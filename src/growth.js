@@ -94,6 +94,7 @@ function openChest() {
 /* 엘리트 */
 function scheduleElites() {
   const ph = G.ph, P = curPhase(), span = P.dur || P.fail || 120;
+  if (P.goal === 'hunt') { ph.elites = []; return; }                    // 엘리트 사냥은 전용 출현 일정 사용 (0.10)
   const n = Math.random() < ELITE.chance2 ? 2 : 1;
   ph.elites = [];
   for (let i = 0; i < n; i++) ph.elites.push(span * (0.18 + i * 0.4 + rand(0, 0.15)));
@@ -124,7 +125,8 @@ function eliteMove(e, dt) {
 }
 function eliteKilled(e) {
   G.stats.eliteKills++;
-  G.chests.push({ x: e.x, y: e.y, r: 14 });
+  if (!e.noChest) G.chests.push({ x: e.x, y: e.y, r: 14 });
+  phaseEliteKilled(e);
   if (e.elite === 'split') for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; makeEnemy(e.type, e.x + Math.cos(a) * 20, e.y + Math.sin(a) * 20); }
   if (G.p.job) ultGain(8);
 }

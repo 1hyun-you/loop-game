@@ -41,6 +41,11 @@ function cardInfo(c) {
     case 'branch': { const o = BRANCHES[c.id].find(x => x.k === c.k); return { k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + ' 분기', ds: o.ds }; }
     case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult }; }
     case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : jobColor(c.id), ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
+    case 'campRest': return { k: 'k-fill', col: '#8ff0b0', ic: '휴', nm: '휴식', tag: '야영지', ds: '체력 전부 회복' };
+    case 'campTrain': return { k: 'k-fill', col: '#7fe0ff', ic: '련', nm: '수련', tag: '야영지', ds: '즉시 레벨 업 2회' };
+    case 'campSupply': return { k: 'k-fill', col: '#ffd24a', ic: '급', nm: '보급', tag: '야영지', ds: '보물 상자 1개 (유물 후보 우선)' };
+    case 'doorYes': return { k: 'k-fill', col: '#c8a0ff', ic: '문', nm: '문을 연다', tag: '저주 감수', ds: `저주 ${CURSES[c.id].name}(${CURSES[c.id].ds}) 이번 판 지속\n즉시 레벨 업 ${EV_CFG.doorLv}회` };
+    case 'doorNo': return { k: 'k-fill', col: '#8a86a0', ic: '×', nm: '물러난다', tag: '보상 없음', ds: '문이 다시 닫힘' };
     case 'power': return { k: 'k-fill', col: '#ffb070', ic: '↑', nm: '단련', tag: '추가 성장', ds: `모든 피해 +${Math.round(CFG.fill.power * 100)}% (중첩)` };
     default: return { k: 'k-fill', col: '#e04848', ic: '+', nm: '응급 처치', tag: '회복', ds: `체력 ${CFG.fill.heal} 회복` };
   }
@@ -51,6 +56,8 @@ const SEL_HEAD = {
   branch: s => ['분기 선택', `${itemName(s.q.id)} 강화 ${BRANCH_AT}단계 · 플레이 방식 선택`],
   chest: () => ['보물 상자', '정예 처치 보상 · 하나를 선택'],
   job: s => ['전직 제단', s.offer ? '봉헌할 무기 선택 · 무기가 사라지고 다른 직업 3종 호출' : '직업 선택 · 무기 봉헌 시 다시 호출'],
+  camp: () => ['떠돌이 야영지', '휴식·보상 중 하나를 선택'],
+  door: () => ['봉인된 문', '저주를 받아들이면 문이 열림'],
   job2: () => ['2차 전직', `${JOBS[G.p.job].name} · 필수 선택 · 전용 무기 ${EXW[G.p.job].name} 지급`],
 };
 function renderSelect() {
@@ -88,6 +95,8 @@ function pickCard(i) {
   if (s.kind === 'branch') { applyBranch(c); return closeSel(); }
   if (s.kind === 'job') { applyJob(c.id); return closeSel(); }
   if (s.kind === 'job2') { applyJob2(c.k); return closeSel(); }
+  if (s.kind === 'camp') { applyCamp(c); return closeSel(); }
+  if (s.kind === 'door') { applyDoor(c); return closeSel(); }
   if (s.banish) {
     if (isFill(c) || !G.banishes) return;
     G.banished.add(c.id); G.banishes--; s.banish = false;
@@ -121,7 +130,7 @@ function applyCard(c) {
 function aiProfile() {
   if (G.ai) return G.ai;
   const cat = { melee: 0, ranged: 0, magic: 0 }; cat[pick(['melee', 'ranged', 'magic'])] = 1.6; cat[pick(['melee', 'ranged', 'magic'])] += 0.6;
-  return (G.ai = { cat, pPref: shuffle(PASSIVE_ORDER.slice()), slip: rand(0.03, 0.12), leave: 0.1, offer: 0.2, autoUlt: Math.random() < 0.3 });
+  return (G.ai = { cat, pPref: shuffle(PASSIVE_ORDER.slice()), slip: rand(0.03, 0.12), leave: 0.1, offer: 0.2, autoUlt: Math.random() < 0.3, evGo: Math.random() < 0.8, curse: 0.7 });
 }
 function cardScore(c) {
   const p = G.p, ai = aiProfile(), nW = p.weapons.length, nP = p.passives.length;
@@ -152,6 +161,8 @@ function autoSelect() {
     const sc = s.cards.map(c => Math.max(...jobCats(c.id).map(k => ai.cat[k] || 0)) + rand(0, 1.5)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; });
     return pickCard(bi);
   }
+  if (s.kind === 'camp') { const p = G.p; return pickCard(p.hp < p.maxHp * 0.5 ? 0 : Math.random() < 0.55 ? 2 : 1); }
+  if (s.kind === 'door') return pickCard(Math.random() < ai.curse ? 0 : 1);
   if (s.kind === 'chest') { const sc = s.cards.map(c => cardScore(c)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; }); return pickCard(bi); }
   // 원하지 않는 계열 신규 무기는 가끔 제외 (사람의 제외 사용 재현)
   if (!s.banished && G.banishes > 0 && G.p.weapons.length >= 2) {

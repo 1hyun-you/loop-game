@@ -41,6 +41,10 @@ const out = {
       branchesAvg: avg(ok.map(r => (r.branches || []).length)), branchPick: cnt(ok.flatMap(r => r.branches || [])), relicRuns: ok.filter(r => (r.relics || []).length).length, relics: cnt(ok.flatMap(r => r.relics || [])),
       elitesAvg: avg(ok.map(r => (r.elites || [0])[0])), eliteKillAvg: avg(ok.map(r => (r.elites || [0, 0])[1])), chestsAvg: avg(ok.map(r => r.chests || 0)), chestPick: cnt(ok.flatMap(r => (r.chestPicks || []).map(x => x.split(':')[0]))),
       maxMinions: q(ok.map(r => r.maxMinions || 0), 1) }; })(),
+  content: (() => { const ev = ok.flatMap(r => r.events || []), E = {};   // 3단계 페이즈 확장·곁가지 사건 (0.10)
+    for (const [t, o, s] of ev) { const x = E[t] = E[t] || { n: 0 }; x.n++; x[o] = (x[o] || 0) + 1; }
+    return { phasesPerRun: avg(ok.map(r => (r.order || []).length)), eventsPerRun: avg(ok.map(r => (r.events || []).length)), events: E, curses: cnt(ok.flatMap(r => r.curses || [])), camp: cnt(ok.flatMap(r => r.camp || [])),
+      in15to18: ok.filter(r => r.time >= 900 && r.time <= 1080).length }; })(),
   errors: errs, pageErr: ok.reduce((s, r) => s + (r.pageErr || []).length, 0), errShownRuns: ok.filter(r => r.errShown).length,
   flow: flows, saveBad: ok.filter(r => !r.saveOk).length,
   perf: { maxEnP90: q(ok.map(r => r.maxEn || 0), .9), stepMsAvg: avg(ok.map(r => r.cost.stepMs)), stepMsMax: q(ok.map(r => r.cost.stepMs), 1), renMsAvg: avg(ok.map(r => r.cost.renMs)), renMsMax: q(ok.map(r => r.cost.renMs), 1) },

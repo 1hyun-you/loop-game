@@ -13,6 +13,7 @@ function render() {
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   drawGround(c, camX, camY);
   drawPhaseGround(c);
+  drawEventGround(c);
   drawGrowthGround(c, inView);
   drawGems(c, inView);
   drawEnemies(c, inView);
@@ -21,6 +22,7 @@ function render() {
   drawWeapons(c, inView);
   drawFx(c);
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawPhaseFog(c);
   drawPhaseTint(c);
   if (p.flash > 0) { c.fillStyle = 'rgba(255,40,40,' + (p.flash * 1.2) + ')'; c.fillRect(0, 0, VIEW.cw, VIEW.ch); }
   drawJoy(c);
@@ -72,9 +74,14 @@ function drawEnemies(c, inView) {
   c.fill();
   for (const [col, a] of byColor) { c.fillStyle = col; c.beginPath(); for (const e of a) enemyPath(c, e); c.fill(); }
   c.fillStyle = '#1a1420'; c.beginPath();
-  for (const a of byColor.values()) for (const e of a) { const ex = G.p.x > e.x ? 1.5 : -1.5; c.rect(e.x - e.r * 0.4 + ex, e.y - e.r * 0.15, 2, 2.5); c.rect(e.x + e.r * 0.25 + ex, e.y - e.r * 0.15, 2, 2.5); }
+  for (const a of byColor.values()) for (const e of a) { if (e.fixed) continue; const ex = G.p.x > e.x ? 1.5 : -1.5; c.rect(e.x - e.r * 0.4 + ex, e.y - e.r * 0.15, 2, 2.5); c.rect(e.x + e.r * 0.25 + ex, e.y - e.r * 0.15, 2, 2.5); }
   c.fill();
   if (flash.length) { c.fillStyle = '#fff'; c.beginPath(); for (const e of flash) enemyPath(c, e); c.fill(); }
+  // 대장·마법진·거대 몹 체력 막대 (0.10)
+  for (const e of G.enemies) {
+    if (e.dead || !e.cmd || !inView(e.x, e.y, e.r)) continue;
+    const w = e.r * 2.2, y = e.y - e.r - 10; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 5); c.fillStyle = e.rit ? '#c8a0ff' : '#ff8a5a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 5);
+  }
   // 엘리트: 금색 테두리 · 보호막 · 돌진 예고 · 체력 막대
   for (const e of G.enemies) {
     if (e.dead || !e.elite || !inView(e.x, e.y, e.r)) continue;

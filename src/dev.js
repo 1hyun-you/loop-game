@@ -57,13 +57,21 @@ const AUTO = { dir: { x: 0, y: -1 }, next: 0, out: null, run: null };
 const AUTO_DIRS = Array.from({ length: 16 }, (_, i) => ({ x: Math.cos(i * Math.PI / 8), y: Math.sin(i * Math.PI / 8) }));
 function autoDanger(qx, qy) {
   const p = G.p; let d = 0;
-  gridQuery(qx, qy, 90, e => { const dd = Math.sqrt(dist2(e.x, e.y, qx, qy)) - e.r - p.r; d += dd < 6 ? 50 : 140 / (dd + 8); });
+  for (const k of G.ph.cracks) if (!k.done) { const dd = Math.sqrt(dist2(k.x, k.y, qx, qy)) - k.r - p.r; if (dd < 10) d += 30 + 30 * k.t / PH_CFG.crackWarn; }   // 붕괴 예고 회피 (0.10)
+  gridQuery(qx, qy, 90, e => { if (e.fixed || e.sleep) return; const dd = Math.sqrt(dist2(e.x, e.y, qx, qy)) - e.r - p.r; d += dd < 6 ? 50 : 140 / (dd + 8); });
   return d;
 }
 function autoTarget() {
   const p = G.p, ph = G.ph; let best = null, bs = 0;
   if (ph.zone && p.hp > p.maxHp * 0.6) return { x: ph.zone.x, y: ph.zone.y, k: 'goal' };              // 봉인석 구역 우선 (0.3)
   for (const c of G.chests) if (dist2(c.x, c.y, p.x, p.y) < 500 * 500) return { x: c.x, y: c.y, k: 'goal' };   // 보물 상자 (0.5)
+  if (ph.camp && !ph.camp.used) return { x: ph.camp.x, y: ph.camp.y, k: 'goal' };                                 // 야영지 (0.10)
+  if (ph.cart && !ph.cart.done && dist2(ph.cart.x, ph.cart.y, p.x, p.y) > 90 * 90) {                                       // 수레 곁 유지
+    const c = ph.cart, dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy) || 1; return { x: c.x + dx / d * 40, y: c.y + dy / d * 40, k: 'goal' }; }
+  const ev = G.ev && G.ev.cur, ai = aiProfile();
+  if (ev && ev.state === 'idle' && ai.evGo && p.hp > p.maxHp * 0.55) return ev.type === 'giant' ? { x: ev.mob.x, y: ev.mob.y, k: 'boss' } : { x: ev.x, y: ev.y, k: 'goal' };   // 곁가지 사건 진입
+  if (ev && ev.type === 'giant' && ev.state === 'active' && p.hp > p.maxHp * 0.4) return { x: ev.mob.x, y: ev.mob.y, k: 'boss' };
+  if (ph.rits && p.hp > p.maxHp * 0.35) { const r = ph.rits.filter(e => !e.dead).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y))[0]; if (r) return { x: r.x, y: r.y, k: 'boss' }; }   // 마법진 파괴
   if (G.altar && p.hp > p.maxHp * 0.4 && !aiProfile().skipAltar) return { x: G.altar.x, y: G.altar.y, k: 'goal' };     // 전직 제단 (0.6)
   if (ph.spring && !ph.spring.used && p.hp < p.maxHp * 0.85) return { x: ph.spring.x, y: ph.spring.y, k: 'goal' };
   if (ph.cmd && !ph.cmd.dead && p.hp > p.maxHp * 0.4) return { x: ph.cmd.x, y: ph.cmd.y, k: 'boss' };            // 대장 교전 유도
@@ -95,7 +103,8 @@ function autoVec() {
     const s = -dg * (STATE.dev.god ? 0.15 : 1) + (tg ? (dv.x * tx + dv.y * ty) * (tg.k === 'goal' || tg.k === 'boss' ? 26 : 6) * pull : 0) + (dv.x * AUTO.dir.x + dv.y * AUTO.dir.y) * 1.2;
     if (s > bs) { bs = s; best = dv; }
   }
-  if (tg && tg.k === 'goal' && td < (G.ph.zone ? G.ph.zone.r - 20 : 20)) return (AUTO.out = { x: 0, y: 0, m: 0 });
+  const ev2 = G.ev && G.ev.cur, stopR = G.ph.zone ? G.ph.zone.r - 20 : ev2 && ev2.state === 'idle' && tg && tg.x === ev2.x ? 12 : 20;
+  if (tg && tg.k === 'goal' && td < stopR) return (AUTO.out = { x: 0, y: 0, m: 0 });
   if (here < 1.5 && -here >= bs && !(tg && (tg.k === 'gem' || tg.k === 'goal'))) return (AUTO.out = { x: 0, y: 0, m: 0 });
   const k = here > 6 ? 1 : 0.55;
   let x = AUTO.dir.x * (1 - k) + best.x * k, y = AUTO.dir.y * (1 - k) + best.y * k; const m = Math.hypot(x, y) || 1;

@@ -105,7 +105,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.9',
+  VERSION: '0.10',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -293,9 +293,9 @@ function newRun() {
     time: 0, kills: 0, eid: 0, pid: 0, spawnAcc: 0, result: null, endT: 0, finished: false,
     p: { x: 0, y: 0, r: CFG.player.r, hp: CFG.player.hp, maxHp: CFG.player.hp, face: { x: 0, y: -1 }, invT: 0, flash: 0, moving: false,
       level: 1, xp: 0, need: xpNeed(1), weapons: [], passives: [], relics: [], bonusDmg: 0, mod: null,
-      job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, holy: 0, form: null, shield: false, vet: false },
+      job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, holy: 0, form: null, shield: false, vet: false, curses: [] },
     enemies: [], gems: [], proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], altar: null, banner: null, sanct: null,
-    pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
+    pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, pendingCamp: false, pendingDoor: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
     stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
       branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
@@ -316,14 +316,14 @@ function recalc() {
   const p = G.p, prevMax = p.maxHp;
   p.mod = {
     dmg: (1 + PASSIVES.might.per * passLv('might')) * (1 + p.bonusDmg) * (p.vet ? 1.15 : 1),
-    speed: (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1) * (p.job2 === 'accel' ? 1.15 : 1) * (p.job === 'druid' && p.form === 'spirit' ? 1.15 : 1),
+    speed: (hasCurse('heavy') ? 0.9 : 1) * (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1) * (p.job2 === 'accel' ? 1.15 : 1) * (p.job === 'druid' && p.form === 'spirit' ? 1.15 : 1),
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
   p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
   if (p.maxHp > prevMax) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복
   p.hp = Math.min(p.hp, p.maxHp);
 }
-function heal(v) { const p = G.p; p.hp = Math.min(p.maxHp, p.hp + v); }
+function heal(v) { const p = G.p; if (hasCurse('blight')) v *= 0.6; p.hp = Math.min(p.maxHp, p.hp + v); }
 function clearInput() { INPUT.active = false; INPUT.id = null; INPUT.mag = 0; }
 function toast(text, color = '#fff') { G.toasts.push({ text, color, t: 0, dur: 2 }); if (G.toasts.length > 3) G.toasts.shift(); }
 function fx(o) { if (G.fx.length < 220) G.fx.push(Object.assign({ t: 0 }, o)); }
@@ -333,7 +333,7 @@ function step(dt) {
   G.time += dt;
   if (G.time >= (G.stats.dmgMin.length + 1) * 60) G.stats.dmgMin.push(Object.assign({}, G.stats.dmg));   // 분 단위 피해 누적 스냅숏
   updatePlayer(dt);
-  if (!G.result) { updatePhase(dt); updateEliteSpawn(dt); }
+  if (!G.result) { updatePhase(dt); if (!G.result) updateEvent(dt); updateEliteSpawn(dt); }
   if (!G.result) updateSpawn(dt);
   gridBuild(G.enemies);
   if (!G.result) { updateWeapons(dt); updateJob(dt); updatePassiveBranches(dt); updateRelics(dt); }
@@ -347,6 +347,8 @@ function step(dt) {
   else if (STATE.mode === 'play') {                         // 선택 화면 우선순위: 2차 전직 → 분기 → 보물 상자 → 레벨업
     if (G.pendingJob2) openJob2();
     else if (G.pendingBr.length) openBranch();
+    else if (G.pendingDoor) openDoor();
+    else if (G.pendingCamp) openCamp();
     else if (G.pendingChest > 0) openChest();
     else if (G.pendingLv > 0) openSelect();
   }
@@ -396,7 +398,7 @@ function updateSpawn(dt) {
   while (G.spawnAcc >= 1) {
     G.spawnAcc -= 1;
     if (alive >= cap) break;
-    const q = ringPos(); makeEnemy(pickType(), q.x, q.y); alive++;
+    const P = curPhase(), q = P && P.spawnR && !G.ph.inGap ? ringAt(P.spawnR[0], P.spawnR[1]) : ringPos(); makeEnemy(pickType(), q.x, q.y); alive++;   // 안개 평원: 근접 출현 (0.10)
   }
   if (alive > G.stats.maxEnemies) G.stats.maxEnemies = alive;
 }
@@ -414,12 +416,13 @@ function updateEnemies(dt) {
     if (G.tm.stop > 0) sp *= e.boss ? 0.3 : 0;                                    // 시간술사 궁극기
     if (e.elite) sp *= eliteMove(e, dt);
     if (e.slowT > 0) { e.slowT -= dt; sp *= 0.55; }
-    if (e.frz > 0) { e.frz -= dt; sp = 0; }                                       // 빙결·속박 (0.8)
+    if (e.frz > 0) { e.frz -= dt; sp = 0; }
+    if (e.sleep || e.fixed) sp = 0;                                               // 잠든 거대 몹·마법진 (0.10)                                       // 빙결·속박 (0.8)
     if (e.bl > 0) { e.bl -= dt; e.blT = (e.blT || 0) - dt; if (e.blT <= 0) { e.blT = 0.5; damageEnemy(e, e.blD, { src: 'bleed' }); if (e.dead) continue; } }
     const z = G.ph.zone; if (z && dist2(e.x, e.y, z.x, z.y) < z.r * z.r) sp *= PH_CFG.zoneSlow;   // 봉인석 구역 둔화 (0.3)
     e.x += dx / d * sp * dt; e.y += dy / d * sp * dt;
-    if (d > farR) { const q = e.cmd ? ringAt(VIEW.w * 0.6, VIEW.w * 0.7) : ringPos(10); e.x = q.x; e.y = q.y; e.kbx = e.kby = 0; }   // 시야 밖 재배치
-    if (d < e.r + p.r - 3) hurtPlayer(e.dmg, ENEMIES[e.type].name);
+    if (d > farR && !e.fixed && !e.sleep) { const q = e.cmd ? ringAt(VIEW.w * 0.6, VIEW.w * 0.7) : ringPos(10); e.x = q.x; e.y = q.y; e.kbx = e.kby = 0; }   // 시야 밖 재배치
+    if (d < e.r + p.r - 3 && !e.fixed && !e.sleep) hurtPlayer(e.dmg, ENEMIES[e.type].name);
   }
   // 적끼리 겹침 완화(가벼운 분리)
   for (const e of G.enemies) {
@@ -450,6 +453,7 @@ function killEnemy(e) {
   e.dead = true; G.kills++;
   G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
   if (e.elite) eliteKilled(e);
+  if (e.ev) eventMobKilled(e);
   if (e.slowT > 0 && wBr('icering') === 'shatter') { const x = e.x, y = e.y, d = wStats(G.p.weapons.find(w => w.id === 'icering')).dmg * 2.5; G.later.push({ t: 0, f: () => explode(x, y, 46, d, 'shatter', '#bfe8ff') }); }
   if (pBr('regen') === 'vamp') heal(0.4);
   onEnemyKill(e);
@@ -459,7 +463,7 @@ function hurtPlayer(dmg, src) {
   const p = G.p;
   if (p.invT > 0 || STATE.dev.god || G.result) return;
   if (playerAvoid()) return;
-  dmg *= playerHurtMul();
+  dmg *= playerHurtMul() * (hasCurse('frail') ? 1.15 : 1);
   onPlayerHurt();
   p.hp -= dmg; p.invT = CFG.player.invuln; p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
@@ -516,6 +520,7 @@ function buildReport() {
     branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
     job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults,
     altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
+    order: G.ph.order, events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [],
   };
 }
 /* 마지막 1분 피해 비중 (빌드 완성도 반영 판독용) */
@@ -536,32 +541,67 @@ function finishRun() {
   showResult();
 }
 /* ============================================================
-   페이즈 — 1단계 풀 5종(기본형 2·전투형 2·기믹형 1), 판마다 순서 무작위 자동 진행
+   페이즈 — 풀 12종(기본형 4·전투형 4·기믹형 4), 판마다 7~8종 무작위 투입 (유형별 2종 이상 보장)
    구성: 페이즈 → 예고 구간(색감 전환·다음 페이즈 이름 표시) → 다음 페이즈, 전부 돌파 시 판 완료
    기믹 융합 원칙: 기믹 진행 중에도 일반 몹 출현 지속 (기획서 페이즈 풀)
+   0.10 추가 7종: 안개 평원·떠돌이 야영지·엘리트 사냥·포위진·수레 호위·의식 저지·붕괴 지대 (3단계 결정 안건 5)
    ============================================================ */
 // 0.4 판 길이 조정: 무적 완주 기준 8~10분 맞춤 (물결 140→180, 언덕 80→90, 몰아치는 무리 120→150초, 봉인석 체류 4→5초)
+// 0.10 1차 무적 4판 평균 11분 48초 → 신규 시간형 페이즈 +10~20초·엘리트 사냥 출현 간격·마법진 체력 상향
+// 0.10: 판 길이 기준 15~18분(기획서 채택), 판당 7~8종 투입으로 길이 확보, 개별 페이즈 시간은 0.4 수준 유지
 const PHASES = {
   horde: { name: '들판의 물결', type: '기본형', goal: 'time', dur: 180, spawnMul: 1.0, tint: null,
     hint: '버텨라' },
   calm: { name: '고요한 언덕', type: '기본형', goal: 'time', dur: 90, spawnMul: 0.45, tint: [150, 210, 140],
     hint: '회복의 샘을 찾아라' },
+  fog: { name: '안개 평원', type: '기본형', goal: 'time', dur: 130, spawnMul: 0.9, bias: { bat: 5, skel: 3, slime: 2 }, tint: [175, 185, 195], fog: 150, spawnR: [210, 270],
+    hint: '시야 축소 · 근접 기습 주의' },
+  camp: { name: '떠돌이 야영지', type: '기본형', goal: 'time', dur: 90, spawnMul: 0.4, tint: [230, 170, 90],
+    hint: '야영지에서 휴식·보상 1회 선택' },
   surge: { name: '몰아치는 무리', type: '전투형', goal: 'time', dur: 150, spawnMul: 1.8, bias: { bat: 6, slime: 6 }, tint: [200, 70, 60],
     hint: '물량 폭주' },
   warband: { name: '오우거 전열', type: '전투형', goal: 'kill', fail: 150, spawnMul: 0.9, bias: { brute: 1.5, skel: 5, slime: 3 }, tint: [190, 130, 60],
     hint: '오우거 대장 처치' },
+  hunt: { name: '엘리트 사냥', type: '전투형', goal: 'hunt', fail: 150, spawnMul: 0.7, tint: [235, 205, 90],
+    hint: '정예 4체 처치 (완료 시 보물 상자)' },
+  siege: { name: '포위진', type: '전투형', goal: 'time', dur: 120, spawnMul: 0.5, tint: [170, 80, 120],
+    hint: '사방 포위 · 빈틈 돌파' },
   seal: { name: '봉인석', type: '기믹형', goal: 'zone', fail: 170, spawnMul: 0.45, tint: [90, 140, 230],
     hint: '봉인석 4개 해제 (빛나는 구역에 머물기, 구역 안 적 둔화)' },
+  escort: { name: '수레 호위', type: '기믹형', goal: 'escort', fail: 170, spawnMul: 0.6, tint: [200, 160, 110],
+    hint: '수레 곁에 머물러 목적지까지 호위' },
+  ritual: { name: '의식 저지', type: '기믹형', goal: 'ritual', fail: 120, spawnMul: 0.55, tint: [150, 90, 210],
+    hint: '마법진 3개 파괴 (시간 초과 시 정예 소환)' },
+  collapse: { name: '붕괴 지대', type: '기믹형', goal: 'time', dur: 120, spawnMul: 0.6, tint: [140, 120, 100],
+    hint: '붕괴 예고 지점 회피' },
 };
-const PHASE_ORDER = ['horde', 'calm', 'surge', 'warband', 'seal'];
-const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 7, zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420 };   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
+const PHASE_ORDER = ['horde', 'calm', 'fog', 'camp', 'surge', 'warband', 'hunt', 'siege', 'seal', 'escort', 'ritual', 'collapse'];
+const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 7, zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
+  perRun: [7, 8], perType: 2,
+  huntN: 4, huntAt: [0, 15, 35, 55],                                   // 엘리트 사냥: 처치 목표·출현 시각(초)
+  siegeEvery: 13, siegeFirst: 4, siegeN: 30, siegeR: 300,              // 포위진: 원형 포위 주기·수·반경
+  cartHp: 300, cartR: 16, cartDist: 1000, cartSpeed: 10, cartNear: 150, cartHurt: 0.25, cartHurtMax: 8,   // 수레 호위
+  ritN: 3, ritHp: 10, ritR: 24, ritDist: [200, 320], ritEvery: 6, ritSummon: 3,                           // 의식 저지 (체력: 같은 시각 오우거 배수)
+  crackEvery: 2.0, crackN: 3, crackR: 52, crackWarn: 1.3, crackDmg: 16,   // 붕괴 지대
+  campDist: [160, 240], campR: 28,
+};
 
+/* 판당 투입 페이즈 구성 — 유형별 perType종 이상 보장 후 나머지 무작위 */
+function pickPhaseOrder() {
+  const n = Math.random() < 0.5 ? PH_CFG.perRun[0] : PH_CFG.perRun[1], by = {}, out = [];
+  for (const id of PHASE_ORDER) (by[PHASES[id].type] = by[PHASES[id].type] || []).push(id);
+  for (const t in by) out.push(...shuffle(by[t].slice()).slice(0, PH_CFG.perType));
+  const rest = shuffle(PHASE_ORDER.filter(id => !out.includes(id)));
+  while (out.length < n && rest.length) out.push(rest.pop());
+  return shuffle(out);
+}
 function phaseInit() {
-  G.ph = { order: shuffle(PHASE_ORDER.slice()), i: -1, id: null, t: 0, gapT: 2.5, inGap: true, tint: null, tintFrom: null, tintK: 1,
-    zone: null, spring: null, cmd: null, log: [] };
+  G.ph = { order: pickPhaseOrder(), i: -1, id: null, t: 0, gapT: 2.5, inGap: true, tint: null, tintFrom: null, tintK: 1,
+    zone: null, spring: null, cmd: null, cart: null, rits: null, cracks: [], camp: null, hunt: 0, log: [] };
+  eventInit();
 }
 function curPhase() { return G.ph.id ? PHASES[G.ph.id] : null; }
-function phaseSpawnMul() { return G.ph.inGap ? 0.6 : curPhase().spawnMul; }
+function phaseSpawnMul() { return (G.ph.inGap ? 0.6 : curPhase().spawnMul) * eventSpawnMul() * (hasCurse('horde') ? 1.15 : 1); }
 function phaseBias() { const P = curPhase(); return !G.ph.inGap && P && P.bias || null; }
 
 function phaseStart() {
@@ -576,6 +616,24 @@ function phaseStart() {
     e.hp = e.maxHp = e.hp * PH_CFG.cmdHp; e.r = PH_CFG.cmdR; e.dmg *= 1.3; e.speed *= 1.35; e.color = '#e8a83c'; e.xp = 30; e.cmd = true;
     ph.cmd = e;
   }
+  if (ph.id === 'hunt') { ph.hunt = 0; ph.huntQ = PH_CFG.huntAt.slice(); }
+  if (ph.id === 'siege') ph.siegeT = PH_CFG.siegeFirst;
+  if (ph.id === 'collapse') { ph.cracks = []; ph.crackT = 1.5; }
+  if (ph.id === 'camp') { const q = ringAt(PH_CFG.campDist[0], PH_CFG.campDist[1]); ph.camp = { x: q.x, y: q.y, r: PH_CFG.campR, used: false }; }
+  if (ph.id === 'escort') {
+    const a = rand(Math.PI * 2), sx = G.p.x + Math.cos(a + 1.6) * 60, sy = G.p.y + Math.sin(a + 1.6) * 60;
+    ph.cart = { x: sx, y: sy, tx: sx + Math.cos(a) * PH_CFG.cartDist, ty: sy + Math.sin(a) * PH_CFG.cartDist, hp: PH_CFG.cartHp, maxHp: PH_CFG.cartHp, r: PH_CFG.cartR, d0: PH_CFG.cartDist, hit: 0 };
+  }
+  if (ph.id === 'ritual') {
+    ph.rits = []; const a0 = rand(Math.PI * 2);
+    for (let i = 0; i < PH_CFG.ritN; i++) {
+      const a = a0 + i * Math.PI * 2 / PH_CFG.ritN + rand(-0.4, 0.4), R = rand(PH_CFG.ritDist[0], PH_CFG.ritDist[1]);
+      const e = makeEnemy('brute', G.p.x + Math.cos(a) * R, G.p.y + Math.sin(a) * R);
+      e.hp = e.maxHp = e.hp * PH_CFG.ritHp; e.r = PH_CFG.ritR; e.speed = 0; e.dmg = 0; e.xp = 12; e.color = '#8a5ad0'; e.shape = 'rune';
+      e.cmd = true; e.fixed = true; e.rit = true; e.sumT = rand(1, PH_CFG.ritEvery);
+      ph.rits.push(e);
+    }
+  }
 }
 function ringAt(a, b) { const ang = rand(Math.PI * 2), R = rand(a, b); return { x: G.p.x + Math.cos(ang) * R, y: G.p.y + Math.sin(ang) * R }; }
 function newZone(i) { const q = ringAt(PH_CFG.zoneDist[0], PH_CFG.zoneDist[1]); return { x: q.x, y: q.y, r: PH_CFG.zoneR, prog: 0, i }; }
@@ -586,6 +644,7 @@ function phaseEnd(outcome) {
   ph.zone = null; ph.spring = null;
   if (ph.cmd && !ph.cmd.dead) { ph.cmd.dead = true; fx({ kind: 'ring', x: ph.cmd.x, y: ph.cmd.y, r0: 10, r1: 60, dur: 0.5, color: '#e8a83c' }); }
   ph.cmd = null;
+  phaseCleanup(outcome);
   if (ph.i >= ph.order.length - 1) {                       // 마지막 페이즈 돌파 → 판 완료
     G.result = 'clear'; G.endT = 1.6; toast('들판 돌파', '#ffe08a');
     fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 260, dur: 1.2, color: '#ffe08a' });
@@ -610,8 +669,13 @@ function updatePhase(dt) {
     if (ph.gapT <= 0) { ph.warned = false; phaseStart(); }
     return;
   }
-  ph.t += dt;
+  if (!eventPaused()) ph.t += dt;          // 곁가지 사건 진행 중 페이즈 타이머 정지 (3단계 결정 안건 6)
   const P = PHASES[ph.id];
+  updatePhaseGimmick(P, dt);
+  if (G.result) return;
+  if (P.goal === 'hunt' && ph.hunt >= PH_CFG.huntN) return phaseEnd('ok');
+  if (P.goal === 'escort' && ph.cart) { if (ph.cart.hp <= 0) return phaseEnd('fail'); if (ph.cart.done) return phaseEnd('ok'); }
+  if (P.goal === 'ritual' && ph.rits && ph.rits.every(e => e.dead)) return phaseEnd('ok');
   if (P.goal === 'time' && ph.t >= P.dur) return phaseEnd('ok');
   if (P.fail && ph.t >= P.fail) return phaseEnd('timeout');
   if (ph.spring && !ph.spring.used && dist2(p.x, p.y, ph.spring.x, ph.spring.y) < (ph.spring.r + p.r) ** 2) {
@@ -637,12 +701,89 @@ function sealPulse(z) {
   gridQuery(z.x, z.y, R, e => { if (e.cmd || e.dead) return; const dx = e.x - z.x, dy = e.y - z.y, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * PH_CFG.zoneKb; e.kby += dy / d * PH_CFG.zoneKb; });
 }
 
+/* ============================================================
+   0.10 추가 페이즈 기믹 갱신
+   ============================================================ */
+function updatePhaseGimmick(P, dt) {
+  const ph = G.ph, p = G.p, paused = eventPaused(), min = G.time / 60;
+  // 엘리트 사냥: 정해진 시각에 정예 출현 (개별 보상 없음, 완료 시 상자 1개)
+  if (ph.id === 'hunt' && ph.huntQ && ph.huntQ.length && ph.t >= ph.huntQ[0]) { ph.huntQ.shift(); const e = spawnElite(); e.noChest = true; e.hunt = true; }
+  // 포위진: 주기적 원형 포위
+  if (ph.id === 'siege' && !paused) {
+    ph.siegeT -= dt;
+    if (ph.siegeT <= 0) {
+      ph.siegeT = PH_CFG.siegeEvery;
+      const n = Math.max(0, Math.min(PH_CFG.siegeN, CFG.spawn.max - aliveCount())), a0 = rand(Math.PI * 2);
+      for (let i = 0; i < n; i++) { const a = a0 + i * Math.PI * 2 / n; makeEnemy(min > 3 && i % 3 === 0 ? 'skel' : 'slime', p.x + Math.cos(a) * PH_CFG.siegeR, p.y + Math.sin(a) * PH_CFG.siegeR); }
+      toast('포위 압축', '#e0a0c0');
+    }
+  }
+  // 붕괴 지대: 예고 원 → 붕괴 (플레이어 피해)
+  if (ph.id === 'collapse') {
+    if (!paused) { ph.crackT -= dt; if (ph.crackT <= 0) { ph.crackT = PH_CFG.crackEvery; spawnCracks(); } }
+    for (const k of ph.cracks) {
+      k.t += dt;
+      if (k.t >= PH_CFG.crackWarn && !k.done) {
+        k.done = true; fx({ kind: 'ring', x: k.x, y: k.y, r0: k.r * 0.4, r1: k.r * 1.1, dur: 0.35, color: '#c09060' });
+        if (dist2(p.x, p.y, k.x, k.y) < (k.r + p.r * 0.5) ** 2) hurtPlayer(PH_CFG.crackDmg * (1 + CFG.scale.dmgPerMin * min), '붕괴 지대');
+      }
+    }
+    ph.cracks = ph.cracks.filter(k => k.t < PH_CFG.crackWarn + 0.35);
+  }
+  // 떠돌이 야영지: 접촉 시 보상 1회 선택
+  if (ph.camp && !ph.camp.used && dist2(p.x, p.y, ph.camp.x, ph.camp.y) < (ph.camp.r + p.r) ** 2) { ph.camp.used = true; G.pendingCamp = true; }
+  // 수레 호위: 플레이어 근접 시에만 전진, 접촉 적에게 손상
+  const c = ph.cart;
+  if (c && !c.done) {
+    const near = dist2(p.x, p.y, c.x, c.y) < PH_CFG.cartNear ** 2;
+    c.moving = near && !paused;
+    if (c.moving) { const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy); if (d < 8) { c.done = true; } else { c.x += dx / d * PH_CFG.cartSpeed * dt; c.y += dy / d * PH_CFG.cartSpeed * dt; } }
+    let n = 0, hurt = 0;
+    gridQuery(c.x, c.y, c.r + 18, e => { if (e.fixed || e.sleep || n >= PH_CFG.cartHurtMax) return; if (dist2(e.x, e.y, c.x, c.y) < (e.r + c.r) ** 2) { n++; hurt += e.dmg; } });
+    if (hurt) { c.hp -= hurt * PH_CFG.cartHurt * dt; c.hit = 0.15; }
+    c.hit -= dt;
+  }
+  // 의식 저지: 남은 마법진마다 주기 소환
+  if (ph.rits && !paused) for (const e of ph.rits) {
+    if (e.dead) continue; e.sumT -= dt;
+    if (e.sumT <= 0) { e.sumT = PH_CFG.ritEvery; for (let i = 0; i < PH_CFG.ritSummon; i++) { if (aliveCount() >= CFG.spawn.max) break; const a = rand(Math.PI * 2); makeEnemy(min > 1.5 ? 'skel' : 'slime', e.x + Math.cos(a) * 34, e.y + Math.sin(a) * 34); } }
+  }
+}
+function spawnCracks() {
+  const p = G.p, mv = p.moving ? p.face : { x: 0, y: 0 };
+  for (let i = 0; i < PH_CFG.crackN; i++) {
+    const q = i === 0 ? { x: p.x + mv.x * 70 + rand(-20, 20), y: p.y + mv.y * 70 + rand(-20, 20) } : ringAt(60, 220);
+    G.ph.cracks.push({ x: q.x, y: q.y, r: PH_CFG.crackR * rand(0.85, 1.15), t: 0 });
+  }
+}
+/* 엘리트 사냥 처치 집계 (growth.js eliteKilled에서 호출) */
+function phaseEliteKilled(e) { if (e.hunt && G.ph.id === 'hunt') G.ph.hunt++; }
+/* 페이즈 종료 정리·보상 */
+function phaseCleanup(outcome) {
+  const ph = G.ph, id = ph.id, p = G.p;
+  if (outcome === 'ok' && (id === 'hunt' || id === 'escort' || id === 'ritual')) {
+    const at = id === 'escort' && ph.cart ? ph.cart : ringAt(40, 70);
+    G.chests.push({ x: at.x, y: at.y, r: 14 }); toast('완수 보상 · 보물 상자', '#ffd24a');
+  }
+  if (id === 'ritual' && ph.rits) {
+    const left = ph.rits.filter(e => !e.dead);
+    for (const e of left) { e.dead = true; fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 70, dur: 0.5, color: '#b080ff' }); }
+    if (left.length) { spawnElite(); toast('의식 완성 · 정예 소환', '#c8a0ff'); }
+  }
+  if (id === 'hunt') for (const e of G.enemies) if (e.hunt && !e.dead) e.hunt = false;
+  if (id === 'escort' && outcome !== 'ok') toast('수레 파손', '#ff9a7a');
+  ph.cart = null; ph.rits = null; ph.cracks = []; ph.camp = null; ph.huntQ = null;
+}
+
 /* 진행도(0~1) — 상단 표시용 */
 function phaseProgress() {
   const ph = G.ph, P = curPhase(); if (!P) return 0;
   if (P.goal === 'time') return ph.t / P.dur;
   if (P.goal === 'kill') return ph.cmd ? 1 - Math.max(0, ph.cmd.hp) / ph.cmd.maxHp : 1;
   if (P.goal === 'zone') return ph.zone ? (ph.zone.i + ph.zone.prog / PH_CFG.zoneNeed) / PH_CFG.zoneN : 1;
+  if (P.goal === 'hunt') return ph.hunt / PH_CFG.huntN;
+  if (P.goal === 'escort') return ph.cart ? 1 - Math.hypot(ph.cart.tx - ph.cart.x, ph.cart.ty - ph.cart.y) / ph.cart.d0 : 1;
+  if (P.goal === 'ritual') return ph.rits ? ph.rits.filter(e => e.dead).length / PH_CFG.ritN : 1;
   return 0;
 }
 
@@ -656,11 +797,42 @@ function drawPhaseGround(c) {
     c.strokeStyle = '#e8f0ff'; c.lineWidth = 6; c.beginPath(); c.arc(z.x, z.y, z.r - 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * z.prog / PH_CFG.zoneNeed); c.stroke();
     c.fillStyle = '#5a6f9a'; c.fillRect(z.x - 9, z.y - 16, 18, 26); c.strokeStyle = '#cfe0ff'; c.lineWidth = 2; c.strokeRect(z.x - 9, z.y - 16, 18, 26);
   }
+  for (const k of ph.cracks) {
+    const a = Math.min(1, k.t / PH_CFG.crackWarn);
+    if (!k.done) { c.fillStyle = `rgba(200,80,50,${0.12 + 0.25 * a})`; c.beginPath(); c.arc(k.x, k.y, k.r * a, 0, 7); c.fill(); c.strokeStyle = 'rgba(255,140,90,0.85)'; c.lineWidth = 2; c.beginPath(); c.arc(k.x, k.y, k.r, 0, 7); c.stroke(); }
+    else { c.fillStyle = 'rgba(40,28,20,0.6)'; c.beginPath(); c.arc(k.x, k.y, k.r, 0, 7); c.fill(); }
+  }
+  if (ph.rits) for (const e of ph.rits) {
+    if (e.dead) continue;
+    c.strokeStyle = 'rgba(190,140,255,0.7)'; c.lineWidth = 2; c.beginPath(); c.arc(e.x, e.y, e.r + 14 + Math.sin(G.time * 3) * 3, 0, 7); c.stroke();
+    c.save(); c.translate(e.x, e.y); c.rotate(G.time); c.beginPath(); for (let i = 0; i < 5; i++) { const a = i * Math.PI * 4 / 5; c.lineTo(Math.cos(a) * (e.r + 10), Math.sin(a) * (e.r + 10)); } c.closePath(); c.stroke(); c.restore();
+  }
+  if (ph.camp && !ph.camp.used) {
+    const m = ph.camp; c.fillStyle = 'rgba(255,190,90,0.18)'; c.beginPath(); c.arc(m.x, m.y, m.r + 10, 0, 7); c.fill();
+    c.fillStyle = '#8a5a30'; c.beginPath(); c.moveTo(m.x - 18, m.y + 10); c.lineTo(m.x, m.y - 16); c.lineTo(m.x + 18, m.y + 10); c.closePath(); c.fill();
+    c.fillStyle = '#ffb040'; c.beginPath(); c.arc(m.x + 16, m.y + 14, 4 + Math.sin(G.time * 9), 0, 7); c.fill();
+  }
+  if (ph.cart) {
+    const k = ph.cart;
+    c.strokeStyle = 'rgba(255,230,150,0.35)'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.moveTo(k.x, k.y); c.lineTo(k.tx, k.ty); c.stroke(); c.setLineDash([]);
+    c.fillStyle = '#e8d070'; c.fillRect(k.tx - 1.5, k.ty - 28, 3, 28); c.fillRect(k.tx + 1.5, k.ty - 28, 14, 9);
+    c.strokeStyle = 'rgba(255,230,150,0.3)'; c.beginPath(); c.arc(k.x, k.y, PH_CFG.cartNear, 0, 7); c.stroke();
+    c.fillStyle = k.hit > 0 ? '#fff' : '#9a6a3a'; c.fillRect(k.x - 16, k.y - 11, 32, 20); c.fillStyle = '#3a2410'; c.beginPath(); c.arc(k.x - 10, k.y + 10, 5, 0, 7); c.arc(k.x + 10, k.y + 10, 5, 0, 7); c.fill();
+    c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);
+  }
   if (ph.spring && !ph.spring.used) {
     const s = ph.spring;
     c.fillStyle = 'rgba(120,240,170,0.35)'; c.beginPath(); c.arc(s.x, s.y, s.r + 6 + Math.sin(G.time * 5) * 3, 0, 7); c.fill();
     c.fillStyle = '#6fe0a0'; c.beginPath(); c.arc(s.x, s.y, s.r * 0.6, 0, 7); c.fill();
   }
+}
+/* 안개 평원 시야 축소 (화면 좌표, 플레이어 중심) */
+function drawPhaseFog(c) {
+  const P = curPhase(); if (!P || !P.fog || G.ph.inGap) return;
+  const k = Math.min(1, G.ph.t / 2), Z = VIEW.zoom, cx = VIEW.cw / 2, cy = VIEW.ch / 2, r0 = P.fog * Z, r1 = P.fog * Z * 1.7;
+  const g = c.createRadialGradient(cx, cy, r0, cx, cy, r1);
+  g.addColorStop(0, 'rgba(200,205,215,0)'); g.addColorStop(1, `rgba(190,196,206,${0.92 * k})`);
+  c.fillStyle = g; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
 }
 /* 색감 덧칠 (환경 예고) */
 function drawPhaseTint(c) {
@@ -671,7 +843,8 @@ function drawPhaseTint(c) {
 }
 /* 화면 밖 목표 방향 표시 */
 function drawPhasePointer(c, camX, camY) {
-  const ph = G.ph, t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || G.altar || G.chests[0];
+  const ph = G.ph, rit = ph.rits && ph.rits.filter(e => !e.dead).sort((a, b) => dist2(a.x, a.y, G.p.x, G.p.y) - dist2(b.x, b.y, G.p.x, G.p.y))[0];
+  const t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || ph.cart || rit || (ph.camp && !ph.camp.used ? ph.camp : null) || eventPointer() || G.altar || G.chests[0];
   if (!t) return;
   const Z = VIEW.zoom, sx = (t.x - camX) * Z, sy = (t.y - camY) * Z, m = 34, top = VIEW.sat + 90;
   if (sx > m && sx < VIEW.cw - m && sy > top && sy < VIEW.ch - m) return;
@@ -679,9 +852,146 @@ function drawPhasePointer(c, camX, camY) {
   const kx = (VIEW.cw / 2 - m) / Math.abs(Math.cos(ang) || 1e-6), ky = (Math.sin(ang) < 0 ? cy - top : VIEW.ch / 2 - m) / Math.abs(Math.sin(ang) || 1e-6);
   const R = Math.min(kx, ky), px = cx + Math.cos(ang) * R, py = cy + Math.sin(ang) * R;
   c.save(); c.translate(px, py); c.rotate(ang);
-  c.fillStyle = t === G.altar ? '#d9a8ff' : G.chests.includes(t) ? '#ffd24a' : ph.zone ? '#9fc4ff' : ph.cmd ? '#e8a83c' : '#8ff0b0'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2;
+  c.fillStyle = t === G.altar ? '#d9a8ff' : G.chests.includes(t) ? '#ffd24a' : t === ph.zone ? '#9fc4ff' : t === ph.cmd ? '#e8a83c' : t === ph.cart ? '#e8d070' : t === rit ? '#b080ff' : t === ph.camp ? '#ffb040' : t.ev ? '#7fe0ff' : '#8ff0b0'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2;
   c.beginPath(); c.moveTo(14, 0); c.lineTo(-8, -10); c.lineTo(-3, 0); c.lineTo(-8, 10); c.closePath(); c.fill(); c.stroke();
   c.restore();
+}
+/* ============================================================
+   곁가지 사건 (0.10) — 판당 1~2회, 3종 (3단계 결정 안건 6)
+   공통: 일반 페이즈(기믹형·야영지 제외) 진행 중 플레이어 주변 생성, 간접 신호로 성격 암시,
+         무시 가능(일정 시간 후 소멸), 진입 시 진행 중 페이즈 타이머 정지, 완료 후 복귀
+   동굴 입구: 정예 소굴 45초 생존 → 유물 우선 보물 상자
+   잠든 거대 몹: 접근·피격 시 각성, 강화 엘리트 처치 → 보물 상자 2개
+   봉인된 문: 구역 체류 해제 → 저주 1개 감수 시 레벨업 3회
+   ============================================================ */
+const EVENTS = {
+  cave: { name: '동굴 입구', sign: '어딘가에서 서늘한 바람이 분다', color: '#7fe0ff' },
+  giant: { name: '잠든 거대 몹', sign: '땅이 낮게 울린다', color: '#ffb070' },
+  door: { name: '봉인된 문', sign: '희미한 문양이 빛난다', color: '#c8a0ff' },
+};
+const EV_CFG = { perRun: [1, 2], at: [0.25, 0.55], dist: [200, 260], life: 40, r: 26,
+  caveEnter: 1.0, caveDur: 45, caveSpawn: 2.2, caveElites: 2,
+  giantHp: 14, giantDmg: 1.5, giantR: 30, giantWake: 110, giantMax: 90, giantChests: 2,
+  doorStay: 2.5, doorLv: 3 };
+const CURSES = {
+  frail: { name: '연약', ds: '받는 피해 +15%' },
+  heavy: { name: '둔중', ds: '이동 속도 -10%' },
+  horde: { name: '소란', ds: '적 출현량 +15%' },
+  blight: { name: '메마름', ds: '회복량 -40%' },
+};
+
+function eventInit() {
+  const ph = G.ph, idx = [];
+  ph.order.forEach((id, i) => { if (i > 0 && PHASES[id].type !== '기믹형' && id !== 'camp') idx.push(i); });
+  const n = Math.min(idx.length, Math.random() < 0.5 ? EV_CFG.perRun[0] : EV_CFG.perRun[1]);
+  const at = shuffle(idx).slice(0, n).sort((a, b) => a - b), types = shuffle(Object.keys(EVENTS));
+  G.ev = { plan: at.map((i, k) => ({ i, type: types[k], at: rand(EV_CFG.at[0], EV_CFG.at[1]) })), cur: null, log: [] };
+}
+function eventPaused() { const c = G.ev && G.ev.cur; return !!(c && c.state === 'active'); }
+function eventSpawnMul() { const c = G.ev && G.ev.cur; return c && c.state === 'active' && c.type === 'cave' ? EV_CFG.caveSpawn : 1; }
+function hasCurse(k) { return G.p.curses && G.p.curses.includes(k); }
+function eventPointer() { const c = G.ev && G.ev.cur; if (!c) return null; if (c.type === 'giant' && c.mob && !c.mob.dead) return c.state === 'idle' ? c : null; return c.state === 'idle' ? c : null; }
+
+function eventSpawn(pl) {
+  const q = ringAt(EV_CFG.dist[0], EV_CFG.dist[1]), D = EVENTS[pl.type];
+  const c = { ev: true, type: pl.type, x: q.x, y: q.y, r: EV_CFG.r, t: 0, stay: 0, state: 'idle', at: G.time };
+  if (pl.type === 'giant') {
+    const e = makeEnemy('brute', q.x, q.y);
+    e.hp = e.maxHp = e.hp * EV_CFG.giantHp; e.dmg *= EV_CFG.giantDmg; e.r = EV_CFG.giantR; e.color = '#7a5a8a'; e.xp = 40;
+    e.cmd = true; e.sleep = true; e.ev = c; c.mob = e;
+  }
+  G.ev.cur = c; toast(D.sign, D.color);
+}
+function eventEnd(outcome) {
+  const c = G.ev.cur; if (!c) return;
+  G.ev.log.push([c.type, outcome, Math.round(G.time - c.at)]);
+  if (c.mob && !c.mob.dead && outcome !== 'ok') c.mob.dead = true;
+  G.ev.cur = null;
+}
+function updateEvent(dt) {
+  const E = G.ev, ph = G.ph, p = G.p; if (!E) return;
+  if (!E.cur) {
+    const pl = E.plan[0];
+    if (pl && pl.i < ph.i) E.plan.shift();                            // 해당 페이즈를 지나침 (조기 종료 등)
+    else if (pl && pl.i === ph.i && !ph.inGap) { const P = curPhase(), span = P.dur || P.fail || 120; if (ph.t >= span * pl.at) { E.plan.shift(); eventSpawn(pl); } }
+    return;
+  }
+  const c = E.cur; c.t += dt;
+  const inside = dist2(p.x, p.y, c.x, c.y) < (c.r + p.r) ** 2;
+  if (c.state === 'idle') {
+    if (c.type !== 'giant' && c.t > EV_CFG.life) return eventEnd('ignore');
+    if (c.type === 'cave') { c.stay = inside ? c.stay + dt : 0; if (c.stay >= EV_CFG.caveEnter) eventStart(c); }
+    if (c.type === 'door') { c.stay = inside ? c.stay + dt : Math.max(0, c.stay - dt); if (c.stay >= EV_CFG.doorStay) { c.state = 'done'; G.pendingDoor = true; } }
+    if (c.type === 'giant') {
+      const m = c.mob;
+      if (m.dead) return eventEnd('ok');
+      if (c.t > EV_CFG.life && m.hp >= m.maxHp) return eventEnd('ignore');
+      if (dist2(p.x, p.y, m.x, m.y) < EV_CFG.giantWake ** 2 || m.hp < m.maxHp) { m.sleep = false; m.giant = true; eventStart(c); toast('거대 몹 각성', '#ffb070'); }
+    }
+    return;
+  }
+  if (c.state === 'active') {
+    c.act += dt;
+    if (c.type === 'cave' && c.act >= EV_CFG.caveDur) { G.chests.push({ x: c.x, y: c.y, r: 14, relic: true }); toast('소굴 소탕 · 보물 상자', '#ffd24a'); return eventEnd('ok'); }
+    if (c.type === 'giant') {
+      if (c.mob.dead) return eventEnd('ok');
+      if (c.act >= EV_CFG.giantMax) { fx({ kind: 'ring', x: c.mob.x, y: c.mob.y, r0: 10, r1: 80, dur: 0.6, color: '#ffb070' }); toast('거대 몹 퇴각', '#ffb070'); return eventEnd('flee'); }
+    }
+  }
+}
+function eventStart(c) {
+  c.state = 'active'; c.act = 0;
+  if (c.type === 'cave') { toast('동굴 진입 · 45초 생존', '#7fe0ff'); for (let i = 0; i < EV_CFG.caveElites; i++) { const e = spawnElite(); e.noChest = true; } }
+}
+/* 거대 몹 처치 (killEnemy에서 호출) */
+function eventMobKilled(e) {
+  for (let i = 0; i < EV_CFG.giantChests; i++) G.chests.push({ x: e.x + (i ? 20 : -20), y: e.y, r: 14 });
+  toast('거대 몹 처치 · 보물 상자 2개', '#ffd24a');
+}
+/* 봉인된 문 선택 */
+function openDoor() {
+  G.pendingDoor = false; STATE.mode = 'select'; clearInput();
+  const left = Object.keys(CURSES).filter(k => !hasCurse(k)), k = pick(left.length ? left : Object.keys(CURSES));
+  G.sel = { kind: 'door', curse: k, cards: [{ t: 'doorYes', id: k }, { t: 'doorNo', id: k }], banish: false };
+  renderSelect(); autoLater();
+}
+function applyDoor(c) {
+  if (c.t === 'doorYes') {
+    (G.p.curses = G.p.curses || []).push(c.id); G.pendingLv += EV_CFG.doorLv;
+    toast(`저주 ${CURSES[c.id].name} · 레벨 업 ${EV_CFG.doorLv}회`, '#c8a0ff'); recalc(); eventEnd('ok');
+  } else eventEnd('refuse');
+}
+/* 떠돌이 야영지 선택 */
+const CAMP_CARDS = [{ t: 'campRest', id: 'rest' }, { t: 'campTrain', id: 'train' }, { t: 'campSupply', id: 'supply' }];
+function openCamp() {
+  G.pendingCamp = false; STATE.mode = 'select'; clearInput();
+  G.sel = { kind: 'camp', cards: CAMP_CARDS.slice(), banish: false };
+  renderSelect(); autoLater();
+}
+function applyCamp(c) {
+  const p = G.p; (G.stats.camp = G.stats.camp || []).push(c.id);
+  if (c.id === 'rest') { p.hp = p.maxHp; toast('휴식 · 체력 전부 회복', '#8ff0b0'); }
+  if (c.id === 'train') { G.pendingLv += 2; toast('수련 · 레벨 업 2회', '#7fe0ff'); }
+  if (c.id === 'supply') { G.pendingChest++; }
+}
+
+/* 지면 표시 */
+function drawEventGround(c) {
+  const E = G.ev, v = E && E.cur; if (!v || v.state === 'done') return;
+  if (v.type === 'cave') {
+    c.fillStyle = v.state === 'active' ? 'rgba(20,30,40,0.55)' : 'rgba(20,30,40,0.8)'; c.beginPath(); c.ellipse(v.x, v.y, v.r + 6, v.r, 0, 0, 7); c.fill();
+    c.strokeStyle = '#7fe0ff'; c.lineWidth = 2; c.stroke();
+    if (v.state === 'idle' && v.stay > 0) { c.strokeStyle = '#e8f8ff'; c.lineWidth = 4; c.beginPath(); c.arc(v.x, v.y, v.r + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v.stay / EV_CFG.caveEnter); c.stroke(); }
+    if (v.state === 'active') { c.strokeStyle = '#ffd24a'; c.lineWidth = 4; c.beginPath(); c.arc(v.x, v.y, v.r + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v.act / EV_CFG.caveDur); c.stroke(); }
+  }
+  if (v.type === 'door') {
+    c.fillStyle = 'rgba(200,160,255,0.15)'; c.beginPath(); c.arc(v.x, v.y, v.r + 8, 0, 7); c.fill();
+    c.fillStyle = '#4a3a5a'; c.fillRect(v.x - 13, v.y - 22, 26, 30); c.strokeStyle = '#c8a0ff'; c.lineWidth = 2; c.strokeRect(v.x - 13, v.y - 22, 26, 30);
+    if (v.stay > 0) { c.strokeStyle = '#f0e0ff'; c.lineWidth = 4; c.beginPath(); c.arc(v.x, v.y, v.r + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v.stay / EV_CFG.doorStay); c.stroke(); }
+  }
+  if (v.type === 'giant' && v.mob && v.mob.sleep && !v.mob.dead) {
+    c.fillStyle = '#fff'; c.font = 'bold 14px system-ui'; c.textAlign = 'center'; c.fillText('Z', v.mob.x + 26, v.mob.y - 30 + Math.sin(G.time * 2) * 4);
+  }
 }
 /* ============================================================
    무기 — 레벨별 수치 계산 · 발동 · 투사체
@@ -1039,6 +1349,7 @@ function openChest() {
 /* 엘리트 */
 function scheduleElites() {
   const ph = G.ph, P = curPhase(), span = P.dur || P.fail || 120;
+  if (P.goal === 'hunt') { ph.elites = []; return; }                    // 엘리트 사냥은 전용 출현 일정 사용 (0.10)
   const n = Math.random() < ELITE.chance2 ? 2 : 1;
   ph.elites = [];
   for (let i = 0; i < n; i++) ph.elites.push(span * (0.18 + i * 0.4 + rand(0, 0.15)));
@@ -1069,7 +1380,8 @@ function eliteMove(e, dt) {
 }
 function eliteKilled(e) {
   G.stats.eliteKills++;
-  G.chests.push({ x: e.x, y: e.y, r: 14 });
+  if (!e.noChest) G.chests.push({ x: e.x, y: e.y, r: 14 });
+  phaseEliteKilled(e);
   if (e.elite === 'split') for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; makeEnemy(e.type, e.x + Math.cos(a) * 20, e.y + Math.sin(a) * 20); }
   if (G.p.job) ultGain(8);
 }
@@ -1493,6 +1805,11 @@ function cardInfo(c) {
     case 'branch': { const o = BRANCHES[c.id].find(x => x.k === c.k); return { k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + ' 분기', ds: o.ds }; }
     case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult }; }
     case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : jobColor(c.id), ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
+    case 'campRest': return { k: 'k-fill', col: '#8ff0b0', ic: '휴', nm: '휴식', tag: '야영지', ds: '체력 전부 회복' };
+    case 'campTrain': return { k: 'k-fill', col: '#7fe0ff', ic: '련', nm: '수련', tag: '야영지', ds: '즉시 레벨 업 2회' };
+    case 'campSupply': return { k: 'k-fill', col: '#ffd24a', ic: '급', nm: '보급', tag: '야영지', ds: '보물 상자 1개 (유물 후보 우선)' };
+    case 'doorYes': return { k: 'k-fill', col: '#c8a0ff', ic: '문', nm: '문을 연다', tag: '저주 감수', ds: `저주 ${CURSES[c.id].name}(${CURSES[c.id].ds}) 이번 판 지속\n즉시 레벨 업 ${EV_CFG.doorLv}회` };
+    case 'doorNo': return { k: 'k-fill', col: '#8a86a0', ic: '×', nm: '물러난다', tag: '보상 없음', ds: '문이 다시 닫힘' };
     case 'power': return { k: 'k-fill', col: '#ffb070', ic: '↑', nm: '단련', tag: '추가 성장', ds: `모든 피해 +${Math.round(CFG.fill.power * 100)}% (중첩)` };
     default: return { k: 'k-fill', col: '#e04848', ic: '+', nm: '응급 처치', tag: '회복', ds: `체력 ${CFG.fill.heal} 회복` };
   }
@@ -1503,6 +1820,8 @@ const SEL_HEAD = {
   branch: s => ['분기 선택', `${itemName(s.q.id)} 강화 ${BRANCH_AT}단계 · 플레이 방식 선택`],
   chest: () => ['보물 상자', '정예 처치 보상 · 하나를 선택'],
   job: s => ['전직 제단', s.offer ? '봉헌할 무기 선택 · 무기가 사라지고 다른 직업 3종 호출' : '직업 선택 · 무기 봉헌 시 다시 호출'],
+  camp: () => ['떠돌이 야영지', '휴식·보상 중 하나를 선택'],
+  door: () => ['봉인된 문', '저주를 받아들이면 문이 열림'],
   job2: () => ['2차 전직', `${JOBS[G.p.job].name} · 필수 선택 · 전용 무기 ${EXW[G.p.job].name} 지급`],
 };
 function renderSelect() {
@@ -1540,6 +1859,8 @@ function pickCard(i) {
   if (s.kind === 'branch') { applyBranch(c); return closeSel(); }
   if (s.kind === 'job') { applyJob(c.id); return closeSel(); }
   if (s.kind === 'job2') { applyJob2(c.k); return closeSel(); }
+  if (s.kind === 'camp') { applyCamp(c); return closeSel(); }
+  if (s.kind === 'door') { applyDoor(c); return closeSel(); }
   if (s.banish) {
     if (isFill(c) || !G.banishes) return;
     G.banished.add(c.id); G.banishes--; s.banish = false;
@@ -1573,7 +1894,7 @@ function applyCard(c) {
 function aiProfile() {
   if (G.ai) return G.ai;
   const cat = { melee: 0, ranged: 0, magic: 0 }; cat[pick(['melee', 'ranged', 'magic'])] = 1.6; cat[pick(['melee', 'ranged', 'magic'])] += 0.6;
-  return (G.ai = { cat, pPref: shuffle(PASSIVE_ORDER.slice()), slip: rand(0.03, 0.12), leave: 0.1, offer: 0.2, autoUlt: Math.random() < 0.3 });
+  return (G.ai = { cat, pPref: shuffle(PASSIVE_ORDER.slice()), slip: rand(0.03, 0.12), leave: 0.1, offer: 0.2, autoUlt: Math.random() < 0.3, evGo: Math.random() < 0.8, curse: 0.7 });
 }
 function cardScore(c) {
   const p = G.p, ai = aiProfile(), nW = p.weapons.length, nP = p.passives.length;
@@ -1604,6 +1925,8 @@ function autoSelect() {
     const sc = s.cards.map(c => Math.max(...jobCats(c.id).map(k => ai.cat[k] || 0)) + rand(0, 1.5)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; });
     return pickCard(bi);
   }
+  if (s.kind === 'camp') { const p = G.p; return pickCard(p.hp < p.maxHp * 0.5 ? 0 : Math.random() < 0.55 ? 2 : 1); }
+  if (s.kind === 'door') return pickCard(Math.random() < ai.curse ? 0 : 1);
   if (s.kind === 'chest') { const sc = s.cards.map(c => cardScore(c)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; }); return pickCard(bi); }
   // 원하지 않는 계열 신규 무기는 가끔 제외 (사람의 제외 사용 재현)
   if (!s.banished && G.banishes > 0 && G.p.weapons.length >= 2) {
@@ -1630,6 +1953,7 @@ function render() {
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   drawGround(c, camX, camY);
   drawPhaseGround(c);
+  drawEventGround(c);
   drawGrowthGround(c, inView);
   drawGems(c, inView);
   drawEnemies(c, inView);
@@ -1638,6 +1962,7 @@ function render() {
   drawWeapons(c, inView);
   drawFx(c);
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawPhaseFog(c);
   drawPhaseTint(c);
   if (p.flash > 0) { c.fillStyle = 'rgba(255,40,40,' + (p.flash * 1.2) + ')'; c.fillRect(0, 0, VIEW.cw, VIEW.ch); }
   drawJoy(c);
@@ -1689,9 +2014,14 @@ function drawEnemies(c, inView) {
   c.fill();
   for (const [col, a] of byColor) { c.fillStyle = col; c.beginPath(); for (const e of a) enemyPath(c, e); c.fill(); }
   c.fillStyle = '#1a1420'; c.beginPath();
-  for (const a of byColor.values()) for (const e of a) { const ex = G.p.x > e.x ? 1.5 : -1.5; c.rect(e.x - e.r * 0.4 + ex, e.y - e.r * 0.15, 2, 2.5); c.rect(e.x + e.r * 0.25 + ex, e.y - e.r * 0.15, 2, 2.5); }
+  for (const a of byColor.values()) for (const e of a) { if (e.fixed) continue; const ex = G.p.x > e.x ? 1.5 : -1.5; c.rect(e.x - e.r * 0.4 + ex, e.y - e.r * 0.15, 2, 2.5); c.rect(e.x + e.r * 0.25 + ex, e.y - e.r * 0.15, 2, 2.5); }
   c.fill();
   if (flash.length) { c.fillStyle = '#fff'; c.beginPath(); for (const e of flash) enemyPath(c, e); c.fill(); }
+  // 대장·마법진·거대 몹 체력 막대 (0.10)
+  for (const e of G.enemies) {
+    if (e.dead || !e.cmd || !inView(e.x, e.y, e.r)) continue;
+    const w = e.r * 2.2, y = e.y - e.r - 10; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 5); c.fillStyle = e.rit ? '#c8a0ff' : '#ff8a5a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 5);
+  }
   // 엘리트: 금색 테두리 · 보호막 · 돌진 예고 · 체력 막대
   for (const e of G.enemies) {
     if (e.dead || !e.elite || !inView(e.x, e.y, e.r)) continue;
@@ -1929,13 +2259,21 @@ const AUTO = { dir: { x: 0, y: -1 }, next: 0, out: null, run: null };
 const AUTO_DIRS = Array.from({ length: 16 }, (_, i) => ({ x: Math.cos(i * Math.PI / 8), y: Math.sin(i * Math.PI / 8) }));
 function autoDanger(qx, qy) {
   const p = G.p; let d = 0;
-  gridQuery(qx, qy, 90, e => { const dd = Math.sqrt(dist2(e.x, e.y, qx, qy)) - e.r - p.r; d += dd < 6 ? 50 : 140 / (dd + 8); });
+  for (const k of G.ph.cracks) if (!k.done) { const dd = Math.sqrt(dist2(k.x, k.y, qx, qy)) - k.r - p.r; if (dd < 10) d += 30 + 30 * k.t / PH_CFG.crackWarn; }   // 붕괴 예고 회피 (0.10)
+  gridQuery(qx, qy, 90, e => { if (e.fixed || e.sleep) return; const dd = Math.sqrt(dist2(e.x, e.y, qx, qy)) - e.r - p.r; d += dd < 6 ? 50 : 140 / (dd + 8); });
   return d;
 }
 function autoTarget() {
   const p = G.p, ph = G.ph; let best = null, bs = 0;
   if (ph.zone && p.hp > p.maxHp * 0.6) return { x: ph.zone.x, y: ph.zone.y, k: 'goal' };              // 봉인석 구역 우선 (0.3)
   for (const c of G.chests) if (dist2(c.x, c.y, p.x, p.y) < 500 * 500) return { x: c.x, y: c.y, k: 'goal' };   // 보물 상자 (0.5)
+  if (ph.camp && !ph.camp.used) return { x: ph.camp.x, y: ph.camp.y, k: 'goal' };                                 // 야영지 (0.10)
+  if (ph.cart && !ph.cart.done && dist2(ph.cart.x, ph.cart.y, p.x, p.y) > 90 * 90) {                                       // 수레 곁 유지
+    const c = ph.cart, dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy) || 1; return { x: c.x + dx / d * 40, y: c.y + dy / d * 40, k: 'goal' }; }
+  const ev = G.ev && G.ev.cur, ai = aiProfile();
+  if (ev && ev.state === 'idle' && ai.evGo && p.hp > p.maxHp * 0.55) return ev.type === 'giant' ? { x: ev.mob.x, y: ev.mob.y, k: 'boss' } : { x: ev.x, y: ev.y, k: 'goal' };   // 곁가지 사건 진입
+  if (ev && ev.type === 'giant' && ev.state === 'active' && p.hp > p.maxHp * 0.4) return { x: ev.mob.x, y: ev.mob.y, k: 'boss' };
+  if (ph.rits && p.hp > p.maxHp * 0.35) { const r = ph.rits.filter(e => !e.dead).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y))[0]; if (r) return { x: r.x, y: r.y, k: 'boss' }; }   // 마법진 파괴
   if (G.altar && p.hp > p.maxHp * 0.4 && !aiProfile().skipAltar) return { x: G.altar.x, y: G.altar.y, k: 'goal' };     // 전직 제단 (0.6)
   if (ph.spring && !ph.spring.used && p.hp < p.maxHp * 0.85) return { x: ph.spring.x, y: ph.spring.y, k: 'goal' };
   if (ph.cmd && !ph.cmd.dead && p.hp > p.maxHp * 0.4) return { x: ph.cmd.x, y: ph.cmd.y, k: 'boss' };            // 대장 교전 유도
@@ -1967,7 +2305,8 @@ function autoVec() {
     const s = -dg * (STATE.dev.god ? 0.15 : 1) + (tg ? (dv.x * tx + dv.y * ty) * (tg.k === 'goal' || tg.k === 'boss' ? 26 : 6) * pull : 0) + (dv.x * AUTO.dir.x + dv.y * AUTO.dir.y) * 1.2;
     if (s > bs) { bs = s; best = dv; }
   }
-  if (tg && tg.k === 'goal' && td < (G.ph.zone ? G.ph.zone.r - 20 : 20)) return (AUTO.out = { x: 0, y: 0, m: 0 });
+  const ev2 = G.ev && G.ev.cur, stopR = G.ph.zone ? G.ph.zone.r - 20 : ev2 && ev2.state === 'idle' && tg && tg.x === ev2.x ? 12 : 20;
+  if (tg && tg.k === 'goal' && td < stopR) return (AUTO.out = { x: 0, y: 0, m: 0 });
   if (here < 1.5 && -here >= bs && !(tg && (tg.k === 'gem' || tg.k === 'goal'))) return (AUTO.out = { x: 0, y: 0, m: 0 });
   const k = here > 6 ? 1 : 0.55;
   let x = AUTO.dir.x * (1 - k) + best.x * k, y = AUTO.dir.y * (1 - k) + best.y * k; const m = Math.hypot(x, y) || 1;
