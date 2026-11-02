@@ -13,10 +13,12 @@ function render() {
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   drawGround(c, camX, camY);
   drawPhaseGround(c);
+  drawBossGround(c);
   drawEventGround(c);
   drawGrowthGround(c, inView);
   drawGems(c, inView);
   drawEnemies(c, inView);
+  drawBossTop(c, inView);
   drawJobUnits(c, inView);
   drawPlayer(c);
   drawWeapons(c, inView);
@@ -79,7 +81,7 @@ function drawEnemies(c, inView) {
   if (flash.length) { c.fillStyle = '#fff'; c.beginPath(); for (const e of flash) enemyPath(c, e); c.fill(); }
   // 대장·마법진·거대 몹 체력 막대 (0.10)
   for (const e of G.enemies) {
-    if (e.dead || !e.cmd || !inView(e.x, e.y, e.r)) continue;
+    if (e.dead || !e.cmd || e.gk || !inView(e.x, e.y, e.r)) continue;
     const w = e.r * 2.2, y = e.y - e.r - 10; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 5); c.fillStyle = e.rit ? '#c8a0ff' : '#ff8a5a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 5);
   }
   // 엘리트: 금색 테두리 · 보호막 · 돌진 예고 · 체력 막대
@@ -235,8 +237,9 @@ function drawHUD(c) {
   if (P) { const bw = 120; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4); }
   c.fillStyle = '#fff';
   c.font = 'bold 14px system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
-  if (STATE.dev.fps) { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount(), W - 12, top + 96, 'right'); }
+  if (STATE.dev.fps) { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount(), W - 12, G.ph && G.ph.id === 'gate' ? top + 128 : top + 96, 'right'); }
   drawSlots(c, top + 58);
+  drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
   let ty = VIEW.ch * 0.3;
   for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px system-ui'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
   c.globalAlpha = 1;

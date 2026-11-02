@@ -4,8 +4,8 @@
 cd "$(dirname "$0")/.."
 N=$1; OUT=$2; shift 2
 H=$((N / 2)); R=$((N - H))
-NODE_PATH=$(npm root -g) node dev/vtest.js $H --out "$OUT.p1" --port 48233 "$@" > "$OUT.p1.log" 2>&1 &
-NODE_PATH=$(npm root -g) node dev/vtest.js $R --out "$OUT.p2" --port 48234 "$@" > "$OUT.p2.log" 2>&1 &
+NODE_PATH=$(npm root -g) node dev/vtest.js $H --out "$OUT.p1" --port $((48233 + ${PB:-0})) "$@" > "$OUT.p1.log" 2>&1 &
+NODE_PATH=$(npm root -g) node dev/vtest.js $R --out "$OUT.p2" --port $((48234 + ${PB:-0})) --off $H "$@" > "$OUT.p2.log" 2>&1 &
 wait
 cat "$OUT.p1" "$OUT.p2" > "$OUT"; rm -f "$OUT.p1" "$OUT.p2"
 tail -n 2 "$OUT.p1.log" "$OUT.p2.log"; rm -f "$OUT.p1.log" "$OUT.p2.log"

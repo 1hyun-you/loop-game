@@ -29,7 +29,8 @@ const DEV = {
       <button data-k="dlg">대사창 시험</button>
       <button data-k="ult">궁극기 충전</button>
       <button data-k="elite">정예 호출</button>
-      <button data-k="altar">제단 호출</button></div>
+      <button data-k="altar">제단 호출</button>
+      <button data-k="gate">수문장전 이동</button></div>
       <pre id="devinfo"></pre>`;
     this.info();
     this.el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
@@ -39,6 +40,7 @@ const DEV = {
       if (k === 'lv') addXp(G.p.need - G.p.xp);
       if (k === 'speed') d.speed = { 1: 2, 2: 4, 4: 8, 8: 1 }[d.speed];
       if (k === 'restart') newRun();
+      if (k === 'gate' && STATE.mode === 'play' && G.ph.id !== 'gate') { G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
       if (k === 'ult' && G.p.job) G.p.ult = JOB_CFG.ultNeed;
       if (k === 'elite' && STATE.mode === 'play') spawnElite();
       if (k === 'altar' && !G.p.job) { const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i }; }
@@ -58,6 +60,15 @@ const AUTO_DIRS = Array.from({ length: 16 }, (_, i) => ({ x: Math.cos(i * Math.P
 function autoDanger(qx, qy) {
   const p = G.p; let d = 0;
   for (const k of G.ph.cracks) if (!k.done) { const dd = Math.sqrt(dist2(k.x, k.y, qx, qy)) - k.r - p.r; if (dd < 10) d += 30 + 30 * k.t / PH_CFG.crackWarn; }   // 붕괴 예고 회피 (0.10)
+  if (G.hz) for (const h of G.hz) {                                                       // 수문장 예고 구역·장판 회피 (0.11)
+    if (h.k === 'circ') { if (h.fired && !h.pool) continue; const dd = Math.sqrt(dist2(h.x, h.y, qx, qy)) - h.r - p.r * 0.5; if (dd < 12) d += h.fired ? 25 : 30 + 30 * h.t / h.warn; }
+    else if (h.t <= h.warn + 0.6) { const rx = qx - h.x, ry = qy - h.y, al = rx * h.dx + ry * h.dy; if (al > -20 && al < h.len + 20 && Math.abs(rx * h.dy - ry * h.dx) < h.w / 2 + p.r + 10) d += 45; }
+  }
+  if (G.eb) for (const b of G.eb) {                                                       // 적 탄환 진행 경로 회피 (0.11)
+    const rx = qx - b.x, ry = qy - b.y; if (Math.abs(rx) > 120 || Math.abs(ry) > 120) continue;
+    const sp = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / sp, uy = b.vy / sp, al = rx * ux + ry * uy; if (al < -10 || al > 130) continue;
+    if (Math.abs(rx * uy - ry * ux) < b.r + p.r + 8) d += 22 * (1 - al / 150);
+  }
   gridQuery(qx, qy, 90, e => { if (e.fixed || e.sleep) return; const dd = Math.sqrt(dist2(e.x, e.y, qx, qy)) - e.r - p.r; d += dd < 6 ? 50 : 140 / (dd + 8); });
   return d;
 }
@@ -74,6 +85,7 @@ function autoTarget() {
   if (ph.rits && p.hp > p.maxHp * 0.35) { const r = ph.rits.filter(e => !e.dead).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y))[0]; if (r) return { x: r.x, y: r.y, k: 'boss' }; }   // 마법진 파괴
   if (G.altar && p.hp > p.maxHp * 0.4 && !aiProfile().skipAltar) return { x: G.altar.x, y: G.altar.y, k: 'goal' };     // 전직 제단 (0.6)
   if (ph.spring && !ph.spring.used && p.hp < p.maxHp * 0.85) return { x: ph.spring.x, y: ph.spring.y, k: 'goal' };
+  const gb = G.gkMob; if (gb && !gb.dead && ph.id === 'gate' && p.hp > p.maxHp * 0.3) { const t = autoGkTarget(gb); return { x: t.x, y: t.y, k: 'gk' }; }   // 수문장 교전 (0.11)
   if (ph.cmd && !ph.cmd.dead && p.hp > p.maxHp * 0.4) return { x: ph.cmd.x, y: ph.cmd.y, k: 'boss' };            // 대장 교전 유도
   for (const g of G.gems) {
     if (g.mag) continue; const d = Math.sqrt(dist2(g.x, g.y, p.x, p.y)); if (d > 420) continue;
@@ -86,6 +98,14 @@ function autoTarget() {
   if (n) return { x: cx / n, y: cy / n, k: 'fight' };
   return null;
 }
+/* 세렌 본체 탐색: 분열 후 1.2~2.6초 반응 지연, 80% 확률로 본체 식별 (미식별 시 가까운 분신 공격) */
+function autoGkTarget(e) {
+  if (e.gk !== 'seren') return e;
+  const s = e.ai.splitAt || 0, p = G.p;
+  if (AUTO.split !== s) { AUTO.split = s; AUTO.seeAt = s + rand(1.2, 2.6); AUTO.see = Math.random() < 0.8; }
+  if (G.time >= AUTO.seeAt && AUTO.see) return e;
+  return [e].concat(G.enemies.filter(o => o.clone && !o.dead)).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y))[0];
+}
 function autoVec() {
   if (AUTO.run !== G) { AUTO.run = G; AUTO.next = 0; AUTO.out = null; }
   if (G.time < AUTO.next && AUTO.out) return AUTO.out;
@@ -95,12 +115,13 @@ function autoVec() {
   if (tg) { tx = tg.x - p.x; ty = tg.y - p.y; td = Math.hypot(tx, ty) || 1; tx /= td; ty /= td; }
   if (tg && tg.k === 'fight') pull = td > 130 ? 1 : td > 90 ? 0.2 : -0.4;
   if (tg && tg.k === 'boss') pull = td > 60 ? 1 : 0;                       // 대장은 근접 사거리까지 접근
+  if (tg && tg.k === 'gk') { const mel = p.weapons.filter(w => WEAPONS[w.id].cat === 'melee').length >= 2, lo = mel ? 55 : 110, hi = mel ? 95 : 170; pull = td > hi ? 1 : td < lo ? -0.6 : 0.1; }   // 수문장: 근접형은 붙고 원거리형은 거리 유지
   const here = autoDanger(p.x, p.y);
   if (ultReady() && !autoUltSetting() && (here > 3 || G.time - G.tm.readyAt > 8)) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 궁극기: 손 떼고 정지 (0.6)
   let best = AUTO_DIRS[0], bs = -1e9;
   for (const dv of AUTO_DIRS) {
     const dg = autoDanger(p.x + dv.x * 30, p.y + dv.y * 30) + 0.6 * autoDanger(p.x + dv.x * 70, p.y + dv.y * 70);
-    const s = -dg * (STATE.dev.god ? 0.15 : 1) + (tg ? (dv.x * tx + dv.y * ty) * (tg.k === 'goal' || tg.k === 'boss' ? 26 : 6) * pull : 0) + (dv.x * AUTO.dir.x + dv.y * AUTO.dir.y) * 1.2;
+    const s = -dg * (STATE.dev.god ? 0.15 : 1) + (tg ? (dv.x * tx + dv.y * ty) * (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk' ? 26 : 6) * pull : 0) + (dv.x * AUTO.dir.x + dv.y * AUTO.dir.y) * 1.2;
     if (s > bs) { bs = s; best = dv; }
   }
   const ev2 = G.ev && G.ev.cur, stopR = G.ph.zone ? G.ph.zone.r - 20 : ev2 && ev2.state === 'idle' && tg && tg.x === ev2.x ? 12 : 20;

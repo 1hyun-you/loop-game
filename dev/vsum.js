@@ -45,6 +45,11 @@ const out = {
     for (const [t, o, s] of ev) { const x = E[t] = E[t] || { n: 0 }; x.n++; x[o] = (x[o] || 0) + 1; }
     return { phasesPerRun: avg(ok.map(r => (r.order || []).length)), eventsPerRun: avg(ok.map(r => (r.events || []).length)), events: E, curses: cnt(ok.flatMap(r => r.curses || [])), camp: cnt(ok.flatMap(r => r.camp || [])),
       in15to18: ok.filter(r => r.time >= 900 && r.time <= 1080).length }; })(),
+  gate: (() => { const G = {}, all = ok.filter(r => r.gate);   // 수문장전 (0.11): 수문장별 도달·처치·소요 시간·격노 시각·사망 시 남은 체력
+    for (const r of all) { const [id, o, t, hp, rage] = r.gate, x = G[id] = G[id] || { n: 0, kill: 0, t: [], dead: 0, hpLeft: [], rage: [] }; x.n++; if (o === 'kill') { x.kill++; x.t.push(t); } else { x.dead++; x.hpLeft.push(hp); } if (rage != null) x.rage.push(rage); }
+    for (const k in G) G[k] = { n: G[k].n, kill: G[k].kill, avgSec: avg(G[k].t), minSec: q(G[k].t, 0), maxSec: q(G[k].t, 1), dead: G[k].dead, hpLeftAvg: avg(G[k].hpLeft), rageAvg: avg(G[k].rage) };
+    const gh = {}; for (const r of all) for (const k in r.hurt || {}) if (/바르간|이그나|모르덴|세렌|거울/.test(k)) gh[k] = Math.round((gh[k] || 0) + r.hurt[k]);
+    return { reached: all.length, in30to150: all.filter(r => r.gate[1] === 'kill' && r.gate[2] >= 30 && r.gate[2] <= 150).length, byGk: G, bossHurt: gh, gatesMax: Math.max(0, ...ok.map(r => r.gates || 0)) }; })(),
   errors: errs, pageErr: ok.reduce((s, r) => s + (r.pageErr || []).length, 0), errShownRuns: ok.filter(r => r.errShown).length,
   flow: flows, saveBad: ok.filter(r => !r.saveOk).length,
   perf: { maxEnP90: q(ok.map(r => r.maxEn || 0), .9), stepMsAvg: avg(ok.map(r => r.cost.stepMs)), stepMsMax: q(ok.map(r => r.cost.stepMs), 1), renMsAvg: avg(ok.map(r => r.cost.renMs)), renMsMax: q(ok.map(r => r.cost.renMs), 1) },

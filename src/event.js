@@ -24,7 +24,7 @@ const CURSES = {
 
 function eventInit() {
   const ph = G.ph, idx = [];
-  ph.order.forEach((id, i) => { if (i > 0 && PHASES[id].type !== '기믹형' && id !== 'camp') idx.push(i); });
+  ph.order.forEach((id, i) => { if (i > 0 && PHASES[id].type !== '기믹형' && PHASES[id].type !== '보스' && id !== 'camp') idx.push(i); });
   const n = Math.min(idx.length, Math.random() < 0.5 ? EV_CFG.perRun[0] : EV_CFG.perRun[1]);
   const at = shuffle(idx).slice(0, n).sort((a, b) => a - b), types = shuffle(Object.keys(EVENTS));
   G.ev = { plan: at.map((i, k) => ({ i, type: types[k], at: rand(EV_CFG.at[0], EV_CFG.at[1]) })), cur: null, log: [] };

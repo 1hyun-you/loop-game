@@ -32,6 +32,9 @@ const PHASES = {
     hint: '마법진 3개 파괴 (시간 초과 시 정예 소환)' },
   collapse: { name: '붕괴 지대', type: '기믹형', goal: 'time', dur: 120, spawnMul: 0.6, tint: [140, 120, 100],
     hint: '붕괴 예고 지점 회피' },
+  /* 0.11 수문장전 — 판 마지막 고정, 풀 비포함 (처치 시 판 돌파, 360초 초과 시 수문장 퇴각) */
+  gate: { name: '수문장전', type: '보스', goal: 'boss', fail: 360, spawnMul: 0.35, tint: [190, 70, 70],
+    hint: '사문의 수문장 처치' },
 };
 const PHASE_ORDER = ['horde', 'calm', 'fog', 'camp', 'surge', 'warband', 'hunt', 'siege', 'seal', 'escort', 'ritual', 'collapse'];
 const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 7, zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
@@ -56,6 +59,7 @@ function pickPhaseOrder() {
 function phaseInit() {
   G.ph = { order: pickPhaseOrder(), i: -1, id: null, t: 0, gapT: 2.5, inGap: true, tint: null, tintFrom: null, tintK: 1,
     zone: null, spring: null, cmd: null, cart: null, rits: null, cracks: [], camp: null, hunt: 0, log: [] };
+  G.ph.order.push('gate');                                 // 수문장전 마지막 고정 (0.11)
   eventInit();
 }
 function curPhase() { return G.ph.id ? PHASES[G.ph.id] : null; }
@@ -67,6 +71,7 @@ function phaseStart() {
   const P = PHASES[ph.id];
   scheduleElites();
   toast(`${ph.i + 1}/${ph.order.length} · ${P.name}`, '#ffe08a'); toast(P.hint, '#fff');
+  if (ph.id === 'gate') gkSpawn();
   if (ph.id === 'calm') { const q = ringAt(180, 260); ph.spring = { x: q.x, y: q.y, r: 22, used: false }; }
   if (ph.id === 'seal') { ph.zone = newZone(0); }
   if (ph.id === 'warband') {
@@ -103,8 +108,13 @@ function phaseEnd(outcome) {
   if (ph.cmd && !ph.cmd.dead) { ph.cmd.dead = true; fx({ kind: 'ring', x: ph.cmd.x, y: ph.cmd.y, r0: 10, r1: 60, dur: 0.5, color: '#e8a83c' }); }
   ph.cmd = null;
   phaseCleanup(outcome);
-  if (ph.i >= ph.order.length - 1) {                       // 마지막 페이즈 돌파 → 판 완료
-    G.result = 'clear'; G.endT = 1.6; toast('들판 돌파', '#ffe08a');
+  if (ph.i >= ph.order.length - 1) {                       // 마지막 페이즈(수문장전) 종료 → 판 완료
+    if (ph.id === 'gate' && outcome !== 'ok') {              // 시간 초과: 수문장 퇴각, 판 미돌파 (0.11)
+      G.result = 'retreat'; G.endT = 1.6; toast(GATEKEEPERS[G.gk].name + ' 퇴각 · 문 닫힘', '#ff9a7a');
+      if (G.gkMob) for (const e of G.enemies) if (e.gk) e.dead = true;
+      G.eb = []; G.hz = []; return;
+    }
+    G.result = 'clear'; G.endT = 1.6; toast(ph.id === 'gate' ? `${GATEKEEPERS[G.gk].name} 처치 · ${GATEKEEPERS[G.gk].gate} 개방` : '들판 돌파', '#ffe08a');
     fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 260, dur: 1.2, color: '#ffe08a' });
     return;
   }
@@ -141,6 +151,7 @@ function updatePhase(dt) {
     fx({ kind: 'ring', x: ph.spring.x, y: ph.spring.y, r0: 8, r1: 60, dur: 0.5, color: '#8ff0b0' });
   }
   if (P.goal === 'kill' && ph.cmd && ph.cmd.dead) return phaseEnd('ok');
+  if (P.goal === 'boss' && G.gkMob && G.gkMob.dead) return phaseEnd('ok');
   if (P.goal === 'zone' && ph.zone) {
     const z = ph.zone;
     if (dist2(p.x, p.y, z.x, z.y) < z.r * z.r) z.prog += dt;
@@ -237,6 +248,7 @@ function phaseCleanup(outcome) {
 function phaseProgress() {
   const ph = G.ph, P = curPhase(); if (!P) return 0;
   if (P.goal === 'time') return ph.t / P.dur;
+  if (P.goal === 'boss') return G.gkMob ? 1 - Math.max(0, G.gkMob.hp) / G.gkMob.maxHp : 0;
   if (P.goal === 'kill') return ph.cmd ? 1 - Math.max(0, ph.cmd.hp) / ph.cmd.maxHp : 1;
   if (P.goal === 'zone') return ph.zone ? (ph.zone.i + ph.zone.prog / PH_CFG.zoneNeed) / PH_CFG.zoneN : 1;
   if (P.goal === 'hunt') return ph.hunt / PH_CFG.huntN;
@@ -302,7 +314,7 @@ function drawPhaseTint(c) {
 /* 화면 밖 목표 방향 표시 */
 function drawPhasePointer(c, camX, camY) {
   const ph = G.ph, rit = ph.rits && ph.rits.filter(e => !e.dead).sort((a, b) => dist2(a.x, a.y, G.p.x, G.p.y) - dist2(b.x, b.y, G.p.x, G.p.y))[0];
-  const t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || ph.cart || rit || (ph.camp && !ph.camp.used ? ph.camp : null) || eventPointer() || G.altar || G.chests[0];
+  const t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || (G.gkMob && !G.gkMob.dead && ph.id === 'gate' ? G.gkMob : null) || ph.cart || rit || (ph.camp && !ph.camp.used ? ph.camp : null) || eventPointer() || G.altar || G.chests[0];
   if (!t) return;
   const Z = VIEW.zoom, sx = (t.x - camX) * Z, sy = (t.y - camY) * Z, m = 34, top = VIEW.sat + 90;
   if (sx > m && sx < VIEW.cw - m && sy > top && sy < VIEW.ch - m) return;
@@ -310,7 +322,7 @@ function drawPhasePointer(c, camX, camY) {
   const kx = (VIEW.cw / 2 - m) / Math.abs(Math.cos(ang) || 1e-6), ky = (Math.sin(ang) < 0 ? cy - top : VIEW.ch / 2 - m) / Math.abs(Math.sin(ang) || 1e-6);
   const R = Math.min(kx, ky), px = cx + Math.cos(ang) * R, py = cy + Math.sin(ang) * R;
   c.save(); c.translate(px, py); c.rotate(ang);
-  c.fillStyle = t === G.altar ? '#d9a8ff' : G.chests.includes(t) ? '#ffd24a' : t === ph.zone ? '#9fc4ff' : t === ph.cmd ? '#e8a83c' : t === ph.cart ? '#e8d070' : t === rit ? '#b080ff' : t === ph.camp ? '#ffb040' : t.ev ? '#7fe0ff' : '#8ff0b0'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2;
+  c.fillStyle = t === G.altar ? '#d9a8ff' : G.chests.includes(t) ? '#ffd24a' : t === ph.zone ? '#9fc4ff' : t === ph.cmd ? '#e8a83c' : t === G.gkMob ? '#ff6a4a' : t === ph.cart ? '#e8d070' : t === rit ? '#b080ff' : t === ph.camp ? '#ffb040' : t.ev ? '#7fe0ff' : '#8ff0b0'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2;
   c.beginPath(); c.moveTo(14, 0); c.lineTo(-8, -10); c.lineTo(-3, 0); c.lineTo(-8, 10); c.closePath(); c.fill(); c.stroke();
   c.restore();
 }

@@ -1,7 +1,7 @@
 /* ============================================================
    판 상태 · 진행
    ============================================================ */
-const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: false, speed: 1 } };
+const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: false, speed: 1, gk: null } };   // gk: 수문장 지정(시험용)
 let G = null;
 
 function xpNeed(l) { return Math.floor(CFG.xp.base + CFG.xp.linear * l + Math.pow(l, CFG.xp.pow) * CFG.xp.powMul); }
@@ -12,7 +12,7 @@ function newRun() {
     p: { x: 0, y: 0, r: CFG.player.r, hp: CFG.player.hp, maxHp: CFG.player.hp, face: { x: 0, y: -1 }, invT: 0, flash: 0, moving: false,
       level: 1, xp: 0, need: xpNeed(1), weapons: [], passives: [], relics: [], bonusDmg: 0, mod: null,
       job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, holy: 0, form: null, shield: false, vet: false, curses: [] },
-    enemies: [], gems: [], proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], altar: null, banner: null, sanct: null,
+    enemies: [], gems: [], eb: [], hz: [], gk: null, gkMob: null, proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], altar: null, banner: null, sanct: null,
     pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, pendingCamp: false, pendingDoor: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
     stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
@@ -20,6 +20,7 @@ function newRun() {
   };
   recalc();
   addWeapon(START_WEAPON);
+  G.gk = gkPick();                                          // 수문장 결정 (0.11)
   phaseInit();
   STATE.mode = 'play';
   hideUI();
@@ -58,6 +59,7 @@ function step(dt) {
   updateProjectiles(dt);
   updatePools(dt);
   updateEnemies(dt);
+  updateBossFx(dt);
   updateGems(dt);
   if (!G.result) { updateChests(); updateAltar(dt); }
   updateMisc(dt);
@@ -137,6 +139,7 @@ function updateEnemies(dt) {
     if (e.frz > 0) { e.frz -= dt; sp = 0; }
     if (e.sleep || e.fixed) sp = 0;                                               // 잠든 거대 몹·마법진 (0.10)                                       // 빙결·속박 (0.8)
     if (e.bl > 0) { e.bl -= dt; e.blT = (e.blT || 0) - dt; if (e.blT <= 0) { e.blT = 0.5; damageEnemy(e, e.blD, { src: 'bleed' }); if (e.dead) continue; } }
+    if (e.gk) { gkUpdate(e, dt, d, dx, dy); continue; }                      // 수문장 전용 이동·패턴 (0.11)
     const z = G.ph.zone; if (z && dist2(e.x, e.y, z.x, z.y) < z.r * z.r) sp *= PH_CFG.zoneSlow;   // 봉인석 구역 둔화 (0.3)
     e.x += dx / d * sp * dt; e.y += dy / d * sp * dt;
     if (d > farR && !e.fixed && !e.sleep) { const q = e.cmd ? ringAt(VIEW.w * 0.6, VIEW.w * 0.7) : ringPos(10); e.x = q.x; e.y = q.y; e.kbx = e.kby = 0; }   // 시야 밖 재배치
@@ -172,6 +175,7 @@ function killEnemy(e) {
   G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
   if (e.elite) eliteKilled(e);
   if (e.ev) eventMobKilled(e);
+  if (e.gk) gkKilled(e);
   if (e.slowT > 0 && wBr('icering') === 'shatter') { const x = e.x, y = e.y, d = wStats(G.p.weapons.find(w => w.id === 'icering')).dmg * 2.5; G.later.push({ t: 0, f: () => explode(x, y, 46, d, 'shatter', '#bfe8ff') }); }
   if (pBr('regen') === 'vamp') heal(0.4);
   onEnemyKill(e);
@@ -238,7 +242,7 @@ function buildReport() {
     branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
     job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults,
     altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
-    order: G.ph.order, events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [],
+    order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [],
   };
 }
 /* 마지막 1분 피해 비중 (빌드 완성도 반영 판독용) */
@@ -253,7 +257,7 @@ function finishRun() {
   G.report = buildReport();
   try {
     const s = loadSave(); G.report.newBest = G.report.time > (s.bestTime || 0);
-    s.runs = (s.runs || 0) + 1; s.bestTime = Math.max(s.bestTime || 0, G.report.time); if (G.report.result === 'clear') s.clears = (s.clears || 0) + 1;
+    s.runs = (s.runs || 0) + 1; s.bestTime = Math.max(s.bestTime || 0, G.report.time); if (G.report.result === 'clear') s.clears = (s.clears || 0) + 1; gkSave(s); G.report.gates = s.gates.length;
     localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s));
   } catch (e) { }
   showResult();

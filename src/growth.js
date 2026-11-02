@@ -94,7 +94,7 @@ function openChest() {
 /* 엘리트 */
 function scheduleElites() {
   const ph = G.ph, P = curPhase(), span = P.dur || P.fail || 120;
-  if (P.goal === 'hunt') { ph.elites = []; return; }                    // 엘리트 사냥은 전용 출현 일정 사용 (0.10)
+  if (P.goal === 'hunt' || P.goal === 'boss') { ph.elites = []; return; }   // 수문장전 제외 (0.11)                    // 엘리트 사냥은 전용 출현 일정 사용 (0.10)
   const n = Math.random() < ELITE.chance2 ? 2 : 1;
   ph.elites = [];
   for (let i = 0; i < n; i++) ph.elites.push(span * (0.18 + i * 0.4 + rand(0, 0.15)));

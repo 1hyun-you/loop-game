@@ -28,10 +28,11 @@ function showTitle() {
   newRun(); STATE.mode = 'title';
   const s = loadSave();
   UI.innerHTML = `<div class="layer title">
-    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">몰려오는 무리를 버티고 다섯 페이즈를 돌파 · 제단에서 전직</p></div>
+    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">들판의 페이즈를 돌파하고 사문의 수문장을 쓰러뜨려 문을 열어라</p></div>
     <button class="pri big" id="start">시작</button>
     <button id="settings">설정</button>
-    <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span></div>
+    <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${(s.gates || []).length}/4</span></div>
+    ${(s.gates || []).length ? `<p class="hint">${GK_ORDER.map(k => (s.gates.includes(k) ? '■ ' : '□ ') + GATEKEEPERS[k].gate).join(' · ')}</p>` : ''}
     <p class="hint">화면을 누른 채 끌어 이동 · 공격은 자동</p>
     <p class="ver">v${CFG.VERSION}</p></div>`;
   on('start', startRun);
@@ -68,7 +69,9 @@ function confirmStep(id) {
 function showResult() {
   STATE.mode = 'result';
   const R = G.report, done = G.ph.log.filter(x => x[2] === 'ok').length;
-  UI.innerHTML = `<div class="layer"><h2>${R.result === 'clear' ? '들판 돌파' : '쓰러졌다'}</h2>
+  const D = GATEKEEPERS[G.gk];
+  UI.innerHTML = `<div class="layer"><h2>${R.result === 'clear' ? '들판 돌파' : R.result === 'retreat' ? '수문장 퇴각' : '쓰러졌다'}</h2>
+    ${R.result === 'clear' ? `<p class="best">${D.name} 처치 · ${D.gate} 개방 (열린 문 ${R.gates || 0}/4)</p>` : ''}
     ${R.newBest ? '<p class="best">최고 생존 기록 갱신</p>' : ''}
     <div class="stats"><span>생존 시간</span><span>${fmtTime(R.time)}</span><span>돌파 페이즈</span><span>${done}/${G.ph.order.length}</span><span>레벨</span><span>${R.level}</span><span>처치</span><span>${R.kills}</span><span>마지막 피격</span><span>${R.result === 'clear' ? '-' : (R.lastHit || '-')}</span></div>
     <div class="build">${buildChips()}</div>
