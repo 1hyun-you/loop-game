@@ -1,4 +1,5 @@
 // 가상 시험 기록 집계 (본 제작 0.2, 초안 vsum.js 구조 재사용)
+const bonusLv = r => 3 * (r.events || []).filter(e => e[0] === 'door' && e[1] === 'ok').length + 2 * (r.camp || []).filter(c => c === 'train').length; // 0.11: 레벨 없는 추가 선택 보정
 // 사용: node dev/vsum.js [파일] [--last N]
 const fs = require('fs'), path = require('path');
 const a = process.argv.slice(2);
@@ -24,7 +25,7 @@ const out = {
   level: { avg: avg(ok.map(r => r.level)), max: q(ok.map(r => r.level), 1) },
   lvAt5min: avg(ok.filter(r => r.time >= 300).map(r => 1 + (r.levelAt || []).filter(t => t <= 300).length)),
   xpRate: avg(ok.filter(r => r.xp).map(r => Math.round(r.xp[0] / Math.max(1, r.xp[1]) * 100))),
-  selects: { ok: ok.filter(r => r.selects + r.pendingLv === r.level - 1 && r.picks.length === r.selects).length, mismatch: ok.filter(r => !(r.selects + r.pendingLv === r.level - 1 && r.picks.length === r.selects)).map(r => [r.idx, r.selects, r.pendingLv, r.level, r.picks.length]) },
+  selects: { ok: ok.filter(r => r.selects + r.pendingLv === r.level - 1 + bonusLv(r) && r.picks.length === r.selects).length, mismatch: ok.filter(r => !(r.selects + r.pendingLv === r.level - 1 + bonusLv(r) && r.picks.length === r.selects)).map(r => [r.idx, r.selects, r.pendingLv, r.level, r.picks.length, bonusLv(r)]) },
   build: { weaponsAvg: avg(ok.map(r => r.build.w.length)), passivesAvg: avg(ok.map(r => r.build.p.length)), wFull: ok.filter(r => r.wFullAt != null).length, wFullAtAvg: avg(ok.filter(r => r.wFullAt != null).map(r => r.wFullAt)) },
   lastMinTop: (() => { const t = ok.map(r => r.lastMin && r.lastMin[0] ? r.lastMin[0][1] : 0); return { avg: avg(t), p50: q(t, .5), over35: t.filter(x => x > 35).length, w4plus: avg(ok.filter(r => r.build.w.length >= 4).map(r => r.lastMin[0][1])) }; })(),
   topShare: { avg: avg(topShare), p50: q(topShare, .5), over35: topShare.filter(x => x > 35).length },
