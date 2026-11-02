@@ -12,9 +12,14 @@ const ROOT = path.resolve(__dirname, '..');
 const OUT = path.resolve(ROOT, opt('out', 'dev/sim_log/runs.jsonl'));
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 // 게시 환경과 같은 문서 골격으로 감싸서 제공 (http 주소: 저장 유지)
-const page = () => '<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>'
-  + fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8') + '</body></html>';
-const SERVER = http.createServer((q, s) => { s.setHeader('content-type', 'text/html; charset=utf-8'); s.end(page()); });
+// 0.4a부터 index.html 자체에 문서 골격 포함 → 그대로 제공, 설치 정보 파일·아이콘은 실제 파일 제공
+const page = () => fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+const MIME = { '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
+const SERVER = http.createServer((q, s) => {
+  const u = decodeURIComponent((q.url || '/').split('?')[0]), ext = path.extname(u), f = path.join(ROOT, u);
+  if (MIME[ext] && f.startsWith(ROOT) && fs.existsSync(f)) { s.setHeader('content-type', MIME[ext]); return s.end(fs.readFileSync(f)); }
+  s.setHeader('content-type', 'text/html; charset=utf-8'); s.end(page());
+});
 
 const INIT = () => {
   const realNow = performance.now.bind(performance);
