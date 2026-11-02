@@ -11,8 +11,8 @@ function newRun() {
     time: 0, kills: 0, eid: 0, pid: 0, spawnAcc: 0, result: null, endT: 0, finished: false,
     p: { x: 0, y: 0, r: CFG.player.r, hp: CFG.player.hp, maxHp: CFG.player.hp, face: { x: 0, y: -1 }, invT: 0, flash: 0, moving: false,
       level: 1, xp: 0, need: xpNeed(1), weapons: [], passives: [], relics: [], bonusDmg: 0, mod: null,
-      job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, shield: false, vet: false },
-    enemies: [], gems: [], proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], turrets: [], minions: [], mines: [], altar: null,
+      job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, holy: 0, form: null, shield: false, vet: false },
+    enemies: [], gems: [], proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], altar: null, banner: null, sanct: null,
     pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
     stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
@@ -34,7 +34,7 @@ function recalc() {
   const p = G.p, prevMax = p.maxHp;
   p.mod = {
     dmg: (1 + PASSIVES.might.per * passLv('might')) * (1 + p.bonusDmg) * (p.vet ? 1.15 : 1),
-    speed: (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1),
+    speed: (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1) * (p.job2 === 'accel' ? 1.15 : 1) * (p.job === 'druid' && p.form === 'spirit' ? 1.15 : 1),
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
   p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
@@ -128,8 +128,12 @@ function updateEnemies(dt) {
     if (e.kbx || e.kby) { e.x += e.kbx * dt; e.y += e.kby * dt; const k = Math.max(0, 1 - dt * 9); e.kbx *= k; e.kby *= k; if (Math.abs(e.kbx) + Math.abs(e.kby) < 2) e.kbx = e.kby = 0; }
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy) || 1;
     let sp = G.result ? -e.speed * 0.3 : e.speed;
+    if (G.tm.roar > 0) sp *= 0.5;                                                 // 군주 궁극기
+    if (G.tm.stop > 0) sp *= e.boss ? 0.3 : 0;                                    // 시간술사 궁극기
     if (e.elite) sp *= eliteMove(e, dt);
     if (e.slowT > 0) { e.slowT -= dt; sp *= 0.55; }
+    if (e.frz > 0) { e.frz -= dt; sp = 0; }                                       // 빙결·속박 (0.8)
+    if (e.bl > 0) { e.bl -= dt; e.blT = (e.blT || 0) - dt; if (e.blT <= 0) { e.blT = 0.5; damageEnemy(e, e.blD, { src: 'bleed' }); if (e.dead) continue; } }
     const z = G.ph.zone; if (z && dist2(e.x, e.y, z.x, z.y) < z.r * z.r) sp *= PH_CFG.zoneSlow;   // 봉인석 구역 둔화 (0.3)
     e.x += dx / d * sp * dt; e.y += dy / d * sp * dt;
     if (d > farR) { const q = e.cmd ? ringAt(VIEW.w * 0.6, VIEW.w * 0.7) : ringPos(10); e.x = q.x; e.y = q.y; e.kbx = e.kby = 0; }   // 시야 밖 재배치
@@ -164,6 +168,8 @@ function killEnemy(e) {
   e.dead = true; G.kills++;
   G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
   if (e.elite) eliteKilled(e);
+  if (e.slowT > 0 && wBr('icering') === 'shatter') { const x = e.x, y = e.y, d = wStats(G.p.weapons.find(w => w.id === 'icering')).dmg * 2.5; G.later.push({ t: 0, f: () => explode(x, y, 46, d, 'shatter', '#bfe8ff') }); }
+  if (pBr('regen') === 'vamp') heal(0.4);
   onEnemyKill(e);
   fx({ kind: 'pop', x: e.x, y: e.y, r: e.r, color: e.color, dur: 0.22 });
 }
@@ -175,12 +181,13 @@ function hurtPlayer(dmg, src) {
   onPlayerHurt();
   p.hp -= dmg; p.invT = CFG.player.invuln; p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
+  if (p.hp <= 0 && pBr('regen') === 'second' && !p.revived) { p.revived = true; p.hp = p.maxHp * 0.4; p.invT = 2; toast('불굴', '#ffb070'); return; }
   if (p.hp <= 0) { p.hp = 0; G.result = 'dead'; G.endT = 1.4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 200, dur: 1, color: '#ff6a6a' }); }
 }
 
 /* 경험치·레벨업 (레벨업마다 3지선다 대기열 적재) */
 function updateGems(dt) {
-  const p = G.p, R = CFG.player.pickup, R2 = R * R;
+  const p = G.p, R = CFG.player.pickup * (1 + PASSIVES.magnet.per * passLv('magnet')), R2 = R * R;
   for (const g of G.gems) {
     const d2 = dist2(g.x, g.y, p.x, p.y);
     if (!g.mag && d2 < R2) g.mag = true;
@@ -198,7 +205,7 @@ function updateGems(dt) {
   }
 }
 function addXp(v) {
-  const p = G.p; p.xp += v;
+  const p = G.p; p.xp += v * (pBr('magnet') === 'greed' ? 1.15 : 1);
   while (p.xp >= p.need) { p.xp -= p.need; levelUp(); }
 }
 function levelUp() {

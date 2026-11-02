@@ -2,7 +2,7 @@
    무기 — 레벨별 수치 계산 · 발동 · 투사체
    구현 출처: 초안 0.2l weapons.js 동작 재사용 (분기·유물·직업 연계 제거, 레벨 강화 표 방식으로 재구성)
    ============================================================ */
-const W_UNIT = { spin: '검', arrow: '화살', boomerang: '도끼', fireball: '화염구', lightning: '낙뢰' };
+const W_UNIT = { spin: '검', arrow: '화살', boomerang: '도끼', fireball: '화염구', lightning: '낙뢰', knife: '단검', trap: '덫', orb: '구체' };
 
 /* 강화 1단계 설명문 (수치에서 생성) */
 function upText(id, u) {
@@ -28,11 +28,20 @@ function wStats(w) {
   if (br === 'pierce') { s.pierce += 3; dm *= 1.15; }
   if (br === 'multi') s.n += 1;
   if (br === 'big') { s.area += 0.45; dm *= 1.2; cm *= 1.15; }
-  if (pBr('might') === 'pen' && (w.id === 'arrow' || w.id === 'boomerang')) s.pierce += 1;
+  if (pBr('might') === 'pen' && (w.id === 'arrow' || w.id === 'boomerang' || w.id === 'knife')) s.pierce += 1;
+  if (br === 'fan') s.n += 2;
+  if (br === 'swarm') { s.n += 2; dm *= 0.8; }
+  // 3단계 보조 효과 (0.8): 공격 범위·투사체 수
+  const aL = passLv('area'), mL = passLv('multi');
+  if (aL) { if (pBr('area') === 'dense') dm *= 1 + 0.12 * aL; else s.area += 0.08 * aL + (pBr('area') === 'giant' ? 0.15 : 0); }
+  if (pBr('area') === 'giant') dm *= 1.08;
+  if (mL && B.n) { s.n += multiN(mL) + (pBr('multi') === 'barrage' ? 1 : 0); dm *= 1 + 0.05 * mL * (pBr('multi') === 'velocity' ? 1 : 1) + (pBr('multi') === 'velocity' ? 0.2 : 0); if (pBr('multi') === 'barrage') cm *= 1.1; }
   // 직업 (0.6·0.7)
   if (G.p.job2 === 'archmage' && D.cat === 'magic') cm *= 0.8;
   if (G.p.job2 === 'berserk' && w.id === 'cleave' && G.p.fury >= 100) s.area += 0.3;
-  if (G.p.job && JOBS[G.p.job].cat === D.cat) dm *= 1.1;                 // 전직 계열 무기 피해 +10%
+  if (jobCat(D.cat)) dm *= 1.1;                                          // 전직 계열 무기 피해 +10%
+  if (G.p.job === 'druid') { if (D.cat === 'melee' && formOn('bear')) dm *= G.p.job2 === 'ursa' ? 1.4 : 1.25; if (D.cat === 'magic' && formOn('spirit')) dm *= G.p.job2 === 'sage' ? 1.4 : 1.25; }
+  if (G.p.job2 === 'accel') cm *= 0.88;
   return {
     dmg: B.dmg * (1 + s.dmg) * M.dmg * dm,
     area: 1 + s.area,
@@ -96,6 +105,73 @@ const WEAPON_FIRE = {
   },
 };
 
+/* ---------- 3단계 추가 무기 (0.8) ---------- */
+Object.assign(WEAPON_FIRE, {
+  /* 방패 충격: 주변 적 강하게 밀쳐내기 · 방벽 분기: 1.5초간 받는 피해 -40% · 이중 충격 분기: 0.4초 뒤 넓은 2차 충격 */
+  shield(w, S) {
+    const D = WEAPONS.shield.base, p = G.p, R = D.R * S.area;
+    shieldBash(p.x, p.y, R, S.dmg, D.kb);
+    if (w.br === 'wall') G.tm.wall = 1.5;
+    if (w.br === 'twin') G.later.push({ t: 0.4, f: () => shieldBash(G.p.x, G.p.y, R * 1.4, S.dmg * 0.5, D.kb * 0.6) });
+    if (hasRelic('bulwark')) heal(p.maxHp * 0.03);
+  },
+  /* 대지 강타: 원형 충격파 · 여진 분기: 1초 뒤 같은 자리 재충격 · 균열 분기: 네 방향 균열 장판 */
+  slam(w, S) {
+    const D = WEAPONS.slam.base, p = G.p, R = D.R * S.area, x = p.x, y = p.y;
+    slamWave(x, y, R, S.dmg, D.kb);
+    if (w.br === 'after') G.later.push({ t: 1.0, f: () => slamWave(x, y, R * 0.9, S.dmg * 0.6, D.kb * 0.5) });
+    if (w.br === 'fissure') for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; addPool({ x: x + Math.cos(a) * R * 0.6, y: y + Math.sin(a) * R * 0.6, r: 34, dur: 2, every: 0.4, dmg: S.dmg * 0.2, src: 'fissure', kind: 'crack' }); }
+  },
+  /* 투척 단검: 이동 방향 연사 · 부채 투척 분기: 단검 +2·넓은 부채꼴 · 출혈 분기: 명중 시 3초 지속 피해 */
+  knife(w, S) {
+    const D = WEAPONS.knife.base, p = G.p, a0 = Math.atan2(p.face.y, p.face.x), sp = w.br === 'fan' ? 0.22 : 0.09;
+    for (let i = 0; i < S.n; i++) shoot({ kind: 'arrow', x: p.x, y: p.y, ang: a0 + (i - (S.n - 1) / 2) * sp, sp: D.sp, r: 4, dmg: S.dmg, pierce: S.pierce, life: D.life, color: '#e6e8f8', src: 'knife', bleed: w.br === 'bleed' });
+  },
+  /* 덫: 발밑 설치(최대 개수 제한), 밟으면 폭발 · 속박 분기: 폭발 범위 적 1.5초 정지 · 연쇄 분기: 폭발 시 작은 덫 2개 */
+  trap(w, S) {
+    const D = WEAPONS.trap.base, p = G.p, max = D.max + (S.n - 1) * 2;
+    for (let i = 0; i < S.n; i++) {
+      if (G.traps.length >= max) G.traps.shift();
+      const a = rand(Math.PI * 2), d = i ? 18 : 0;
+      G.traps.push({ x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: 12, arm: 0.4, dmg: S.dmg, R: D.R * S.area, snare: w.br === 'snare', cluster: w.br === 'cluster' });
+    }
+  },
+  /* 얼음 고리: 주변 냉기 (0.5초마다 둔화·피해) · 빙결 분기: 6% 확률 1초 빙결 · 파쇄 분기: 둔화된 적 처치 시 냉기 폭발 */
+  icering(w, S) {
+    const R = WEAPONS.icering.base.R * S.area, p = G.p, frz = w.br === 'freeze';
+    gridQuery(p.x, p.y, R, e => { e.slowT = 0.7; if (frz && !e.cmd && !e.boss && Math.random() < 0.06) e.frz = 1; damageEnemy(e, S.dmg, { src: 'icering' }); });
+    w.R = R;
+  },
+  /* 마력 구체: 추적 구체 · 군집 분기: 구체 +2·피해 -20% · 신성 폭발 분기: 명중 시 작은 폭발 */
+  orb(w, S) {
+    const D = WEAPONS.orb.base, p = G.p;
+    for (let i = 0; i < S.n; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: rand(Math.PI * 2), sp: D.sp, r: 6, dmg: S.dmg, pierce: 0, life: D.life, color: '#9fb8ff', src: 'mbolt', home: true, nova: w.br === 'nova' });
+  },
+});
+function shieldBash(x, y, R, dmg, kb) {
+  gridQuery(x, y, R, e => damageEnemy(e, dmg, { src: 'shield', kb, fx: x, fy: y }));
+  fx({ kind: 'ring', x, y, r0: R * 0.4, r1: R, dur: 0.22, color: '#c8d8ff', fill: true });
+}
+function slamWave(x, y, R, dmg, kb) {
+  const frost = hasRelic('frostrift');
+  gridQuery(x, y, R, e => { if (frost && !e.cmd && !e.boss) e.frz = 1.2; damageEnemy(e, dmg, { src: 'slam', kb, fx: x, fy: y }); });
+  fx({ kind: 'ring', x, y, r0: 12, r1: R, dur: 0.35, color: frost ? '#bfe8ff' : '#d8b080' });
+}
+/* 덫 갱신 — 설치 후 0.4초 뒤 작동 */
+function updateTraps(dt) {
+  for (const t of G.traps) {
+    t.arm -= dt; if (t.arm > 0) continue;
+    let hit = false; gridQuery(t.x, t.y, t.r, () => { hit = true; return false; });
+    if (!hit) continue;
+    t.dead = true;
+    explode(t.x, t.y, t.R, t.dmg, 'trap', '#e0c070');
+    if (t.snare) gridQuery(t.x, t.y, t.R, e => { if (!e.cmd && !e.boss) e.frz = 1.5; });
+    if (hasRelic('firetrap')) addPool({ x: t.x, y: t.y, r: t.R * 0.8, dur: 2, every: 0.4, dmg: t.dmg * 0.2, src: 'firetrap', kind: 'fire' });
+    if (t.cluster && !t.mini) for (let i = 0; i < 2; i++) { const a = rand(Math.PI * 2); G.later.push({ t: 0.05, f: () => G.traps.push({ x: t.x + Math.cos(a) * 40, y: t.y + Math.sin(a) * 40, r: 10, arm: 0.5, dmg: t.dmg * 0.5, R: t.R * 0.7, mini: true }) }); }
+  }
+  G.traps = G.traps.filter(t => !t.dead);
+}
+
 function slash(a0, arc, range, dmg, kb) {
   const p = G.p;
   gridQuery(p.x, p.y, range, e => {
@@ -120,12 +196,13 @@ function updateWeapons(dt) {
   for (const w of G.p.weapons) {
     const S = wStats(w);
     if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
-    w.t -= dt;
+    w.t -= dt * (G.tm.roar > 0 ? 2 : 1);                                      // 군주 궁극기: 재사용 2배 속도
     if (w.t <= 0) {
       const r = WEAPON_FIRE[w.id](w, S); w.t = r === false ? 0.25 : S.cd;
       if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;   // 연속 발동 분기
     }
   }
+  updateTraps(dt);
   // 지연 실행 (연속 베기 등)
   for (const L of G.later) { L.t -= dt; if (L.t <= 0) { L.done = true; L.f(); } }
   if (G.later.length) G.later = G.later.filter(L => !L.done);
@@ -164,6 +241,8 @@ function updateProjectiles(dt) {
       pr.hits.add(e.id);
       if (pr.kind === 'fire' || pr.kind === 'shell') { fireBurst(pr); pr.dead = true; return false; }
       damageEnemy(e, pr.dmg, { kb: 40, fx: pr.x - pr.vx * 0.05, fy: pr.y - pr.vy * 0.05, src: pr.src });
+      if (pr.bleed && !e.dead) { e.bl = 3; e.blD = pr.dmg * 0.25; }
+      if (pr.nova) explode(pr.x, pr.y, 42, pr.dmg * 0.6, 'nova', '#b8c8ff');
       if (pr.split) { pr.split = false; const a = Math.atan2(pr.vy, pr.vx); for (const da of [-0.5, 0, 0.5]) { const s2 = shoot({ kind: 'arrow', x: pr.x, y: pr.y, ang: a + da, sp: 480, r: 4, dmg: pr.dmg * 0.5, pierce: 0, life: 0.5, color: '#d8ffc8', src: 'split' }); s2.hits.add(e.id); } }
       if (--pr.pierce < 0) { pr.dead = true; return false; }
     });

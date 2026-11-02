@@ -2,9 +2,10 @@
    레벨업 3지선다 — 후보 생성 · 카드 화면 · 다시 뽑기 · 제외
    구조 출처: 초안 0.2l ui.js levelCands·drawCards·renderSelect (분기·유물·직업 카드 제거)
    ============================================================ */
+const jobColor = id => JOBS[id].cats ? '#7fc8a0' : CFG.colors[JOBS[id].cat];
 function levelCands() {
   const p = G.p, out = [], ban = G.banished, nW = p.weapons.length, K = CFG.select;
-  const jc = id => p.job && JOBS[p.job].cat === WEAPONS[id].cat ? JOB_CFG.jobCatW : 1;   // 전직 계열 후보 비중 증가
+  const jc = id => jobCat(WEAPONS[id].cat) ? JOB_CFG.jobCatW : 1;   // 전직 계열 후보 비중 증가
   for (const w of p.weapons) if (w.lvl < CFG.weaponMax && !ban.has(w.id)) out.push({ t: 'wup', id: w.id, w: K.wupW * (nW >= 3 ? K.wupW3 : 1) * jc(w.id) });
   if (nW < CFG.slots.weapon) for (const id of WEAPON_ORDER) if (!hasW(id) && !ban.has(id)) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * jc(id) });
   for (const id of RELIC_ORDER) if (relicReady(id)) out.push({ t: 'relic', id, w: 2.5 });
@@ -38,8 +39,8 @@ function cardInfo(c) {
     case 'pup': { const d = PASSIVES[c.id], L = passLv(c.id); return { k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: `Lv ${L} → ${L + 1}`, ds: d.desc(L + 1) }; }
     case 'relic': { const d = RELICS[c.id]; return { k: 'k-relic', col: '#ffd24a', ic: d.ic, nm: d.name, tag: `유물 · ${itemName(d.a)} + ${itemName(d.b)}`, ds: d.ds }; }
     case 'branch': { const o = BRANCHES[c.id].find(x => x.k === c.k); return { k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + ' 분기', ds: o.ds }; }
-    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: CFG.colors[d.cat], ic: d.ic, nm: d.name, tag: CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult }; }
-    case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : CFG.colors[JOBS[c.id].cat], ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
+    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult }; }
+    case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : jobColor(c.id), ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
     case 'power': return { k: 'k-fill', col: '#ffb070', ic: '↑', nm: '단련', tag: '추가 성장', ds: `모든 피해 +${Math.round(CFG.fill.power * 100)}% (중첩)` };
     default: return { k: 'k-fill', col: '#e04848', ic: '+', nm: '응급 처치', tag: '회복', ds: `체력 ${CFG.fill.heal} 회복` };
   }
@@ -148,7 +149,7 @@ function autoSelect() {
       s.tried = true; const w = G.p.weapons.slice().sort((a, b) => a.lvl - b.lvl)[0];
       s.offer = true; renderSelect(); return later(() => { if (G.sel === s) offerWeapon(w.id); });
     }
-    const sc = s.cards.map(c => (ai.cat[JOBS[c.id].cat] || 0) + rand(0, 1.5)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; });
+    const sc = s.cards.map(c => Math.max(...jobCats(c.id).map(k => ai.cat[k] || 0)) + rand(0, 1.5)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; });
     return pickCard(bi);
   }
   if (s.kind === 'chest') { const sc = s.cards.map(c => cardScore(c)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; }); return pickCard(bi); }

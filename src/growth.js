@@ -16,14 +16,30 @@ const BRANCHES = {
   might: [{ k: 'crit', nm: '치명', ds: '15% 확률 피해 2배' }, { k: 'pen', nm: '분쇄', ds: '투사체 관통 +1, 대형 적·엘리트 피해 +25%' }],
   swift: [{ k: 'trail', nm: '잔상', ds: '이동 중 발밑에 잔상, 닿은 적 피해' }, { k: 'dodge', nm: '회피', ds: '피격 시 20% 확률 회피' }],
   haste: [{ k: 'echo', nm: '연속 발동', ds: '무기 발동 시 12% 확률 즉시 재발동' }, { k: 'charge', nm: '충전', ds: '8초마다 모든 무기 재사용 즉시 완료' }],
+  /* 3단계 추가분 (0.8) */
+  shield: [{ k: 'wall', nm: '방벽', ds: '충격 후 1.5초간 받는 피해 -40%' }, { k: 'twin', nm: '이중 충격', ds: '0.4초 뒤 범위 140% 2차 충격 (피해 50%)' }],
+  slam: [{ k: 'after', nm: '여진', ds: '1초 뒤 같은 자리 재충격 (피해 60%)' }, { k: 'fissure', nm: '균열', ds: '네 방향 균열 장판 2초 (0.4초마다 피해 20%)' }],
+  knife: [{ k: 'fan', nm: '부채 투척', ds: '단검 +2, 넓은 부채꼴 투척' }, { k: 'bleed', nm: '출혈', ds: '명중 시 3초 출혈 (0.5초마다 피해 25%)' }],
+  trap: [{ k: 'snare', nm: '속박 덫', ds: '폭발 범위 적 1.5초 정지' }, { k: 'cluster', nm: '연쇄 덫', ds: '폭발 시 주변에 작은 덫 2개 생성 (피해 50%)' }],
+  icering: [{ k: 'freeze', nm: '빙결', ds: '냉기 피해 시 6% 확률 1초 빙결' }, { k: 'shatter', nm: '파쇄', ds: '둔화된 적 처치 시 냉기 폭발 (주변 피해)' }],
+  orb: [{ k: 'swarm', nm: '구체 군집', ds: '구체 +2, 피해 -20%' }, { k: 'nova', nm: '마력 폭발', ds: '명중 시 작은 폭발 (피해 60%)' }],
+  area: [{ k: 'giant', nm: '거대화', ds: '범위 추가 +15%, 모든 무기 피해 +8%' }, { k: 'dense', nm: '응축', ds: '범위 증가 대신 단계당 피해 +12%' }],
+  multi: [{ k: 'barrage', nm: '일제 사격', ds: '개수 추가 +1, 해당 무기 재사용 +10%' }, { k: 'velocity', nm: '고속탄', ds: '개수형 무기 피해 +20%' }],
+  magnet: [{ k: 'vacuum', nm: '자석 파동', ds: '30초마다 주변 경험치 전부 흡수' }, { k: 'greed', nm: '성장 가속', ds: '경험치 획득 +15%' }],
+  regen: [{ k: 'vamp', nm: '흡혈', ds: '처치 시 체력 0.4 회복' }, { k: 'second', nm: '불굴', ds: '판당 1회 치명 피해 시 체력 40%로 버팀' }],
 };
 const RELICS = {
   bladestorm: { name: '칼날 폭풍', ic: '폭', a: 'cleave', b: 'spin', ds: '베기 시 1.5초간 회전검 속도 2배·피해 +30%' },
   thunderarrow: { name: '뇌전 화살', ic: '뇌', a: 'arrow', b: 'lightning', ds: '화살 명중 시 20% 확률 연쇄 번개 2체 (번개 피해 50%)' },
   flameaxe: { name: '불타는 도끼', ic: '염', a: 'boomerang', b: 'fireball', ds: '도끼 궤적에 작은 화염 폭발 (화염구 피해 30%)' },
   firefield: { name: '화염 장판', ic: '장', a: 'fireball', b: 'might', ds: '화염구 착탄 지점 2초 화염 장판 (0.5초마다 피해 20%)' },
+  /* 3단계 추가 4종 (0.8) */
+  frostrift: { name: '서리 균열', ic: '서', a: 'slam', b: 'icering', ds: '대지 강타 충격파가 적을 1.2초 빙결' },
+  firetrap: { name: '화염 덫', ic: '덫', a: 'trap', b: 'fireball', ds: '덫 폭발 자리에 2초 화염 장판' },
+  bulwark: { name: '수호 방패', ic: '수', a: 'shield', b: 'vit', ds: '방패 충격마다 최대 체력 3% 회복' },
+  arcknife: { name: '마력 단검', ic: '마', a: 'knife', b: 'orb', ds: '단검 명중 시 20% 확률 마력 구체 1발 (구체 피해 60%)' },
 };
-const RELIC_ORDER = ['bladestorm', 'thunderarrow', 'flameaxe', 'firefield'];
+const RELIC_ORDER = ['bladestorm', 'thunderarrow', 'flameaxe', 'firefield', 'frostrift', 'firetrap', 'bulwark', 'arcknife'];
 const ELITE = { size: 1.5, hp: 8, xp: 8, perPhase: [1, 2], chance2: 0.5, ab: ['dash', 'split', 'shield', 'haste'] };
 const ELITE_AB = { dash: '돌진', split: '분열', shield: '보호막', haste: '가속' };
 
@@ -123,7 +139,7 @@ function addPool(o) { if (G.pools.length < 60) G.pools.push(Object.assign({ t: 0
 function updatePools(dt) {
   for (const z of G.pools) {
     z.t += dt; z.tick -= dt;
-    if (z.tick <= 0) { z.tick = z.every; gridQuery(z.x, z.y, z.r, e => { if (!e.cmd || !z.noCmd) damageEnemy(e, z.dmg, { src: z.src, el: z.el }); }); }
+    if (z.tick <= 0) { z.tick = z.every; gridQuery(z.x, z.y, z.r, e => { if (z.slow) e.slowT = Math.max(e.slowT || 0, 0.5); if (!e.cmd || !z.noCmd) damageEnemy(e, z.dmg, { src: z.src, el: z.el }); }); }
   }
   G.pools = G.pools.filter(z => z.t < z.dur);
 }
@@ -131,6 +147,9 @@ function updatePools(dt) {
 /* 보조 효과 분기 갱신 */
 function updatePassiveBranches(dt) {
   const p = G.p, T = G.tm;
+  if (passLv('regen')) heal(PASSIVES.regen.per * passLv('regen') * dt);
+  if (T.wall > 0) T.wall -= dt;
+  if (pBr('magnet') === 'vacuum') { T.vac = (T.vac == null ? 30 : T.vac) - dt; if (T.vac <= 0) { T.vac = 30; for (const g of G.gems) if (dist2(g.x, g.y, p.x, p.y) < 700 * 700) g.mag = true; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 160, dur: 0.4, color: '#7fe0ff', follow: true }); } }
   if (pBr('vit') === 'regen') heal(p.maxHp * 0.006 * dt);
   if (pBr('vit') === 'shield' && !p.shield) { T.shield -= dt; if (T.shield <= 0) { p.shield = true; T.shield = 12; } }
   if (pBr('swift') === 'trail' && p.moving) { T.trail -= dt; if (T.trail <= 0) { T.trail = 0.3; addPool({ x: p.x, y: p.y, r: 18, dur: 1.2, every: 0.35, dmg: (8 + passLv('swift') * 2) * p.mod.dmg, src: 'trail', kind: 'trail' }); } }

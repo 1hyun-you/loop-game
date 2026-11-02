@@ -4,7 +4,7 @@
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.7',
+  VERSION: '0.9',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -44,7 +44,7 @@ const WEAPONS = {
     base: { dmg: 19, cd: 1.25, range: 86, arc: 1.9, kb: 180 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { cd: 0.15 }, { dmg: 0.3 }, { area: 0.1, dmg: 0.2 }] },
   spin: { name: '회전검', cat: 'melee', ic: '회', desc: '캐릭터 주변을 도는 검',
-    base: { dmg: 18, n: 2, R: 62, rot: 3, size: 12, hitCd: 0.35, kb: 120 },
+    base: { dmg: 14, n: 2, R: 62, rot: 3, size: 12, hitCd: 0.35, kb: 120 },
     ups: [{ n: 1 }, { dmg: 0.3 }, { n: 1 }, { rot: 0.3 }, { n: 1, dmg: 0.2 }] },
   arrow: { name: '화살', cat: 'ranged', ic: '활', desc: '가장 가까운 적에게 직선 발사',
     base: { dmg: 15, cd: 0.95, n: 1, pierce: 1, sp: 540, life: 1.1 },
@@ -58,15 +58,40 @@ const WEAPONS = {
   lightning: { name: '번개', cat: 'magic', ic: '번', desc: '무작위 적에게 낙뢰',
     base: { dmg: 28, cd: 1.25, n: 1, range: 360 },
     ups: [{ n: 1 }, { dmg: 0.3 }, { cd: 0.15 }, { n: 1 }, { dmg: 0.3 }] },
+  /* 3단계 추가 6종 (0.8) — 기획서 무기 12종 표 */
+  shield: { name: '방패 충격', cat: 'melee', ic: '방', desc: '주변 적을 크게 밀쳐내는 충격',
+    base: { dmg: 22, cd: 2.4, R: 82, kb: 420 },
+    ups: [{ dmg: 0.3 }, { area: 0.15 }, { cd: 0.15 }, { dmg: 0.3 }, { area: 0.15, dmg: 0.2 }] },
+  slam: { name: '대지 강타', cat: 'melee', ic: '강', desc: '주기적으로 넓은 원형 충격파',
+    base: { dmg: 26, cd: 3.0, R: 125, kb: 150 },
+    ups: [{ dmg: 0.3 }, { cd: 0.15 }, { area: 0.15 }, { dmg: 0.3 }, { cd: 0.1, dmg: 0.2 }] },
+  knife: { name: '투척 단검', cat: 'ranged', ic: '단', desc: '이동 방향으로 단검 연사',
+    base: { dmg: 11, cd: 0.42, n: 1, pierce: 0, sp: 620, life: 0.75 },
+    ups: [{ n: 1 }, { dmg: 0.3 }, { cd: 0.15 }, { n: 1, pierce: 1 }, { dmg: 0.3 }] },
+  trap: { name: '덫', cat: 'ranged', ic: '덫', desc: '지나간 자리에 덫 설치, 밟은 적 주변 폭발',
+    base: { dmg: 24, cd: 1.5, n: 1, R: 52, max: 8 },
+    ups: [{ dmg: 0.3 }, { area: 0.2 }, { n: 1 }, { cd: 0.15 }, { dmg: 0.3, n: 1 }] },
+  icering: { name: '얼음 고리', cat: 'magic', ic: '빙', desc: '주변 냉기 고리, 적 둔화·지속 피해',
+    base: { dmg: 8, cd: 0.5, R: 72 },
+    ups: [{ dmg: 0.3 }, { area: 0.15 }, { dmg: 0.3 }, { area: 0.15 }, { dmg: 0.4 }] },
+  orb: { name: '마력 구체', cat: 'magic', ic: '구', desc: '적을 추적하는 유도 구체',
+    base: { dmg: 20, cd: 1.1, n: 1, sp: 270, life: 2.4 },
+    ups: [{ n: 1 }, { dmg: 0.3 }, { cd: 0.15 }, { n: 1 }, { dmg: 0.3 }] },
 };
-const WEAPON_ORDER = ['cleave', 'spin', 'arrow', 'boomerang', 'fireball', 'lightning'];
+const WEAPON_ORDER = ['cleave', 'spin', 'shield', 'slam', 'arrow', 'boomerang', 'knife', 'trap', 'fireball', 'lightning', 'icering', 'orb'];
 const START_WEAPON = 'cleave';
 
-/* 보조 효과 4종 (1단계 확정) — 단계당 효과, 최대 5단계 */
+/* 보조 효과 8종 — 1단계 4종 + 3단계 4종, 단계당 효과, 최대 5단계 */
 const PASSIVES = {
   vit: { name: '최대 체력', ic: '체', per: 20, desc: L => `최대 체력 +${20 * L}` },
   might: { name: '공격력', ic: '공', per: 0.1, desc: L => `모든 피해 +${10 * L}%` },
   swift: { name: '이동 속도', ic: '속', per: 0.08, desc: L => `이동 속도 +${8 * L}%` },
   haste: { name: '재사용 감소', ic: '재', per: 0.06, desc: L => `재사용 대기 -${6 * L}%` },
+  /* 3단계 추가 4종 (0.8) */
+  area: { name: '공격 범위', ic: '범', per: 0.08, desc: L => `모든 무기 범위 +${8 * L}%` },
+  multi: { name: '투사체 수', ic: '투', per: 0.05, desc: L => `개수형 무기 개수 +${multiN(L)}, 해당 무기 피해 +${5 * L}%` },
+  magnet: { name: '경험치 흡수', ic: '흡', per: 0.3, desc: L => `경험치 흡수 범위 +${30 * L}%` },
+  regen: { name: '체력 회복', ic: '회', per: 0.25, desc: L => `초당 체력 ${(0.25 * L).toFixed(2)} 회복` },
 };
-const PASSIVE_ORDER = ['vit', 'might', 'swift', 'haste'];
+const PASSIVE_ORDER = ['vit', 'might', 'swift', 'haste', 'area', 'multi', 'magnet', 'regen'];
+function multiN(L) { return L >= 3 ? 2 : L >= 1 ? 1 : 0; }
