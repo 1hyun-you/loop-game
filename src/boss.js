@@ -25,6 +25,7 @@ const GK_CFG = {
   // 세렌
   seEvery: [9, 6.5], seClones: [3, 4], seCloneHp: 0.03, seShot: 1.6, seSp: 160, seDmg: 11, seBreak: 0.06, seBladeR: 80, seBladeDmg: 22, seShards: 8,
 };
+const isBossPhase = () => G.ph && (G.ph.id === 'gate' || G.ph.id === 'demon');
 const gkLv = (a) => a[G.gkMob && G.gkMob.rage ? 1 : 0];
 function gkDmg(v) { return v * (1 + CFG.scale.dmgPerMin * G.time / 60); }
 
@@ -47,6 +48,7 @@ function gkSpawn() {
 
 /* 수문장 갱신 — game.js updateEnemies에서 개체별 호출 (이동·접촉·패턴) */
 function gkUpdate(e, dt, d, dx, dy) {
+  if (e.gk === 'demon') return dmUpdate(e, dt, d, dx, dy);   // 마왕 (0.12)
   const p = G.p;
   if (G.result) return;
   if (G.tm.stop > 0) dt *= 0.3;                                   // 시간술사 궁극기: 둔화만 적용
@@ -179,6 +181,7 @@ function gkClone(e, dt, d, dx, dy) {
 }
 /* 분신 파괴 — 파편 탄막 (game.js killEnemy에서 호출) */
 function gkKilled(e) {
+  if (e.gk === 'demon') return dmKilled(e);
   if (e.clone) { gkRing(e.x, e.y, GK_CFG.seShards, 140, gkDmg(GK_CFG.seDmg) * 0.8, '거울 파편', rand(6.28), '#cfe0ff'); return; }
   const D = GATEKEEPERS[e.gk];
   G.stats.gate.killed = true; G.stats.gate.dur = Math.round(G.time - G.stats.gate.t0);
@@ -198,8 +201,9 @@ function gkShot(x, y, vx, vy, dmg, src, col) { if (G.eb.length < 260) G.eb.push(
 
 /* 적 탄환·예고 구역 갱신 (step에서 매 틱 호출) */
 function updateBossFx(dt) {
-  if (!G.eb || (!G.eb.length && !G.hz.length)) return;
+  if (!G.eb || (!G.eb.length && !G.hz.length && !G.arena)) return;
   const p = G.p;
+  dmFx(dt);                                                        // 마왕 결계·광선·부채꼴·추적탄 (0.12)
   for (const b of G.eb) {
     b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
     if (!G.result && dist2(b.x, b.y, p.x, p.y) < (b.r + p.r * 0.7) ** 2) { b.life = 0; hurtPlayer(b.dmg, b.src); }
@@ -207,20 +211,23 @@ function updateBossFx(dt) {
   G.eb = G.eb.filter(b => b.life > 0);
   for (const h of G.hz) {
     h.t += dt;
-    if (h.follow && !h.fired) { if (h.k === 'circ') { h.x = h.follow.x; h.y = h.follow.y; } else { h.x = h.follow.x; h.y = h.follow.y; } }
+    if (h.k === 'sect' || h.k === 'beam') continue;                 // 마왕 패턴은 dmFx에서 처리
+    if (h.follow && !h.fired) { h.x = h.follow.x; h.y = h.follow.y; }
     if (h.k === 'circ' && h.t >= h.warn && !h.fired) {
       h.fired = true; fx({ kind: 'ring', x: h.x, y: h.y, r0: h.r * 0.4, r1: h.r * 1.1, dur: 0.35, color: h.pool ? '#ff7a30' : '#ff5a4a' });
       if (!G.result && dist2(p.x, p.y, h.x, h.y) < (h.r + p.r * 0.5) ** 2) hurtPlayer(h.dmg * (h.pool ? 1.6 : 1), h.src);
     }
     if (h.pool && h.fired) { h.tick = (h.tick || 0) - dt; if (h.tick <= 0) { h.tick = 0.5; if (!G.result && dist2(p.x, p.y, h.x, h.y) < (h.r + p.r * 0.5) ** 2) hurtPlayer(h.dmg, h.src); } }
   }
-  G.hz = G.hz.filter(h => h.k === 'line' ? h.t < h.warn + GK_CFG.bgDashT : h.t < h.warn + (h.pool || 0.35));
+  G.hz = G.hz.filter(h => h.k === 'sect' || h.k === 'beam' ? dmHzAlive(h) : h.k === 'line' ? h.t < h.warn + GK_CFG.bgDashT : h.t < h.warn + (h.pool || 0.35));
 }
 
 /* 그리기: 예고·장판(지면), 탄환·수문장 장식(적 위) */
 function drawBossGround(c) {
   if (!G.hz) return;
+  drawDemonGround(c);
   for (const h of G.hz) {
+    if (h.k === 'sect' || h.k === 'beam') continue;
     const a = Math.min(1, h.t / h.warn);
     if (h.k === 'line') {
       if (h.t > h.warn) continue;
@@ -250,11 +257,12 @@ function drawBossTop(c, inView) {
 }
 /* 상단 수문장 체력 막대 */
 function drawBossBar(c, y, txt) {
-  const e = G.gkMob; if (!e || e.dead || !G.ph || G.ph.id !== 'gate') return;
-  const D = GATEKEEPERS[e.gk], W = VIEW.cw, bw = W - 48;
+  const e = G.gkMob; if (!e || e.dead || !G.ph || !isBossPhase()) return;
+  const D = bossDef(e.gk), W = VIEW.cw, bw = W - 48;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(24, y, bw, 8);
-  c.fillStyle = e.rage ? '#ff6a4a' : D.color; c.fillRect(24, y, bw * Math.max(0, e.hp / e.maxHp), 8);
-  c.font = 'bold 12px system-ui'; c.fillStyle = '#fff'; txt(`${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
+  c.fillStyle = e.rage || e.st === 2 ? '#ff6a4a' : D.color; c.fillRect(24, y, bw * Math.max(0, e.hp / e.maxHp), 8);
+  if (e.gk === 'demon') { c.fillStyle = 'rgba(255,255,255,0.8)'; for (const k of DM_CFG.stages) c.fillRect(24 + bw * k - 1, y - 2, 2, 12); }   // 페이즈 전환 눈금
+  c.font = 'bold 12px system-ui'; c.fillStyle = '#fff'; txt(e.gk === 'demon' ? `${D.name} · ${['그림자 군주', '암흑 결계', '종언'][e.st]} (${e.st + 1}/3)` : `${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
 }
 
 /* 저장: 처치 수문장 누적 (finishRun에서 호출) */

@@ -1,7 +1,7 @@
 /* ============================================================
    판 상태 · 진행
    ============================================================ */
-const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: false, speed: 1, gk: null } };   // gk: 수문장 지정(시험용)
+const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: false, speed: 1, gk: null, demon: null } };   // gk: 수문장 지정, demon: 판 구조 지정 final·retry (시험용)
 let G = null;
 
 function xpNeed(l) { return Math.floor(CFG.xp.base + CFG.xp.linear * l + Math.pow(l, CFG.xp.pow) * CFG.xp.powMul); }
@@ -21,6 +21,8 @@ function newRun() {
   recalc();
   addWeapon(START_WEAPON);
   G.gk = gkPick();                                          // 수문장 결정 (0.11)
+  G.runType = runTypeOf();                                  // 판 구조: normal·final·retry (0.12)
+  if (G.runType === 'retry') G.gk = null;
   phaseInit();
   STATE.mode = 'play';
   hideUI();
@@ -159,7 +161,7 @@ function updateEnemies(dt) {
 
 /* 피해·처치 */
 function damageEnemy(e, dmg, o = {}) {
-  if (e.dead) return;
+  if (e.dead || e.inv > 0) return;                         // 마왕 페이즈 전환 중 무적 (0.12)
   dmg *= jobDmgMul(e, o);
   if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
@@ -242,7 +244,7 @@ function buildReport() {
     branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
     job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults,
     altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
-    order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [],
+    order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.stats.gate.killed ? 0 : G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, runType: G.runType, demon: dmReport(), events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [],
   };
 }
 /* 마지막 1분 피해 비중 (빌드 완성도 반영 판독용) */
@@ -257,7 +259,7 @@ function finishRun() {
   G.report = buildReport();
   try {
     const s = loadSave(); G.report.newBest = G.report.time > (s.bestTime || 0);
-    s.runs = (s.runs || 0) + 1; s.bestTime = Math.max(s.bestTime || 0, G.report.time); if (G.report.result === 'clear') s.clears = (s.clears || 0) + 1; gkSave(s); G.report.gates = s.gates.length;
+    s.runs = (s.runs || 0) + 1; s.bestTime = Math.max(s.bestTime || 0, G.report.time); if (G.report.result === 'clear') s.clears = (s.clears || 0) + 1; gkSave(s); dmSave(s); G.report.gates = s.gates.length; G.report.demonKills = s.demonKills || 0;
     localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s));
   } catch (e) { }
   showResult();

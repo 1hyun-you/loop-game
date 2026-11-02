@@ -33,6 +33,7 @@ function showTitle() {
     <button id="settings">설정</button>
     <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${(s.gates || []).length}/4</span></div>
     ${(s.gates || []).length ? `<p class="hint">${GK_ORDER.map(k => (s.gates.includes(k) ? '■ ' : '□ ') + GATEKEEPERS[k].gate).join(' · ')}</p>` : ''}
+    ${(s.gates || []).length >= 4 ? `<p class="best">마왕성 출현 · 도전 ${s.demonTries || 0}회 · 처치 ${s.demonKills || 0}회</p>` : ''}
     <p class="hint">화면을 누른 채 끌어 이동 · 공격은 자동</p>
     <p class="ver">v${CFG.VERSION}</p></div>`;
   on('start', startRun);
@@ -69,9 +70,11 @@ function confirmStep(id) {
 function showResult() {
   STATE.mode = 'result';
   const R = G.report, done = G.ph.log.filter(x => x[2] === 'ok').length;
-  const D = GATEKEEPERS[G.gk];
-  UI.innerHTML = `<div class="layer"><h2>${R.result === 'clear' ? '들판 돌파' : R.result === 'retreat' ? '수문장 퇴각' : '쓰러졌다'}</h2>
-    ${R.result === 'clear' ? `<p class="best">${D.name} 처치 · ${D.gate} 개방 (열린 문 ${R.gates || 0}/4)</p>` : ''}
+  const D = GATEKEEPERS[G.gk], dm = R.demon, gk = R.gate && R.gate[1] === 'kill';
+  const head = dm ? (dm[0] === 'kill' ? '마왕 처치' : R.result === 'retreat' ? '마왕성 소멸' : '쓰러졌다') : R.result === 'clear' ? '들판 돌파' : R.result === 'retreat' ? '수문장 퇴각' : '쓰러졌다';
+  UI.innerHTML = `<div class="layer"><h2>${head}</h2>
+    ${gk && D ? `<p class="best">${D.name} 처치 · ${D.gate} 개방 (열린 문 ${R.gates || 0}/4)</p>` : ''}
+    ${dm ? `<p class="best">${dm[0] === 'kill' ? `마왕 처치 (누적 ${R.demonKills}회)` : `마왕 ${dm[3]}/3 페이즈 · 남은 체력 ${dm[2]}%`}</p>` : ''}
     ${R.newBest ? '<p class="best">최고 생존 기록 갱신</p>' : ''}
     <div class="stats"><span>생존 시간</span><span>${fmtTime(R.time)}</span><span>돌파 페이즈</span><span>${done}/${G.ph.order.length}</span><span>레벨</span><span>${R.level}</span><span>처치</span><span>${R.kills}</span><span>마지막 피격</span><span>${R.result === 'clear' ? '-' : (R.lastHit || '-')}</span></div>
     <div class="build">${buildChips()}</div>

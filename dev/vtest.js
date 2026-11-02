@@ -3,13 +3,14 @@
 // 사용: node dev/vtest.js <판 수> [--speed 8] [--cap 600] [--render 2] [--out dev/sim_log/runs_0.2.jsonl]
 // 0.2 확장: 레벨업 선택 화면 흐름(자동 선택) 통과, 선택 이력·최종 구성·무기별 피해 비중 기록
 // 0.7 확장: 분기·유물·엘리트·보물 상자·전직·2차 전직·궁극기 기록
+// 0.12 확장: --demon final|retry|mix (판 구조 지정, 마왕전 기록 demon·runType)
 // 0.11 확장: 수문장전 기록(gate·gk), --rotate(판마다 수문장 4인 순환 지정)
 // 0.4 확장: 시작 화면·일시정지(정지 확인·계속)·결과 화면 처음 화면 경유 흐름 점검, --god(무적 완주 시간 판독), --port(동시 실행)
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
-const N = +(args[0] || 10), SPEED = +opt('speed', 8), CAP = +opt('cap', 1500), REN_EVERY = +opt('render', 2), GOD = args.includes('--god'), ROT = args.includes('--rotate'), OFF = +opt('off', 0), PORT = +opt('port', 48232);
+const N = +(args[0] || 10), SPEED = +opt('speed', 8), CAP = +opt('cap', 1800), REN_EVERY = +opt('render', 2), GOD = args.includes('--god'), ROT = args.includes('--rotate'), DEMON = opt('demon', null), OFF = +opt('off', 0), PORT = +opt('port', 48232);
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.resolve(ROOT, opt('out', 'dev/sim_log/runs.jsonl'));
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -44,7 +45,7 @@ const INIT = () => {
   };
 };
 
-const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot }) => {
+const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
   const VT = window.__VT, H = window.__H || (window.__H = { hooked: false });
   if (!H.hooked) {
     H.hooked = true;
@@ -55,12 +56,15 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot }) => {
   const wall0 = VT.realNow();
   const tick = () => { VT.now += 1000 / 60; VT.fire(); const cb = VT.raf; VT.raf = null; if (cb) cb(VT.now); else H.flow.push('raf_lost'); };
   const click = (id, tag) => { const b = document.getElementById(id); if (b) b.click(); else H.flow.push('no_btn_' + (tag || id)); };
+  STATE.dev.demon = demon === 'mix' ? (idx % 2 ? 'retry' : 'final') : demon || null;   // 0.12 판 구조 지정 (새 판 생성 전)
+  if (rot) STATE.dev.gk = GK_ORDER[idx % 4];
   // 결과 화면: 3판마다 '처음 화면' 경유, 나머지는 '다시 시작' (화면 흐름 점검)
   if (STATE.mode === 'result') { if (idx % 3 === 2) { click('home'); if (STATE.mode !== 'title') H.flow.push('home_not_title'); } else click('again'); }
   if (STATE.mode === 'title') click('start');
   if (STATE.mode !== 'play') H.flow.push('not_play_after_restart');
+  if (STATE.dev.demon && G.runType !== STATE.dev.demon) newRun();   // 시작 화면 배경 판은 지정 전 생성 → 재생성 (0.12)
   STATE.dev.auto = true; STATE.dev.speed = speed; STATE.dev.god = !!god;
-  if (rot) { STATE.dev.gk = GK_ORDER[idx % 4]; G.gk = STATE.dev.gk; }
+  if (rot && G.gk) G.gk = STATE.dev.gk;
   const pauseAt = 30 + Math.random() * 60; let paused = false;
   const runG = G; let frames = 0, lastGT = -1, still = 0, selFrames = 0, selN = 0, wasSel = false;
   while ((STATE.mode === 'play' || STATE.mode === 'select') && G === runG) {
@@ -90,7 +94,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot }) => {
   const R = runG.report || {};
   return {
     v: CFG.VERSION, god: !!god, result: R.result, time: R.time, level: R.level, kills: R.kills, lastHit: R.lastHit, dmg: R.dmgShare, hurt: R.hurt, maxEn: R.maxEnemies,
-    levelAt: R.levelAt, selects: R.selOpen, pendingLv: R.pendingLv, lastMin: R.lastMinShare, xp: R.xp, build: R.build, picks: R.picks, wFullAt: R.wFullAt, phases: R.phases, phaseReached: R.phaseReached, phaseAt: R.phaseAt, hurt: R.hurt, pFullAt: R.pFullAt, rerolls: R.rerollsUsed, banish: R.banishUsed, branches: R.branches, relics: R.relics, elites: R.elites, chests: R.chests, chestPicks: R.chestPicks, job: R.job, jobAt: R.jobAt, job2: R.job2, job2At: R.job2At, ults: R.ults, altar: R.altar, passes: R.passes, maxMinions: R.maxMinions, order: R.order, gate: R.gate, gk: R.gk, gates: R.gates, events: R.events, curses: R.curses, camp: R.camp, saveRuns: save && save.runs, errs: VT.errs.splice(0), errShown: !!window.__errShown, flow: H.flow,
+    levelAt: R.levelAt, selects: R.selOpen, pendingLv: R.pendingLv, lastMin: R.lastMinShare, xp: R.xp, build: R.build, picks: R.picks, wFullAt: R.wFullAt, phases: R.phases, phaseReached: R.phaseReached, phaseAt: R.phaseAt, hurt: R.hurt, pFullAt: R.pFullAt, rerolls: R.rerollsUsed, banish: R.banishUsed, branches: R.branches, relics: R.relics, elites: R.elites, chests: R.chests, chestPicks: R.chestPicks, job: R.job, jobAt: R.jobAt, job2: R.job2, job2At: R.job2At, ults: R.ults, altar: R.altar, passes: R.passes, maxMinions: R.maxMinions, order: R.order, gate: R.gate, gk: R.gk, gates: R.gates, runType: R.runType, demon: R.demon, events: R.events, curses: R.curses, camp: R.camp, saveRuns: save && save.runs, errs: VT.errs.splice(0), errShown: !!window.__errShown, flow: H.flow,
     cost: { wallSec: Math.round((VT.realNow() - wall0) / 100) / 10, stepMs: H.steps ? +(H.stepMs / H.steps).toFixed(3) : 0, renMs: H.renders ? +(H.renMs / H.renders).toFixed(2) : 0 },
     diag: { enemiesArr: runG.enemies.length, gems: runG.gems.length, fx: runG.fx.length, dom: document.getElementsByTagName('*').length },
   };
@@ -107,7 +111,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot }) => {
   let prevRuns = 0;
   for (let i = 0; i < N; i++) {
     let rec;
-    try { rec = await p.evaluate(RUN_ONE, { cap: CAP, speed: SPEED, renEvery: REN_EVERY, idx: i + OFF, god: GOD, rot: ROT }); }
+    try { rec = await p.evaluate(RUN_ONE, { cap: CAP, speed: SPEED, renEvery: REN_EVERY, idx: i + OFF, god: GOD, rot: ROT, demon: DEMON }); }
     catch (e) { rec = { fatal: String(e.message).slice(0, 300) }; await p.goto(`http://127.0.0.1:${PORT}/`); }
     rec.idx = i; rec.pageErr = perr.splice(0);
     if (!rec.fatal) { rec.saveOk = rec.saveRuns === prevRuns + 1; prevRuns = rec.saveRuns || prevRuns; }

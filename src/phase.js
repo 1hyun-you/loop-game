@@ -35,10 +35,13 @@ const PHASES = {
   /* 0.11 수문장전 — 판 마지막 고정, 풀 비포함 (처치 시 판 돌파, 360초 초과 시 수문장 퇴각) */
   gate: { name: '수문장전', type: '보스', goal: 'boss', fail: 360, spawnMul: 0.35, tint: [190, 70, 70],
     hint: '사문의 수문장 처치' },
+  /* 0.12 마왕전 — 4번째 문 개방 직후(마지막 판) 또는 재도전 판 페이즈 5종 후, 420초 초과 시 마왕성 소멸 */
+  demon: { name: '마왕전', type: '보스', goal: 'boss', fail: 420, spawnMul: 0.3, tint: [70, 40, 110],
+    hint: '마왕 처치' },
 };
 const PHASE_ORDER = ['horde', 'calm', 'fog', 'camp', 'surge', 'warband', 'hunt', 'siege', 'seal', 'escort', 'ritual', 'collapse'];
 const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 7, zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
-  perRun: [7, 8], perType: 2,
+  perRun: [7, 8], perType: 2, retryN: 5, finalGap: 9,              // 재도전 판 페이즈 수 (0.12), 마왕성 출현 예고 구간(초)
   huntN: 4, huntAt: [0, 15, 35, 55],                                   // 엘리트 사냥: 처치 목표·출현 시각(초)
   siegeEvery: 13, siegeFirst: 4, siegeN: 30, siegeR: 300,              // 포위진: 원형 포위 주기·수·반경
   cartHp: 300, cartR: 16, cartDist: 1000, cartSpeed: 10, cartNear: 150, cartHurt: 0.25, cartHurtMax: 8,   // 수레 호위
@@ -48,18 +51,18 @@ const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: 
 };
 
 /* 판당 투입 페이즈 구성 — 유형별 perType종 이상 보장 후 나머지 무작위 */
-function pickPhaseOrder() {
-  const n = Math.random() < 0.5 ? PH_CFG.perRun[0] : PH_CFG.perRun[1], by = {}, out = [];
+function pickPhaseOrder(retry) {
+  const n = retry ? PH_CFG.retryN : Math.random() < 0.5 ? PH_CFG.perRun[0] : PH_CFG.perRun[1], by = {}, out = [];
   for (const id of PHASE_ORDER) (by[PHASES[id].type] = by[PHASES[id].type] || []).push(id);
-  for (const t in by) out.push(...shuffle(by[t].slice()).slice(0, PH_CFG.perType));
+  for (const t in by) out.push(...shuffle(by[t].slice()).slice(0, retry ? 1 : PH_CFG.perType));
   const rest = shuffle(PHASE_ORDER.filter(id => !out.includes(id)));
   while (out.length < n && rest.length) out.push(rest.pop());
   return shuffle(out);
 }
 function phaseInit() {
-  G.ph = { order: pickPhaseOrder(), i: -1, id: null, t: 0, gapT: 2.5, inGap: true, tint: null, tintFrom: null, tintK: 1,
+  G.ph = { order: pickPhaseOrder(G.runType === 'retry'), i: -1, id: null, t: 0, gapT: 2.5, inGap: true, tint: null, tintFrom: null, tintK: 1,
     zone: null, spring: null, cmd: null, cart: null, rits: null, cracks: [], camp: null, hunt: 0, log: [] };
-  G.ph.order.push('gate');                                 // 수문장전 마지막 고정 (0.11)
+  G.ph.order.push(G.runType === 'retry' ? 'demon' : 'gate');   // 수문장전 마지막 고정 (0.11), 재도전 판은 마왕전 (0.12)
   eventInit();
 }
 function curPhase() { return G.ph.id ? PHASES[G.ph.id] : null; }
@@ -72,6 +75,7 @@ function phaseStart() {
   scheduleElites();
   toast(`${ph.i + 1}/${ph.order.length} · ${P.name}`, '#ffe08a'); toast(P.hint, '#fff');
   if (ph.id === 'gate') gkSpawn();
+  if (ph.id === 'demon') dmSpawn();
   if (ph.id === 'calm') { const q = ringAt(180, 260); ph.spring = { x: q.x, y: q.y, r: 22, used: false }; }
   if (ph.id === 'seal') { ph.zone = newZone(0); }
   if (ph.id === 'warband') {
@@ -108,12 +112,24 @@ function phaseEnd(outcome) {
   if (ph.cmd && !ph.cmd.dead) { ph.cmd.dead = true; fx({ kind: 'ring', x: ph.cmd.x, y: ph.cmd.y, r0: 10, r1: 60, dur: 0.5, color: '#e8a83c' }); }
   ph.cmd = null;
   phaseCleanup(outcome);
+  if (ph.id === 'gate' && outcome === 'ok' && G.runType === 'final') {   // 4번째 문 개방 → 마왕성 출현, 같은 판에서 마왕전 (0.12)
+    ph.order.push('demon'); G.eb = []; G.hz = [];
+    toast(`${GATEKEEPERS[G.gk].name} 처치 · 네 문 개방`, '#ffe08a'); toast('마왕성 출현', '#c9a8ff');
+    fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 320, dur: 1.4, color: '#c9a8ff' });
+    ph.inGap = true; ph.gapT = PH_CFG.finalGap; ph.id = null; return;
+  }
   if (ph.i >= ph.order.length - 1) {                       // 마지막 페이즈(수문장전) 종료 → 판 완료
     if (ph.id === 'gate' && outcome !== 'ok') {              // 시간 초과: 수문장 퇴각, 판 미돌파 (0.11)
       G.result = 'retreat'; G.endT = 1.6; toast(GATEKEEPERS[G.gk].name + ' 퇴각 · 문 닫힘', '#ff9a7a');
       if (G.gkMob) for (const e of G.enemies) if (e.gk) e.dead = true;
       G.eb = []; G.hz = []; return;
     }
+    if (ph.id === 'demon' && outcome !== 'ok') {             // 시간 초과: 마왕성 소멸, 판 미돌파 (0.12)
+      G.result = 'retreat'; G.endT = 1.6; toast('마왕성 소멸 · 회귀', '#c9a8ff');
+      for (const e of G.enemies) if (e.gk) e.dead = true;
+      G.eb = []; G.hz = []; G.arena = null; return;
+    }
+    if (ph.id === 'demon') { G.result = 'clear'; G.endT = 2.2; toast('마왕 처치', '#ffe08a'); fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 320, dur: 1.4, color: '#ffe08a' }); return; }
     G.result = 'clear'; G.endT = 1.6; toast(ph.id === 'gate' ? `${GATEKEEPERS[G.gk].name} 처치 · ${GATEKEEPERS[G.gk].gate} 개방` : '들판 돌파', '#ffe08a');
     fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 260, dur: 1.2, color: '#ffe08a' });
     return;
@@ -314,7 +330,7 @@ function drawPhaseTint(c) {
 /* 화면 밖 목표 방향 표시 */
 function drawPhasePointer(c, camX, camY) {
   const ph = G.ph, rit = ph.rits && ph.rits.filter(e => !e.dead).sort((a, b) => dist2(a.x, a.y, G.p.x, G.p.y) - dist2(b.x, b.y, G.p.x, G.p.y))[0];
-  const t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || (G.gkMob && !G.gkMob.dead && ph.id === 'gate' ? G.gkMob : null) || ph.cart || rit || (ph.camp && !ph.camp.used ? ph.camp : null) || eventPointer() || G.altar || G.chests[0];
+  const t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || (G.gkMob && !G.gkMob.dead && isBossPhase() ? G.gkMob : null) || ph.cart || rit || (ph.camp && !ph.camp.used ? ph.camp : null) || eventPointer() || G.altar || G.chests[0];
   if (!t) return;
   const Z = VIEW.zoom, sx = (t.x - camX) * Z, sy = (t.y - camY) * Z, m = 34, top = VIEW.sat + 90;
   if (sx > m && sx < VIEW.cw - m && sy > top && sy < VIEW.ch - m) return;

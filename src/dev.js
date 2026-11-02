@@ -30,7 +30,8 @@ const DEV = {
       <button data-k="ult">궁극기 충전</button>
       <button data-k="elite">정예 호출</button>
       <button data-k="altar">제단 호출</button>
-      <button data-k="gate">수문장전 이동</button></div>
+      <button data-k="gate">수문장전 이동</button>
+      <button data-k="demon">마왕전 이동</button></div>
       <pre id="devinfo"></pre>`;
     this.info();
     this.el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
@@ -41,6 +42,7 @@ const DEV = {
       if (k === 'speed') d.speed = { 1: 2, 2: 4, 4: 8, 8: 1 }[d.speed];
       if (k === 'restart') newRun();
       if (k === 'gate' && STATE.mode === 'play' && G.ph.id !== 'gate') { G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
+      if (k === 'demon' && STATE.mode === 'play' && !isBossPhase()) { G.runType = 'retry'; G.ph.order = G.ph.order.slice(0, G.ph.i + 1).concat('demon'); G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
       if (k === 'ult' && G.p.job) G.p.ult = JOB_CFG.ultNeed;
       if (k === 'elite' && STATE.mode === 'play') spawnElite();
       if (k === 'altar' && !G.p.job) { const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i }; }
@@ -60,7 +62,10 @@ const AUTO_DIRS = Array.from({ length: 16 }, (_, i) => ({ x: Math.cos(i * Math.P
 function autoDanger(qx, qy) {
   const p = G.p; let d = 0;
   for (const k of G.ph.cracks) if (!k.done) { const dd = Math.sqrt(dist2(k.x, k.y, qx, qy)) - k.r - p.r; if (dd < 10) d += 30 + 30 * k.t / PH_CFG.crackWarn; }   // 붕괴 예고 회피 (0.10)
+  const A = G.arena; if (A) { const o = Math.sqrt(dist2(A.x, A.y, qx, qy)) - (A.R - p.r - 25); if (o > 0) d += 40 + o; }   // 마왕 결계 밖 회피 (0.12)
   if (G.hz) for (const h of G.hz) {                                                       // 수문장 예고 구역·장판 회피 (0.11)
+    if (h.k === 'sect') { if (!h.fired && dmInSect(h, qx, qy, p.r + 12)) d += 30 + 30 * h.t / h.warn; continue; }   // 마왕 낫·광선 (0.12)
+    if (h.k === 'beam') { if (h.t > h.warn - 0.5 && dmOnBeam(h, qx, qy, p.r + 14)) d += 45; continue; }
     if (h.k === 'circ') { if (h.fired && !h.pool) continue; const dd = Math.sqrt(dist2(h.x, h.y, qx, qy)) - h.r - p.r * 0.5; if (dd < 12) d += h.fired ? 25 : 30 + 30 * h.t / h.warn; }
     else if (h.t <= h.warn + 0.6) { const rx = qx - h.x, ry = qy - h.y, al = rx * h.dx + ry * h.dy; if (al > -20 && al < h.len + 20 && Math.abs(rx * h.dy - ry * h.dx) < h.w / 2 + p.r + 10) d += 45; }
   }
@@ -85,7 +90,7 @@ function autoTarget() {
   if (ph.rits && p.hp > p.maxHp * 0.35) { const r = ph.rits.filter(e => !e.dead).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y))[0]; if (r) return { x: r.x, y: r.y, k: 'boss' }; }   // 마법진 파괴
   if (G.altar && p.hp > p.maxHp * 0.4 && !aiProfile().skipAltar) return { x: G.altar.x, y: G.altar.y, k: 'goal' };     // 전직 제단 (0.6)
   if (ph.spring && !ph.spring.used && p.hp < p.maxHp * 0.85) return { x: ph.spring.x, y: ph.spring.y, k: 'goal' };
-  const gb = G.gkMob; if (gb && !gb.dead && ph.id === 'gate' && p.hp > p.maxHp * 0.3) { const t = autoGkTarget(gb); return { x: t.x, y: t.y, k: 'gk' }; }   // 수문장 교전 (0.11)
+  const gb = G.gkMob; if (gb && !gb.dead && isBossPhase() && p.hp > p.maxHp * 0.3) { const t = autoGkTarget(gb); return { x: t.x, y: t.y, k: 'gk' }; }   // 수문장 교전 (0.11)
   if (ph.cmd && !ph.cmd.dead && p.hp > p.maxHp * 0.4) return { x: ph.cmd.x, y: ph.cmd.y, k: 'boss' };            // 대장 교전 유도
   for (const g of G.gems) {
     if (g.mag) continue; const d = Math.sqrt(dist2(g.x, g.y, p.x, p.y)); if (d > 420) continue;
