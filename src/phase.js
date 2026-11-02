@@ -30,6 +30,7 @@ function phaseBias() { const P = curPhase(); return !G.ph.inGap && P && P.bias |
 function phaseStart() {
   const ph = G.ph; ph.i++; ph.id = ph.order[ph.i]; ph.t = 0; ph.inGap = false;
   const P = PHASES[ph.id];
+  scheduleElites();
   toast(`${ph.i + 1}/${ph.order.length} · ${P.name}`, '#ffe08a'); toast(P.hint, '#fff');
   if (ph.id === 'calm') { const q = ringAt(180, 260); ph.spring = { x: q.x, y: q.y, r: 22, used: false }; }
   if (ph.id === 'seal') { ph.zone = newZone(0); }
@@ -54,6 +55,7 @@ function phaseEnd(outcome) {
     return;
   }
   ph.inGap = true; ph.gapT = PH_CFG.gap; ph.id = null;
+  altarCheck();
   toast(outcome === 'ok' ? '페이즈 돌파' : '페이즈 종료', '#9fe0a0');
 }
 
@@ -132,7 +134,7 @@ function drawPhaseTint(c) {
 }
 /* 화면 밖 목표 방향 표시 */
 function drawPhasePointer(c, camX, camY) {
-  const ph = G.ph, t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null);
+  const ph = G.ph, t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || G.altar || G.chests[0];
   if (!t) return;
   const Z = VIEW.zoom, sx = (t.x - camX) * Z, sy = (t.y - camY) * Z, m = 34, top = VIEW.sat + 90;
   if (sx > m && sx < VIEW.cw - m && sy > top && sy < VIEW.ch - m) return;
@@ -140,7 +142,7 @@ function drawPhasePointer(c, camX, camY) {
   const kx = (VIEW.cw / 2 - m) / Math.abs(Math.cos(ang) || 1e-6), ky = (Math.sin(ang) < 0 ? cy - top : VIEW.ch / 2 - m) / Math.abs(Math.sin(ang) || 1e-6);
   const R = Math.min(kx, ky), px = cx + Math.cos(ang) * R, py = cy + Math.sin(ang) * R;
   c.save(); c.translate(px, py); c.rotate(ang);
-  c.fillStyle = ph.zone ? '#9fc4ff' : ph.cmd ? '#e8a83c' : '#8ff0b0'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2;
+  c.fillStyle = t === G.altar ? '#d9a8ff' : G.chests.includes(t) ? '#ffd24a' : ph.zone ? '#9fc4ff' : ph.cmd ? '#e8a83c' : '#8ff0b0'; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 2;
   c.beginPath(); c.moveTo(14, 0); c.lineTo(-8, -10); c.lineTo(-3, 0); c.lineTo(-8, 10); c.closePath(); c.fill(); c.stroke();
   c.restore();
 }

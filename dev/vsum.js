@@ -35,6 +35,12 @@ const out = {
   phase: (() => { const P = {}; for (const r of ok) for (const [id, t, o] of r.phases || []) { const x = P[id] = P[id] || { n: 0, t: [], timeout: 0 }; x.n++; x.t.push(t); if (o === 'timeout') x.timeout++; }
     for (const k in P) P[k] = { n: P[k].n, avgSec: avg(P[k].t), timeout: P[k].timeout };
     return { clearRuns: ok.filter(r => r.result === 'clear').length, reachedAvg: avg(ok.map(r => r.phaseReached || 0)), in8to10: ok.filter(r => r.time >= 480 && r.time <= 600).length, byPhase: P }; })(),
+  core: (() => { const J = ok.filter(r => r.job), J2 = ok.filter(r => r.job2);   // 2단계 핵심 시스템 (0.7)
+    return { jobRuns: J.length, jobs: cnt(J.map(r => r.job)), jobAtAvg: avg(J.map(r => r.jobAt)), job2Runs: J2.length, job2: cnt(J2.map(r => r.job2)), job2AtAvg: avg(J2.map(r => r.job2At)),
+      ultsAvgJob: avg(J.map(r => r.ults || 0)), altar: ok.reduce((m, r) => (r.altar || [0, 0, 0, 0]).map((v, i) => m[i] + v), [0, 0, 0, 0]),
+      branchesAvg: avg(ok.map(r => (r.branches || []).length)), branchPick: cnt(ok.flatMap(r => r.branches || [])), relicRuns: ok.filter(r => (r.relics || []).length).length, relics: cnt(ok.flatMap(r => r.relics || [])),
+      elitesAvg: avg(ok.map(r => (r.elites || [0])[0])), eliteKillAvg: avg(ok.map(r => (r.elites || [0, 0])[1])), chestsAvg: avg(ok.map(r => r.chests || 0)), chestPick: cnt(ok.flatMap(r => (r.chestPicks || []).map(x => x.split(':')[0]))),
+      maxMinions: q(ok.map(r => r.maxMinions || 0), 1) }; })(),
   errors: errs, pageErr: ok.reduce((s, r) => s + (r.pageErr || []).length, 0), errShownRuns: ok.filter(r => r.errShown).length,
   flow: flows, saveBad: ok.filter(r => !r.saveOk).length,
   perf: { maxEnP90: q(ok.map(r => r.maxEn || 0), .9), stepMsAvg: avg(ok.map(r => r.cost.stepMs)), stepMsMax: q(ok.map(r => r.cost.stepMs), 1), renMsAvg: avg(ok.map(r => r.cost.renMs)), renMsMax: q(ok.map(r => r.cost.renMs), 1) },

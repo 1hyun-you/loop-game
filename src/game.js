@@ -10,10 +10,13 @@ function newRun() {
   G = {
     time: 0, kills: 0, eid: 0, pid: 0, spawnAcc: 0, result: null, endT: 0, finished: false,
     p: { x: 0, y: 0, r: CFG.player.r, hp: CFG.player.hp, maxHp: CFG.player.hp, face: { x: 0, y: -1 }, invT: 0, flash: 0, moving: false,
-      level: 1, xp: 0, need: xpNeed(1), weapons: [], passives: [], bonusDmg: 0, mod: null },
-    enemies: [], gems: [], proj: [], fx: [], toasts: [],
-    pendingLv: 0, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
-    stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null }, lastHit: '',
+      level: 1, xp: 0, need: xpNeed(1), weapons: [], passives: [], relics: [], bonusDmg: 0, mod: null,
+      job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, shield: false, vet: false },
+    enemies: [], gems: [], proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], turrets: [], minions: [], mines: [], altar: null,
+    pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
+    tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
+    stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
+      branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
   };
   recalc();
   addWeapon(START_WEAPON);
@@ -30,15 +33,16 @@ function passLv(id) { const ps = G.p.passives.find(x => x.id === id); return ps 
 function recalc() {
   const p = G.p, prevMax = p.maxHp;
   p.mod = {
-    dmg: (1 + PASSIVES.might.per * passLv('might')) * (1 + p.bonusDmg),
-    speed: 1 + PASSIVES.swift.per * passLv('swift'),
+    dmg: (1 + PASSIVES.might.per * passLv('might')) * (1 + p.bonusDmg) * (p.vet ? 1.15 : 1),
+    speed: (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1),
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
-  p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit');
+  p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
   if (p.maxHp > prevMax) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복
   p.hp = Math.min(p.hp, p.maxHp);
 }
 function heal(v) { const p = G.p; p.hp = Math.min(p.maxHp, p.hp + v); }
+function clearInput() { INPUT.active = false; INPUT.id = null; INPUT.mag = 0; }
 function toast(text, color = '#fff') { G.toasts.push({ text, color, t: 0, dur: 2 }); if (G.toasts.length > 3) G.toasts.shift(); }
 function fx(o) { if (G.fx.length < 220) G.fx.push(Object.assign({ t: 0 }, o)); }
 
@@ -47,16 +51,23 @@ function step(dt) {
   G.time += dt;
   if (G.time >= (G.stats.dmgMin.length + 1) * 60) G.stats.dmgMin.push(Object.assign({}, G.stats.dmg));   // 분 단위 피해 누적 스냅숏
   updatePlayer(dt);
-  if (!G.result) updatePhase(dt);
+  if (!G.result) { updatePhase(dt); updateEliteSpawn(dt); }
   if (!G.result) updateSpawn(dt);
   gridBuild(G.enemies);
-  if (!G.result) updateWeapons(dt);
+  if (!G.result) { updateWeapons(dt); updateJob(dt); updatePassiveBranches(dt); updateRelics(dt); }
   updateProjectiles(dt);
+  updatePools(dt);
   updateEnemies(dt);
   updateGems(dt);
+  if (!G.result) { updateChests(); updateAltar(dt); }
   updateMisc(dt);
   if (G.result) { G.endT -= dt; if (G.endT <= 0 && !G.finished) { G.finished = true; finishRun(); } }
-  else if (G.pendingLv > 0 && STATE.mode === 'play') openSelect();
+  else if (STATE.mode === 'play') {                         // 선택 화면 우선순위: 2차 전직 → 분기 → 보물 상자 → 레벨업
+    if (G.pendingJob2) openJob2();
+    else if (G.pendingBr.length) openBranch();
+    else if (G.pendingChest > 0) openChest();
+    else if (G.pendingLv > 0) openSelect();
+  }
 }
 
 /* 플레이어 */
@@ -117,6 +128,8 @@ function updateEnemies(dt) {
     if (e.kbx || e.kby) { e.x += e.kbx * dt; e.y += e.kby * dt; const k = Math.max(0, 1 - dt * 9); e.kbx *= k; e.kby *= k; if (Math.abs(e.kbx) + Math.abs(e.kby) < 2) e.kbx = e.kby = 0; }
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy) || 1;
     let sp = G.result ? -e.speed * 0.3 : e.speed;
+    if (e.elite) sp *= eliteMove(e, dt);
+    if (e.slowT > 0) { e.slowT -= dt; sp *= 0.55; }
     const z = G.ph.zone; if (z && dist2(e.x, e.y, z.x, z.y) < z.r * z.r) sp *= PH_CFG.zoneSlow;   // 봉인석 구역 둔화 (0.3)
     e.x += dx / d * sp * dt; e.y += dy / d * sp * dt;
     if (d > farR) { const q = e.cmd ? ringAt(VIEW.w * 0.6, VIEW.w * 0.7) : ringPos(10); e.x = q.x; e.y = q.y; e.kbx = e.kby = 0; }   // 시야 밖 재배치
@@ -137,20 +150,29 @@ function updateEnemies(dt) {
 /* 피해·처치 */
 function damageEnemy(e, dmg, o = {}) {
   if (e.dead) return;
+  dmg *= jobDmgMul(e, o);
+  if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
+  if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
   const eff = Math.min(dmg, Math.max(0, e.hp));          // 실제 깎은 체력 기준 집계(초과 피해 제외, 0.2a)
   e.hp -= dmg; e.flash = 0.08;
   G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + eff;
   if (o.kb && o.fx !== undefined && !e.cmd) { const dx = e.x - o.fx, dy = e.y - o.fy, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * o.kb; e.kby += dy / d * o.kb; }
   if (e.hp <= 0) killEnemy(e);
+  else onEnemyHit(e, o);
 }
 function killEnemy(e) {
   e.dead = true; G.kills++;
   G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
+  if (e.elite) eliteKilled(e);
+  onEnemyKill(e);
   fx({ kind: 'pop', x: e.x, y: e.y, r: e.r, color: e.color, dur: 0.22 });
 }
 function hurtPlayer(dmg, src) {
   const p = G.p;
   if (p.invT > 0 || STATE.dev.god || G.result) return;
+  if (playerAvoid()) return;
+  dmg *= playerHurtMul();
+  onPlayerHurt();
   p.hp -= dmg; p.invT = CFG.player.invuln; p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
   if (p.hp <= 0) { p.hp = 0; G.result = 'dead'; G.endT = 1.4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 200, dur: 1, color: '#ff6a6a' }); }
@@ -202,6 +224,9 @@ function buildReport() {
     xp: [G.stats.xpGot, G.stats.xpDrop], selOpen: G.stats.selOpen, pendingLv: G.pendingLv, lastMinShare: lastMinShare(), picks: G.stats.picks, wFullAt: G.stats.wFullAt, pFullAt: G.stats.pFullAt,
     phases: G.ph.log, phaseReached: G.ph.i + 1, phaseAt: G.ph.id || 'gap',
     rerollsUsed: CFG.select.rerolls - G.rerolls, banishUsed: CFG.select.banishes - G.banishes,
+    branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
+    job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults,
+    altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
   };
 }
 /* 마지막 1분 피해 비중 (빌드 완성도 반영 판독용) */

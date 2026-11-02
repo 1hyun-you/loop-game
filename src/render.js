@@ -13,8 +13,10 @@ function render() {
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   drawGround(c, camX, camY);
   drawPhaseGround(c);
+  drawGrowthGround(c, inView);
   drawGems(c, inView);
   drawEnemies(c, inView);
+  drawJobUnits(c, inView);
   drawPlayer(c);
   drawWeapons(c, inView);
   drawFx(c);
@@ -73,6 +75,51 @@ function drawEnemies(c, inView) {
   for (const a of byColor.values()) for (const e of a) { const ex = G.p.x > e.x ? 1.5 : -1.5; c.rect(e.x - e.r * 0.4 + ex, e.y - e.r * 0.15, 2, 2.5); c.rect(e.x + e.r * 0.25 + ex, e.y - e.r * 0.15, 2, 2.5); }
   c.fill();
   if (flash.length) { c.fillStyle = '#fff'; c.beginPath(); for (const e of flash) enemyPath(c, e); c.fill(); }
+  // 엘리트: 금색 테두리 · 보호막 · 돌진 예고 · 체력 막대
+  for (const e of G.enemies) {
+    if (e.dead || !e.elite || !inView(e.x, e.y, e.r)) continue;
+    c.strokeStyle = '#ffd24a'; c.lineWidth = 3; c.beginPath(); enemyPath(c, e); c.stroke();
+    if (e.sh > 0) { c.strokeStyle = 'rgba(140,200,255,0.85)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 6, 0, 7); c.stroke(); }
+    if (e.tele > 0) { c.strokeStyle = 'rgba(255,80,60,0.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(G.p.x, G.p.y); c.stroke(); }
+    const w = e.r * 2, y = e.y - e.r - 9; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 4); c.fillStyle = '#ffd24a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 4);
+  }
+  if (G.p.job === 'archer') { c.fillStyle = '#b8ff9a'; for (const e of G.enemies) if (!e.dead && e.mk && inView(e.x, e.y, e.r)) for (let i = 0; i < e.mk; i++) c.fillRect(e.x - 8 + i * 4, e.y - e.r - 6, 3, 3); }
+}
+/* 지면: 장판·잔상·보물 상자·전직 제단·지뢰 */
+function drawGrowthGround(c, inView) {
+  for (const z of G.pools) {
+    if (!inView(z.x, z.y, z.r)) continue;
+    const k = 1 - z.t / z.dur;
+    c.fillStyle = z.kind === 'trail' ? `rgba(200,255,220,${0.25 * k})` : `rgba(255,120,40,${0.28 * k})`;
+    c.beginPath(); c.arc(z.x, z.y, z.r, 0, 7); c.fill();
+  }
+  const p = G.p;
+  if (p.exw && p.exw.id === 'mage') { c.strokeStyle = 'rgba(170,220,255,0.35)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, EXW.mage.R, 0, 7); c.stroke(); }
+  for (const m of G.mines) { c.fillStyle = m.arm > 0 ? '#8a7040' : '#ffcf70'; c.beginPath(); c.arc(m.x, m.y, 5, 0, 7); c.fill(); }
+  for (const ch of G.chests) {
+    const b = Math.sin(G.time * 5) * 2;
+    c.fillStyle = '#a8742a'; c.fillRect(ch.x - 11, ch.y - 8 + b, 22, 16); c.fillStyle = '#ffd24a'; c.fillRect(ch.x - 11, ch.y - 2 + b, 22, 3); c.fillRect(ch.x - 2, ch.y - 4 + b, 4, 6);
+    c.strokeStyle = '#3a2410'; c.lineWidth = 1.5; c.strokeRect(ch.x - 11, ch.y - 8 + b, 22, 16);
+  }
+  const a = G.altar;
+  if (a) {
+    const pulse = 0.5 + 0.5 * Math.sin(G.time * 3);
+    c.fillStyle = `rgba(200,150,255,${0.15 + pulse * 0.1})`; c.beginPath(); c.arc(a.x, a.y, a.r + 14, 0, 7); c.fill();
+    c.fillStyle = '#4a3a6a'; c.fillRect(a.x - 14, a.y - 10, 28, 20); c.fillStyle = '#d9a8ff'; c.fillRect(a.x - 9, a.y - 22, 18, 12);
+    c.strokeStyle = '#efdcff'; c.lineWidth = 2; c.strokeRect(a.x - 14, a.y - 10, 28, 20);
+    if (a.stay > 0) { c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(a.x, a.y, a.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * a.stay / JOB_CFG.altarStay); c.stroke(); }
+  }
+}
+/* 포탑·망령 */
+function drawJobUnits(c, inView) {
+  for (const t of G.turrets) {
+    if (!inView(t.x, t.y, 12)) continue;
+    c.fillStyle = t.temp ? '#c89040' : '#8a6a3a'; c.fillRect(t.x - 9, t.y - 9, 18, 18);
+    c.strokeStyle = '#ffd890'; c.lineWidth = 4; c.beginPath(); c.moveTo(t.x, t.y); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y + Math.sin(t.a || 0) * 13); c.stroke();
+  }
+  c.fillStyle = 'rgba(200,170,255,0.85)'; c.beginPath();
+  for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; c.moveTo(m.x + m.r, m.y); c.arc(m.x, m.y, m.r, 0, 7); }
+  c.fill();
 }
 function drawPlayer(c) {
   const p = G.p;
@@ -88,6 +135,15 @@ function drawPlayer(c) {
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
   c.fillStyle = p.hp / p.maxHp > 0.3 ? '#5fe07a' : '#ff5a5a'; c.fillRect(x, y, w * Math.max(0, p.hp / p.maxHp), h);
+  if (p.shield) { c.strokeStyle = 'rgba(140,210,255,0.9)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, p.r + 5, 0, 7); c.stroke(); }
+  if (G.tm.inv > 0) { c.strokeStyle = 'rgba(255,240,160,0.8)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, p.r + 8, 0, 7); c.stroke(); }
+  if (p.job) {                                              // 궁극기 게이지 (체력 막대 아래)
+    const k = p.ult / JOB_CFG.ultNeed, full = k >= 1;
+    c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y + h + 1, w + 2, 4);
+    c.fillStyle = full ? (Math.floor(G.time * 4) % 2 ? '#ffe08a' : '#fff6c8') : '#c8a040'; c.fillRect(x, y + h + 2, w * k, 2);
+    if (full && G.tm.stopT > 0) { c.strokeStyle = '#ffe08a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * G.tm.stopT / JOB_CFG.ultStop); c.stroke(); }
+    if (p.job === 'warrior' && p.fury > 0) { c.fillStyle = '#ff7a5a'; c.fillRect(x, y - 4, w * p.fury / 100, 2); }
+  }
 }
 function drawFx(c) {
   for (const f of G.fx) {
@@ -105,6 +161,7 @@ function drawFx(c) {
       c.stroke(); c.fillStyle = '#bfe4ff'; c.beginPath(); c.arc(f.x, f.y, 10 * (1 - k) + 4, 0, 7); c.fill();
     }
     else if (f.kind === 'arc') { c.globalAlpha = 0.45 * (1 - k); c.fillStyle = f.color; c.beginPath(); c.moveTo(G.p.x, G.p.y); c.arc(G.p.x, G.p.y, f.r, f.a - f.arc / 2, f.a + f.arc / 2); c.closePath(); c.fill(); }
+    else if (f.kind === 'zap') { c.globalAlpha = 1 - k; c.strokeStyle = '#d8eeff'; c.lineWidth = 2; c.beginPath(); c.moveTo(f.x, f.y); c.lineTo((f.x + f.x2) / 2 + 8, (f.y + f.y2) / 2 - 6); c.lineTo(f.x2, f.y2); c.stroke(); }
     else if (f.kind === 'pop') { c.globalAlpha = 1 - k; c.fillStyle = f.color; c.beginPath(); c.arc(f.x, f.y, f.r * (1 + k), 0, 7); c.fill(); }
     c.globalAlpha = 1;
   }
@@ -116,7 +173,7 @@ function drawWeapons(c, inView) {
     if (w.id !== 'spin' || !w.n) continue;
     c.fillStyle = '#ffd0c8'; c.strokeStyle = '#7a3a30'; c.lineWidth = 1.5;
     for (let i = 0; i < w.n; i++) {
-      const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R, t = a + Math.PI / 2, L = w.br * 1.3, H = w.br * 0.45;
+      const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R, t = a + Math.PI / 2, L = w.bs * 1.3, H = w.bs * 0.45;
       c.beginPath();
       c.moveTo(bx + Math.cos(t) * L, by + Math.sin(t) * L); c.lineTo(bx + Math.cos(a) * H, by + Math.sin(a) * H);
       c.lineTo(bx - Math.cos(t) * L, by - Math.sin(t) * L); c.lineTo(bx - Math.cos(a) * H, by - Math.sin(a) * H); c.closePath(); c.fill(); c.stroke();
@@ -131,6 +188,8 @@ function drawWeapons(c, inView) {
       c.save(); c.translate(pr.x, pr.y); c.rotate(pr.spin); c.fillStyle = pr.color; c.strokeStyle = '#6a4a20'; c.lineWidth = 1.5;
       c.beginPath(); c.moveTo(-pr.r, -pr.r * 0.35); c.lineTo(pr.r, -pr.r * 0.35); c.lineTo(pr.r * 0.6, pr.r * 0.6); c.lineTo(-pr.r * 0.6, pr.r * 0.6); c.closePath(); c.fill(); c.stroke();
       c.restore();
+    } else if (pr.kind === 'orb' || pr.kind === 'shell') {
+      c.fillStyle = pr.color; c.beginPath(); c.arc(pr.x, pr.y, pr.r, 0, 7); c.fill();
     } else if (pr.kind === 'fire') {
       c.fillStyle = 'rgba(255,170,60,0.35)'; c.beginPath(); c.arc(pr.x - Math.cos(a) * 6, pr.y - Math.sin(a) * 6, pr.r * 1.3, 0, 7); c.fill();
       c.fillStyle = pr.color; c.beginPath(); c.arc(pr.x, pr.y, pr.r, 0, 7); c.fill();
@@ -153,6 +212,7 @@ function drawHUD(c) {
   c.font = 'bold 14px system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
   const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
   txt('Lv ' + p.level, 12, top + 20, 'left');
+  if (p.job) { c.font = 'bold 12px system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px system-ui'; }
   c.font = 'bold 18px system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
   const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)
   c.font = 'bold 12px system-ui'; c.fillStyle = '#ffe08a';

@@ -3,8 +3,24 @@
    ============================================================ */
 const UI = document.getElementById('ui');
 function hideUI() { UI.innerHTML = ''; }
-const buildChips = () => G.p.weapons.map(w => `<span class="chip" style="border-color:${CFG.colors[WEAPONS[w.id].cat]}">${WEAPONS[w.id].name} ${w.lvl}</span>`).join('')
-  + G.p.passives.map(x => `<span class="chip" style="border-color:${CFG.colors.passive}">${PASSIVES[x.id].name} ${x.lvl}</span>`).join('');
+const brName = (id, k) => k ? ' · ' + BRANCHES[id].find(o => o.k === k).nm : '';
+const buildChips = () => (G.p.job ? `<span class="chip" style="border-color:#d9a8ff">${JOBS[G.p.job].name}${G.p.job2 ? ' · ' + JOB2[G.p.job].concat(JOB2_STAT).find(o => o.k === G.p.job2).nm : ''}</span>` : '')
+  + G.p.weapons.map(w => `<span class="chip" style="border-color:${CFG.colors[WEAPONS[w.id].cat]}">${WEAPONS[w.id].name} ${w.lvl}${brName(w.id, w.br)}</span>`).join('')
+  + (G.p.exw ? `<span class="chip" style="border-color:#ffe08a">${EXW[G.p.exw.id].name}</span>` : '')
+  + G.p.passives.map(x => `<span class="chip" style="border-color:${CFG.colors.passive}">${PASSIVES[x.id].name} ${x.lvl}${brName(x.id, x.br)}</span>`).join('')
+  + G.p.relics.map(r => `<span class="chip" style="border-color:#ffd24a">유물 ${RELICS[r].name}</span>`).join('');
+
+/* 설정 (0.7) — 기기 저장, 궁극기 자동 발동 */
+const SETTINGS = (() => { try { return Object.assign({ autoUlt: false }, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return { autoUlt: false }; } })();
+function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
+function showSettings(back) {
+  UI.innerHTML = `<div class="layer"><h2>설정</h2>
+    <div class="menu"><button id="s_ult" class="${SETTINGS.autoUlt ? 'pri' : ''}">궁극기 자동 발동 · ${SETTINGS.autoUlt ? '켜짐' : '꺼짐'}</button>
+    <p class="hint">꺼짐: 게이지가 차면 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동 발동</p>
+    <button id="s_back">돌아가기</button></div></div>`;
+  on('s_ult', () => { SETTINGS.autoUlt = !SETTINGS.autoUlt; saveSettings(); showSettings(back); });
+  on('s_back', back);
+}
 const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
 
 /* 시작 화면 — 배경은 새 판 들판(정지 상태), 기록 요약 표시 */
@@ -12,12 +28,14 @@ function showTitle() {
   newRun(); STATE.mode = 'title';
   const s = loadSave();
   UI.innerHTML = `<div class="layer title">
-    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">몰려오는 무리를 버티고 다섯 페이즈를 돌파</p></div>
+    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">몰려오는 무리를 버티고 다섯 페이즈를 돌파 · 제단에서 전직</p></div>
     <button class="pri big" id="start">시작</button>
+    <button id="settings">설정</button>
     <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span></div>
     <p class="hint">화면을 누른 채 끌어 이동 · 공격은 자동</p>
     <p class="ver">v${CFG.VERSION}</p></div>`;
   on('start', startRun);
+  on('settings', () => showSettings(showTitle));
 }
 function startRun() { if (STATE.mode !== 'title') newRun(); STATE.mode = 'play'; hideUI(); }
 
@@ -31,8 +49,9 @@ function pauseGame() {
     <h2>일시정지</h2>
     <div class="stats"><span>경과 시간</span><span>${fmtTime(G.time)}</span><span>페이즈</span><span>${P ? `${ph.i + 1}/${ph.order.length} ${P.name}` : '이동 중'}</span><span>레벨</span><span>${G.p.level}</span><span>체력</span><span>${Math.ceil(G.p.hp)}/${G.p.maxHp}</span></div>
     <div class="build">${buildChips()}</div>
-    <div class="menu"><button class="pri" id="resume">계속</button><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div>`;
+    <div class="menu"><button class="pri" id="resume">계속</button><button id="psettings">설정</button><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div>`;
   on('resume', resumeGame);
+  on('psettings', () => showSettings(() => { STATE.mode = 'play'; pauseGame(); }));
   on('restart', () => { if (confirmStep('restart')) newRun(); });
   on('home', () => { if (confirmStep('home')) showTitle(); });
 }

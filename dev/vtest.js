@@ -2,6 +2,7 @@
 // 가상 시계로 실제 주 반복·그리기·결과 화면·다시 시작 흐름·저장 누적을 실행
 // 사용: node dev/vtest.js <판 수> [--speed 8] [--cap 600] [--render 2] [--out dev/sim_log/runs_0.2.jsonl]
 // 0.2 확장: 레벨업 선택 화면 흐름(자동 선택) 통과, 선택 이력·최종 구성·무기별 피해 비중 기록
+// 0.7 확장: 분기·유물·엘리트·보물 상자·전직·2차 전직·궁극기 기록
 // 0.4 확장: 시작 화면·일시정지(정지 확인·계속)·결과 화면 처음 화면 경유 흐름 점검, --god(무적 완주 시간 판독), --port(동시 실행)
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
@@ -87,7 +88,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god }) => {
   const R = runG.report || {};
   return {
     v: CFG.VERSION, god: !!god, result: R.result, time: R.time, level: R.level, kills: R.kills, lastHit: R.lastHit, dmg: R.dmgShare, hurt: R.hurt, maxEn: R.maxEnemies,
-    levelAt: R.levelAt, selects: R.selOpen, pendingLv: R.pendingLv, lastMin: R.lastMinShare, xp: R.xp, build: R.build, picks: R.picks, wFullAt: R.wFullAt, phases: R.phases, phaseReached: R.phaseReached, phaseAt: R.phaseAt, hurt: R.hurt, pFullAt: R.pFullAt, rerolls: R.rerollsUsed, banish: R.banishUsed, saveRuns: save && save.runs, errs: VT.errs.splice(0), errShown: !!window.__errShown, flow: H.flow,
+    levelAt: R.levelAt, selects: R.selOpen, pendingLv: R.pendingLv, lastMin: R.lastMinShare, xp: R.xp, build: R.build, picks: R.picks, wFullAt: R.wFullAt, phases: R.phases, phaseReached: R.phaseReached, phaseAt: R.phaseAt, hurt: R.hurt, pFullAt: R.pFullAt, rerolls: R.rerollsUsed, banish: R.banishUsed, branches: R.branches, relics: R.relics, elites: R.elites, chests: R.chests, chestPicks: R.chestPicks, job: R.job, jobAt: R.jobAt, job2: R.job2, job2At: R.job2At, ults: R.ults, altar: R.altar, passes: R.passes, maxMinions: R.maxMinions, saveRuns: save && save.runs, errs: VT.errs.splice(0), errShown: !!window.__errShown, flow: H.flow,
     cost: { wallSec: Math.round((VT.realNow() - wall0) / 100) / 10, stepMs: H.steps ? +(H.stepMs / H.steps).toFixed(3) : 0, renMs: H.renders ? +(H.renMs / H.renders).toFixed(2) : 0 },
     diag: { enemiesArr: runG.enemies.length, gems: runG.gems.length, fx: runG.fx.length, dom: document.getElementsByTagName('*').length },
   };
