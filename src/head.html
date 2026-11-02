@@ -1,0 +1,86 @@
+<title>회귀의 들판</title>
+<meta name="theme-color" content="#16141e">
+<style>
+/* 단일 어두운 화면(게임 화면 전용), 세로형 전체 화면 캔버스 + 상단 겹침 UI */
+:root{
+  color-scheme:dark;
+  --bg:#16141e; --panel:#221f2e; --panel2:#2c2840; --line:#3d3854; --fg:#f0ecf7; --muted:#a49fb8; --accent:#7f74d6; --danger:#d0505c;
+  --f-body:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --f-mono:ui-monospace,Menlo,Consolas,monospace;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);overflow:hidden;overscroll-behavior:none;touch-action:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:var(--f-body)}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:5}
+#ui>.layer{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);background:rgba(12,10,18,.78)}
+.layer h2{margin:0;font-size:24px;text-wrap:balance}
+.layer .sub{color:var(--muted);font-size:15px;text-align:center}
+.stats{display:grid;grid-template-columns:auto auto;gap:6px 22px;font-size:15px;font-variant-numeric:tabular-nums}
+.stats span:nth-child(odd){color:var(--muted)}
+button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:12px 18px;font-size:16px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:active{transform:translateY(1px)}
+button.pri{background:#463c8c;border-color:var(--accent)}
+/* 레벨업 카드 (세로 나열, 테두리 색으로 종류 구분) */
+#ui>.layer.sel{justify-content:flex-start;background:rgba(14,12,22,.9);overflow-y:auto;touch-action:pan-y}
+.sel-head{text-align:center;margin-top:9vh}
+.sel-head h2{margin:0 0 4px}
+.cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px}
+.card{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--panel);width:100%}
+.card .ic{flex:0 0 44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#14121c}
+.card .tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.card .nm{font-size:17px;font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.card .ds{font-size:14px;color:var(--muted);line-height:1.45}
+.card .tag{font-size:12px;font-weight:500;padding:1px 7px;border-radius:20px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.card.k-melee{border-color:#e0655a}.card.k-ranged{border-color:#5fbf6a}.card.k-magic{border-color:#5f8fe8}.card.k-passive{border-color:#a8904a}.card.k-fill{border-color:#6a6480}
+.card.banish{border-style:dashed}
+.card:disabled{opacity:.4}
+.sel-actions{display:flex;gap:8px;width:100%;max-width:420px}
+.sel-actions button{flex:1;font-size:15px;padding:11px 8px}
+.sel-actions button.on{background:#7a2e3a;border-color:#c25060}
+button:disabled{opacity:.4}
+.build{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
+.chip{font-size:13px;padding:3px 9px;border-radius:20px;border:1.5px solid var(--line);background:var(--panel)}
+.devbtn{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);bottom:calc(var(--sab) + 10px);z-index:6;pointer-events:auto;
+  padding:6px 9px;font-size:12px;font-family:var(--f-mono);border-radius:7px;background:rgba(34,31,46,.8)}
+.dev{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);bottom:calc(var(--sab) + 48px);
+  max-width:420px;margin:0 auto;z-index:7;pointer-events:auto;background:rgba(14,12,20,.95);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px}
+.dev .g{display:flex;flex-wrap:wrap;gap:6px}
+.dev button{padding:7px 10px;font-size:13px;border-radius:7px}
+.dev button.on{background:#2d6a3c;border-color:#4caf6a}
+.dev pre{margin:8px 0 0;white-space:pre-wrap;color:#bcd9c0;font:12px/1.5 var(--f-mono)}
+.rot{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:50;font-size:18px;text-align:center;padding:24px}
+/* 시작·일시정지·결과 화면 (0.4) */
+.layer.title{background:linear-gradient(180deg,rgba(12,10,18,.55),rgba(12,10,18,.88));gap:18px}
+.ttl{text-align:center}
+.ttl h1{margin:0 0 6px;font-size:40px;letter-spacing:2px;text-wrap:balance}
+button.big{font-size:20px;padding:15px 0;width:min(260px,80vw)}
+.menu{display:flex;flex-direction:column;gap:10px;width:min(260px,80vw)}
+.menu button{width:100%}
+button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
+.hint{margin:0;color:var(--muted);font-size:14px;text-align:center}
+.ver{position:absolute;bottom:calc(var(--sab) + 12px);right:16px;margin:0;color:var(--muted);font:12px var(--f-mono)}
+.best{margin:0;color:#ffe08a;font-weight:700}
+.pausebtn{position:fixed;top:calc(var(--sat) + 6px);right:calc(env(safe-area-inset-right,0px) + 8px);z-index:6;width:40px;height:40px;padding:0;
+  font-size:15px;font-weight:800;border-radius:10px;background:rgba(34,31,46,.75);pointer-events:auto}
+/* 대사창 틀 — 하단 고정 */
+.dlg-wrap{position:absolute;inset:0;pointer-events:auto;display:flex;align-items:flex-end;justify-content:center;padding:0 12px calc(var(--sab) + 18px)}
+.dlg{display:flex;gap:12px;align-items:flex-start;width:100%;max-width:440px;min-height:112px;padding:12px;border-radius:14px;
+  background:rgba(20,18,30,.94);border:1.5px solid var(--line);position:relative;cursor:pointer}
+.dlg .pt{flex:0 0 64px;height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#14121c}
+.dlg .body{min-width:0;flex:1}
+.dlg .nm{font-weight:700;font-size:15px;color:#ffe08a;margin-bottom:4px}
+.dlg .tx{font-size:16px;line-height:1.55;white-space:pre-wrap;word-break:keep-all}
+.dlg .nx{position:absolute;right:12px;bottom:8px;font-size:12px;color:var(--muted)}
+@media (orientation:landscape) and (pointer:coarse){.rot{display:flex}}
+@media (prefers-reduced-motion:reduce){button:active{transform:none}}
+</style>
+<canvas id="c"></canvas>
+<div id="ui"></div>
+<div class="rot">세로 화면 전용 게임<br>기기를 세로로 돌려 주세요</div>
+<div id="sa" style="position:fixed;top:0;left:0;height:env(safe-area-inset-top,0px);width:1px;visibility:hidden"></div>
+<div id="sb" style="position:fixed;bottom:0;left:0;height:env(safe-area-inset-bottom,0px);width:1px;visibility:hidden"></div>
+<script>
