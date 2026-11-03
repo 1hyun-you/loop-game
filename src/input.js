@@ -4,23 +4,28 @@
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d', { alpha: false });
 const VIEW = { w: 400, h: 800, dpr: 1, zoom: 1, sat: 0, sab: 0, cw: 400, ch: 800 };
+/* 0.26a 화면 고정: 캔버스·UI를 픽셀 고정 크기로 두어 창 크기가 순간 변해도 늘어남·재생성·재배치 없음
+   (가장자리·상단 끌기 때 시스템 표시줄이 잠깐 나타나며 창 높이가 흔들리던 현상 대응)
+   폭 변경(회전)·높이 확대는 즉시 반영, 높이 축소는 1.2초 이상 유지될 때만 반영 */
+const uiEl = document.getElementById('ui');
 function resize() {
   VIEW.dpr = Math.min(CFG.dprMax, window.devicePixelRatio || 1);
   VIEW.cw = window.innerWidth; VIEW.ch = window.innerHeight;
   cv.width = Math.round(VIEW.cw * VIEW.dpr); cv.height = Math.round(VIEW.ch * VIEW.dpr);
+  cv.style.width = VIEW.cw + 'px'; cv.style.height = VIEW.ch + 'px';
+  if (uiEl) { uiEl.style.width = VIEW.cw + 'px'; uiEl.style.height = VIEW.ch + 'px'; }
   VIEW.zoom = clamp(VIEW.cw / CFG.viewWidth, 0.8, 1.6);
   VIEW.w = VIEW.cw / VIEW.zoom; VIEW.h = VIEW.ch / VIEW.zoom;
   VIEW.sat = document.getElementById('sa').getBoundingClientRect().height || 0;
   VIEW.sab = document.getElementById('sb').getBoundingClientRect().height || 0;
 }
-/* 0.25 상단 알림창 끌기 등 일시적 크기 변화로 캔버스가 재생성되며 흔들리던 현상 제거:
-   폭이 그대로이고 높이 변화가 30% 미만이면 0.4초 지연 후 크기가 유지될 때만 반영 */
 let rsT = 0;
 window.addEventListener('resize', () => {
   clearTimeout(rsT);
   const w = window.innerWidth, h = window.innerHeight;
-  if (w !== VIEW.cw || Math.abs(h - VIEW.ch) > VIEW.ch * 0.3) return resize();
-  rsT = setTimeout(() => { if (window.innerWidth === w && window.innerHeight === h) resize(); }, 400);
+  if (w !== VIEW.cw || h > VIEW.ch + 1) return resize();
+  if (h === VIEW.ch) return;
+  rsT = setTimeout(() => { if (window.innerWidth === w && window.innerHeight === h) resize(); }, 1200);
 });
 
 const INPUT = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0, dx: 0, dy: 0, mag: 0, keys: {} };

@@ -235,15 +235,23 @@ function drawBossGround(c) {
     if (h.k === 'line') {
       if (h.t > h.warn) continue;
       c.save(); c.translate(h.x, h.y); c.rotate(Math.atan2(h.dy, h.dx));
-      c.fillStyle = `rgba(255,70,50,${0.1 + 0.22 * a})`; c.fillRect(0, -h.w / 2, h.len, h.w);
-      c.strokeStyle = 'rgba(255,110,80,0.8)'; c.lineWidth = 2; c.strokeRect(0, -h.w / 2, h.len, h.w); c.restore();
+      c.fillStyle = 'rgba(255,40,70,0.13)'; c.fillRect(0, -h.w / 2, h.len, h.w);
+      c.fillStyle = `rgba(255,40,70,${0.18 + 0.22 * a})`; c.fillRect(0, -h.w / 2, h.len * a, h.w);       // 0.26a 진행 방향으로 차오르는 예고
+      c.strokeStyle = `rgba(255,${90 + 120 * a},${110 + 100 * a},0.9)`; c.lineWidth = 2; c.strokeRect(0, -h.w / 2, h.len, h.w);
+      c.restore();
     } else if (!h.fired) {
-      c.fillStyle = `rgba(255,60,40,${0.1 + 0.25 * a})`; c.beginPath(); c.arc(h.x, h.y, h.r * a, 0, 7); c.fill();
-      c.strokeStyle = 'rgba(255,120,90,0.9)'; c.lineWidth = 2; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.stroke();
+      c.fillStyle = 'rgba(255,40,70,0.12)'; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.fill();
+      c.fillStyle = `rgba(255,40,70,${0.16 + 0.2 * a})`; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 6.2832); c.moveTo(h.x + h.r * (1 - a), h.y); c.arc(h.x, h.y, h.r * (1 - a), 6.2832, 0, true); c.fill();   // 0.26a 가장자리부터 차오름
+      c.strokeStyle = `rgba(255,${90 + 140 * a},${110 + 120 * a},0.95)`; c.lineWidth = 2 + a; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.stroke();
+      c.save(); c.translate(h.x, h.y); c.rotate(G.time * 1.6); c.setLineDash([6, 8]); c.strokeStyle = 'rgba(255,120,140,0.55)'; c.lineWidth = 1.5;
+      c.beginPath(); c.arc(0, 0, h.r * 0.78, 0, 7); c.stroke(); c.restore(); c.setLineDash([]);
     } else if (h.pool) {
       const k = 1 - (h.t - h.warn) / h.pool;
-      c.fillStyle = `rgba(200,30,70,${0.35 * k + 0.1})`; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.fill();   // 0.25 적 장판 적자색 (아군 화염 장판 주황과 구분)
-      c.setLineDash([5, 4]); c.strokeStyle = `rgba(255,90,130,${0.8 * k})`; c.lineWidth = 2; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.stroke(); c.setLineDash([]);
+      const g = c.createRadialGradient(h.x, h.y, h.r * 0.1, h.x, h.y, h.r);
+      g.addColorStop(0, `rgba(120,10,50,${0.45 * k + 0.1})`); g.addColorStop(0.75, `rgba(220,30,80,${0.35 * k + 0.08})`); g.addColorStop(1, `rgba(255,80,120,${0.5 * k})`);
+      c.fillStyle = g; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.fill();
+      c.save(); c.translate(h.x, h.y); c.rotate(-G.time * 1.2); c.setLineDash([5, 6]); c.strokeStyle = `rgba(255,110,150,${0.8 * k})`; c.lineWidth = 2;
+      c.beginPath(); c.arc(0, 0, h.r - 2, 0, 7); c.stroke(); c.restore(); c.setLineDash([]);
     }
   }
 }
@@ -257,11 +265,7 @@ function drawBossTop(c, inView) {
     if (e.rage) { c.strokeStyle = 'rgba(255,90,60,0.7)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 5, 0, 7); c.stroke(); }
     if (e.gk === 'seren' && !e.clone && (G.time % 1.3) < 0.2) { c.strokeStyle = 'rgba(255,255,255,0.95)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 8, 0, 7); c.stroke(); }   // 본체 미광
   }
-  // 0.25 피아 구분: 적 탄환은 검은 외곽 + 적자색 테두리 + 맥동 (아군 공격은 청백·금색 계열)
-  const pu = 0.5 + 0.5 * Math.sin(G.time * 14);
-  c.fillStyle = 'rgba(20,6,16,0.85)'; c.beginPath(); for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; c.moveTo(b.x + b.r + 3.5, b.y); c.arc(b.x, b.y, b.r + 3.5, 0, 7); } c.fill();
-  c.strokeStyle = `rgba(255,${50 + pu * 40},${90 + pu * 40},0.95)`; c.lineWidth = 2; c.beginPath(); for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; c.moveTo(b.x + b.r + 2, b.y); c.arc(b.x, b.y, b.r + 2, 0, 7); } c.stroke();
-  for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; drawSpriteC(c, 'ball', 0, b.x, b.y, { tint: b.col, mul: b.r > 7 ? 2 : 1 }); }   // 0.20 도트 탄환
+  drawEnemyShots(c, inView);
 }
 /* 상단 수문장 체력 막대 */
 function drawBossBar(c, y, txt) {
@@ -277,4 +281,39 @@ function drawBossBar(c, y, txt) {
 function gkSave(s) {
   const g = G.stats.gate; s.gates = s.gates || [];
   if (g && g.killed && !s.gates.includes(g.id)) s.gates.push(g.id);
+}
+
+/* 0.26a 적 탄환: 발광 구슬(흰 중심·소스 색 띠·적색 번짐) + 진행 방향 잔광, 빠른 탄은 창날형, 대형탄은 회전 고리
+   모양은 색·크기별로 미리 그려 두고 찍는 방식 (매 프레임 그라데이션 생성 없음) */
+const ESHOT_CACHE = {};
+function eShotImg(col, r) {
+  const key = col + '|' + r; if (ESHOT_CACHE[key]) return ESHOT_CACHE[key];
+  const S = 3, R = r + 6, cv2 = document.createElement('canvas'); cv2.width = cv2.height = Math.ceil(R * 2 * S);
+  const g = cv2.getContext('2d'); g.scale(S, S); const o = R;
+  let gr = g.createRadialGradient(o, o, r * 0.6, o, o, R); gr.addColorStop(0, 'rgba(255,20,60,0.75)'); gr.addColorStop(0.5, 'rgba(255,20,60,0.3)'); gr.addColorStop(1, 'rgba(255,20,60,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(o, o, R, 0, 7); g.fill();                                     // 적색 번짐
+  g.fillStyle = 'rgba(40,0,14,0.9)'; g.beginPath(); g.arc(o, o, r + 1.3, 0, 7); g.fill();               // 밝은 지형 대비용 얇은 어두운 테
+  gr = g.createRadialGradient(o - r * 0.25, o - r * 0.25, 0, o, o, r);
+  gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.35, col); gr.addColorStop(1, '#ff2a55');
+  g.fillStyle = gr; g.beginPath(); g.arc(o, o, r, 0, 7); g.fill();
+  return (ESHOT_CACHE[key] = { cv: cv2, R });
+}
+function drawEnemyShots(c, inView) {
+  if (!G.eb.length) return;
+  const t = G.time;
+  for (const b of G.eb) {
+    if (!inView(b.x, b.y, b.r + 20)) continue;
+    const r = Math.round(b.r), I = eShotImg(b.col || '#ffb050', r), sp = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / sp, uy = b.vy / sp;
+    c.globalAlpha = 0.22; c.drawImage(I.cv, b.x - ux * r * 2.6 - I.R * 0.7, b.y - uy * r * 2.6 - I.R * 0.7, I.R * 1.4, I.R * 1.4);   // 잔광 2개
+    c.globalAlpha = 0.4; c.drawImage(I.cv, b.x - ux * r * 1.4 - I.R * 0.85, b.y - uy * r * 1.4 - I.R * 0.85, I.R * 1.7, I.R * 1.7);
+    c.globalAlpha = 1;
+    if (sp > 260 && r <= 7) {                                                                          // 빠른 탄: 진행 방향 창날형
+      c.save(); c.translate(b.x, b.y); c.rotate(Math.atan2(uy, ux)); c.scale(1.55, 0.8);
+      c.drawImage(I.cv, -I.R, -I.R, I.R * 2, I.R * 2); c.restore();
+    } else c.drawImage(I.cv, b.x - I.R, b.y - I.R, I.R * 2, I.R * 2);
+    if (r > 7) {                                                                                       // 대형탄: 회전 고리
+      c.strokeStyle = 'rgba(255,170,190,0.85)'; c.lineWidth = 1.6; const a0 = t * 5;
+      c.beginPath(); c.arc(b.x, b.y, r + 4, a0, a0 + 1.4); c.stroke(); c.beginPath(); c.arc(b.x, b.y, r + 4, a0 + 3.14, a0 + 4.54); c.stroke();
+    }
+  }
 }

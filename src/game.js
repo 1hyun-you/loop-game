@@ -74,6 +74,7 @@ function step(dt) {
   else if (STATE.mode === 'play') {                         // 선택 화면 우선순위: 2차 전직 → 분기 → 보물 상자 → 레벨업
     if (G.pendingStart) openStart();
     else if (G.pendingJob2) openJob2();
+    else if (G.pendingBond && G.pendingBond.length) openBond();
     else if (G.pendingBr.length) openBranch();
     else if (G.pendingDoor) openDoor();
     else if (G.pendingCamp) openCamp();
@@ -87,7 +88,7 @@ function updatePlayer(dt) {
   const p = G.p;
   p.invT -= dt; p.flash -= dt;
   if (G.result) { p.moving = false; return; }
-  const mv = moveVec(), sp = CFG.player.speed * p.mod.speed;
+  const mv = moveVec(), sp = CFG.player.speed * p.mod.speed * (G.tm.alpha > 0 ? 1.2 : 1);   // 0.26a 늑대 우두머리의 함성
   p.moving = mv.m > 0.05;
   if (p.moving) {
     p.x += mv.x * sp * dt; p.y += mv.y * sp * dt;
@@ -182,6 +183,7 @@ function damageEnemy(e, dmg, o = {}) {
   e.hp -= dmg; sfx('hit'); jHit(e, eff, o);                   // 타격 연출·피해 숫자 (0.22)
   G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + eff;
   if (o.kb && o.fx !== undefined && !e.cmd) { const dx = e.x - o.fx, dy = e.y - o.fy, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * o.kb * JUICE.kbMul; e.kby += dy / d * o.kb * JUICE.kbMul; }   // 밀림 강화 (0.22)
+  if (o.src !== 'ult') ultHitGain(e);                       // 0.26a 엘리트·수문장 타격 충전
   e.ls = o.src;                                              // 마지막 피해원 (0.26 변환 처치 효과)
   if (e.hp <= 0) killEnemy(e);
   else { o.dmg0 = dmg; onEnemyHit(e, o); }
@@ -238,7 +240,7 @@ function addXp(v) {
   while (p.xp >= p.need) { p.xp -= p.need; levelUp(); }
 }
 function levelUp() {
-  const p = G.p; p.level++; p.need = xpNeed(p.level); sfx('level');
+  const p = G.p; p.level++; p.need = xpNeed(p.level); sfx('level'); bondShareLevel();
   G.pendingLv++;
   G.stats.levelAt.push(Math.round(G.time));
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 70, dur: 0.4, color: '#7fe0ff', follow: true });
@@ -263,7 +265,7 @@ function buildReport() {
     phases: G.ph.log, phaseReached: G.ph.i + 1, phaseAt: G.ph.id || 'gap',
     rerollsUsed: CFG.select.rerolls - G.rerolls, banishUsed: CFG.select.banishes - G.banishes,
     branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
-    job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults,
+    job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults, bond: G.stats.bond || null, bondPicks: G.stats.bondPicks || [],
     altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
     order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.stats.gate.killed ? 0 : G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, runType: G.runType, demon: dmReport(), events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [], traits: G.stats.traits || [], mobs: Object.keys(G.stats.kt), crisis: G.stats.crisis, start: G.stats.start,
   };

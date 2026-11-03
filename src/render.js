@@ -225,6 +225,11 @@ function drawFx(c) {
       const pt = i => { const t = i / n, o = i && i < n ? (hash2(s, i) - 0.5) * 22 : 0; return [f.x + (f.x2 - f.x) * t + nx / L * o, f.y + (f.y2 - f.y) * t + ny / L * o]; };
       for (const [w, col, al] of [[6, '#5f8fe8', 0.35], [2, '#e6f4ff', 1]]) { c.globalAlpha = al * (1 - k); c.strokeStyle = col; c.lineWidth = w; c.beginPath(); for (let i = 0; i <= n; i++) { const q = pt(i); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); } c.stroke(); }
     }
+    else if (f.kind === 'slash') {                                        // 0.26a 도적 궁극기 그림자 베기: 대상 위 교차 칼자국
+      const L = 26 * (0.6 + Math.min(1, k * 4) * 0.4); c.globalAlpha = 1 - k; c.lineCap = 'round';
+      for (const [da, w, col] of [[0.5, 6, f.color], [0.5, 2, '#ffffff'], [-0.5, 6, f.color], [-0.5, 2, '#ffffff']]) { const a = f.a + da; c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(f.x - Math.cos(a) * L, f.y - Math.sin(a) * L); c.lineTo(f.x + Math.cos(a) * L, f.y + Math.sin(a) * L); c.stroke(); }
+      c.lineCap = 'butt';
+    }
     else if (f.kind === 'pop') { c.globalAlpha = 1 - k; c.fillStyle = f.color; c.beginPath(); c.arc(f.x, f.y, f.r * (1 + k), 0, 7); c.fill(); }
     c.globalAlpha = 1;
   }

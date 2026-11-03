@@ -15,7 +15,7 @@
 html{background:#16141e}
 html,body{height:100%;margin:0;background:var(--bg);position:fixed;inset:0;color:var(--fg);overflow:hidden;overscroll-behavior:none;touch-action:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:var(--f-body)}
-canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;background:#16141e}
+canvas#c{position:fixed;left:0;top:0;width:100vw;height:100vh;display:block;touch-action:none;background:#16141e}
 /* 0.25 능력 보기 */
 .abil{width:100%;max-width:420px;display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow-y:auto;touch-action:pan-y;text-align:left}
 .abil h3{margin:6px 0 0;font-size:13px;color:var(--muted);font-weight:400;text-align:left}
@@ -26,7 +26,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-actio
 .sel-head{position:relative;width:100%;max-width:420px}
 #abtn{position:absolute;right:0;top:0;padding:6px 10px;font-size:13px}
 #backhint{position:fixed;left:50%;bottom:calc(var(--sab) + 70px);transform:translateX(-50%);background:rgba(20,18,30,.92);border:1px solid var(--line);border-radius:20px;padding:8px 16px;font-size:14px;z-index:9;pointer-events:none}
-#ui{position:fixed;inset:0;pointer-events:none;z-index:5}
+#ui{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:5}
 #ui>.layer{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
   padding:calc(var(--sat) + 16px) 16px calc(var(--sab) + 16px);background:rgba(12,10,18,.78)}
 .layer h2{margin:0;font-size:24px;text-wrap:balance}

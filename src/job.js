@@ -51,7 +51,7 @@ const EXW = {
   priest: { name: '성광', ic: '광', ds: '1.6초마다 체력 높은 적에게 빛 기둥', cd: 1.6, dmg: 32, R: 50 },
   druid: { name: '가시 덩굴', ic: '덩', ds: '2초마다 주변 3곳 가시 장판', cd: 2.0, dmg: 9, R: 36 },
 };
-const JOB_CFG = { altarAfter: 2, altarDist: [170, 240], altarR: 26, altarStay: 0.6, ultNeed: 100, ultKill: 0.12, ultSec: 0.3, job2Min: 60, ultStop: 0.6, ultAutoN: 10, jobCatW: 1.4 };
+const JOB_CFG = { altarAfter: 2, altarDist: [170, 240], altarR: 26, altarStay: 0.6, ultNeed: 100, ultKill: 0.12, ultSec: 0.65, ultKillCap: 2, ultBossHit: 0.35, ultBossCap: 1.2, ultWin: 4, ultRefK: 0.5, ultRefMax: 25, job2Min: 60, ultStop: 0.6, ultAutoN: 10, jobCatW: 1.4 };
 
 /* ---------- 주력 계열 ---------- */
 function catLevels() { const s = { melee: 0, ranged: 0, magic: 0 }; for (const w of G.p.weapons) s[WEAPONS[w.id].cat] += w.lvl; return s; }
@@ -118,6 +118,8 @@ function applyJob2(k) {
 /* ---------- 피해·피격 연계 ---------- */
 function jobDmgMul(e, o) {
   const p = G.p; let m = 1;
+  if (G.tm.alpha > 0) m *= 1.2;                                   // 0.26a 늑대 우두머리의 함성
+  if (e.slowT > 0 && bondHas('wolf', 'howl2')) m *= 1.2;          // 0.26a 긴 울음
   if (p.job === 'warrior') m *= 1 + 0.4 * (p.job2 === 'berserk' ? 1.6 : 1) * p.fury / 100;
   let cc = 0, cm = 2;
   if (pBr('might') === 'crit') cc += 0.15;
@@ -152,7 +154,7 @@ function onEnemyHit(e, o) {
 }
 function onEnemyKill(e) {
   const p = G.p; if (!p.job) return;
-  ultGain(JOB_CFG.ultKill);
+  ultKillGain(e);
   if (p.job === 'priest' && ++p.holy >= (p.job2 === 'saint' ? 12 : 20)) { p.holy = 0; purify(); }
   jobWeaponKill(e); if (p.job === 'druid') petKilled(e);
   if (p.job === 'summoner' && !e.minionOf) {
@@ -217,30 +219,49 @@ function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0
 
 /* ---------- 궁극기 ---------- */
 function ultGain(v) { const p = G.p; if (tr('focus')) v *= 1.15; if (!p.job || p.ult >= JOB_CFG.ultNeed) return; p.ult = Math.min(JOB_CFG.ultNeed, p.ult + v); if (p.ult >= JOB_CFG.ultNeed) { G.tm.readyAt = G.time; toast('궁극기 준비 · 손 떼고 정지', '#ffe08a'); } }
+/* 0.26a 궁극기 충전 혼합 보강: 처치 충전은 초당 상한, 엘리트·수문장·마왕 타격 충전(초당 상한), 시전 중 처치분은 환급(1회 상한) */
+function ultBucket() { const B = G.ultB || (G.ultB = { s: -1, k: 0, b: 0, ref: 0 }); const s = Math.floor(G.time); if (s !== B.s) { B.s = s; B.k = 0; B.b = 0; } return B; }
+function ultKillGain(e) {
+  const C = JOB_CFG, B = ultBucket(), p = G.p;
+  if (G.tm.ultWin > 0) { if (B.ref < C.ultRefMax) { const v = Math.min(C.ultRefK, C.ultRefMax - B.ref); B.ref += v; p.ultRef = Math.min(C.ultNeed, (p.ultRef || 0) + v); } return; }
+  const v = Math.min(C.ultKill * (e && e.elite ? 10 : 1), C.ultKillCap - B.k); if (v <= 0) return; B.k += v; ultGain(v);
+}
+function ultHitGain(e) {
+  if (!G.p.job || !(e.elite || e.gk || e.boss)) return;
+  const C = JOB_CFG, B = ultBucket(), v = Math.min(C.ultBossHit, C.ultBossCap - B.b); if (v <= 0) return; B.b += v; ultGain(v);
+}
 function ultReady() { return G.p.job && G.p.ult >= JOB_CFG.ultNeed; }
 function useUlt() {
-  const p = G.p, j = p.job, D = (60 + p.level * 4) * p.mod.dmg;
-  p.ult = 0; G.stats.ults++; G.tm.stopT = 0; sfx('ult');
+  const p = G.p, j = p.job, D = (90 + p.level * 7) * p.mod.dmg;   // 0.26a 위력 상향 (60+4L → 90+7L)
+  p.ult = 0; p.ultRef = 0; G.ultB && (G.ultB.ref = 0); G.tm.ultWin = JOB_CFG.ultWin; G.stats.ults++; G.tm.stopT = 0; sfx('ult');
   toast(JOBS[j].ult.split(':')[0], '#ffe08a');
-  if (j === 'warrior') { G.tm.inv = 3; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 170, dur: 0.5, color: '#ffb070', fill: true }); gridQuery(p.x, p.y, 170, e => damageEnemy(e, D, { src: 'ult', kb: 420, fx: p.x, fy: p.y })); }
-  if (j === 'rogue') { G.tm.inv = 2.5; G.tm.dance = 2.5; }
-  if (j === 'archer') G.tm.rain = 3;
-  if (j === 'engineer') { for (let i = 0; i < 4; i++) addTurret(p.x + Math.cos(i * 1.57 + 0.78) * 40, p.y + Math.sin(i * 1.57 + 0.78) * 40, true); G.tm.overdrive = 8; }
+  if (j === 'warrior') { G.tm.inv = 3; ultBlast(p.x, p.y, 200, D * 1.5, 460, '#ffb070'); G.ultLater = [{ t: G.time + 0.6, x: p.x, y: p.y, r: 230, d: D, kb: 260, col: '#ffd0a0' }]; }   // 0.26a 범위·피해 상향 + 여진
+  if (j === 'rogue') { G.tm.inv = 2.5; G.tm.dance = 2.5; ultSlashes(12, D * 1.4); }   // 0.26a 즉시 그림자 베기 추가
+  if (j === 'archer') { G.tm.rain = 4.5; ultBlast(p.x, p.y, 120, D * 0.8, 300, '#bfe8ff'); }   // 0.26a 지속 4.5초 + 발동 충격
+  if (j === 'engineer') { for (let i = 0; i < 4; i++) addTurret(p.x + Math.cos(i * 1.57 + 0.78) * 40, p.y + Math.sin(i * 1.57 + 0.78) * 40, true); G.tm.overdrive = 10; ultBlast(p.x, p.y, 150, D, 320, '#9ad8ff'); }   // 0.26a 과부하 폭발 추가
   if (j === 'mage') {
     let best = null, bn = -1;
     for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6, cx = p.x + Math.cos(a) * 110, cy = p.y + Math.sin(a) * 110; let n = 0; gridQuery(cx, cy, 140, () => { n++; }); if (n > bn) { bn = n; best = { x: cx, y: cy }; } }
     const c = best || p; fx({ kind: 'ring', x: c.x, y: c.y, r0: 20, r1: 180, dur: 0.6, color: '#ff7a3a', fill: true });
-    gridQuery(c.x, c.y, 180, e => damageEnemy(e, D * 2, { src: 'ult', kb: 300, fx: c.x, fy: c.y }));
+    gridQuery(c.x, c.y, 180, e => damageEnemy(e, D * 3, { src: 'ult', kb: 300, fx: c.x, fy: c.y })); G.ultLater = [{ t: G.time + 0.5, x: c.x, y: c.y, r: 120, d: D * 1.2, kb: 160, col: '#ffb070' }];   // 0.26a 피해 2→3배 + 잔불 폭발
   }
-  if (j === 'summoner') for (let i = 0; i < 8; i++) addMinion(p.x + Math.cos(i) * 30, p.y + Math.sin(i) * 30);
+  if (j === 'summoner') { for (let i = 0; i < 8; i++) addMinion(p.x + Math.cos(i) * 30, p.y + Math.sin(i) * 30); ultBlast(p.x, p.y, 160, D, 280, '#c9a8ff'); }   // 0.26a 영혼 파동 추가
   if (j === 'sovereign') { G.tm.roar = 5; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 260, dur: 0.6, color: '#ffd24a' }); }
-  if (j === 'chrono') startRewind();                          // 0.26 과거의 나
-  if (j === 'priest') { G.sanct = { x: p.x, y: p.y, r: 150 }; G.tm.sanct = 6; }
-  if (j === 'druid') G.tm.wrath = 8;
+  if (j === 'chrono') { startRewind(); ultBlast(p.x, p.y, 220, D * 0.9, 0, '#9ff0ff'); }   // 0.26a 시간 정지 순간 충격                          // 0.26 과거의 나
+  if (j === 'priest') { G.sanct = { x: p.x, y: p.y, r: 170 }; G.tm.sanct = 7; ultBlast(p.x, p.y, 170, D * 0.8, 200, '#fff3b0'); }   // 0.26a 성역 확대 + 축복 파동
+  if (j === 'druid') { G.tm.wrath = 10; ultBlast(p.x, p.y, 170, D, 300, '#7fd07a'); for (const m of G.pets) ultBlast(m.x, m.y, 90, D * 0.6, 200, '#a8e08a'); }   // 0.26a 분노 10초 + 포효
 }
 function autoUltSetting() { return SETTINGS.autoUlt || (STATE.dev.auto && G.ai && G.ai.autoUlt); }
+function ultBlast(x, y, r, d, kb, col) { fx({ kind: 'ring', x, y, r0: 10, r1: r, dur: 0.5, color: col, fill: true }); gridQuery(x, y, r, e => damageEnemy(e, d, { src: 'ult', kb, fx: x, fy: y })); }
+function ultSlashes(n, d) {
+  const p = G.p, list = []; gridQuery(p.x, p.y, 260, e => { if (!e.dead) list.push(e); });
+  list.sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y));
+  for (const e of list.slice(0, n)) { fx({ kind: 'slash', x: e.x, y: e.y, a: Math.atan2(e.y - p.y, e.x - p.x), dur: 0.3, color: '#d0b0ff' }); damageEnemy(e, d, { src: 'ult', kb: 120, fx: p.x, fy: p.y }); }
+}
 function updateUlt(dt) {
   const p = G.p; if (!p.job) return;
+  if (G.ultLater && G.ultLater.length) G.ultLater = G.ultLater.filter(u => { if (G.time < u.t) return true; ultBlast(u.x, u.y, u.r, u.d, u.kb, u.col); return false; });
+  if (p.ultRef > 0 && !(G.tm.ultWin > 0)) { const v = p.ultRef; p.ultRef = 0; ultGain(v); }   // 시전 종료 후 환급
   ultGain(JOB_CFG.ultSec * dt);
   if (!ultReady()) { G.tm.stopT = 0; return; }
   if (autoUltSetting()) { let n = 0; gridQuery(p.x, p.y, 200, () => { n++; }); if (n >= JOB_CFG.ultAutoN || G.time - G.tm.readyAt > 12) useUlt(); return; }
@@ -320,7 +341,7 @@ function updateMines(dt) {
 function updateJob(dt) {
   const p = G.p, T = G.tm;
   if (G.job2Ready && !p.job2 && G.time - G.stats.jobAt >= JOB_CFG.job2Min) { G.job2Ready = false; G.pendingJob2 = true; }   // 최소 60초 경과 후
-  for (const k of ['inv', 'dance', 'rain', 'overdrive', 'guard', 'passCd', 'roar', 'stop', 'sanct', 'wrath']) if (T[k] > 0) T[k] -= dt;
+  for (const k of ['inv', 'dance', 'rain', 'overdrive', 'guard', 'passCd', 'roar', 'stop', 'sanct', 'wrath', 'ultWin', 'alpha']) if (T[k] > 0) T[k] -= dt;
   if (p.job === 'sovereign') {
     T.banner = (T.banner == null ? 0 : T.banner) - dt;
     if (T.banner <= 0) { T.banner = 10; G.banner = { x: p.x, y: p.y, r: 110 * (p.job2 === 'conqueror' ? 1.5 : 1) }; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: G.banner.r, dur: 0.4, color: '#ffd24a' }); }

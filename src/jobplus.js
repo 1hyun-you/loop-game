@@ -79,13 +79,62 @@ const PET = {
 };
 function petMul() { const p = G.p; return { dmg: p.mod.dmg * (1 + p.level * 0.04) * (G.tm.wrath > 0 ? 2 : 1) * (p.vet ? 1 : 1), sp: p.mod.speed, area: 1 + PASSIVES.area.per * passLv('area'), cd: p.mod.cd / (G.tm.wrath > 0 ? 1.5 : 1) }; }
 function petStat(kind) {
-  const D = PET[kind], M = petMul(), big = kind === 'bear' && G.p.job2 === 'ursa' ? 1.5 : 1;
-  return { dmg: D.dmg * M.dmg * big, sp: D.sp * M.sp, atk: D.atk * M.cd, sk: D.sk * M.cd, skR: D.skR * M.area * (big > 1 ? 1.4 : 1), r: D.r * (big > 1 ? 1.3 : 1) };
+  const D = PET[kind], M = petMul(), big = kind === 'bear' && G.p.job2 === 'ursa' ? 1.5 : 1, B = bondOf(kind), L = B.lv - 1, h = k => bondHas(kind, k);
+  const lvDmg = 1 + BOND_CFG.dmgPer * L, lvAtk = Math.max(0.75, 1 - BOND_CFG.atkPer * L), lvR = Math.min(1.3, 1 + BOND_CFG.rPer * L);
+  const dm = (h('titan') ? 1.5 : 1), spd = h('swift') ? 1.25 : 1;
+  return { dmg: D.dmg * M.dmg * big * lvDmg * dm, sp: D.sp * M.sp * spd, atk: D.atk * M.cd * lvAtk / spd, sk: D.sk * M.cd * (h('rampage') ? 0.6 : 1),
+    skR: D.skR * M.area * (big > 1 ? 1.4 : 1) * (1 + 0.02 * L) * (h('howl2') ? 1.25 : h('quake') ? 1.35 : 1), r: D.r * (big > 1 ? 1.3 : 1) * lvR * (h('titan') ? 1.25 : 1), lv: B.lv };
+}
+/* 0.26a 유대 성장: 늑대·곰 종류별 레벨, 동료 처치·플레이어 레벨업으로 경험치, 5·10·15레벨 전용 능력 2지선다 */
+const BOND_CFG = { xpBase: 6, xpPer: 6, kill: 1, eliteKill: 6, share: 2, dmgPer: 0.05, atkPer: 0.015, rPer: 0.02, maxLv: 20, tiers: [5, 10, 15] };
+const BOND_PERKS = {
+  wolf: [
+    [{ k: 'bleed', nm: '찢는 이빨', ds: '물린 적 3초간 출혈 (초당 늑대 피해 40%)' }, { k: 'swift', nm: '바람 발', ds: '늑대 이동·공격 속도 +25%' }],
+    [{ k: 'howl2', nm: '긴 울음', ds: '울부짖음 범위 +25%, 둔화된 적이 받는 모든 피해 +20% (울부짖음 자체 피해 감소)' }, { k: 'litter', nm: '새 식구', ds: '늑대 1마리 합류' }],
+    [{ k: 'alpha', nm: '우두머리의 함성', ds: '울부짖음 때 주인 공격력·이동 속도 4초간 +20%' }, { k: 'frenzy', nm: '사냥 광란', ds: '늑대가 적 처치 시 울부짖음 재사용 1초 단축' }],
+  ],
+  bear: [
+    [{ k: 'thorn', nm: '가시 털', ds: '곰 주변 적에게 1초마다 곰 피해 50%' }, { k: 'quake', nm: '넓은 강타', ds: '강타 범위 +35%' }],
+    [{ k: 'after', nm: '대지 울림', ds: '강타 0.5초 뒤 같은 자리에 2차 충격 (피해 60%)' }, { k: 'guard', nm: '보호 본능', ds: '강타마다 주인 체력 2 회복' }],
+    [{ k: 'titan', nm: '거대 곰', ds: '곰 피해 +50%·몸집 +25%' }, { k: 'rampage', nm: '난폭', ds: '강타 재사용 대기 40% 단축' }],
+  ],
+};
+function bondOf(kind) { G.bond = G.bond || {}; return G.bond[kind] || (G.bond[kind] = { lv: 1, xp: 0, perks: [] }); }
+function bondHas(kind, k) { const b = G.bond && G.bond[kind]; return !!(b && b.perks.includes(k)); }
+function bondNeed(lv) { return BOND_CFG.xpBase + BOND_CFG.xpPer * lv; }
+function bondXp(kind, v) {
+  if (G.p.job !== 'druid' || !G.pets.some(m => m.kind === kind)) return;
+  const B = bondOf(kind); if (B.lv >= BOND_CFG.maxLv) return; B.xp += v;
+  while (B.lv < BOND_CFG.maxLv && B.xp >= bondNeed(B.lv)) {
+    B.xp -= bondNeed(B.lv); B.lv++;
+    for (const m of G.pets) if (m.kind === kind) { m.lvT = 1.2; fx({ kind: 'ring', x: m.x, y: m.y, r0: 6, r1: 34, dur: 0.4, color: '#a8e08a' }); }
+    const ti = BOND_CFG.tiers.indexOf(B.lv);
+    if (ti >= 0) { (G.pendingBond = G.pendingBond || []).push({ kind, ti }); toast(`${PET[kind].name} 유대 Lv ${B.lv} · 전용 능력 선택`, '#a8e08a'); }
+    G.stats.bond = G.stats.bond || {}; G.stats.bond[kind] = B.lv;
+  }
+}
+function bondShareLevel() { if (G.p.job === 'druid') for (const k of ['wolf', 'bear']) bondXp(k, BOND_CFG.share); }
+function openBond() {
+  const q = G.pendingBond.shift(); STATE.mode = 'select'; clearInput();
+  G.sel = { kind: 'bond', q, cards: BOND_PERKS[q.kind][q.ti].map(o => ({ t: 'bond', id: q.kind, k: o.k })) };
+  renderSelect(); autoLater();
+}
+function applyBond(c) {
+  const B = bondOf(c.id); B.perks.push(c.k); (G.stats.bondPicks = G.stats.bondPicks || []).push(c.id + ':' + c.k);
+  if (c.k === 'litter') addPet('wolf');
+  toast(`${PET[c.id].name} · ${bondPerk(c.k).nm}`, '#a8e08a');
+}
+function bondPerk(k) { for (const kind in BOND_PERKS) for (const t of BOND_PERKS[kind]) for (const o of t) if (o.k === k) return o; return null; }
+function updateBleeds(dt) {
+  if (!G.bleeds || !G.bleeds.length) return;
+  for (const b of G.bleeds) { b.t -= dt; b.tick -= dt; if (b.tick <= 0 && !b.e.dead) { b.tick = 0.5; b.e.lpk = 'wolf'; damageEnemy(b.e, b.d * 0.5, { src: 'pet' }); } }
+  G.bleeds = G.bleeds.filter(b => b.t > 0 && !b.e.dead);
 }
 function addPet(kind) { const p = G.p, a = rand(Math.PI * 2); G.pets.push({ kind, x: p.x + Math.cos(a) * 30, y: p.y + Math.sin(a) * 30, t: 0.5, sk: PET[kind].sk * 0.5, tg: null, vx: 0, i: G.pets.length }); }
-function petsInit() { G.pets = []; addPet('wolf'); addPet('bear'); }
+function petsInit() { G.pets = []; G.bond = {}; G.bleeds = []; G.pendingBond = []; addPet('wolf'); addPet('bear'); }
 function updatePets(dt) {
   const p = G.p; if (p.job !== 'druid') return;
+  updateBleeds(dt);
   const claimed = new Set();
   for (const m of G.pets) {
     const S = petStat(m.kind); m.t -= dt; m.sk -= dt;
@@ -99,17 +148,32 @@ function updatePets(dt) {
     const dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1, reach = e ? e.r + S.r : 4;
     if (d > reach) { const v = Math.min(d - reach, S.sp * (leash ? 1.6 : 1) * dt); m.x += dx / d * v; m.y += dy / d * v; m.vx = dx; }
     for (const o of G.pets) if (o !== m) { const ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od > 0 && od < 16) { m.x += ox / od * (16 - od) * 0.5; m.y += oy / od * (16 - od) * 0.5; } }
-    if (e && m.t <= 0 && d <= reach + 6) { m.t = S.atk; m.bite = 0.15; damageEnemy(e, S.dmg, { src: 'pet', kb: m.kind === 'bear' ? 120 : 30, fx: m.x, fy: m.y }); }
+    if (e && m.t <= 0 && d <= reach + 6) {
+      m.t = S.atk; m.bite = 0.15; e.lpk = m.kind;
+      if (m.kind === 'wolf' && bondHas('wolf', 'bleed') && G.bleeds.length < 120 && !G.bleeds.some(b => b.e === e)) G.bleeds.push({ e, t: 3, tick: 0.5, d: S.dmg * 0.4 });
+      damageEnemy(e, S.dmg, { src: 'pet', kb: m.kind === 'bear' ? 120 : 30, fx: m.x, fy: m.y });
+    }
+    if (m.lvT > 0) m.lvT -= dt;
+    if (m.kind === 'bear' && bondHas('bear', 'thorn')) { m.th = (m.th || 0) - dt; if (m.th <= 0) { m.th = 1; gridQuery(m.x, m.y, S.r + 26, t => { t.lpk = 'bear'; damageEnemy(t, S.dmg * 0.5, { src: 'pet' }); }); } }
     if (m.bite > 0) m.bite -= dt;
     if (m.sk <= 0 && (e || m.kind === 'wolf')) {                       // 주기 자동 스킬
       m.sk = S.sk;
-      if (m.kind === 'wolf') { let n = 0; gridQuery(m.x, m.y, S.skR, t => { n++; t.slowT = Math.max(t.slowT || 0, 2); damageEnemy(t, S.dmg * 0.6, { src: 'howl' }); }); fx({ kind: 'ring', x: m.x, y: m.y, r0: 8, r1: S.skR, dur: 0.4, color: '#c8d4e0' }); if (!n) m.sk = 1; }
-      else { const x = m.x, y = m.y; gridQuery(x, y, S.skR, t => damageEnemy(t, S.dmg * 2.5, { src: 'maul', kb: 260, fx: x, fy: y })); fx({ kind: 'ring', x, y, r0: 10, r1: S.skR, dur: 0.35, color: '#c89060', fill: true }); if (p.job2 === 'ursa') heal(1); }
+      if (m.kind === 'wolf') { let n = 0; gridQuery(m.x, m.y, S.skR, t => { n++; t.slowT = Math.max(t.slowT || 0, 2); t.lpk = 'wolf'; damageEnemy(t, S.dmg * (bondHas('wolf', 'howl2') ? 0.4 : 0.6), { src: 'howl' }); }); if (n && bondHas('wolf', 'alpha')) G.tm.alpha = 4; fx({ kind: 'ring', x: m.x, y: m.y, r0: 8, r1: S.skR, dur: 0.4, color: '#c8d4e0' }); if (!n) m.sk = 1; }
+      else {
+        const x = m.x, y = m.y, R = S.skR, dm = S.dmg; gridQuery(x, y, R, t => { t.lpk = 'bear'; damageEnemy(t, dm * 2.5, { src: 'maul', kb: 260, fx: x, fy: y }); }); fx({ kind: 'ring', x, y, r0: 10, r1: R, dur: 0.35, color: '#c89060', fill: true });
+        if (p.job2 === 'ursa') heal(1); if (bondHas('bear', 'guard')) heal(2);
+        if (bondHas('bear', 'after')) (G.petLater = G.petLater || []).push({ t: G.time + 0.5, x, y, R, d: dm * 1.5 });
+      }
     }
   }
+  if (G.petLater && G.petLater.length) G.petLater = G.petLater.filter(u => { if (G.time < u.t) return true; gridQuery(u.x, u.y, u.R, t => { t.lpk = 'bear'; damageEnemy(t, u.d, { src: 'maul', kb: 140, fx: u.x, fy: u.y }); }); fx({ kind: 'ring', x: u.x, y: u.y, r0: 10, r1: u.R, dur: 0.3, color: '#e0b080' }); return false; });
   if (p.petMark && p.petMark.dead) p.petMark = null;
 }
-function petKilled(e) { if (G.p.job2 === 'pack' && e.ls === 'pet') for (const m of G.pets) if (m.kind === 'wolf') m.sk -= 1; }
+function petKilled(e) {
+  const own = e.lpk && (e.ls === 'pet' || e.ls === 'howl' || e.ls === 'maul');
+  if (G.p.job2 === 'pack' && e.ls === 'pet') for (const m of G.pets) if (m.kind === 'wolf') m.sk -= 1;
+  if (own) { bondXp(e.lpk, e.elite || e.gk ? BOND_CFG.eliteKill : BOND_CFG.kill); if (e.lpk === 'wolf' && bondHas('wolf', 'frenzy')) for (const m of G.pets) if (m.kind === 'wolf') m.sk -= 1; }
+}
 function drawPets(c, inView) {
   if (!G.pets || !G.pets.length) return;
   for (const m of G.pets) {
@@ -117,7 +181,12 @@ function drawPets(c, inView) {
     const S = petStat(m.kind), fr = Math.floor(G.time * (m.kind === 'wolf' ? 9 : 5) + m.i) & 1;
     c.fillStyle = 'rgba(0,0,0,0.22)'; c.beginPath(); c.ellipse(m.x, m.y + S.r * 0.7, S.r, S.r * 0.32, 0, 0, 7); c.fill();
     if (G.tm.wrath > 0) { c.strokeStyle = 'rgba(127,208,122,0.8)'; c.lineWidth = 2; c.beginPath(); c.ellipse(m.x, m.y + S.r * 0.7, S.r + 4, (S.r + 4) * 0.35, 0, 0, 7); c.stroke(); }
-    drawSprite(c, m.kind, fr, m.x + (m.bite > 0 ? Math.sign(m.vx || 1) * 3 : 0), m.y + S.r * 0.8, { flip: (m.vx || 0) < 0 });
+    const sc = S.r / PET[m.kind].r;                                 // 0.26a 유대 레벨에 따른 몸집
+    if (sc > 1.01) { c.save(); c.translate(m.x, m.y + S.r * 0.8); c.scale(sc, sc); drawSprite(c, m.kind, fr, (m.bite > 0 ? Math.sign(m.vx || 1) * 3 : 0), 0, { flip: (m.vx || 0) < 0 }); c.restore(); }
+    else drawSprite(c, m.kind, fr, m.x + (m.bite > 0 ? Math.sign(m.vx || 1) * 3 : 0), m.y + S.r * 0.8, { flip: (m.vx || 0) < 0 });
+    if (m.lvT > 0) { c.globalAlpha = Math.min(1, m.lvT); c.strokeStyle = '#d8ffb8'; c.lineWidth = 2; c.beginPath(); c.arc(m.x, m.y, S.r + 6 + (1.2 - m.lvT) * 10, 0, 7); c.stroke(); c.globalAlpha = 1; }
+    c.font = 'bold 9px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.7)'; c.fillStyle = '#c8f0a8';
+    const ly = m.y - S.r * 1.6 - 6; c.strokeText('Lv' + S.lv, m.x, ly); c.fillText('Lv' + S.lv, m.x, ly);
   }
 }
 Object.assign(SPR, {
