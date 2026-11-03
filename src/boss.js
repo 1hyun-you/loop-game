@@ -36,7 +36,7 @@ function gkPick() {
   return pick(left.length ? left : GK_ORDER);
 }
 function gkSpawn() {
-  sfx('boss');
+  sfx('boss'); jBoss(GATEKEEPERS[G.gk].name, GATEKEEPERS[G.gk].gate + ' · 수문장 등장');
   const D = GATEKEEPERS[G.gk], q = ringAt(GK_CFG.spawn[0], GK_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * GK_CFG.hpMul * D.hp; e.dmg *= GK_CFG.dmgMul; e.r = D.r; e.speed = D.speed; e.color = D.color; e.shape = D.shape; e.xp = 0;
   e.cmd = true; e.boss = true; e.gk = G.gk; e.ai = { cd: 2.2, act: null, at: 0 }; e.rage = false;

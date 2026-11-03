@@ -3,6 +3,7 @@
 // 사용: node dev/vtest.js <판 수> [--speed 8] [--cap 600] [--render 2] [--out dev/sim_log/runs_0.2.jsonl]
 // 0.2 확장: 레벨업 선택 화면 흐름(자동 선택) 통과, 선택 이력·최종 구성·무기별 피해 비중 기록
 // 0.7 확장: 분기·유물·엘리트·보물 상자·전직·2차 전직·궁극기 기록
+// 0.22 확장: --dmgnum(피해 숫자 설정 켬)
 // 0.12 확장: --demon final|retry|mix (판 구조 지정, 마왕전 기록 demon·runType)
 // 0.11 확장: 수문장전 기록(gate·gk), --rotate(판마다 수문장 4인 순환 지정)
 // 0.13 확장: 대사창(talk) 자동 넘김 통과·진엔딩 화면 경유, 기록 조각·서사 상태·점수 기록, --preset release|post(저장 상태 주입), --tier n·--cond a,b (도전 옵션)
@@ -125,6 +126,10 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
       localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s));
       localStorage.setItem(CFG.SAVE_KEY + '_run', JSON.stringify({ tier, conds: cond ? cond.split(',') : [] }));
     }, { pre: PRESET, tier: TIER, cond: COND });
+    await p.goto(`http://127.0.0.1:${PORT}/`);
+  }
+  if (args.includes('--dmgnum')) {   // 피해 숫자 켬 상태 부하 점검 (0.22)
+    await p.evaluate(() => { const k = CFG.SAVE_KEY + '_set', o = JSON.parse(localStorage.getItem(k) || '{}'); o.dmgNum = true; localStorage.setItem(k, JSON.stringify(o)); });
     await p.goto(`http://127.0.0.1:${PORT}/`);
   }
   let prevRuns = 0;

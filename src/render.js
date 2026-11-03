@@ -16,7 +16,7 @@ function render() {
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const tn = G.time; updateTerrain(Math.max(0, Math.min(0.1, tn - terLast))); terLast = tn;
   c.fillStyle = TERRAIN[TER.cur].a; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
-  const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
+  const sh = SETTINGS.shake ? Math.max(p.flash > 0 ? 3 : 0, shakeAmt()) : 0;   // 화면 흔들림 설정 (0.14), 연출 흔들림 (0.22)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
   c.imageSmoothingEnabled = false;
@@ -34,6 +34,7 @@ function render() {
   drawPlayer(c);
   drawWeapons(c, inView);
   drawFx(c);
+  drawJuice(c);
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   drawPhaseFog(c);
   drawPhaseTint(c);
@@ -42,6 +43,7 @@ function render() {
   if (STATE.mode === 'title') return;          // 시작 화면에서는 상단 정보 숨김
   drawHUD(c);
   drawPhasePointer(c, camX, camY);
+  drawBanner(c);
 }
 /* 지형: 16×16 타일 묶음(월드 512 단위)을 사전 저장해 반복 무늬로 1회 채움 (0.20 부하 절감) */
 const GROUND_PAT = new Map();

@@ -131,7 +131,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.21',
+  VERSION: '0.22',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -482,9 +482,9 @@ function damageEnemy(e, dmg, o = {}) {
   if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16) — 모든 피해 배율 적용 후 보정 (0.18: 칼날 폭풍 배율이 보정 뒤에 곱해져 페이즈 조기 전환되던 결함 수정)
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
   const eff = Math.min(dmg, Math.max(0, e.hp));          // 실제 깎은 체력 기준 집계(초과 피해 제외, 0.2a)
-  e.hp -= dmg; e.flash = 0.08; sfx('hit');
+  e.hp -= dmg; sfx('hit'); jHit(e, eff, o);                   // 타격 연출·피해 숫자 (0.22)
   G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + eff;
-  if (o.kb && o.fx !== undefined && !e.cmd) { const dx = e.x - o.fx, dy = e.y - o.fy, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * o.kb; e.kby += dy / d * o.kb; }
+  if (o.kb && o.fx !== undefined && !e.cmd) { const dx = e.x - o.fx, dy = e.y - o.fy, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * o.kb * JUICE.kbMul; e.kby += dy / d * o.kb * JUICE.kbMul; }   // 밀림 강화 (0.22)
   if (e.hp <= 0) killEnemy(e);
   else onEnemyHit(e, o);
 }
@@ -498,6 +498,7 @@ function killEnemy(e) {
   if (pBr('regen') === 'vamp') heal(0.4);
   onEnemyKill(e);
   fx({ kind: 'pop', x: e.x, y: e.y, r: e.r, color: e.color, dur: 0.22 });
+  jKill(e);                                                  // 처치 파편 (0.22)
 }
 function hurtPlayer(dmg, src) {
   const p = G.p;
@@ -540,11 +541,13 @@ function levelUp() {
   G.pendingLv++;
   G.stats.levelAt.push(Math.round(G.time));
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 70, dur: 0.4, color: '#7fe0ff', follow: true });
+  jLevel();                                                  // 레벨업 연출 (0.22)
 }
 
 function updateMisc(dt) {
   for (const f of G.fx) f.t += dt; G.fx = G.fx.filter(f => f.t < f.dur);
   for (const t of G.toasts) t.t += dt; G.toasts = G.toasts.filter(t => t.t < t.dur);
+  updateJuice(dt);
 }
 
 /* 판 종료 */
@@ -663,7 +666,7 @@ function phaseStart() {
   const ph = G.ph; ph.i++; ph.id = ph.order[ph.i]; ph.t = 0; ph.inGap = false;
   const P = PHASES[ph.id];
   scheduleElites();
-  toast(`${ph.i + 1}/${ph.order.length} · ${P.name}`, '#ffe08a'); toast(P.hint, '#fff');
+  if (ph.id !== 'gate' && ph.id !== 'demon') banner(P.name, `${ph.i + 1}/${ph.order.length} · ${P.hint}`);   // 페이즈 전환 알림판 (0.22)
   if (ph.id === 'gate') gkSpawn();
   if (ph.id === 'demon') dmSpawn();
   if (ph.id === 'calm') { const q = ringAt(180, 260); ph.spring = { x: q.x, y: q.y, r: 22, used: false }; }
@@ -1109,7 +1112,7 @@ function gkPick() {
   return pick(left.length ? left : GK_ORDER);
 }
 function gkSpawn() {
-  sfx('boss');
+  sfx('boss'); jBoss(GATEKEEPERS[G.gk].name, GATEKEEPERS[G.gk].gate + ' · 수문장 등장');
   const D = GATEKEEPERS[G.gk], q = ringAt(GK_CFG.spawn[0], GK_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * GK_CFG.hpMul * D.hp; e.dmg *= GK_CFG.dmgMul; e.r = D.r; e.speed = D.speed; e.color = D.color; e.shape = D.shape; e.xp = 0;
   e.cmd = true; e.boss = true; e.gk = G.gk; e.ai = { cd: 2.2, act: null, at: 0 }; e.rage = false;
@@ -1383,7 +1386,7 @@ function runTypeOf() {
 }
 
 function dmSpawn() {
-  sfx('boss');
+  sfx('boss'); jBoss(DEMON.name || '마왕', '마왕성 · 최후의 결전');
   const q = ringAt(DM_CFG.spawn[0], DM_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : DM_CFG.finalHp); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
   e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0; e.stT0 = G.time;
@@ -1717,7 +1720,7 @@ function showEnding(next) {
    보상은 성능 영향 없음(판 점수 배율·칭호·주인공 색상), 배율·강화 수치는 초기값 (5단계 시험으로 확정)
    ============================================================ */
 /* ---------- 설정 (기기 저장) ---------- */
-const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false };
+const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false };
 const SETTINGS = (() => { try { return Object.assign({}, SET_DEF, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return Object.assign({}, SET_DEF); } })();
 function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
 let vibeAt = 0;
@@ -1798,14 +1801,15 @@ function metaSave(s) {
 /* ---------- 설정 화면 ---------- */
 function showSettings(back) {
   const T = (k, nm, ds) => `<div class="row"><div class="rt"><b>${nm}</b><span>${ds}</span></div><button class="tg ${SETTINGS[k] ? 'pri' : ''}" data-k="${k}">${SETTINGS[k] ? '켜짐' : '꺼짐'}</button></div>`;
-  const V = (k, nm) => `<div class="row"><div class="rt"><b>${nm}</b><span>소리 제작 시 적용</span></div><input type="range" min="0" max="100" step="10" value="${SETTINGS[k]}" data-v="${k}" aria-label="${nm}"><output>${SETTINGS[k]}</output></div>`;
+  const V = (k, nm) => `<div class="row"><div class="rt"><b>${nm}</b><span>0~100</span></div><input type="range" min="0" max="100" step="10" value="${SETTINGS[k]}" data-v="${k}" aria-label="${nm}"><output>${SETTINGS[k]}</output></div>`;
   UI.innerHTML = `<div class="layer scroll"><h2>설정</h2><div class="rows">
     <div class="row"><div class="rt"><b>조이스틱</b><span>${SETTINGS.joy === 'fixed' ? '고정형: 화면 아래 중앙 기준' : '유동형: 처음 누른 위치 기준'}</span></div><button class="tg" id="s_joy">${SETTINGS.joy === 'fixed' ? '고정형' : '유동형'}</button></div>
     ${T('autoUlt', '궁극기 자동 발동', '꺼짐: 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동')}
     ${T('confirm2', '두 번 눌러 확정', '선택 카드를 한 번 더 눌러야 선택')}
     ${T('dlgAuto', '대사 자동 넘김', '대사가 끝나면 잠시 후 다음 줄로')}
     ${T('vibe', '진동', '피격·보스 등장 시 짧은 진동')}
-    ${T('shake', '화면 흔들림', '피격 시 화면 흔들림')}
+    ${T('shake', '화면 흔들림', '피격·보스 등장 시 화면 흔들림')}
+    ${T('dmgNum', '피해 숫자', '적에게 준 피해를 숫자로 표시')}
     ${V('sfx', '효과음 음량')}${V('bgm', '배경음 음량')}
     </div><div class="menu"><button id="s_back">돌아가기</button></div></div>`;
   UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); showSettings(back); }));
@@ -2353,7 +2357,7 @@ function chestCands() {
   return out.slice(0, 3);
 }
 function openChest() {
-  G.pendingChest--; G.stats.chests++; sfx('chest');
+  G.pendingChest--; G.stats.chests++; sfx('chest'); jChest();
   STATE.mode = 'select'; clearInput();
   G.sel = { kind: 'chest', cards: chestCands(), banish: false };
   renderSelect(); autoLater();
@@ -3606,6 +3610,103 @@ function getTileT(i, tid) {
   return s;
 }
 /* ============================================================
+   타격 연출 (0.22) — 피격 반짝임·밀림 강화, 처치 파편, 치명타 강조,
+   레벨업·상자 개봉·보스 등장·페이즈 전환 연출, 피해 숫자(설정, 기본 꺼짐)
+   ============================================================ */
+const JUICE = {
+  kbMul: 1.3,            // 밀림 강화 배율
+  flash: 0.1,            // 피격 반짝임 시간 (기존 0.08)
+  ptMax: 260,            // 파편 동시 상한
+  dnMax: 60,             // 피해 숫자 동시 상한
+  dnMerge: 0.12,         // 같은 적 연속 피해 합산 시간
+  shard: { n: 3, elite: 7, boss: 18 },
+};
+function JC() { return G.jc || (G.jc = { pt: [], dn: [], bn: null, sk: 0, ska: 0 }); }
+
+/* 화면 흔들림 (설정 '화면 흔들림' 따름) */
+function shake(a, dur) { const j = JC(); if (a >= j.ska || j.sk <= 0) { j.ska = a; j.sk = dur; } }
+function shakeAmt() { const j = G.jc; return j && j.sk > 0 ? j.ska * Math.min(1, j.sk * 4) : 0; }
+
+/* 파편 */
+function burst(x, y, n, col, sp = 120, life = 0.45, sz = 3) {
+  const j = JC(); n = Math.min(n, JUICE.ptMax - j.pt.length); if (n <= 0) return;
+  for (let i = 0; i < n; i++) {
+    const a = rand(Math.PI * 2), v = sp * rand(0.45, 1);
+    j.pt.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * 0.25, t: 0, dur: life * rand(0.7, 1.15), c: col, s: sz * rand(0.8, 1.3), g: 260 });
+  }
+}
+function sparkUp(x, y, n, cols, spread = 26) {
+  const j = JC(); n = Math.min(n, JUICE.ptMax - j.pt.length);
+  for (let i = 0; i < n; i++) j.pt.push({ x: x + rand(-spread, spread), y: y + rand(-6, 10), vx: rand(-12, 12), vy: -rand(70, 150), t: 0, dur: rand(0.5, 0.9), c: cols[i % cols.length], s: rand(2, 3.5), g: -40 });
+}
+
+/* 적 피격·처치 연계 (game.js damageEnemy·killEnemy에서 호출) */
+function jHit(e, dmg, o) {
+  e.flash = o.crit ? 0.14 : JUICE.flash;
+  if (o.crit) fx({ kind: 'ring', x: e.x, y: e.y, r0: e.r * 0.6, r1: e.r + 14, dur: 0.18, color: '#ffe08a' });
+  if (SETTINGS.dmgNum) dmgNum(e, dmg, o.crit);
+}
+function jKill(e) {
+  const S = JUICE.shard, n = e.gk && !e.clone ? S.boss : e.elite ? S.elite : S.n;
+  burst(e.x, e.y, n, e.color || '#ddd', e.gk ? 200 : 120, e.gk ? 0.8 : 0.45, e.gk ? 4 : 3);
+  if (e.elite) burst(e.x, e.y, 4, '#ffd24a', 150, 0.5, 3);
+  if (e.gk && !e.clone) { shake(6, 0.6); vibe(60); fx({ kind: 'ring', x: e.x, y: e.y, r0: e.r, r1: e.r + 140, dur: 0.7, color: '#fff2c8' }); }
+}
+
+/* 피해 숫자 — 같은 적 연속 피해는 짧은 시간 합산, 상한 초과 시 치명타 외 생략 */
+function dmgNum(e, v, crit) {
+  const j = JC(), m = e._dn;
+  if (m && !m.done && m.t < JUICE.dnMerge && !crit && !m.crit) { m.v += v; m.x = e.x; return; }
+  if (j.dn.length >= JUICE.dnMax) { if (!crit) return; j.dn.shift(); }
+  const d = { x: e.x + rand(-4, 4), y: e.y - e.r - 2, v, crit: !!crit, t: 0, dur: crit ? 0.8 : 0.6 };
+  j.dn.push(d); e._dn = d;
+}
+
+/* 가운데 알림판: 페이즈 전환·보스 등장 */
+function banner(text, sub, color = '#ffe08a', dur = 1.8) { JC().bn = { text, sub, color, t: 0, dur }; }
+
+/* 레벨업·상자 개봉·보스 등장 */
+function jLevel() { const p = G.p; sparkUp(p.x, p.y, 14, ['#7fe0ff', '#fff6c8', '#b8f0ff']); fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 40, dur: 0.3, color: '#fff6c8', follow: true }); }
+function jChest() { const p = G.p; burst(p.x, p.y, 18, '#ffd24a', 170, 0.6, 3); sparkUp(p.x, p.y, 8, ['#fff2a0', '#ffd24a']); shake(2, 0.2); }
+function jBoss(name, sub) { banner(name, sub, '#ff8a6a', 2.2); shake(5, 0.7); vibe(80); }
+
+function updateJuice(dt) {
+  const j = G.jc; if (!j) return;
+  if (j.sk > 0) j.sk -= dt;
+  if (j.pt.length) { for (const q of j.pt) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += q.g * dt; q.vx *= 1 - dt * 3; } j.pt = j.pt.filter(q => q.t < q.dur); }
+  if (j.dn.length) { for (const d of j.dn) { d.t += dt; d.y -= (d.crit ? 34 : 26) * dt; if (d.t >= JUICE.dnMerge) d.done = true; } j.dn = j.dn.filter(d => d.t < d.dur); }
+  if (j.bn) { j.bn.t += dt; if (j.bn.t >= j.bn.dur) j.bn = null; }
+}
+/* 월드 좌표 그리기 (drawFx 다음) */
+function drawJuice(c) {
+  const j = G.jc; if (!j) return;
+  for (const q of j.pt) { c.globalAlpha = Math.max(0, 1 - q.t / q.dur); c.fillStyle = q.c; const s = q.s; c.fillRect(Math.round(q.x - s / 2), Math.round(q.y - s / 2), s, s); }
+  c.globalAlpha = 1;
+  if (!j.dn.length) return;
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+  for (const d of j.dn) {
+    const k = d.t / d.dur, pop = d.crit && d.t < 0.1 ? 1.35 : 1;
+    c.globalAlpha = k > 0.6 ? (1 - k) / 0.4 : 1;
+    c.font = `bold ${Math.round((d.crit ? 13 : 10) * pop)}px Galmuri11, system-ui`;
+    const s = String(Math.max(1, Math.round(d.v)));
+    c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.75)'; c.strokeText(s, d.x, d.y);
+    c.fillStyle = d.crit ? '#ffd24a' : '#ffffff'; c.fillText(s, d.x, d.y);
+  }
+  c.globalAlpha = 1;
+}
+/* 화면 좌표 그리기 (HUD 다음) */
+function drawBanner(c) {
+  const j = G.jc, b = j && j.bn; if (!b) return;
+  const W = VIEW.cw, y = VIEW.ch * 0.4, k = b.t / b.dur;
+  const a = b.t < 0.2 ? b.t / 0.2 : k > 0.75 ? (1 - k) / 0.25 : 1, sx = b.t < 0.2 ? 0.7 + 0.3 * b.t / 0.2 : 1;
+  c.globalAlpha = a * 0.55; c.fillStyle = '#000'; c.fillRect(0, y - 30, W, b.sub ? 62 : 46);
+  c.globalAlpha = a; c.fillStyle = b.color; c.fillRect(0, y - 30, W * sx, 2); c.fillRect(W * (1 - sx), y + (b.sub ? 30 : 14), W * sx, 2);
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,0,0.7)';
+  c.font = 'bold 22px Galmuri11, system-ui'; c.strokeText(b.text, W / 2, y - 6); c.fillStyle = b.color; c.fillText(b.text, W / 2, y - 6);
+  if (b.sub) { c.font = 'bold 13px Galmuri11, system-ui'; c.strokeText(b.sub, W / 2, y + 17); c.fillStyle = '#fff'; c.fillText(b.sub, W / 2, y + 17); }
+  c.globalAlpha = 1;
+}
+/* ============================================================
    그리기 — 0.19 도트 적용 시작(주인공·잡몹 4종·바르간·지형), 나머지 도형은 0.20 교체
    ============================================================ */
 const PAL = [GROUND_BASE];   // 들판 바탕 (0.19 도트 타일)
@@ -3623,7 +3724,7 @@ function render() {
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const tn = G.time; updateTerrain(Math.max(0, Math.min(0.1, tn - terLast))); terLast = tn;
   c.fillStyle = TERRAIN[TER.cur].a; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
-  const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
+  const sh = SETTINGS.shake ? Math.max(p.flash > 0 ? 3 : 0, shakeAmt()) : 0;   // 화면 흔들림 설정 (0.14), 연출 흔들림 (0.22)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
   c.imageSmoothingEnabled = false;
@@ -3641,6 +3742,7 @@ function render() {
   drawPlayer(c);
   drawWeapons(c, inView);
   drawFx(c);
+  drawJuice(c);
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   drawPhaseFog(c);
   drawPhaseTint(c);
@@ -3649,6 +3751,7 @@ function render() {
   if (STATE.mode === 'title') return;          // 시작 화면에서는 상단 정보 숨김
   drawHUD(c);
   drawPhasePointer(c, camX, camY);
+  drawBanner(c);
 }
 /* 지형: 16×16 타일 묶음(월드 512 단위)을 사전 저장해 반복 무늬로 1회 채움 (0.20 부하 절감) */
 const GROUND_PAT = new Map();

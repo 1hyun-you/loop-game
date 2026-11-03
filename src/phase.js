@@ -75,7 +75,7 @@ function phaseStart() {
   const ph = G.ph; ph.i++; ph.id = ph.order[ph.i]; ph.t = 0; ph.inGap = false;
   const P = PHASES[ph.id];
   scheduleElites();
-  toast(`${ph.i + 1}/${ph.order.length} · ${P.name}`, '#ffe08a'); toast(P.hint, '#fff');
+  if (ph.id !== 'gate' && ph.id !== 'demon') banner(P.name, `${ph.i + 1}/${ph.order.length} · ${P.hint}`);   // 페이즈 전환 알림판 (0.22)
   if (ph.id === 'gate') gkSpawn();
   if (ph.id === 'demon') dmSpawn();
   if (ph.id === 'calm') { const q = ringAt(180, 260); ph.spring = { x: q.x, y: q.y, r: 22, used: false }; }
