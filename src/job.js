@@ -16,9 +16,9 @@ const JOBS = {
   summoner: { name: '소환사', cat: 'magic', ic: '소', rule: '처치한 적 12% 확률로 망령 소환 (최대 6), 망령이 적 추적 공격', ult: '망령 군단: 망령 8체 즉시 소환' },
   /* 3단계 추가 4종 (0.9) — 초안 직업 목록 기준, 드루이드는 혼합 계열(근접+마법) */
   sovereign: { name: '군주', cat: 'melee', ic: '군', rule: '10초마다 발밑에 군기 설치, 군기 반경 안에서 피해 +25%·받는 피해 -15%', ult: '왕의 호령: 5초간 모든 적 둔화 50%, 무기 재사용 2배 속도' },
-  chrono: { name: '시간술사', cat: 'ranged', ic: '시', rule: '원거리 명중 시 적 시간 지연(둔화) 누적, 5중첩 시 1.5초 정지', ult: '시간 정지: 4초간 모든 적 정지 (보스는 둔화)' },
+  chrono: { name: '시간술사', cat: 'ranged', ic: '시', rule: '원거리 명중 시 적 시간 지연(둔화) 누적, 5중첩 시 1.5초 정지', ult: '과거의 나: 1.5초 시간 정지, 5초 전 자신의 잔상이 지나온 길을 되감아 달리며 닿은 적 피해·둔화, 끝나면 5초 전 체력으로 되돌림(낮아진 경우)' },
   priest: { name: '프리스트', cat: 'magic', ic: '프', rule: '처치 20회마다 정화: 체력 10% 회복 + 주변 신성 폭발', ult: '성역: 6초간 성역 안 적 지속 피해, 플레이어 초당 체력 5% 회복' },
-  druid: { name: '드루이드', cat: 'hybrid', cats: ['melee', 'magic'], ic: '드', rule: '15초마다 곰 형태(근접 피해 +25%·받는 피해 -20%)와 정령 형태(마법 피해 +25%·이동 속도 +15%) 교대', ult: '대자연의 분노: 8초간 두 형태 동시 적용, 주변 덩굴 장판' },
+  druid: { name: '드루이드', cat: 'hybrid', cats: ['melee', 'magic'], ic: '드', rule: '야수 동료 늑대·곰 동행, 늑대 8초마다 울부짖음(주변 둔화), 곰 10초마다 강타(충격파), 피해·범위·이동 속도·재사용 보조 효과가 동료에게도 적용', ult: '대자연의 분노: 8초간 동료 피해 2배·공격 속도 1.5배, 주변 덩굴 장판' },
 };
 const JOB_ORDER = ['warrior', 'rogue', 'sovereign', 'archer', 'engineer', 'chrono', 'mage', 'summoner', 'priest', 'druid'];
 CAT_NAME.hybrid = '혼합';
@@ -35,7 +35,7 @@ const JOB2 = {
   sovereign: [{ k: 'conqueror', nm: '정복왕', ds: '군기 반경 +50%, 군기 안 적 지속 피해' }, { k: 'benevolent', nm: '성군', ds: '군기 안에서 초당 체력 2% 회복' }],
   chrono: [{ k: 'accel', nm: '가속자', ds: '이동 속도 +15%, 무기 재사용 -12%' }, { k: 'rewind', nm: '역행자', ds: '정지된 적이 받는 피해 +50%' }],
   priest: [{ k: 'judge', nm: '심판관', ds: '정화 폭발 피해 2배·범위 +35%' }, { k: 'saint', nm: '성자', ds: '정화 필요 처치 12회, 회복량 20%' }],
-  druid: [{ k: 'ursa', nm: '수호 곰', ds: '곰 형태 받는 피해 -35%, 근접 피해 +40%' }, { k: 'sage', nm: '숲의 현자', ds: '정령 형태 마법 피해 +40%, 처치 시 체력 0.5 회복' }],
+  druid: [{ k: 'ursa', nm: '수호 곰', ds: '곰 크기 증가·피해 1.5배, 강타 범위 +40%, 강타 시 체력 1 회복' }, { k: 'pack', nm: '무리의 우두머리', ds: '늑대 +2 (총 3), 늑대가 처치할 때마다 울부짖음 1초 단축' }],
 };
 const JOB2_STAT = { k: 'veteran', nm: '숙련', ds: '최대 체력 +30, 모든 피해 +15%, 이동 속도 +8%' };
 /* 직업 전용 강화 무기 (2차 전직 시 지급, 무기 칸 미점유) */
@@ -58,6 +58,7 @@ function catLevels() { const s = { melee: 0, ranged: 0, magic: 0 }; for (const w
 function mainCat() { return Object.entries(catLevels()).sort((a, b) => b[1] - a[1] || Math.random() - 0.5)[0][0]; }
 /* 후보 3종: 주력 계열 2종(혼합 직업은 두 계열 모두 보유 시 주력 후보 포함) + 다른 계열 1종 (0.9 10직업 확장) */
 function jobCands(prev = []) {
+  if (typeof window !== 'undefined' && window.__vtJob && JOBS[window.__vtJob]) return [{ t: 'job', id: window.__vtJob }];   // 가상 시험 직업 지정 (dev/vtest.js --job)
   const mc = mainCat(), lv = catLevels();
   const fit = j => JOBS[j].cats ? JOBS[j].cats.includes(mc) && Math.min(...JOBS[j].cats.map(c => lv[c])) >= 0.4 * lv[mc] : JOBS[j].cat === mc;   // 혼합: 부 계열이 주력의 40% 이상
   let main = shuffle(JOB_ORDER.filter(fit)); const fresh = main.filter(j => !prev.includes(j));
@@ -99,8 +100,8 @@ function leaveAltar() { G.altar = null; G.sel = null; hideUI(); STATE.mode = 'pl
 function applyJob(id) {
   const p = G.p; p.job = id; p.jobAt = G.ph.i; p.ult = 50; G.altar = null;
   G.stats.job = id; G.stats.jobAt = Math.round(G.time);
-  toast(`${JOBS[id].name} 전직`, '#d9a8ff'); fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 120, dur: 0.6, color: '#d9a8ff', follow: true });
-  recalc();
+  if (id === 'druid') petsInit();
+  recalc(); jobCeremony(id, false);                         // 0.26 전직 연출·무기 변환 안내
 }
 function openJob2() {
   G.pendingJob2 = false; G.job2Ready = false; STATE.mode = 'select'; clearInput();
@@ -110,9 +111,8 @@ function openJob2() {
 function applyJob2(k) {
   const p = G.p; p.job2 = k; p.exw = { id: p.job, t: 0.5 }; G.stats.job2 = k; G.stats.job2At = Math.round(G.time);
   if (k === 'veteran') { p.vet = true; }
-  toast(`2차 전직 · ${(JOB2[p.job].concat(JOB2_STAT)).find(o => o.k === k).nm}`, '#d9a8ff');
-  toast(`전용 무기 ${EXW[p.job].name} 획득`, '#ffe08a');
-  recalc();
+  if (k === 'pack') { addPet('wolf'); addPet('wolf'); }
+  recalc(); jobCeremony(p.job, true);
 }
 
 /* ---------- 피해·피격 연계 ---------- */
@@ -135,6 +135,7 @@ function onEnemyHit(e, o) {
   if (src === 'knife' && hasRelic('arcknife') && Math.random() < 0.2) shoot({ kind: 'orb', x: e.x, y: e.y, ang: rand(Math.PI * 2), sp: 270, r: 6, dmg: WEAPONS.orb.base.dmg * 0.6 * p.mod.dmg, pierce: 0, life: 1.6, color: '#9fb8ff', src: 'mbolt', home: true });
   if (src === 'arrow' && hasRelic('thunderarrow') && Math.random() < 0.2) chainBolt(e, 2, WEAPONS.lightning.base.dmg * 0.5 * p.mod.dmg, 'thunder');
   if (!p.job || e.dead) return;
+  jobWeaponHit(e, o);                                       // 0.26 공용 무기 직업 변환
   if (p.job === 'archer' && RANGED_SRC[src]) {
     e.mk = (e.mk || 0) + 1; const need = p.job2 === 'sniper' ? 3 : 5;
     if (e.mk >= need) { e.mk = 0; markBurst(e); }
@@ -153,7 +154,7 @@ function onEnemyKill(e) {
   const p = G.p; if (!p.job) return;
   ultGain(JOB_CFG.ultKill);
   if (p.job === 'priest' && ++p.holy >= (p.job2 === 'saint' ? 12 : 20)) { p.holy = 0; purify(); }
-  if (p.job === 'druid' && p.job2 === 'sage' && formOn('spirit')) heal(0.5);
+  jobWeaponKill(e); if (p.job === 'druid') petKilled(e);
   if (p.job === 'summoner' && !e.minionOf) {
     const cap = p.job2 === 'necro' ? 10 : 6, ch = p.job2 === 'necro' ? 0.24 : 0.12;
     if (G.minions.length < cap && Math.random() < ch) addMinion(e.x, e.y);
@@ -164,7 +165,6 @@ function playerHurtMul() {
   if (p.job === 'warrior') m *= 1 - 0.3 * p.fury / 100;
   if (G.tm.wall > 0) m *= 0.6;
   if (p.job === 'sovereign' && inBanner()) m *= 0.85;
-  if (p.job === 'druid' && formOn('bear')) m *= p.job2 === 'ursa' ? 0.65 : 0.8;                                               // 방패 충격 방벽 분기 (0.8)
   return m;
 }
 /* 피격 직전 판정: true 반환 시 피해 무효 */
@@ -207,14 +207,13 @@ function reaction(e) {
 }
 /* 0.9 직업 보조 함수 */
 function inBanner() { const b = G.banner, p = G.p; return b && dist2(b.x, b.y, p.x, p.y) < b.r * b.r; }
-function formOn(f) { const p = G.p; return p.job === 'druid' && (p.form === f || G.tm.wrath > 0); }
 function purify() {
   const p = G.p, j = p.job2 === 'judge', R = 110 * (j ? 1.35 : 1), d = (20 + p.level * 2) * p.mod.dmg * (j ? 2 : 1);
   heal(p.maxHp * (p.job2 === 'saint' ? 0.2 : 0.1));
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: R, dur: 0.4, color: '#fff2a8', fill: true });
   gridQuery(p.x, p.y, R, e => damageEnemy(e, d, { src: 'holy', kb: 160, fx: p.x, fy: p.y }));
 }
-function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0, G.minions.length + 1); G.minions.push({ x, y, r: G.p.job2 === 'lord' ? 9 : 7, life: 20, hitT: 0 }); }
+function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0, G.minions.length + 1); G.minions.push({ id: ++G.pid, x, y, r: G.p.job2 === 'lord' ? 9 : 7, life: 20, hitT: 0 }); }
 
 /* ---------- 궁극기 ---------- */
 function ultGain(v) { const p = G.p; if (tr('focus')) v *= 1.15; if (!p.job || p.ult >= JOB_CFG.ultNeed) return; p.ult = Math.min(JOB_CFG.ultNeed, p.ult + v); if (p.ult >= JOB_CFG.ultNeed) { G.tm.readyAt = G.time; toast('궁극기 준비 · 손 떼고 정지', '#ffe08a'); } }
@@ -235,7 +234,7 @@ function useUlt() {
   }
   if (j === 'summoner') for (let i = 0; i < 8; i++) addMinion(p.x + Math.cos(i) * 30, p.y + Math.sin(i) * 30);
   if (j === 'sovereign') { G.tm.roar = 5; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 260, dur: 0.6, color: '#ffd24a' }); }
-  if (j === 'chrono') { G.tm.stop = 4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 400, dur: 0.7, color: '#c8c0ff' }); }
+  if (j === 'chrono') startRewind();                          // 0.26 과거의 나
   if (j === 'priest') { G.sanct = { x: p.x, y: p.y, r: 150 }; G.tm.sanct = 6; }
   if (j === 'druid') G.tm.wrath = 8;
 }
@@ -270,15 +269,24 @@ function updateTurrets(dt) {
   }
   G.turrets = G.turrets.filter(t => t.life > 0);
 }
+/* 망령: 서로 다른 적 분산 공격 (0.26) — 표적 유지·미점유 적 우선·망령 간 간격 유지, 적 없으면 주인 주변 선회 */
 function updateMinions(dt) {
-  const p = G.p, k = p.job2 === 'lord' ? 2 : 1, dmg = 8 * k * p.mod.dmg;
-  for (const m of G.minions) {
-    m.life -= dt; m.hitT -= dt;
-    const e = nearestEnemy(m.x, m.y, 300);
-    const tx = e ? e.x : p.x + 30, ty = e ? e.y : p.y, dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1;
-    if (d > 4) { m.x += dx / d * 170 * dt; m.y += dy / d * 170 * dt; }
+  const p = G.p, k = p.job2 === 'lord' ? 2 : 1, dmg = 8 * k * p.mod.dmg, claim = new Map();
+  for (const m of G.minions) if (m.tg && !m.tg.dead) claim.set(m.tg.id, (claim.get(m.tg.id) || 0) + 1);
+  G.minions.forEach((m, i) => {
+    m.life -= dt; m.hitT -= dt; m.rt = (m.rt || 0) - dt;
+    if (m.tg && (m.tg.dead || dist2(m.tg.x, m.tg.y, p.x, p.y) > 360 * 360)) { claim.set(m.tg.id, (claim.get(m.tg.id) || 1) - 1); m.tg = null; }
+    if (!m.tg || m.rt <= 0) {
+      m.rt = 1.2; let best = null, bs = 1e18;
+      gridQuery(p.x, p.y, 320, e => { const s = dist2(e.x, e.y, m.x, m.y) * (1 + 3 * (claim.get(e.id) || 0) - (e === m.tg ? 0.5 : 0)); if (s < bs) { bs = s; best = e; } });
+      if (best !== m.tg) { if (m.tg) claim.set(m.tg.id, (claim.get(m.tg.id) || 1) - 1); m.tg = best; if (best) claim.set(best.id, (claim.get(best.id) || 0) + 1); }
+    }
+    const e = m.tg, a = i * 2.39996 + G.time * 0.8;
+    const tx = e ? e.x : p.x + Math.cos(a) * 44, ty = e ? e.y : p.y + Math.sin(a) * 44, dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1;
+    if (d > 4) { m.vx = dx; m.x += dx / d * 170 * dt; m.y += dy / d * 170 * dt; }
+    for (let j = 0; j < G.minions.length; j++) { if (j === i) continue; const o = G.minions[j], ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od > 0 && od < 13) { m.x += ox / od * (13 - od) * 0.5; m.y += oy / od * (13 - od) * 0.5; } }
     if (e && m.hitT <= 0 && d < e.r + m.r + 2) { m.hitT = 0.5; damageEnemy(e, dmg, { src: 'minion' }); }
-  }
+  });
   G.minions = G.minions.filter(m => m.life > 0);
 }
 
@@ -321,11 +329,10 @@ function updateJob(dt) {
     if (p.job2 === 'benevolent' && inBanner()) heal(p.maxHp * 0.02 * dt);
   }
   if (p.job === 'druid') {
-    T.form = (T.form == null ? 15 : T.form) - dt;
-    if (!p.form) p.form = mainCat() === 'magic' ? 'spirit' : 'bear';
-    if (T.form <= 0) { T.form = 15; p.form = p.form === 'bear' ? 'spirit' : 'bear'; toast(p.form === 'bear' ? '곰 형태' : '정령 형태', '#9fe0a0'); recalc(); }
+    updatePets(dt);
     if (T.wrath > 0) { T.vine = (T.vine || 0) - dt; if (T.vine <= 0) { T.vine = 1; const q = ringAt(30, 140); addPool({ x: q.x, y: q.y, r: 50, dur: 2.5, every: 0.4, dmg: (10 + p.level) * p.mod.dmg, src: 'ult', kind: 'vine', slow: true }); } }
   }
+  recordTrail(dt); updateRewind(dt);
   if (G.sanct && T.sanct > 0) {
     const S = G.sanct; T.st = (T.st || 0) - dt;
     if (T.st <= 0) { T.st = 0.4; const d = (14 + p.level * 1.2) * p.mod.dmg; gridQuery(S.x, S.y, S.r, e => damageEnemy(e, d, { src: 'ult' })); }

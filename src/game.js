@@ -13,7 +13,7 @@ function newRun() {
     p: { x: 0, y: 0, r: CFG.player.r, hp: CFG.player.hp, maxHp: CFG.player.hp, face: { x: 0, y: -1 }, invT: 0, flash: 0, moving: false,
       level: 1, xp: 0, need: xpNeed(1), weapons: [], passives: [], relics: [], bonusDmg: 0, mod: null,
       job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, holy: 0, form: null, shield: false, vet: false, curses: [] },
-    enemies: [], gems: [], eb: [], hz: [], gk: null, gkMob: null, proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], altar: null, banner: null, sanct: null,
+    enemies: [], gems: [], eb: [], hz: [], gk: null, gkMob: null, proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], pets: [], trail: [], rw: null, altar: null, banner: null, sanct: null,
     pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, pendingCamp: false, pendingDoor: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
     stats: { crisis: [], start: null, dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
@@ -40,7 +40,7 @@ function recalc() {
   const p = G.p, prevMax = p.maxHp;
   p.mod = {
     dmg: (1 + PASSIVES.might.per * passLv('might')) * (1 + p.bonusDmg) * (p.vet ? 1.15 : 1),
-    speed: (hasCurse('heavy') ? 0.9 : 1) * (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1) * (p.job2 === 'accel' ? 1.15 : 1) * (p.job === 'druid' && p.form === 'spirit' ? 1.15 : 1),
+    speed: (hasCurse('heavy') ? 0.9 : 1) * (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1) * (p.job2 === 'accel' ? 1.15 : 1),
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
   p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
@@ -182,8 +182,9 @@ function damageEnemy(e, dmg, o = {}) {
   e.hp -= dmg; sfx('hit'); jHit(e, eff, o);                   // 타격 연출·피해 숫자 (0.22)
   G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + eff;
   if (o.kb && o.fx !== undefined && !e.cmd) { const dx = e.x - o.fx, dy = e.y - o.fy, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * o.kb * JUICE.kbMul; e.kby += dy / d * o.kb * JUICE.kbMul; }   // 밀림 강화 (0.22)
+  e.ls = o.src;                                              // 마지막 피해원 (0.26 변환 처치 효과)
   if (e.hp <= 0) killEnemy(e);
-  else onEnemyHit(e, o);
+  else { o.dmg0 = dmg; onEnemyHit(e, o); }
 }
 function killEnemy(e) {
   e.dead = true; G.kills++; G.stats.kt[e.type] = 1; sfx(e.gk && !e.clone ? 'bossdie' : 'kill');

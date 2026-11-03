@@ -49,8 +49,9 @@ function abilityHTML() {
   let h = '';
   if (p.job) { const J = JOBS[p.job], J2 = p.job2 && JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2);
     h += '<h3>직업</h3>' + row(jobColor(p.job), J.ic, J.name, J2 ? '2차 · ' + J2.nm : '1차', J.rule + '\n궁극기 · ' + J.ult + (J2 ? '\n' + J2.nm + ' · ' + J2.ds : ''));
-    if (p.exw) { const X = EXW[p.exw.id]; h += row('#ffd24a', X.ic, X.name, '전용 무기', X.ds, 'exw'); } }
-  if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; return row(CFG.colors[d.cat], d.ic, d.name, 'Lv ' + w.lvl, d.desc + brNm(w.id, w.br)); }).join('');
+    if (p.exw) { const X = EXW[p.exw.id]; h += '<h3>전용 무기</h3>' + row('#ffd24a', X.ic, X.name, JOBS[p.job].name + ' 전용', X.ds, 'exw'); }
+    if (p.job === 'druid' && G.pets.length) h += '<h3>야수 동료</h3>' + ['wolf', 'bear'].map(k => { const n = G.pets.filter(m => m.kind === k).length; if (!n) return ''; const S = petStat(k), D = PET[k]; return row('#7fd07a', D.ic, D.name + (n > 1 ? ' ×' + n : ''), '', `피해 ${Math.round(S.dmg)} · 공격 간격 ${S.atk.toFixed(2)}초 · 이동 속도 ${Math.round(S.sp)}\n${k === 'wolf' ? '울부짖음' : '강타'} ${S.sk.toFixed(1)}초마다 · 범위 ${Math.round(S.skR)}`); }).join(''); }
+  if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; const wx = wxOn(d.cat) ? `\n${JOBS[p.job].name} 변환 · ${JOB_WX[p.job].ds}` : ''; return row(CFG.colors[d.cat], d.ic, wName(w.id), 'Lv ' + w.lvl, d.desc + wx + brNm(w.id, w.br)); }).join('');
   if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br)); }).join('');
   if (p.relics.length) h += '<h3>유물</h3>' + p.relics.map(id => row('#ffd24a', RELICS[id].ic, RELICS[id].name, '', RELICS[id].ds)).join('');
   const tk = Object.keys(p.tr || {}); if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => row('#c8b0ff', TRAITS[k].ic, TRAITS[k].nm, '', TRAITS[k].ds)).join('');
@@ -62,13 +63,13 @@ function autoLater() { if (STATE.dev.auto) { const s = G.sel; setTimeout(() => {
 function cardInfo(c) {
   const p = G.p;
   switch (c.t) {
-    case 'wnew': { const d = WEAPONS[c.id]; return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: d.name, tag: '신규 · ' + CAT_NAME[d.cat] + ' 무기', ds: d.desc }; }
-    case 'wup': { const d = WEAPONS[c.id], w = p.weapons.find(x => x.id === c.id); return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: d.name, tag: `Lv ${w.lvl} → ${w.lvl + 1}`, ds: upText(c.id, d.ups[w.lvl - 1]) }; }
+    case 'wnew': { const d = WEAPONS[c.id]; return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: wName(c.id), tag: '신규 · ' + CAT_NAME[d.cat] + ' 무기', ds: d.desc }; }
+    case 'wup': { const d = WEAPONS[c.id], w = p.weapons.find(x => x.id === c.id); return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: wName(c.id), tag: `Lv ${w.lvl} → ${w.lvl + 1}`, ds: upText(c.id, d.ups[w.lvl - 1]) }; }
     case 'pnew': { const d = PASSIVES[c.id]; return { k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: '신규 · 보조 효과', ds: d.desc(1) }; }
     case 'pup': { const d = PASSIVES[c.id], L = passLv(c.id); return { k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: `Lv ${L} → ${L + 1}`, ds: d.desc(L + 1) }; }
     case 'relic': { const d = RELICS[c.id]; return { k: 'k-relic', col: '#ffd24a', ic: d.ic, nm: d.name, tag: `유물 · ${itemName(d.a)} + ${itemName(d.b)}`, ds: d.ds }; }
     case 'branch': { const o = BRANCHES[c.id].find(x => x.k === c.k); return { k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + ' 분기', ds: o.ds }; }
-    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult }; }
+    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult + '\n무기 변환 · ' + jobCats(c.id).map(x => CAT_NAME[x]).join('·') + ' 무기 → ' + JOB_WX[c.id].pre + ' 무기 (' + JOB_WX[c.id].ds + ')' }; }
     case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : jobColor(c.id), ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
     case 'campRest': return { k: 'k-fill', col: '#8ff0b0', ic: '휴', nm: '휴식', tag: '야영지', ds: '체력 전부 회복' };
     case 'campTrain': return { k: 'k-fill', col: '#7fe0ff', ic: '련', nm: '수련', tag: '야영지', ds: '즉시 레벨 업 2회' };

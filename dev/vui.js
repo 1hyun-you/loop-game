@@ -41,6 +41,17 @@ const SERVER = http.createServer((q, s) => { s.setHeader('content-type', 'text/h
   chk('select open', await ev(() => STATE.mode === 'select'));
   await click('.card[data-i="0"]'); chk('first tap arms', await ev(() => STATE.mode === 'select' && !!document.querySelector('.card.armed')));
   await click('.card[data-i="0"]'); chk('second tap picks', await ev(() => STATE.mode === 'play'));
+  // 0.26 직업 개편: 드루이드 동료·무기 변환 표시·2차 늑대 추가, 시간술사 과거의 나, 능력 보기
+  await ev(() => { if (!hasW('fireball')) addWeapon('fireball'); applyJob('druid'); });
+  chk('druid pets 2', await ev(() => G.pets.length === 2 && G.pets.some(m => m.kind === 'bear')));
+  chk('weapon convert name', await ev(() => G.p.weapons.some(w => wName(w.id).startsWith('야생 '))));
+  await ev(() => { G.pendingLv = 1; }); await wait(300); await ev(() => toggleAbil()); await wait(100);
+  chk('abil pets row', await ev(() => /야수 동료/.test(document.body.innerText)));
+  await ev(() => { G.sel = null; hideUI(); STATE.mode = 'play'; applyJob2('pack'); }); await wait(300);
+  chk('pack wolves 3', await ev(() => G.pets.filter(m => m.kind === 'wolf').length === 3 && !!G.p.exw));
+  await ev(() => { G.p.job2 = null; G.p.exw = null; G.pets = []; applyJob('chrono'); G.p.ult = JOB_CFG.ultNeed; for (let i = 0; i < 20; i++) recordTrail(0.11); useUlt(); });
+  await wait(400); chk('rewind running', await ev(() => !!G.rw && G.tm.stop > 0));
+  await wait(1500); chk('page errors 0 (job)', errs.length === 0);
   // 진엔딩 후 상태 주입 → 도전 준비
   await ev(() => { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify({ runs: 5, trueEnd: 1, tierMax: 2, titles: ['end', 't1'], frags: FRAGS.map(f => f.id), gates: GK_ORDER })); showTitle(); });
   chk('prep button', await click('prep'));

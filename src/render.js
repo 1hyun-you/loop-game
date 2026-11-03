@@ -164,6 +164,7 @@ function drawJobUnits(c, inView) {
     c.strokeStyle = '#1b1626'; c.lineWidth = 5; c.beginPath(); c.moveTo(t.x, t.y - 2); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y - 2 + Math.sin(t.a || 0) * 13); c.stroke();
     c.strokeStyle = t.temp ? '#ffd24a' : '#b4c2d4'; c.lineWidth = 2.5; c.stroke();
   }
+  drawPets(c, inView); drawRewind(c);                      // 0.26 야수 동료·과거의 나
   c.globalAlpha = 0.9;
   for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; drawSprite(c, 'ghost', (Math.floor(G.time * 5) + (m.id || 0)) & 1, m.x, m.y + m.r, { flip: (m.vx || 0) < 0 }); }
   c.globalAlpha = 1;
@@ -172,9 +173,10 @@ function drawPlayer(c) {
   const p = G.p;
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
   c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x, p.y + p.r * 0.85, p.r, p.r * 0.35, 0, 0, 7); c.fill();
+  drawJobAura(c);                                           // 0.26 직업 문양
   const mv = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.05; p._lx = p.x; p._ly = p.y;   // 이동 중 걷기 동작 (0.19)
   if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;
-  drawSprite(c, 'hero', mv ? Math.floor(G.time * 8) & 1 : 0, p.x, p.y + p.r * 1.1, { flip: !!p._fl, tint: playerColor() });   // 색상 변형 (0.15)
+  drawSprite(c, 'hero', mv ? Math.floor(G.time * 8) & 1 : 0, p.x, p.y + p.r * 1.1, { flip: !!p._fl, tint: heroTint() });   // 0.26 직업 색 옷   // 색상 변형 (0.15)
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
   c.fillStyle = p.hp / p.maxHp > 0.3 ? '#5fe07a' : '#ff5a5a'; c.fillRect(x, y, w * Math.max(0, p.hp / p.maxHp), h);
@@ -233,11 +235,13 @@ function drawWeapons(c, inView) {
   for (const w of p.weapons) {
     if (w.id !== 'spin' || !w.n) continue;
     const mul = w.bs > 15 ? 2 : 1;
+    const jt = jobTint('melee'); if (jt) { c.globalAlpha = 0.3; c.fillStyle = jt; c.beginPath(); for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R; c.moveTo(bx + w.bs, by); c.arc(bx, by, w.bs, 0, 7); } c.fill(); c.globalAlpha = 1; }
     for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; drawSpriteRot(c, 'blade', 0, p.x + Math.cos(a) * w.R, p.y + Math.sin(a) * w.R, a + Math.PI / 2, { mul }); }
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
+    if (pr.jt) { c.globalAlpha = 0.35; c.fillStyle = pr.jt; c.beginPath(); c.arc(pr.x, pr.y, pr.r + 5, 0, 7); c.fill(); c.globalAlpha = 1; }   // 직업 변환 발광 (0.26)
     if (pr.kind === 'arrow') drawSpriteRot(c, pr.src === 'knife' ? 'knife' : 'arrow', 0, pr.x, pr.y, a);
     else if (pr.kind === 'boom') drawSpriteRot(c, 'axe', 0, pr.x, pr.y, pr.spin, { mul: pr.r > 15 ? 2 : 1 });
     else if (pr.kind === 'orb') drawSpriteC(c, 'orbp', 0, pr.x, pr.y, { mul: pr.r > 9 ? 2 : 1 });
@@ -264,7 +268,7 @@ function drawHUD(c) {
   c.font = 'bold 14px Galmuri11, system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
   const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
   txt('Lv ' + p.level, 12, top + 20, 'left');
-  if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : p.form === 'bear' ? ' · 곰' : ' · 정령') : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
+  if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
   c.font = 'bold 18px Galmuri11, system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
   const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)
   c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#ffe08a';
@@ -298,13 +302,23 @@ function drawSlots(c, y) {
   };
   const rowW = 5 * S + 4 * gap, px0 = W - 12 - rowW;
   row(p.weapons, slotW(), 12, w => CFG.colors[WEAPONS[w.id].cat], w => WEAPONS[w.id].ic);
+  p.weapons.forEach((w, i) => { const jt = jobTint(WEAPONS[w.id].cat); if (!jt) return; const x = 12 + i * (S + gap); c.strokeStyle = jt; c.lineWidth = 2.5; c.strokeRect(x + 1.25, y + 1.25, S - 2.5, S - 2.5); c.fillStyle = jt; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y); c.lineTo(x, y + 8); c.closePath(); c.fill(); });   // 직업 변환 무기 표시 (0.26)
   row(p.passives, CFG.slots.passive, px0, () => CFG.colors.passive, ps => PASSIVES[ps.id].ic);
   // 0.25 주기형 효과 재사용 표시: 시계 방향으로 채워지는 원형 (숫자 없음)
   const T = G.tm, pie = (x, y, r, k) => { c.fillStyle = 'rgba(10,8,16,0.55)'; c.beginPath(); c.moveTo(x, y); c.arc(x, y, r, -Math.PI / 2 + Math.PI * 2 * clamp(k, 0, 1), Math.PI * 1.5); c.closePath(); c.fill(); c.strokeStyle = k >= 1 ? '#fff6c8' : 'rgba(255,255,255,0.75)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(k, 0, 1)); c.stroke(); };
   const pcd = { magnet: ['vacuum', () => 1 - (T.vac == null ? 30 : T.vac) / 30], vit: ['shield', () => p.shield ? 1 : 1 - T.shield / 12], haste: ['charge', () => 1 - T.charge / 8] };
   p.passives.forEach((ps, i) => { const q = pcd[ps.id]; if (q && ps.br === q[0]) pie(px0 + i * (S + gap) + S / 2, y + S / 2, S / 2 - 2, q[1]()); });
+  let dx0 = 12 + slotW() * (S + gap) + 6;
+  if (p.exw) {                                              // 0.26 전용 무기 칸: 금색 마름모 틀 + 재사용 원형
+    const X = EXW[p.exw.id], cx = dx0 + S / 2, cy = y + S / 2, h = S / 2 + 1;
+    c.fillStyle = '#ffd24a'; c.beginPath(); c.moveTo(cx, cy - h); c.lineTo(cx + h, cy); c.lineTo(cx, cy + h); c.lineTo(cx - h, cy); c.closePath(); c.fill();
+    c.strokeStyle = '#7a5a10'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#14121c'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(X.ic, cx, cy);
+    if (X.cd > 0.6) pie(cx, cy, S / 2 - 5, 1 - Math.max(0, p.exw.t) / X.cd);
+    dx0 += S + gap + 2;
+  }
   const dials = jobDials();
-  dials.forEach((d, i) => { const x = 12 + slotW() * (S + gap) + 8 + i * (S + gap) + S / 2, yy = y + S / 2; if (x + S / 2 > px0 - 4) return;
+  dials.forEach((d, i) => { const x = dx0 + i * (S + gap) + S / 2, yy = y + S / 2; if (x + S / 2 > px0 - 4) return;
     c.fillStyle = d.col; c.beginPath(); c.arc(x, yy, S / 2 - 1, 0, 7); c.fill(); c.fillStyle = '#14121c'; c.font = 'bold 12px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(d.ic, x, yy);
     pie(x, yy, S / 2 - 1, d.k); });
 }
@@ -314,6 +328,6 @@ function jobDials() {
   out.push({ ic: '궁', col: '#ffe08a', k: p.ult / JOB_CFG.ultNeed });
   if (p.job === 'sovereign') out.push({ ic: '기', col: '#ffd24a', k: 1 - (T.banner == null ? 0 : T.banner) / 10 });
   if (p.job === 'engineer') out.push({ ic: '탑', col: '#b4c2d4', k: 1 - T.turret / 10 });
-  if (p.job === 'druid' && T.form != null) out.push({ ic: p.form === 'bear' ? '곰' : '령', col: '#9fe0a0', k: 1 - T.form / 15 });
+  if (p.job === 'druid') { const b = G.pets.find(m => m.kind === 'bear'); if (b) out.push({ ic: '곰', col: '#c89060', k: 1 - b.sk / petStat('bear').sk }); }
   return out;
 }

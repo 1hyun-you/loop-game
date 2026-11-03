@@ -7,6 +7,7 @@
 // 0.12 확장: --demon final|retry|mix (판 구조 지정, 마왕전 기록 demon·runType)
 // 0.11 확장: 수문장전 기록(gate·gk), --rotate(판마다 수문장 4인 순환 지정)
 // 0.13 확장: 대사창(talk) 자동 넘김 통과·진엔딩 화면 경유, 기록 조각·서사 상태·점수 기록, --preset release|post(저장 상태 주입), --tier n·--cond a,b (도전 옵션)
+// 0.26 확장: --job <직업 id> (전직 제단 후보 고정, 직업별 점검)
 // 0.4 확장: 시작 화면·일시정지(정지 확인·계속)·결과 화면 처음 화면 경유 흐름 점검, --god(무적 완주 시간 판독), --port(동시 실행)
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
@@ -118,6 +119,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
   await ctx.addInitScript(INIT);
   const p = await ctx.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
+  if (opt('job', null)) await p.addInitScript(j => { window.__vtJob = j; }, opt('job', null));   // 0.26 --job: 전직 후보를 지정 직업 1종으로 고정
   await p.goto(`http://127.0.0.1:${PORT}/`);
   if (PRESET) {   // 저장 상태 주입 후 새로고침 (0.13): release=기록 조각 10개(해제 직전), post=진엔딩 이후
     await p.evaluate(({ pre, tier, cond }) => {

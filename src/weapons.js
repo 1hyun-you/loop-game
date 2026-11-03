@@ -35,12 +35,11 @@ function wStats(w) {
   const aL = passLv('area'), mL = passLv('multi');
   if (aL) { if (pBr('area') === 'dense') dm *= 1 + 0.12 * aL; else s.area += 0.08 * aL + (pBr('area') === 'giant' ? 0.15 : 0); }
   if (pBr('area') === 'giant') dm *= 1.08;
-  if (mL && B.n) { s.n += multiN(mL) + (pBr('multi') === 'barrage' ? 1 : 0); dm *= 1 + 0.05 * mL * (pBr('multi') === 'velocity' ? 1 : 1) + (pBr('multi') === 'velocity' ? 0.2 : 0); if (pBr('multi') === 'barrage') cm *= 1.1; }
+  if (mL && B.n) { s.n += multiN(mL) + (pBr('multi') === 'barrage' ? 1 : 0); dm *= 1 + 0.03 * mL + (pBr('multi') === 'velocity' ? 0.2 : 0); if (pBr('multi') === 'barrage') cm *= 1.2; }   // 0.26 하향: 개수 2·5단계 각 +1, 단계당 피해 +3%
   // 직업 (0.6·0.7)
   if (G.p.job2 === 'archmage' && D.cat === 'magic') cm *= 0.8;
   if (G.p.job2 === 'berserk' && w.id === 'cleave' && G.p.fury >= 100) s.area += 0.3;
   if (jobCat(D.cat)) dm *= 1.1;                                          // 전직 계열 무기 피해 +10%
-  if (G.p.job === 'druid') { if (D.cat === 'melee' && formOn('bear')) dm *= G.p.job2 === 'ursa' ? 1.4 : 1.25; if (D.cat === 'magic' && formOn('spirit')) dm *= G.p.job2 === 'sage' ? 1.4 : 1.25; }
   if (G.p.job2 === 'accel') cm *= 0.88;
   return {
     dmg: B.dmg * (1 + s.dmg) * M.dmg * dm,
@@ -58,6 +57,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 function shoot(o) {
   const pr = Object.assign({ id: ++G.pid, t: 0, life: 1, r: 4, pierce: 0, hits: new Set(), color: '#fff', kind: 'bolt', src: '' }, o);
   pr.vx = Math.cos(o.ang) * o.sp; pr.vy = Math.sin(o.ang) * o.sp;
+  if (SRC_CAT[pr.src] && wxOn(SRC_CAT[pr.src])) pr.jt = JOB_COL[G.p.job];   // 직업 변환 무기 발광 (0.26)
   if (G.proj.length < 400) G.proj.push(pr);
   return pr;
 }
@@ -178,7 +178,7 @@ function slash(a0, arc, range, dmg, kb) {
     let da = Math.atan2(e.y - p.y, e.x - p.x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da));
     if (Math.abs(da) <= arc / 2 + 0.15) damageEnemy(e, dmg, { kb, fx: p.x, fy: p.y, src: 'cleave' });
   });
-  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: '#ffe0d0' });
+  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: jobTint('melee') || '#ffe0d0' });
 }
 /* 회전검: 상시 회전, 적별 타격 간격 0.35초 · 투척 궤도 분기: 2.4초마다 0.8초간 반경 확장 (피해 130%) */
 function updateSpin(w, S, dt) {
@@ -254,7 +254,7 @@ function updateProjectiles(dt) {
 /* 화염구 착탄: 폭발 + 불길 분기·화염 장판 유물 장판 */
 function fireBurst(pr) {
   if (pr.kind === 'shell') { explode(pr.x, pr.y, pr.R, pr.dmg, pr.src, '#ffd890'); return; }
-  explode(pr.x, pr.y, pr.R, pr.dmg, pr.src);
+  explode(pr.x, pr.y, pr.R, pr.dmg, pr.src, jobTint('magic') || '#ff9a4a');
   if (pr.pool) addPool({ x: pr.x, y: pr.y, r: pr.R * 0.8, dur: 2.5, every: 0.4, dmg: pr.dmg * 0.25, src: 'fireball_pool', kind: 'fire' });
   if (hasRelic('firefield')) addPool({ x: pr.x, y: pr.y, r: pr.R * 0.9, dur: 2, every: 0.5, dmg: pr.dmg * 0.2, src: 'firefield', kind: 'fire' });
 }

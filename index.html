@@ -142,7 +142,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.25',
+  VERSION: '0.26',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -229,12 +229,12 @@ const PASSIVES = {
   haste: { name: '재사용 감소', ic: '재', per: 0.06, desc: L => `재사용 대기 -${6 * L}%` },
   /* 3단계 추가 4종 (0.8) */
   area: { name: '공격 범위', ic: '범', per: 0.08, desc: L => `모든 무기 범위 +${8 * L}%` },
-  multi: { name: '투사체 수', ic: '투', per: 0.05, desc: L => `개수형 무기 개수 +${multiN(L)}, 해당 무기 피해 +${5 * L}%` },
+  multi: { name: '투사체 수', ic: '투', per: 0.03, desc: L => `개수형 무기 개수 +${multiN(L)}, 해당 무기 피해 +${3 * L}%` },
   magnet: { name: '경험치 흡수', ic: '흡', per: 0.3, desc: L => `경험치 흡수 범위 +${30 * L}%` },
   regen: { name: '체력 회복', ic: '생', per: 0.25, desc: L => `초당 체력 ${(0.25 * L).toFixed(2)} 회복` },
 };
 const PASSIVE_ORDER = ['vit', 'might', 'swift', 'haste', 'area', 'multi', 'magnet', 'regen'];
-function multiN(L) { return L >= 3 ? 2 : L >= 1 ? 1 : 0; }
+function multiN(L) { return L >= 5 ? 2 : L >= 2 ? 1 : 0; }   // 0.26 하향 (1→2단계부터 +1, 3→5단계에 +2)
 /* ============================================================
    공용 함수 · 공간 격자 (초안 재사용, 명명 유지)
    ============================================================ */
@@ -344,7 +344,7 @@ function newRun() {
     p: { x: 0, y: 0, r: CFG.player.r, hp: CFG.player.hp, maxHp: CFG.player.hp, face: { x: 0, y: -1 }, invT: 0, flash: 0, moving: false,
       level: 1, xp: 0, need: xpNeed(1), weapons: [], passives: [], relics: [], bonusDmg: 0, mod: null,
       job: null, jobAt: -1, job2: null, exw: null, ult: 0, fury: 0, holy: 0, form: null, shield: false, vet: false, curses: [] },
-    enemies: [], gems: [], eb: [], hz: [], gk: null, gkMob: null, proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], altar: null, banner: null, sanct: null,
+    enemies: [], gems: [], eb: [], hz: [], gk: null, gkMob: null, proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], pets: [], trail: [], rw: null, altar: null, banner: null, sanct: null,
     pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, pendingCamp: false, pendingDoor: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
     stats: { crisis: [], start: null, dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
@@ -371,7 +371,7 @@ function recalc() {
   const p = G.p, prevMax = p.maxHp;
   p.mod = {
     dmg: (1 + PASSIVES.might.per * passLv('might')) * (1 + p.bonusDmg) * (p.vet ? 1.15 : 1),
-    speed: (hasCurse('heavy') ? 0.9 : 1) * (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1) * (p.job2 === 'accel' ? 1.15 : 1) * (p.job === 'druid' && p.form === 'spirit' ? 1.15 : 1),
+    speed: (hasCurse('heavy') ? 0.9 : 1) * (1 + PASSIVES.swift.per * passLv('swift')) * (p.vet ? 1.08 : 1) * (p.job2 === 'accel' ? 1.15 : 1),
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
   p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
@@ -513,8 +513,9 @@ function damageEnemy(e, dmg, o = {}) {
   e.hp -= dmg; sfx('hit'); jHit(e, eff, o);                   // 타격 연출·피해 숫자 (0.22)
   G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + eff;
   if (o.kb && o.fx !== undefined && !e.cmd) { const dx = e.x - o.fx, dy = e.y - o.fy, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * o.kb * JUICE.kbMul; e.kby += dy / d * o.kb * JUICE.kbMul; }   // 밀림 강화 (0.22)
+  e.ls = o.src;                                              // 마지막 피해원 (0.26 변환 처치 효과)
   if (e.hp <= 0) killEnemy(e);
-  else onEnemyHit(e, o);
+  else { o.dmg0 = dmg; onEnemyHit(e, o); }
 }
 function killEnemy(e) {
   e.dead = true; G.kills++; G.stats.kt[e.type] = 1; sfx(e.gk && !e.clone ? 'bossdie' : 'kill');
@@ -2204,12 +2205,11 @@ function wStats(w) {
   const aL = passLv('area'), mL = passLv('multi');
   if (aL) { if (pBr('area') === 'dense') dm *= 1 + 0.12 * aL; else s.area += 0.08 * aL + (pBr('area') === 'giant' ? 0.15 : 0); }
   if (pBr('area') === 'giant') dm *= 1.08;
-  if (mL && B.n) { s.n += multiN(mL) + (pBr('multi') === 'barrage' ? 1 : 0); dm *= 1 + 0.05 * mL * (pBr('multi') === 'velocity' ? 1 : 1) + (pBr('multi') === 'velocity' ? 0.2 : 0); if (pBr('multi') === 'barrage') cm *= 1.1; }
+  if (mL && B.n) { s.n += multiN(mL) + (pBr('multi') === 'barrage' ? 1 : 0); dm *= 1 + 0.03 * mL + (pBr('multi') === 'velocity' ? 0.2 : 0); if (pBr('multi') === 'barrage') cm *= 1.2; }   // 0.26 하향: 개수 2·5단계 각 +1, 단계당 피해 +3%
   // 직업 (0.6·0.7)
   if (G.p.job2 === 'archmage' && D.cat === 'magic') cm *= 0.8;
   if (G.p.job2 === 'berserk' && w.id === 'cleave' && G.p.fury >= 100) s.area += 0.3;
   if (jobCat(D.cat)) dm *= 1.1;                                          // 전직 계열 무기 피해 +10%
-  if (G.p.job === 'druid') { if (D.cat === 'melee' && formOn('bear')) dm *= G.p.job2 === 'ursa' ? 1.4 : 1.25; if (D.cat === 'magic' && formOn('spirit')) dm *= G.p.job2 === 'sage' ? 1.4 : 1.25; }
   if (G.p.job2 === 'accel') cm *= 0.88;
   return {
     dmg: B.dmg * (1 + s.dmg) * M.dmg * dm,
@@ -2227,6 +2227,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 function shoot(o) {
   const pr = Object.assign({ id: ++G.pid, t: 0, life: 1, r: 4, pierce: 0, hits: new Set(), color: '#fff', kind: 'bolt', src: '' }, o);
   pr.vx = Math.cos(o.ang) * o.sp; pr.vy = Math.sin(o.ang) * o.sp;
+  if (SRC_CAT[pr.src] && wxOn(SRC_CAT[pr.src])) pr.jt = JOB_COL[G.p.job];   // 직업 변환 무기 발광 (0.26)
   if (G.proj.length < 400) G.proj.push(pr);
   return pr;
 }
@@ -2347,7 +2348,7 @@ function slash(a0, arc, range, dmg, kb) {
     let da = Math.atan2(e.y - p.y, e.x - p.x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da));
     if (Math.abs(da) <= arc / 2 + 0.15) damageEnemy(e, dmg, { kb, fx: p.x, fy: p.y, src: 'cleave' });
   });
-  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: '#ffe0d0' });
+  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: jobTint('melee') || '#ffe0d0' });
 }
 /* 회전검: 상시 회전, 적별 타격 간격 0.35초 · 투척 궤도 분기: 2.4초마다 0.8초간 반경 확장 (피해 130%) */
 function updateSpin(w, S, dt) {
@@ -2423,7 +2424,7 @@ function updateProjectiles(dt) {
 /* 화염구 착탄: 폭발 + 불길 분기·화염 장판 유물 장판 */
 function fireBurst(pr) {
   if (pr.kind === 'shell') { explode(pr.x, pr.y, pr.R, pr.dmg, pr.src, '#ffd890'); return; }
-  explode(pr.x, pr.y, pr.R, pr.dmg, pr.src);
+  explode(pr.x, pr.y, pr.R, pr.dmg, pr.src, jobTint('magic') || '#ff9a4a');
   if (pr.pool) addPool({ x: pr.x, y: pr.y, r: pr.R * 0.8, dur: 2.5, every: 0.4, dmg: pr.dmg * 0.25, src: 'fireball_pool', kind: 'fire' });
   if (hasRelic('firefield')) addPool({ x: pr.x, y: pr.y, r: pr.R * 0.9, dur: 2, every: 0.5, dmg: pr.dmg * 0.2, src: 'firefield', kind: 'fire' });
 }
@@ -2453,7 +2454,7 @@ const BRANCHES = {
   icering: [{ k: 'freeze', nm: '빙결', ds: '냉기 피해 시 6% 확률 1초 빙결' }, { k: 'shatter', nm: '파쇄', ds: '둔화된 적 처치 시 냉기 폭발 (주변 피해)' }],
   orb: [{ k: 'swarm', nm: '구체 군집', ds: '구체 +2, 피해 -20%' }, { k: 'nova', nm: '마력 폭발', ds: '명중 시 작은 폭발 (피해 60%)' }],
   area: [{ k: 'giant', nm: '거대화', ds: '범위 추가 +15%, 모든 무기 피해 +8%' }, { k: 'dense', nm: '응축', ds: '범위 증가 대신 단계당 피해 +12%' }],
-  multi: [{ k: 'barrage', nm: '일제 사격', ds: '개수 추가 +1, 해당 무기 재사용 +10%' }, { k: 'velocity', nm: '고속탄', ds: '개수형 무기 피해 +20%' }],
+  multi: [{ k: 'barrage', nm: '일제 사격', ds: '개수 추가 +1, 해당 무기 재사용 +20%' }, { k: 'velocity', nm: '고속탄', ds: '개수형 무기 피해 +20%' }],
   magnet: [{ k: 'vacuum', nm: '자석 파동', ds: '30초마다 주변 경험치 전부 흡수' }, { k: 'greed', nm: '성장 가속', ds: '경험치 획득 +15%' }],
   regen: [{ k: 'vamp', nm: '흡혈', ds: '처치 시 체력 0.4 회복' }, { k: 'second', nm: '불굴', ds: '판당 1회 치명 피해 시 체력 40%로 버팀' }],
 };
@@ -2609,9 +2610,9 @@ const JOBS = {
   summoner: { name: '소환사', cat: 'magic', ic: '소', rule: '처치한 적 12% 확률로 망령 소환 (최대 6), 망령이 적 추적 공격', ult: '망령 군단: 망령 8체 즉시 소환' },
   /* 3단계 추가 4종 (0.9) — 초안 직업 목록 기준, 드루이드는 혼합 계열(근접+마법) */
   sovereign: { name: '군주', cat: 'melee', ic: '군', rule: '10초마다 발밑에 군기 설치, 군기 반경 안에서 피해 +25%·받는 피해 -15%', ult: '왕의 호령: 5초간 모든 적 둔화 50%, 무기 재사용 2배 속도' },
-  chrono: { name: '시간술사', cat: 'ranged', ic: '시', rule: '원거리 명중 시 적 시간 지연(둔화) 누적, 5중첩 시 1.5초 정지', ult: '시간 정지: 4초간 모든 적 정지 (보스는 둔화)' },
+  chrono: { name: '시간술사', cat: 'ranged', ic: '시', rule: '원거리 명중 시 적 시간 지연(둔화) 누적, 5중첩 시 1.5초 정지', ult: '과거의 나: 1.5초 시간 정지, 5초 전 자신의 잔상이 지나온 길을 되감아 달리며 닿은 적 피해·둔화, 끝나면 5초 전 체력으로 되돌림(낮아진 경우)' },
   priest: { name: '프리스트', cat: 'magic', ic: '프', rule: '처치 20회마다 정화: 체력 10% 회복 + 주변 신성 폭발', ult: '성역: 6초간 성역 안 적 지속 피해, 플레이어 초당 체력 5% 회복' },
-  druid: { name: '드루이드', cat: 'hybrid', cats: ['melee', 'magic'], ic: '드', rule: '15초마다 곰 형태(근접 피해 +25%·받는 피해 -20%)와 정령 형태(마법 피해 +25%·이동 속도 +15%) 교대', ult: '대자연의 분노: 8초간 두 형태 동시 적용, 주변 덩굴 장판' },
+  druid: { name: '드루이드', cat: 'hybrid', cats: ['melee', 'magic'], ic: '드', rule: '야수 동료 늑대·곰 동행, 늑대 8초마다 울부짖음(주변 둔화), 곰 10초마다 강타(충격파), 피해·범위·이동 속도·재사용 보조 효과가 동료에게도 적용', ult: '대자연의 분노: 8초간 동료 피해 2배·공격 속도 1.5배, 주변 덩굴 장판' },
 };
 const JOB_ORDER = ['warrior', 'rogue', 'sovereign', 'archer', 'engineer', 'chrono', 'mage', 'summoner', 'priest', 'druid'];
 CAT_NAME.hybrid = '혼합';
@@ -2628,7 +2629,7 @@ const JOB2 = {
   sovereign: [{ k: 'conqueror', nm: '정복왕', ds: '군기 반경 +50%, 군기 안 적 지속 피해' }, { k: 'benevolent', nm: '성군', ds: '군기 안에서 초당 체력 2% 회복' }],
   chrono: [{ k: 'accel', nm: '가속자', ds: '이동 속도 +15%, 무기 재사용 -12%' }, { k: 'rewind', nm: '역행자', ds: '정지된 적이 받는 피해 +50%' }],
   priest: [{ k: 'judge', nm: '심판관', ds: '정화 폭발 피해 2배·범위 +35%' }, { k: 'saint', nm: '성자', ds: '정화 필요 처치 12회, 회복량 20%' }],
-  druid: [{ k: 'ursa', nm: '수호 곰', ds: '곰 형태 받는 피해 -35%, 근접 피해 +40%' }, { k: 'sage', nm: '숲의 현자', ds: '정령 형태 마법 피해 +40%, 처치 시 체력 0.5 회복' }],
+  druid: [{ k: 'ursa', nm: '수호 곰', ds: '곰 크기 증가·피해 1.5배, 강타 범위 +40%, 강타 시 체력 1 회복' }, { k: 'pack', nm: '무리의 우두머리', ds: '늑대 +2 (총 3), 늑대가 처치할 때마다 울부짖음 1초 단축' }],
 };
 const JOB2_STAT = { k: 'veteran', nm: '숙련', ds: '최대 체력 +30, 모든 피해 +15%, 이동 속도 +8%' };
 /* 직업 전용 강화 무기 (2차 전직 시 지급, 무기 칸 미점유) */
@@ -2651,6 +2652,7 @@ function catLevels() { const s = { melee: 0, ranged: 0, magic: 0 }; for (const w
 function mainCat() { return Object.entries(catLevels()).sort((a, b) => b[1] - a[1] || Math.random() - 0.5)[0][0]; }
 /* 후보 3종: 주력 계열 2종(혼합 직업은 두 계열 모두 보유 시 주력 후보 포함) + 다른 계열 1종 (0.9 10직업 확장) */
 function jobCands(prev = []) {
+  if (typeof window !== 'undefined' && window.__vtJob && JOBS[window.__vtJob]) return [{ t: 'job', id: window.__vtJob }];   // 가상 시험 직업 지정 (dev/vtest.js --job)
   const mc = mainCat(), lv = catLevels();
   const fit = j => JOBS[j].cats ? JOBS[j].cats.includes(mc) && Math.min(...JOBS[j].cats.map(c => lv[c])) >= 0.4 * lv[mc] : JOBS[j].cat === mc;   // 혼합: 부 계열이 주력의 40% 이상
   let main = shuffle(JOB_ORDER.filter(fit)); const fresh = main.filter(j => !prev.includes(j));
@@ -2692,8 +2694,8 @@ function leaveAltar() { G.altar = null; G.sel = null; hideUI(); STATE.mode = 'pl
 function applyJob(id) {
   const p = G.p; p.job = id; p.jobAt = G.ph.i; p.ult = 50; G.altar = null;
   G.stats.job = id; G.stats.jobAt = Math.round(G.time);
-  toast(`${JOBS[id].name} 전직`, '#d9a8ff'); fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 120, dur: 0.6, color: '#d9a8ff', follow: true });
-  recalc();
+  if (id === 'druid') petsInit();
+  recalc(); jobCeremony(id, false);                         // 0.26 전직 연출·무기 변환 안내
 }
 function openJob2() {
   G.pendingJob2 = false; G.job2Ready = false; STATE.mode = 'select'; clearInput();
@@ -2703,9 +2705,8 @@ function openJob2() {
 function applyJob2(k) {
   const p = G.p; p.job2 = k; p.exw = { id: p.job, t: 0.5 }; G.stats.job2 = k; G.stats.job2At = Math.round(G.time);
   if (k === 'veteran') { p.vet = true; }
-  toast(`2차 전직 · ${(JOB2[p.job].concat(JOB2_STAT)).find(o => o.k === k).nm}`, '#d9a8ff');
-  toast(`전용 무기 ${EXW[p.job].name} 획득`, '#ffe08a');
-  recalc();
+  if (k === 'pack') { addPet('wolf'); addPet('wolf'); }
+  recalc(); jobCeremony(p.job, true);
 }
 
 /* ---------- 피해·피격 연계 ---------- */
@@ -2728,6 +2729,7 @@ function onEnemyHit(e, o) {
   if (src === 'knife' && hasRelic('arcknife') && Math.random() < 0.2) shoot({ kind: 'orb', x: e.x, y: e.y, ang: rand(Math.PI * 2), sp: 270, r: 6, dmg: WEAPONS.orb.base.dmg * 0.6 * p.mod.dmg, pierce: 0, life: 1.6, color: '#9fb8ff', src: 'mbolt', home: true });
   if (src === 'arrow' && hasRelic('thunderarrow') && Math.random() < 0.2) chainBolt(e, 2, WEAPONS.lightning.base.dmg * 0.5 * p.mod.dmg, 'thunder');
   if (!p.job || e.dead) return;
+  jobWeaponHit(e, o);                                       // 0.26 공용 무기 직업 변환
   if (p.job === 'archer' && RANGED_SRC[src]) {
     e.mk = (e.mk || 0) + 1; const need = p.job2 === 'sniper' ? 3 : 5;
     if (e.mk >= need) { e.mk = 0; markBurst(e); }
@@ -2746,7 +2748,7 @@ function onEnemyKill(e) {
   const p = G.p; if (!p.job) return;
   ultGain(JOB_CFG.ultKill);
   if (p.job === 'priest' && ++p.holy >= (p.job2 === 'saint' ? 12 : 20)) { p.holy = 0; purify(); }
-  if (p.job === 'druid' && p.job2 === 'sage' && formOn('spirit')) heal(0.5);
+  jobWeaponKill(e); if (p.job === 'druid') petKilled(e);
   if (p.job === 'summoner' && !e.minionOf) {
     const cap = p.job2 === 'necro' ? 10 : 6, ch = p.job2 === 'necro' ? 0.24 : 0.12;
     if (G.minions.length < cap && Math.random() < ch) addMinion(e.x, e.y);
@@ -2757,7 +2759,6 @@ function playerHurtMul() {
   if (p.job === 'warrior') m *= 1 - 0.3 * p.fury / 100;
   if (G.tm.wall > 0) m *= 0.6;
   if (p.job === 'sovereign' && inBanner()) m *= 0.85;
-  if (p.job === 'druid' && formOn('bear')) m *= p.job2 === 'ursa' ? 0.65 : 0.8;                                               // 방패 충격 방벽 분기 (0.8)
   return m;
 }
 /* 피격 직전 판정: true 반환 시 피해 무효 */
@@ -2800,14 +2801,13 @@ function reaction(e) {
 }
 /* 0.9 직업 보조 함수 */
 function inBanner() { const b = G.banner, p = G.p; return b && dist2(b.x, b.y, p.x, p.y) < b.r * b.r; }
-function formOn(f) { const p = G.p; return p.job === 'druid' && (p.form === f || G.tm.wrath > 0); }
 function purify() {
   const p = G.p, j = p.job2 === 'judge', R = 110 * (j ? 1.35 : 1), d = (20 + p.level * 2) * p.mod.dmg * (j ? 2 : 1);
   heal(p.maxHp * (p.job2 === 'saint' ? 0.2 : 0.1));
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: R, dur: 0.4, color: '#fff2a8', fill: true });
   gridQuery(p.x, p.y, R, e => damageEnemy(e, d, { src: 'holy', kb: 160, fx: p.x, fy: p.y }));
 }
-function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0, G.minions.length + 1); G.minions.push({ x, y, r: G.p.job2 === 'lord' ? 9 : 7, life: 20, hitT: 0 }); }
+function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0, G.minions.length + 1); G.minions.push({ id: ++G.pid, x, y, r: G.p.job2 === 'lord' ? 9 : 7, life: 20, hitT: 0 }); }
 
 /* ---------- 궁극기 ---------- */
 function ultGain(v) { const p = G.p; if (tr('focus')) v *= 1.15; if (!p.job || p.ult >= JOB_CFG.ultNeed) return; p.ult = Math.min(JOB_CFG.ultNeed, p.ult + v); if (p.ult >= JOB_CFG.ultNeed) { G.tm.readyAt = G.time; toast('궁극기 준비 · 손 떼고 정지', '#ffe08a'); } }
@@ -2828,7 +2828,7 @@ function useUlt() {
   }
   if (j === 'summoner') for (let i = 0; i < 8; i++) addMinion(p.x + Math.cos(i) * 30, p.y + Math.sin(i) * 30);
   if (j === 'sovereign') { G.tm.roar = 5; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 260, dur: 0.6, color: '#ffd24a' }); }
-  if (j === 'chrono') { G.tm.stop = 4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 400, dur: 0.7, color: '#c8c0ff' }); }
+  if (j === 'chrono') startRewind();                          // 0.26 과거의 나
   if (j === 'priest') { G.sanct = { x: p.x, y: p.y, r: 150 }; G.tm.sanct = 6; }
   if (j === 'druid') G.tm.wrath = 8;
 }
@@ -2863,15 +2863,24 @@ function updateTurrets(dt) {
   }
   G.turrets = G.turrets.filter(t => t.life > 0);
 }
+/* 망령: 서로 다른 적 분산 공격 (0.26) — 표적 유지·미점유 적 우선·망령 간 간격 유지, 적 없으면 주인 주변 선회 */
 function updateMinions(dt) {
-  const p = G.p, k = p.job2 === 'lord' ? 2 : 1, dmg = 8 * k * p.mod.dmg;
-  for (const m of G.minions) {
-    m.life -= dt; m.hitT -= dt;
-    const e = nearestEnemy(m.x, m.y, 300);
-    const tx = e ? e.x : p.x + 30, ty = e ? e.y : p.y, dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1;
-    if (d > 4) { m.x += dx / d * 170 * dt; m.y += dy / d * 170 * dt; }
+  const p = G.p, k = p.job2 === 'lord' ? 2 : 1, dmg = 8 * k * p.mod.dmg, claim = new Map();
+  for (const m of G.minions) if (m.tg && !m.tg.dead) claim.set(m.tg.id, (claim.get(m.tg.id) || 0) + 1);
+  G.minions.forEach((m, i) => {
+    m.life -= dt; m.hitT -= dt; m.rt = (m.rt || 0) - dt;
+    if (m.tg && (m.tg.dead || dist2(m.tg.x, m.tg.y, p.x, p.y) > 360 * 360)) { claim.set(m.tg.id, (claim.get(m.tg.id) || 1) - 1); m.tg = null; }
+    if (!m.tg || m.rt <= 0) {
+      m.rt = 1.2; let best = null, bs = 1e18;
+      gridQuery(p.x, p.y, 320, e => { const s = dist2(e.x, e.y, m.x, m.y) * (1 + 3 * (claim.get(e.id) || 0) - (e === m.tg ? 0.5 : 0)); if (s < bs) { bs = s; best = e; } });
+      if (best !== m.tg) { if (m.tg) claim.set(m.tg.id, (claim.get(m.tg.id) || 1) - 1); m.tg = best; if (best) claim.set(best.id, (claim.get(best.id) || 0) + 1); }
+    }
+    const e = m.tg, a = i * 2.39996 + G.time * 0.8;
+    const tx = e ? e.x : p.x + Math.cos(a) * 44, ty = e ? e.y : p.y + Math.sin(a) * 44, dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1;
+    if (d > 4) { m.vx = dx; m.x += dx / d * 170 * dt; m.y += dy / d * 170 * dt; }
+    for (let j = 0; j < G.minions.length; j++) { if (j === i) continue; const o = G.minions[j], ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od > 0 && od < 13) { m.x += ox / od * (13 - od) * 0.5; m.y += oy / od * (13 - od) * 0.5; } }
     if (e && m.hitT <= 0 && d < e.r + m.r + 2) { m.hitT = 0.5; damageEnemy(e, dmg, { src: 'minion' }); }
-  }
+  });
   G.minions = G.minions.filter(m => m.life > 0);
 }
 
@@ -2914,11 +2923,10 @@ function updateJob(dt) {
     if (p.job2 === 'benevolent' && inBanner()) heal(p.maxHp * 0.02 * dt);
   }
   if (p.job === 'druid') {
-    T.form = (T.form == null ? 15 : T.form) - dt;
-    if (!p.form) p.form = mainCat() === 'magic' ? 'spirit' : 'bear';
-    if (T.form <= 0) { T.form = 15; p.form = p.form === 'bear' ? 'spirit' : 'bear'; toast(p.form === 'bear' ? '곰 형태' : '정령 형태', '#9fe0a0'); recalc(); }
+    updatePets(dt);
     if (T.wrath > 0) { T.vine = (T.vine || 0) - dt; if (T.vine <= 0) { T.vine = 1; const q = ringAt(30, 140); addPool({ x: q.x, y: q.y, r: 50, dur: 2.5, every: 0.4, dmg: (10 + p.level) * p.mod.dmg, src: 'ult', kind: 'vine', slow: true }); } }
   }
+  recordTrail(dt); updateRewind(dt);
   if (G.sanct && T.sanct > 0) {
     const S = G.sanct; T.st = (T.st || 0) - dt;
     if (T.st <= 0) { T.st = 0.4; const d = (14 + p.level * 1.2) * p.mod.dmg; gridQuery(S.x, S.y, S.r, e => damageEnemy(e, d, { src: 'ult' })); }
@@ -2988,8 +2996,9 @@ function abilityHTML() {
   let h = '';
   if (p.job) { const J = JOBS[p.job], J2 = p.job2 && JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2);
     h += '<h3>직업</h3>' + row(jobColor(p.job), J.ic, J.name, J2 ? '2차 · ' + J2.nm : '1차', J.rule + '\n궁극기 · ' + J.ult + (J2 ? '\n' + J2.nm + ' · ' + J2.ds : ''));
-    if (p.exw) { const X = EXW[p.exw.id]; h += row('#ffd24a', X.ic, X.name, '전용 무기', X.ds, 'exw'); } }
-  if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; return row(CFG.colors[d.cat], d.ic, d.name, 'Lv ' + w.lvl, d.desc + brNm(w.id, w.br)); }).join('');
+    if (p.exw) { const X = EXW[p.exw.id]; h += '<h3>전용 무기</h3>' + row('#ffd24a', X.ic, X.name, JOBS[p.job].name + ' 전용', X.ds, 'exw'); }
+    if (p.job === 'druid' && G.pets.length) h += '<h3>야수 동료</h3>' + ['wolf', 'bear'].map(k => { const n = G.pets.filter(m => m.kind === k).length; if (!n) return ''; const S = petStat(k), D = PET[k]; return row('#7fd07a', D.ic, D.name + (n > 1 ? ' ×' + n : ''), '', `피해 ${Math.round(S.dmg)} · 공격 간격 ${S.atk.toFixed(2)}초 · 이동 속도 ${Math.round(S.sp)}\n${k === 'wolf' ? '울부짖음' : '강타'} ${S.sk.toFixed(1)}초마다 · 범위 ${Math.round(S.skR)}`); }).join(''); }
+  if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; const wx = wxOn(d.cat) ? `\n${JOBS[p.job].name} 변환 · ${JOB_WX[p.job].ds}` : ''; return row(CFG.colors[d.cat], d.ic, wName(w.id), 'Lv ' + w.lvl, d.desc + wx + brNm(w.id, w.br)); }).join('');
   if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br)); }).join('');
   if (p.relics.length) h += '<h3>유물</h3>' + p.relics.map(id => row('#ffd24a', RELICS[id].ic, RELICS[id].name, '', RELICS[id].ds)).join('');
   const tk = Object.keys(p.tr || {}); if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => row('#c8b0ff', TRAITS[k].ic, TRAITS[k].nm, '', TRAITS[k].ds)).join('');
@@ -3001,13 +3010,13 @@ function autoLater() { if (STATE.dev.auto) { const s = G.sel; setTimeout(() => {
 function cardInfo(c) {
   const p = G.p;
   switch (c.t) {
-    case 'wnew': { const d = WEAPONS[c.id]; return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: d.name, tag: '신규 · ' + CAT_NAME[d.cat] + ' 무기', ds: d.desc }; }
-    case 'wup': { const d = WEAPONS[c.id], w = p.weapons.find(x => x.id === c.id); return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: d.name, tag: `Lv ${w.lvl} → ${w.lvl + 1}`, ds: upText(c.id, d.ups[w.lvl - 1]) }; }
+    case 'wnew': { const d = WEAPONS[c.id]; return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: wName(c.id), tag: '신규 · ' + CAT_NAME[d.cat] + ' 무기', ds: d.desc }; }
+    case 'wup': { const d = WEAPONS[c.id], w = p.weapons.find(x => x.id === c.id); return { k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: wName(c.id), tag: `Lv ${w.lvl} → ${w.lvl + 1}`, ds: upText(c.id, d.ups[w.lvl - 1]) }; }
     case 'pnew': { const d = PASSIVES[c.id]; return { k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: '신규 · 보조 효과', ds: d.desc(1) }; }
     case 'pup': { const d = PASSIVES[c.id], L = passLv(c.id); return { k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: `Lv ${L} → ${L + 1}`, ds: d.desc(L + 1) }; }
     case 'relic': { const d = RELICS[c.id]; return { k: 'k-relic', col: '#ffd24a', ic: d.ic, nm: d.name, tag: `유물 · ${itemName(d.a)} + ${itemName(d.b)}`, ds: d.ds }; }
     case 'branch': { const o = BRANCHES[c.id].find(x => x.k === c.k); return { k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + ' 분기', ds: o.ds }; }
-    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult }; }
+    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult + '\n무기 변환 · ' + jobCats(c.id).map(x => CAT_NAME[x]).join('·') + ' 무기 → ' + JOB_WX[c.id].pre + ' 무기 (' + JOB_WX[c.id].ds + ')' }; }
     case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : jobColor(c.id), ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
     case 'campRest': return { k: 'k-fill', col: '#8ff0b0', ic: '휴', nm: '휴식', tag: '야영지', ds: '체력 전부 회복' };
     case 'campTrain': return { k: 'k-fill', col: '#7fe0ff', ic: '련', nm: '수련', tag: '야영지', ds: '즉시 레벨 업 2회' };
@@ -3963,6 +3972,186 @@ Object.assign(SPR, {
   ]] },
 });
 /* ============================================================
+   직업 개편 (0.26, 표현·보강 단계)
+   — 전직 체감: 직업 색 옷·발밑 문양·전직 알림판, 공용 무기 직업 변환(이름·효과·색)
+   — 드루이드 야수 동료(늑대·곰), 시간술사 궁극기 '과거의 나'(되감기 잔상)
+   — 회차 25 결정(2026-11-03) 반영
+   ============================================================ */
+const JOB_COL = { warrior: '#ff8a5a', rogue: '#7fe0c0', sovereign: '#ffd24a', archer: '#b8ff9a', engineer: '#ffd890', chrono: '#c8c0ff', mage: '#e8b0ff', summoner: '#b89cff', priest: '#fff2a8', druid: '#7fd07a' };
+/* 공용 무기 직업 변환: 전직 계열과 같은 계열 무기에 접두어·추가 효과·직업 색 부여 */
+const JOB_WX = {
+  warrior: { pre: '투지의', ds: '명중 시 투지 +1' },
+  rogue: { pre: '그림자', ds: '명중 시 8% 확률 그림자 일격 (피해 60%)' },
+  sovereign: { pre: '왕실', ds: '명중 시 6% 확률 금빛 충격 (주변 피해 50%)' },
+  archer: { pre: '사냥꾼의', ds: '명중 시 25% 확률 표식 2개 누적' },
+  engineer: { pre: '개조', ds: '명중 시 10% 확률 소형 폭발 (피해 40%)' },
+  chrono: { pre: '시간', ds: '명중 시 10% 확률 0.5초 뒤 같은 피해 재적용' },
+  mage: { pre: '원소', ds: '명중 시 8% 확률 원소 파편 폭발 (피해 50%)' },
+  summoner: { pre: '영혼', ds: '이 무기로 처치 시 망령 소환 확률 +12%' },
+  priest: { pre: '신성', ds: '이 무기로 처치 시 정화 누적 +1 추가' },
+  druid: { pre: '야생', ds: '명중한 적을 동료가 우선 공격' },
+};
+/* 피해원 → 무기 계열 (공용 무기 발생분만) */
+const SRC_CAT = { cleave: 'melee', spin: 'melee', shield: 'melee', slam: 'melee', fissure: 'melee', arrow: 'ranged', split: 'ranged', boomerang: 'ranged', knife: 'ranged', trap: 'ranged', fireball: 'magic', fireball_pool: 'magic', lightning: 'magic', chain: 'magic', icering: 'magic', mbolt: 'magic', nova: 'magic' };
+const wxOn = cat => !!G.p.job && jobCat(cat);
+const wxSrc = src => { const c = SRC_CAT[src]; return c && wxOn(c); };
+function wName(id) { const d = WEAPONS[id]; return wxOn(d.cat) ? JOB_WX[G.p.job].pre + ' ' + d.name : d.name; }
+function jobTint(cat) { return wxOn(cat) ? JOB_COL[G.p.job] : null; }
+
+function jobWeaponHit(e, o) {
+  const p = G.p, j = p.job, src = o.src;
+  if (e.dead || !wxSrc(src)) return;
+  const base = o.dmg0 || 0;
+  if (j === 'warrior') { p.fury = Math.min(100, p.fury + 1); G.tm.furyHold = Math.max(G.tm.furyHold || 0, 1); }
+  if (j === 'rogue' && Math.random() < 0.08 && base) { fx({ kind: 'pop', x: e.x, y: e.y, r: 9, color: '#203040', dur: 0.18 }); G.later.push({ t: 0.08, f: () => damageEnemy(e, base * 0.6, { src: 'wx' }) }); }
+  if (j === 'sovereign' && Math.random() < 0.06 && base) { const x = e.x, y = e.y; G.later.push({ t: 0, f: () => explode(x, y, 44, base * 0.5, 'wx', '#ffd24a') }); }
+  if (j === 'archer' && Math.random() < 0.25) e.mk = (e.mk || 0) + 1;
+  if (j === 'engineer' && Math.random() < 0.1 && base) { const x = e.x, y = e.y; G.later.push({ t: 0, f: () => explode(x, y, 32, base * 0.4, 'wx', '#ffd890') }); }
+  if (j === 'chrono' && Math.random() < 0.1 && base) { fx({ kind: 'ring', x: e.x, y: e.y, r0: 4, r1: 18, dur: 0.5, color: '#c8c0ff' }); G.later.push({ t: 0.5, f: () => damageEnemy(e, base, { src: 'wx' }) }); }
+  if (j === 'mage' && Math.random() < 0.08 && base) { const x = e.x, y = e.y, col = { ice: '#bfe8ff', fire: '#ff9a4a', bolt: '#bfe4ff', arcane: '#d0b8ff' }[ELEM[src]] || '#e8b0ff'; G.later.push({ t: 0, f: () => explode(x, y, 36, base * 0.5, 'wx', col) }); }
+  if (j === 'druid') p.petMark = e;
+}
+/* 처치 시 변환 효과 (소환사·프리스트) */
+function jobWeaponKill(e) {
+  const p = G.p; if (!wxSrc(e.ls)) return;
+  if (p.job === 'summoner' && !e.minionOf && G.minions.length < (p.job2 === 'necro' ? 10 : 6) && Math.random() < 0.12) addMinion(e.x, e.y);
+  if (p.job === 'priest') p.holy++;
+}
+
+/* ---------- 전직 연출 ---------- */
+function jobCeremony(id, second) {
+  const p = G.p, col = JOB_COL[id];
+  if (second) { const o = JOB2[id].concat(JOB2_STAT).find(x => x.k === p.job2); banner('2차 전직 · ' + o.nm, '전용 무기 ' + EXW[id].name + ' 획득', col, 2.2); }
+  else banner(JOBS[id].name + ' 전직', JOBS[id].rule.split(',')[0], col, 2.2);
+  sfx('ult'); shake(4, 0.3);
+  fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 150, dur: 0.7, color: col, fill: true, follow: true });
+  fx({ kind: 'ring', x: p.x, y: p.y, r0: 40, r1: 220, dur: 0.9, color: '#ffffff', follow: true });
+  sparkBurst(p.x, p.y, 120, col);
+  const n = p.weapons.filter(w => wxOn(WEAPONS[w.id].cat)).length;
+  if (!second && n) toast(`공용 무기 ${n}종 ${JOB_WX[id].pre} 무기로 변환`, col);
+}
+/* 발밑 직업 문양 (그림자 위, 주인공 아래) */
+function drawJobAura(c) {
+  const p = G.p; if (!p.job) return;
+  const col = JOB_COL[p.job], t = G.time, y = p.y + p.r * 0.85, pulse = 0.55 + 0.25 * Math.sin(t * 3);
+  c.globalAlpha = pulse; c.strokeStyle = col; c.lineWidth = 2;
+  c.beginPath(); c.ellipse(p.x, y, p.r + 7, (p.r + 7) * 0.38, 0, 0, 7); c.stroke();
+  if (p.job2) {                                              // 2차: 회전하는 점선 고리
+    c.globalAlpha = 0.8; c.fillStyle = col;
+    for (let i = 0; i < 6; i++) { const a = t * 1.6 + i * Math.PI / 3; c.fillRect(p.x + Math.cos(a) * (p.r + 12) - 1.5, y + Math.sin(a) * (p.r + 12) * 0.38 - 1.5, 3, 3); }
+  }
+  c.globalAlpha = 1;
+}
+/* 주인공 옷 색: 기본 색일 때만 직업 색 적용 (칭호 색상 변형 우선) */
+function heroTint() { const base = playerColor(); return G.p.job && base === COLORS[0].c ? JOB_COL[G.p.job] : base; }
+
+/* ---------- 드루이드 야수 동료 ---------- */
+const PET = {
+  wolf: { name: '늑대', sp: 235, dmg: 9, atk: 0.55, sk: 8, skR: 120, r: 9, ic: '늑' },
+  bear: { name: '곰', sp: 150, dmg: 24, atk: 1.15, sk: 10, skR: 90, r: 12, ic: '곰' },
+};
+function petMul() { const p = G.p; return { dmg: p.mod.dmg * (1 + p.level * 0.04) * (G.tm.wrath > 0 ? 2 : 1) * (p.vet ? 1 : 1), sp: p.mod.speed, area: 1 + PASSIVES.area.per * passLv('area'), cd: p.mod.cd / (G.tm.wrath > 0 ? 1.5 : 1) }; }
+function petStat(kind) {
+  const D = PET[kind], M = petMul(), big = kind === 'bear' && G.p.job2 === 'ursa' ? 1.5 : 1;
+  return { dmg: D.dmg * M.dmg * big, sp: D.sp * M.sp, atk: D.atk * M.cd, sk: D.sk * M.cd, skR: D.skR * M.area * (big > 1 ? 1.4 : 1), r: D.r * (big > 1 ? 1.3 : 1) };
+}
+function addPet(kind) { const p = G.p, a = rand(Math.PI * 2); G.pets.push({ kind, x: p.x + Math.cos(a) * 30, y: p.y + Math.sin(a) * 30, t: 0.5, sk: PET[kind].sk * 0.5, tg: null, vx: 0, i: G.pets.length }); }
+function petsInit() { G.pets = []; addPet('wolf'); addPet('bear'); }
+function updatePets(dt) {
+  const p = G.p; if (p.job !== 'druid') return;
+  const claimed = new Set();
+  for (const m of G.pets) {
+    const S = petStat(m.kind); m.t -= dt; m.sk -= dt;
+    // 표적: 야생 변환 표식 → 기존 표적 유지 → 플레이어 주변 미점유 적
+    if (p.petMark && !p.petMark.dead && dist2(p.petMark.x, p.petMark.y, p.x, p.y) < 300 * 300 && !claimed.has(p.petMark.id)) m.tg = p.petMark;
+    if (m.tg && (m.tg.dead || dist2(m.tg.x, m.tg.y, p.x, p.y) > 320 * 320)) m.tg = null;
+    if (!m.tg) { let best = null, bd = 260 * 260; gridQuery(p.x, p.y, 260, e => { if (claimed.has(e.id)) return; const d = dist2(e.x, e.y, m.x, m.y) * (m.kind === 'bear' && (e.elite || e.gk) ? 0.4 : 1); if (d < bd) { bd = d; best = e; } }); m.tg = best; }
+    if (m.tg) claimed.add(m.tg.id);
+    const e = m.tg, leash = dist2(m.x, m.y, p.x, p.y) > 300 * 300;
+    const tx = e && !leash ? e.x : p.x + Math.cos(m.i * 2.4 + G.time * 0.6) * 36, ty = e && !leash ? e.y : p.y + Math.sin(m.i * 2.4 + G.time * 0.6) * 36;
+    const dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1, reach = e ? e.r + S.r : 4;
+    if (d > reach) { const v = Math.min(d - reach, S.sp * (leash ? 1.6 : 1) * dt); m.x += dx / d * v; m.y += dy / d * v; m.vx = dx; }
+    for (const o of G.pets) if (o !== m) { const ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od > 0 && od < 16) { m.x += ox / od * (16 - od) * 0.5; m.y += oy / od * (16 - od) * 0.5; } }
+    if (e && m.t <= 0 && d <= reach + 6) { m.t = S.atk; m.bite = 0.15; damageEnemy(e, S.dmg, { src: 'pet', kb: m.kind === 'bear' ? 120 : 30, fx: m.x, fy: m.y }); }
+    if (m.bite > 0) m.bite -= dt;
+    if (m.sk <= 0 && (e || m.kind === 'wolf')) {                       // 주기 자동 스킬
+      m.sk = S.sk;
+      if (m.kind === 'wolf') { let n = 0; gridQuery(m.x, m.y, S.skR, t => { n++; t.slowT = Math.max(t.slowT || 0, 2); damageEnemy(t, S.dmg * 0.6, { src: 'howl' }); }); fx({ kind: 'ring', x: m.x, y: m.y, r0: 8, r1: S.skR, dur: 0.4, color: '#c8d4e0' }); if (!n) m.sk = 1; }
+      else { const x = m.x, y = m.y; gridQuery(x, y, S.skR, t => damageEnemy(t, S.dmg * 2.5, { src: 'maul', kb: 260, fx: x, fy: y })); fx({ kind: 'ring', x, y, r0: 10, r1: S.skR, dur: 0.35, color: '#c89060', fill: true }); if (p.job2 === 'ursa') heal(1); }
+    }
+  }
+  if (p.petMark && p.petMark.dead) p.petMark = null;
+}
+function petKilled(e) { if (G.p.job2 === 'pack' && e.ls === 'pet') for (const m of G.pets) if (m.kind === 'wolf') m.sk -= 1; }
+function drawPets(c, inView) {
+  if (!G.pets || !G.pets.length) return;
+  for (const m of G.pets) {
+    if (!inView(m.x, m.y, 16)) continue;
+    const S = petStat(m.kind), fr = Math.floor(G.time * (m.kind === 'wolf' ? 9 : 5) + m.i) & 1;
+    c.fillStyle = 'rgba(0,0,0,0.22)'; c.beginPath(); c.ellipse(m.x, m.y + S.r * 0.7, S.r, S.r * 0.32, 0, 0, 7); c.fill();
+    if (G.tm.wrath > 0) { c.strokeStyle = 'rgba(127,208,122,0.8)'; c.lineWidth = 2; c.beginPath(); c.ellipse(m.x, m.y + S.r * 0.7, S.r + 4, (S.r + 4) * 0.35, 0, 0, 7); c.stroke(); }
+    drawSprite(c, m.kind, fr, m.x + (m.bite > 0 ? Math.sign(m.vx || 1) * 3 : 0), m.y + S.r * 0.8, { flip: (m.vx || 0) < 0 });
+  }
+}
+Object.assign(SPR, {
+  wolf: { px: 2, frames: [[
+    '..........k.', '.........kMk', 'kk..kkkkkMMk', 'kMkkMMMMMMwk', '.kMMMMMMMMMk',
+    '..kMMMMMMMk.', '..kmMmmmMmk.', '..kmk..kmk..', '..kk....kk..',
+  ], [
+    '..........k.', '.........kMk', 'kk..kkkkkMMk', 'kMkkMMMMMMwk', '.kMMMMMMMMMk',
+    '..kMMMMMMMk.', '..kmMmmmMmk.', '.kmk....kmk.', '.kk......kk.',
+  ]] },
+  bear: { px: 2, frames: [[
+    '..........kk..', '..kkkkkkkknnk.', '.knnnnnnnnnnnk', 'knnnnnnnnnkwnk', 'knnnnnnnnnnnek',
+    'knNnnnnnnnnkk.', '.knNNNNNNNNk..', '..kNNk..kNNk..', '..kkk....kkk..',
+  ], [
+    '..........kk..', '..kkkkkkkknnk.', '.knnnnnnnnnnnk', 'knnnnnnnnnkwnk', 'knnnnnnnnnnnek',
+    'knNnnnnnnnnkk.', '.knNNNNNNNNk..', '.kNNk....kNNk.', '.kkk......kkk.',
+  ]] },
+});
+
+/* ---------- 시간술사 궁극기 '과거의 나' ---------- */
+const RW = { keep: 5, every: 0.1, dur: 3, R: 38 };
+function recordTrail(dt) {
+  const p = G.p; if (p.job !== 'chrono') return;
+  G.tm.trl = (G.tm.trl || 0) - dt; if (G.tm.trl > 0) return; G.tm.trl = RW.every;
+  G.trail.push({ x: p.x, y: p.y, hp: p.hp }); if (G.trail.length > RW.keep / RW.every) G.trail.shift();
+}
+function startRewind() {
+  const p = G.p, pts = G.trail.slice().reverse();               // 현재 → 5초 전 순서로 되감기
+  if (pts.length < 2) pts.push({ x: p.x, y: p.y, hp: p.hp });
+  G.rw = { pts, t: 0, tick: 0, hp: pts[pts.length - 1].hp };
+  G.tm.stop = 1.5;
+  fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 360, dur: 0.8, color: '#c8c0ff' });
+  banner('과거의 나', '되감기', '#c8c0ff', 1.2);
+}
+function rwPos(k) { const P = G.rw.pts, f = clamp(k, 0, 1) * (P.length - 1), i = Math.floor(f), j = Math.min(P.length - 1, i + 1), u = f - i; return { x: lerp(P[i].x, P[j].x, u), y: lerp(P[i].y, P[j].y, u) }; }
+function updateRewind(dt) {
+  const R = G.rw; if (!R) return;
+  const p = G.p; R.t += dt; R.tick -= dt;
+  const k = R.t / RW.dur, q = rwPos(k * k * (3 - 2 * k));         // 부드러운 가감속
+  R.x = q.x; R.y = q.y;
+  if (R.tick <= 0) { R.tick = 0.15; const d = (22 + p.level * 1.6) * p.mod.dmg; gridQuery(q.x, q.y, RW.R, e => { if ((e.ht.rw || 0) > G.time) return; e.ht.rw = G.time + 0.5; e.slowT = Math.max(e.slowT || 0, 2.5); damageEnemy(e, d, { src: 'ult', kb: 90, fx: q.x, fy: q.y }); }); }
+  if (R.t >= RW.dur) {
+    if (R.hp > p.hp) { const g = R.hp - p.hp; heal(g); toast(`시간 역행 · 체력 +${Math.round(g)}`, '#c8c0ff'); }
+    fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 60, dur: 0.4, color: '#c8c0ff', follow: true });
+    G.rw = null;
+  }
+}
+function drawRewind(c) {
+  const R = G.rw; if (!R || R.x == null) return;
+  const k = R.t / RW.dur;
+  c.globalAlpha = 0.35; c.strokeStyle = '#c8c0ff'; c.lineWidth = 2; c.setLineDash([4, 5]); c.beginPath();   // 남은 되감기 경로
+  const n = 14; for (let i = 0; i <= n; i++) { const u = k + (1 - k) * i / n, q = rwPos(u * u * (3 - 2 * u)); i ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y); } c.stroke(); c.setLineDash([]);
+  for (let i = 3; i >= 1; i--) {                                   // 잔상 3겹
+    const u = Math.max(0, k - i * 0.04), q = rwPos(u * u * (3 - 2 * u));
+    c.globalAlpha = 0.12 * (4 - i); drawSprite(c, 'hero', 0, q.x, q.y + G.p.r * 1.1, { flip: true, tint: '#8a7ae0', mode: 'white' });
+  }
+  c.globalAlpha = 0.7; drawSprite(c, 'hero', Math.floor(G.time * 8) & 1, R.x, R.y + G.p.r * 1.1, { flip: true, tint: '#c8c0ff' });
+  c.globalAlpha = 0.25; c.fillStyle = '#c8c0ff'; c.beginPath(); c.arc(R.x, R.y, RW.R, 0, 7); c.fill();
+  c.globalAlpha = 1;
+}
+/* ============================================================
    타격 연출 (0.22) — 피격 반짝임·밀림 강화, 처치 파편, 치명타 강조,
    레벨업·상자 개봉·보스 등장·페이즈 전환 연출, 피해 숫자(설정, 기본 꺼짐)
    ============================================================ */
@@ -4227,6 +4416,7 @@ function drawJobUnits(c, inView) {
     c.strokeStyle = '#1b1626'; c.lineWidth = 5; c.beginPath(); c.moveTo(t.x, t.y - 2); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y - 2 + Math.sin(t.a || 0) * 13); c.stroke();
     c.strokeStyle = t.temp ? '#ffd24a' : '#b4c2d4'; c.lineWidth = 2.5; c.stroke();
   }
+  drawPets(c, inView); drawRewind(c);                      // 0.26 야수 동료·과거의 나
   c.globalAlpha = 0.9;
   for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; drawSprite(c, 'ghost', (Math.floor(G.time * 5) + (m.id || 0)) & 1, m.x, m.y + m.r, { flip: (m.vx || 0) < 0 }); }
   c.globalAlpha = 1;
@@ -4235,9 +4425,10 @@ function drawPlayer(c) {
   const p = G.p;
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
   c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x, p.y + p.r * 0.85, p.r, p.r * 0.35, 0, 0, 7); c.fill();
+  drawJobAura(c);                                           // 0.26 직업 문양
   const mv = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.05; p._lx = p.x; p._ly = p.y;   // 이동 중 걷기 동작 (0.19)
   if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;
-  drawSprite(c, 'hero', mv ? Math.floor(G.time * 8) & 1 : 0, p.x, p.y + p.r * 1.1, { flip: !!p._fl, tint: playerColor() });   // 색상 변형 (0.15)
+  drawSprite(c, 'hero', mv ? Math.floor(G.time * 8) & 1 : 0, p.x, p.y + p.r * 1.1, { flip: !!p._fl, tint: heroTint() });   // 0.26 직업 색 옷   // 색상 변형 (0.15)
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
   c.fillStyle = p.hp / p.maxHp > 0.3 ? '#5fe07a' : '#ff5a5a'; c.fillRect(x, y, w * Math.max(0, p.hp / p.maxHp), h);
@@ -4296,11 +4487,13 @@ function drawWeapons(c, inView) {
   for (const w of p.weapons) {
     if (w.id !== 'spin' || !w.n) continue;
     const mul = w.bs > 15 ? 2 : 1;
+    const jt = jobTint('melee'); if (jt) { c.globalAlpha = 0.3; c.fillStyle = jt; c.beginPath(); for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R; c.moveTo(bx + w.bs, by); c.arc(bx, by, w.bs, 0, 7); } c.fill(); c.globalAlpha = 1; }
     for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; drawSpriteRot(c, 'blade', 0, p.x + Math.cos(a) * w.R, p.y + Math.sin(a) * w.R, a + Math.PI / 2, { mul }); }
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
+    if (pr.jt) { c.globalAlpha = 0.35; c.fillStyle = pr.jt; c.beginPath(); c.arc(pr.x, pr.y, pr.r + 5, 0, 7); c.fill(); c.globalAlpha = 1; }   // 직업 변환 발광 (0.26)
     if (pr.kind === 'arrow') drawSpriteRot(c, pr.src === 'knife' ? 'knife' : 'arrow', 0, pr.x, pr.y, a);
     else if (pr.kind === 'boom') drawSpriteRot(c, 'axe', 0, pr.x, pr.y, pr.spin, { mul: pr.r > 15 ? 2 : 1 });
     else if (pr.kind === 'orb') drawSpriteC(c, 'orbp', 0, pr.x, pr.y, { mul: pr.r > 9 ? 2 : 1 });
@@ -4327,7 +4520,7 @@ function drawHUD(c) {
   c.font = 'bold 14px Galmuri11, system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
   const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
   txt('Lv ' + p.level, 12, top + 20, 'left');
-  if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : p.form === 'bear' ? ' · 곰' : ' · 정령') : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
+  if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
   c.font = 'bold 18px Galmuri11, system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
   const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)
   c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#ffe08a';
@@ -4361,13 +4554,23 @@ function drawSlots(c, y) {
   };
   const rowW = 5 * S + 4 * gap, px0 = W - 12 - rowW;
   row(p.weapons, slotW(), 12, w => CFG.colors[WEAPONS[w.id].cat], w => WEAPONS[w.id].ic);
+  p.weapons.forEach((w, i) => { const jt = jobTint(WEAPONS[w.id].cat); if (!jt) return; const x = 12 + i * (S + gap); c.strokeStyle = jt; c.lineWidth = 2.5; c.strokeRect(x + 1.25, y + 1.25, S - 2.5, S - 2.5); c.fillStyle = jt; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y); c.lineTo(x, y + 8); c.closePath(); c.fill(); });   // 직업 변환 무기 표시 (0.26)
   row(p.passives, CFG.slots.passive, px0, () => CFG.colors.passive, ps => PASSIVES[ps.id].ic);
   // 0.25 주기형 효과 재사용 표시: 시계 방향으로 채워지는 원형 (숫자 없음)
   const T = G.tm, pie = (x, y, r, k) => { c.fillStyle = 'rgba(10,8,16,0.55)'; c.beginPath(); c.moveTo(x, y); c.arc(x, y, r, -Math.PI / 2 + Math.PI * 2 * clamp(k, 0, 1), Math.PI * 1.5); c.closePath(); c.fill(); c.strokeStyle = k >= 1 ? '#fff6c8' : 'rgba(255,255,255,0.75)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(k, 0, 1)); c.stroke(); };
   const pcd = { magnet: ['vacuum', () => 1 - (T.vac == null ? 30 : T.vac) / 30], vit: ['shield', () => p.shield ? 1 : 1 - T.shield / 12], haste: ['charge', () => 1 - T.charge / 8] };
   p.passives.forEach((ps, i) => { const q = pcd[ps.id]; if (q && ps.br === q[0]) pie(px0 + i * (S + gap) + S / 2, y + S / 2, S / 2 - 2, q[1]()); });
+  let dx0 = 12 + slotW() * (S + gap) + 6;
+  if (p.exw) {                                              // 0.26 전용 무기 칸: 금색 마름모 틀 + 재사용 원형
+    const X = EXW[p.exw.id], cx = dx0 + S / 2, cy = y + S / 2, h = S / 2 + 1;
+    c.fillStyle = '#ffd24a'; c.beginPath(); c.moveTo(cx, cy - h); c.lineTo(cx + h, cy); c.lineTo(cx, cy + h); c.lineTo(cx - h, cy); c.closePath(); c.fill();
+    c.strokeStyle = '#7a5a10'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#14121c'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(X.ic, cx, cy);
+    if (X.cd > 0.6) pie(cx, cy, S / 2 - 5, 1 - Math.max(0, p.exw.t) / X.cd);
+    dx0 += S + gap + 2;
+  }
   const dials = jobDials();
-  dials.forEach((d, i) => { const x = 12 + slotW() * (S + gap) + 8 + i * (S + gap) + S / 2, yy = y + S / 2; if (x + S / 2 > px0 - 4) return;
+  dials.forEach((d, i) => { const x = dx0 + i * (S + gap) + S / 2, yy = y + S / 2; if (x + S / 2 > px0 - 4) return;
     c.fillStyle = d.col; c.beginPath(); c.arc(x, yy, S / 2 - 1, 0, 7); c.fill(); c.fillStyle = '#14121c'; c.font = 'bold 12px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(d.ic, x, yy);
     pie(x, yy, S / 2 - 1, d.k); });
 }
@@ -4377,7 +4580,7 @@ function jobDials() {
   out.push({ ic: '궁', col: '#ffe08a', k: p.ult / JOB_CFG.ultNeed });
   if (p.job === 'sovereign') out.push({ ic: '기', col: '#ffd24a', k: 1 - (T.banner == null ? 0 : T.banner) / 10 });
   if (p.job === 'engineer') out.push({ ic: '탑', col: '#b4c2d4', k: 1 - T.turret / 10 });
-  if (p.job === 'druid' && T.form != null) out.push({ ic: p.form === 'bear' ? '곰' : '령', col: '#9fe0a0', k: 1 - T.form / 15 });
+  if (p.job === 'druid') { const b = G.pets.find(m => m.kind === 'bear'); if (b) out.push({ ic: '곰', col: '#c89060', k: 1 - b.sk / petStat('bear').sk }); }
   return out;
 }
 /* ============================================================

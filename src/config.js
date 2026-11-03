@@ -4,7 +4,7 @@
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.25',
+  VERSION: '0.26',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -91,9 +91,9 @@ const PASSIVES = {
   haste: { name: '재사용 감소', ic: '재', per: 0.06, desc: L => `재사용 대기 -${6 * L}%` },
   /* 3단계 추가 4종 (0.8) */
   area: { name: '공격 범위', ic: '범', per: 0.08, desc: L => `모든 무기 범위 +${8 * L}%` },
-  multi: { name: '투사체 수', ic: '투', per: 0.05, desc: L => `개수형 무기 개수 +${multiN(L)}, 해당 무기 피해 +${5 * L}%` },
+  multi: { name: '투사체 수', ic: '투', per: 0.03, desc: L => `개수형 무기 개수 +${multiN(L)}, 해당 무기 피해 +${3 * L}%` },
   magnet: { name: '경험치 흡수', ic: '흡', per: 0.3, desc: L => `경험치 흡수 범위 +${30 * L}%` },
   regen: { name: '체력 회복', ic: '생', per: 0.25, desc: L => `초당 체력 ${(0.25 * L).toFixed(2)} 회복` },
 };
 const PASSIVE_ORDER = ['vit', 'might', 'swift', 'haste', 'area', 'multi', 'magnet', 'regen'];
-function multiN(L) { return L >= 3 ? 2 : L >= 1 ? 1 : 0; }
+function multiN(L) { return L >= 5 ? 2 : L >= 2 ? 1 : 0; }   // 0.26 하향 (1→2단계부터 +1, 3→5단계에 +2)
