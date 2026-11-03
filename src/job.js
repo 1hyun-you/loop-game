@@ -221,7 +221,7 @@ function ultGain(v) { const p = G.p; if (!p.job || p.ult >= JOB_CFG.ultNeed) ret
 function ultReady() { return G.p.job && G.p.ult >= JOB_CFG.ultNeed; }
 function useUlt() {
   const p = G.p, j = p.job, D = (60 + p.level * 4) * p.mod.dmg;
-  p.ult = 0; G.stats.ults++; G.tm.stopT = 0;
+  p.ult = 0; G.stats.ults++; G.tm.stopT = 0; sfx('ult');
   toast(JOBS[j].ult.split(':')[0], '#ffe08a');
   if (j === 'warrior') { G.tm.inv = 3; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 170, dur: 0.5, color: '#ffb070', fill: true }); gridQuery(p.x, p.y, 170, e => damageEnemy(e, D, { src: 'ult', kb: 420, fx: p.x, fy: p.y })); }
   if (j === 'rogue') { G.tm.inv = 2.5; G.tm.dance = 2.5; }

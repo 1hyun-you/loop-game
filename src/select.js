@@ -79,7 +79,7 @@ function renderSelect() {
     <div class="cards">${cards}</div>
     ${acts ? `<div class="sel-actions">${acts}</div>` : ''}</div>`;
   s.armed = null;
-  UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => {
+  UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => { sfx('pick');
     const i = +b.dataset.i;
     if (SETTINGS.confirm2 && !s.banish && s.armed !== i) {          // 두 번 눌러 확정 (0.14)
       s.armed = i; UI.querySelectorAll('.card.armed').forEach(x => x.classList.remove('armed')); b.classList.add('armed'); return;

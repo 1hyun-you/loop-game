@@ -147,6 +147,7 @@ function frame(now) {
       for (let i = 0; i < n; i++) { step(raw * sp / n); if (STATE.mode !== 'play') break; }
     }
     if (G) render();
+    auWatch();
     syncPauseBtn();
     if (DEV.open && Math.floor(now / 500) !== Math.floor((now - raw * 1000) / 500)) DEV.info();
   } catch (err) {

@@ -35,6 +35,7 @@ function runTypeOf() {
 }
 
 function dmSpawn() {
+  sfx('boss');
   const q = ringAt(DM_CFG.spawn[0], DM_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : DM_CFG.finalHp); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
   e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0; e.stT0 = G.time;

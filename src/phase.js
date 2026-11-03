@@ -131,8 +131,8 @@ function phaseEnd(outcome) {
       for (const e of G.enemies) if (e.gk) e.dead = true;
       G.eb = []; G.hz = []; G.arena = null; return;
     }
-    if (ph.id === 'demon') { G.result = 'clear'; G.endT = 2.2; toast('마왕 처치', '#ffe08a'); fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 320, dur: 1.4, color: '#ffe08a' }); return; }
-    G.result = 'clear'; G.endT = 1.6; toast(ph.id === 'gate' ? `${GATEKEEPERS[G.gk].name} 처치 · ${GATEKEEPERS[G.gk].gate} 개방` : '들판 돌파', '#ffe08a');
+    if (ph.id === 'demon') { sfx('clear'); G.result = 'clear'; G.endT = 2.2; toast('마왕 처치', '#ffe08a'); fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 320, dur: 1.4, color: '#ffe08a' }); return; }
+    sfx('clear'); G.result = 'clear'; G.endT = 1.6; toast(ph.id === 'gate' ? `${GATEKEEPERS[G.gk].name} 처치 · ${GATEKEEPERS[G.gk].gate} 개방` : '들판 돌파', '#ffe08a');
     fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 260, dur: 1.2, color: '#ffe08a' });
     return;
   }

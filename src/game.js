@@ -171,14 +171,14 @@ function damageEnemy(e, dmg, o = {}) {
   if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16) — 모든 피해 배율 적용 후 보정 (0.18: 칼날 폭풍 배율이 보정 뒤에 곱해져 페이즈 조기 전환되던 결함 수정)
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
   const eff = Math.min(dmg, Math.max(0, e.hp));          // 실제 깎은 체력 기준 집계(초과 피해 제외, 0.2a)
-  e.hp -= dmg; e.flash = 0.08;
+  e.hp -= dmg; e.flash = 0.08; sfx('hit');
   G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + eff;
   if (o.kb && o.fx !== undefined && !e.cmd) { const dx = e.x - o.fx, dy = e.y - o.fy, d = Math.hypot(dx, dy) || 1; e.kbx += dx / d * o.kb; e.kby += dy / d * o.kb; }
   if (e.hp <= 0) killEnemy(e);
   else onEnemyHit(e, o);
 }
 function killEnemy(e) {
-  e.dead = true; G.kills++; G.stats.kt[e.type] = 1;
+  e.dead = true; G.kills++; G.stats.kt[e.type] = 1; sfx(e.gk && !e.clone ? 'bossdie' : 'kill');
   G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
   if (e.elite) eliteKilled(e);
   if (e.ev) eventMobKilled(e);
@@ -193,12 +193,12 @@ function hurtPlayer(dmg, src) {
   if (p.invT > 0 || STATE.dev.god || G.result) return;
   if (playerAvoid()) return;
   dmg *= playerHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
-  vibe(25);
+  vibe(25); sfx('hurt');
   onPlayerHurt();
   p.hp -= dmg; p.invT = CFG.player.invuln; p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
   if (p.hp <= 0 && pBr('regen') === 'second' && !p.revived) { p.revived = true; p.hp = p.maxHp * 0.4; p.invT = 2; toast('불굴', '#ffb070'); return; }
-  if (p.hp <= 0) { p.hp = 0; G.result = 'dead'; G.endT = 1.4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 200, dur: 1, color: '#ff6a6a' }); }
+  if (p.hp <= 0) { p.hp = 0; sfx('dead'); G.result = 'dead'; G.endT = 1.4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 200, dur: 1, color: '#ff6a6a' }); }
 }
 
 /* 경험치·레벨업 (레벨업마다 3지선다 대기열 적재) */
@@ -210,7 +210,7 @@ function updateGems(dt) {
     if (g.mag) {
       const d = Math.sqrt(d2) || 1; g.sp = (g.sp || 120) + 900 * dt;
       g.x += (p.x - g.x) / d * g.sp * dt; g.y += (p.y - g.y) / d * g.sp * dt;
-      if (d < p.r + 6) { g.dead = true; G.stats.xpGot += g.v; addXp(g.v); }
+      if (d < p.r + 6) { g.dead = true; sfx('gem'); G.stats.xpGot += g.v; addXp(g.v); }
     }
   }
   G.gems = G.gems.filter(g => !g.dead);
@@ -225,7 +225,7 @@ function addXp(v) {
   while (p.xp >= p.need) { p.xp -= p.need; levelUp(); }
 }
 function levelUp() {
-  const p = G.p; p.level++; p.need = xpNeed(p.level);
+  const p = G.p; p.level++; p.need = xpNeed(p.level); sfx('level');
   G.pendingLv++;
   G.stats.levelAt.push(Math.round(G.time));
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 70, dur: 0.4, color: '#7fe0ff', follow: true });

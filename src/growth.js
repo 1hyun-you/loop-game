@@ -85,7 +85,7 @@ function chestCands() {
   return out.slice(0, 3);
 }
 function openChest() {
-  G.pendingChest--; G.stats.chests++;
+  G.pendingChest--; G.stats.chests++; sfx('chest');
   STATE.mode = 'select'; clearInput();
   G.sel = { kind: 'chest', cards: chestCands(), banish: false };
   renderSelect(); autoLater();
