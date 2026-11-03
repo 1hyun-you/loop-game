@@ -78,6 +78,29 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
 .dlg .nm{font-weight:700;font-size:15px;color:#ffe08a;margin-bottom:4px}
 .dlg .tx{font-size:16px;line-height:1.55;white-space:pre-wrap;word-break:keep-all}
 .dlg .nx{position:absolute;right:12px;bottom:8px;font-size:12px;color:var(--muted)}
+.dlg .pt{image-rendering:pixelated;border:1.5px solid var(--line)}
+/* 서사·메뉴 (0.13~0.15) */
+.frag{margin:0;color:#e8d8ff;font-weight:700;text-align:center;max-width:420px}
+.score{margin:0;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}.score small{font-size:13px;color:var(--muted);font-weight:600}
+.layer.ending h2{font-size:32px;letter-spacing:2px}
+#ui>.layer.scroll{justify-content:flex-start;overflow-y:auto;touch-action:pan-y;background:rgba(14,12,22,.94)}
+.layer.scroll>h2{margin-top:6vh}
+.layer h3{margin:6px 0 0;font-size:16px;color:var(--muted);align-self:center}
+.menu.row2{flex-direction:row;flex-wrap:wrap;justify-content:center;width:min(340px,90vw)}.menu.row2 button{flex:1;min-width:30%}
+.rows{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
+.row{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.row .rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.row .rt span{font-size:13px;color:var(--muted)}
+.row .tg{flex:0 0 auto;min-width:78px;padding:9px 10px;font-size:14px}
+.row input[type=range]{flex:0 0 110px;accent-color:var(--accent)}.row output{width:30px;text-align:right;font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:6px;width:100%;max-width:420px}.tabs button{flex:1;padding:9px 4px;font-size:14px}
+.cxl{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
+.cx{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+.cx .ic{flex:0 0 36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#14121c}
+.cx b{font-size:15px;margin-right:6px}.cx .tag{font-size:12px;color:var(--muted)}.cx p{margin:3px 0 0;font-size:13.5px;line-height:1.5;color:var(--muted);word-break:keep-all}
+.cx.lock b{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
+.chipb{padding:7px 11px;font-size:13px;border-radius:20px;display:inline-flex;gap:6px;align-items:center}.chipb i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.card.armed{outline:3px solid #fff;outline-offset:1px}
 @media (orientation:landscape) and (pointer:coarse){.rot{display:flex}}
 @media (prefers-reduced-motion:reduce){button:active{transform:none}}
 </style>

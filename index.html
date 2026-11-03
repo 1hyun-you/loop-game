@@ -90,6 +90,29 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
 .dlg .nm{font-weight:700;font-size:15px;color:#ffe08a;margin-bottom:4px}
 .dlg .tx{font-size:16px;line-height:1.55;white-space:pre-wrap;word-break:keep-all}
 .dlg .nx{position:absolute;right:12px;bottom:8px;font-size:12px;color:var(--muted)}
+.dlg .pt{image-rendering:pixelated;border:1.5px solid var(--line)}
+/* 서사·메뉴 (0.13~0.15) */
+.frag{margin:0;color:#e8d8ff;font-weight:700;text-align:center;max-width:420px}
+.score{margin:0;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}.score small{font-size:13px;color:var(--muted);font-weight:600}
+.layer.ending h2{font-size:32px;letter-spacing:2px}
+#ui>.layer.scroll{justify-content:flex-start;overflow-y:auto;touch-action:pan-y;background:rgba(14,12,22,.94)}
+.layer.scroll>h2{margin-top:6vh}
+.layer h3{margin:6px 0 0;font-size:16px;color:var(--muted);align-self:center}
+.menu.row2{flex-direction:row;flex-wrap:wrap;justify-content:center;width:min(340px,90vw)}.menu.row2 button{flex:1;min-width:30%}
+.rows{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
+.row{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.row .rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.row .rt span{font-size:13px;color:var(--muted)}
+.row .tg{flex:0 0 auto;min-width:78px;padding:9px 10px;font-size:14px}
+.row input[type=range]{flex:0 0 110px;accent-color:var(--accent)}.row output{width:30px;text-align:right;font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:6px;width:100%;max-width:420px}.tabs button{flex:1;padding:9px 4px;font-size:14px}
+.cxl{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
+.cx{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+.cx .ic{flex:0 0 36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#14121c}
+.cx b{font-size:15px;margin-right:6px}.cx .tag{font-size:12px;color:var(--muted)}.cx p{margin:3px 0 0;font-size:13.5px;line-height:1.5;color:var(--muted);word-break:keep-all}
+.cx.lock b{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
+.chipb{padding:7px 11px;font-size:13px;border-radius:20px;display:inline-flex;gap:6px;align-items:center}.chipb i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.card.armed{outline:3px solid #fff;outline-offset:1px}
 @media (orientation:landscape) and (pointer:coarse){.rot{display:flex}}
 @media (prefers-reduced-motion:reduce){button:active{transform:none}}
 </style>
@@ -105,7 +128,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.12',
+  VERSION: '0.15',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -252,7 +275,9 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (STATE.mode !== 'play' || INPUT.active) return;
   INPUT.active = true; INPUT.id = e.pointerId;
-  INPUT.ox = INPUT.x = e.clientX; INPUT.oy = INPUT.y = e.clientY; updJoy();
+  INPUT.ox = INPUT.x = e.clientX; INPUT.oy = INPUT.y = e.clientY;
+  if (SETTINGS.joy === 'fixed') { const f = joyFixed(); INPUT.ox = f.x; INPUT.oy = f.y; }   // 고정형: 화면 아래 중앙 기준 (0.14)
+  updJoy();
   try { cv.setPointerCapture(e.pointerId); } catch (_) { }
 }, { passive: false });
 cv.addEventListener('pointermove', e => { if (!INPUT.active || e.pointerId !== INPUT.id) return; INPUT.x = e.clientX; INPUT.y = e.clientY; updJoy(); });
@@ -298,10 +323,11 @@ function newRun() {
     pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, pendingCamp: false, pendingDoor: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
     stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
-      branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
+      kt: {}, branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
   };
+  G.opt = runOpt(); saveCache = null;                       // 고난도 단계·도전 조건 (0.15)
   recalc();
-  addWeapon(START_WEAPON);
+  addWeapon(startWeapon());
   G.gk = gkPick();                                          // 수문장 결정 (0.11)
   G.runType = runTypeOf();                                  // 판 구조: normal·final·retry (0.12)
   if (G.runType === 'retry') G.gk = null;
@@ -323,16 +349,17 @@ function recalc() {
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
   p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
-  if (p.maxHp > prevMax) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복
+  if (p.maxHp > prevMax && !hasCond('noheal')) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복 (도전 조건 회복 없음 제외)
   p.hp = Math.min(p.hp, p.maxHp);
 }
-function heal(v) { const p = G.p; if (hasCurse('blight')) v *= 0.6; p.hp = Math.min(p.maxHp, p.hp + v); }
+function heal(v) { const p = G.p; if (hasCond('noheal')) return; if (hasCurse('blight')) v *= 0.6; p.hp = Math.min(p.maxHp, p.hp + v); }
 function clearInput() { INPUT.active = false; INPUT.id = null; INPUT.mag = 0; }
 function toast(text, color = '#fff') { G.toasts.push({ text, color, t: 0, dur: 2 }); if (G.toasts.length > 3) G.toasts.shift(); }
 function fx(o) { if (G.fx.length < 220) G.fx.push(Object.assign({ t: 0 }, o)); }
 
 /* 한 틱 진행 */
 function step(dt) {
+  if (!G.storyOn) { G.storyOn = true; if (storyRunStart()) return; }   // 판 시작 대사 (0.13)
   G.time += dt;
   if (G.time >= (G.stats.dmgMin.length + 1) * 60) G.stats.dmgMin.push(Object.assign({}, G.stats.dmg));   // 분 단위 피해 누적 스냅숏
   updatePlayer(dt);
@@ -385,7 +412,7 @@ function ringPos(extra = 40) {
 function makeEnemy(type, x, y) {
   const d = ENEMIES[type], min = G.time / 60;
   const e = {
-    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),
+    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min) * (1 + tierK()), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),   // 고난도 체력 (0.15)
     speed: d.speed * rand(0.9, 1.1) * (1 + CFG.scale.speedPerMin * Math.min(min, 10)),
     color: d.color, shape: d.shape, xp: d.xp, flash: 0, kbx: 0, kby: 0, dead: false, ht: {},
   };
@@ -455,7 +482,7 @@ function damageEnemy(e, dmg, o = {}) {
   else onEnemyHit(e, o);
 }
 function killEnemy(e) {
-  e.dead = true; G.kills++;
+  e.dead = true; G.kills++; G.stats.kt[e.type] = 1;
   G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
   if (e.elite) eliteKilled(e);
   if (e.ev) eventMobKilled(e);
@@ -469,7 +496,8 @@ function hurtPlayer(dmg, src) {
   const p = G.p;
   if (p.invT > 0 || STATE.dev.god || G.result) return;
   if (playerAvoid()) return;
-  dmg *= playerHurtMul() * (hasCurse('frail') ? 1.15 : 1);
+  dmg *= playerHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
+  vibe(25);
   onPlayerHurt();
   p.hp -= dmg; p.invT = CFG.player.invuln; p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
@@ -538,13 +566,18 @@ function lastMinShare() {
 }
 function loadSave() { try { return JSON.parse(localStorage.getItem(CFG.SAVE_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function finishRun() {
+  if (G.result === 'dead') fragUnlock('loop');               // 기록 조각: 첫 회귀 (0.13)
   G.report = buildReport();
+  let show = showResult;
   try {
     const s = loadSave(); G.report.newBest = G.report.time > (s.bestTime || 0);
     s.runs = (s.runs || 0) + 1; s.bestTime = Math.max(s.bestTime || 0, G.report.time); if (G.report.result === 'clear') s.clears = (s.clears || 0) + 1; gkSave(s); dmSave(s); G.report.gates = s.gates.length; G.report.demonKills = s.demonKills || 0;
+    metaSave(s);                                             // 도감 기록·점수·칭호 (0.14·0.15)
+    show = storyRunEnd(s, showResult);                        // 판 종료 대사·엔딩 (0.13)
+    G.report.frags = (s.frags || []).length; G.report.story = [s.released ? 1 : 0, s.trueEnd ? 1 : 0, s.ending1 ? 1 : 0];
     localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s));
-  } catch (e) { }
-  showResult();
+  } catch (e) { console.error(e); if (window.__onErr) window.__onErr(e); }
+  show();
 }
 /* ============================================================
    페이즈 — 풀 12종(기본형 4·전투형 4·기믹형 4), 판마다 7~8종 무작위 투입 (유형별 2종 이상 보장)
@@ -939,6 +972,7 @@ function eventSpawn(pl) {
 function eventEnd(outcome) {
   const c = G.ev.cur; if (!c) return;
   G.ev.log.push([c.type, outcome, Math.round(G.time - c.at)]);
+  if (outcome === 'ok') fragUnlock(c.type);                 // 곁가지 사건 첫 해결 조각 (0.13)
   if (c.mob && !c.mob.dead && outcome !== 'ok') c.mob.dead = true;
   G.ev.cur = null;
 }
@@ -1004,7 +1038,7 @@ function openCamp() {
 }
 function applyCamp(c) {
   const p = G.p; (G.stats.camp = G.stats.camp || []).push(c.id);
-  if (c.id === 'rest') { p.hp = p.maxHp; toast('휴식 · 체력 전부 회복', '#8ff0b0'); }
+  if (c.id === 'rest') { if (!hasCond('noheal')) p.hp = p.maxHp; toast('휴식 · 체력 전부 회복', '#8ff0b0'); }
   if (c.id === 'train') { G.pendingLv += 2; toast('수련 · 레벨 업 2회', '#7fe0ff'); }
   if (c.id === 'supply') { G.pendingChest++; }
 }
@@ -1073,6 +1107,7 @@ function gkSpawn() {
   toast(`사문의 수문장 · ${D.name}`, D.color); toast(D.gate + ' · ' + D.ds, '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 120, dur: 0.8, color: D.color });
   if (G.gk === 'seren') e.ai.cd = 0.8;
+  storyBoss(G.gk);                                          // 첫 대면 대사 (0.13)
 }
 
 /* 수문장 갱신 — game.js updateEnemies에서 개체별 호출 (이동·접촉·패턴) */
@@ -1213,6 +1248,7 @@ function gkKilled(e) {
   if (e.gk === 'demon') return dmKilled(e);
   if (e.clone) { gkRing(e.x, e.y, GK_CFG.seShards, 140, gkDmg(GK_CFG.seDmg) * 0.8, '거울 파편', rand(6.28), '#cfe0ff'); return; }
   const D = GATEKEEPERS[e.gk];
+  fragUnlock(e.gk);                                         // 기록 조각 (0.13)
   G.stats.gate.killed = true; G.stats.gate.dur = Math.round(G.time - G.stats.gate.t0);
   for (const o of G.enemies) if (o.clone && !o.dead) o.dead = true;
   G.eb = []; G.hz = [];
@@ -1340,6 +1376,7 @@ function dmSpawn() {
   G.stats.demon = { t0: G.time, st: [null, null], type: G.runType };
   toast('마왕 강림', DEMON.color); toast('그림자 군주', '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 200, dur: 1.0, color: DEMON.color });
+  storyBoss('demon');                                       // 마왕성 도달 조각·대사 (0.13)
 }
 
 function dmUpdate(e, dt, d, dx, dy) {
@@ -1473,6 +1510,7 @@ function dmOnBeam(h, x, y, pad) {
 function dmHzAlive(h) { return h.k === 'sect' ? h.t < h.warn + 0.3 : h.t < h.warn + h.dur; }
 
 function dmKilled(e) {
+  fragUnlock('shadow');                                     // 기록 조각 (0.13)
   const s = G.stats.demon; s.killed = true; s.dur = Math.round(G.time - s.t0);
   G.eb = []; G.hz = []; G.arena = null;
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 320, dur: 1.6, color: DEMON.color });
@@ -1508,6 +1546,295 @@ function dmReport() {
 function dmSave(s) {
   const d = G.stats.demon; if (!d) return;
   s.demonTries = (s.demonTries || 0) + 1; if (d.killed) s.demonKills = (s.demonKills || 0) + 1;
+}
+/* ============================================================
+   서사 (0.13) — 4단계 결정 안건 1
+   원인: 조력자 소원형 — 마왕 토벌에 실패하고 동료를 잃은 주인공의 "다시 한 번" 소원을 조력자가 들어주어 생긴 고리
+   해제: 기록 조각 10개 전부 해금 → 다음 판 시작 대사에서 조력자가 고리를 놓음 → 그 판 마왕 처치 시 진엔딩
+   엔딩: 일반 엔딩(첫 마왕 처치, 고리에 의해 마왕 부활) · 진엔딩(수용·작별형)
+   기록 조각: 이정표 7개 + 곁가지 사건 3종 첫 해결 각 1개 (혼합형)
+   인물명(리안·에다·토르반·하린·유르)은 가칭
+   ============================================================ */
+const CAST = {
+  hero: { name: '리안', color: '#3a6ac0', pt: 'hero' },
+  aide: { name: '에다', color: '#7a6ab8', pt: 'aide' },
+  demon: { name: '마왕', color: '#5a2a8a', pt: 'demon' },
+};
+/* 초상화 도트 16×16 (좌우 대칭: 왼쪽 8칸만 기술, 오른쪽은 반전) → 64px 표시 */
+const PORTRAITS = {
+  hero: { pal: { k: '#1a1622', h: '#6b4a32', s: '#f0c8a0', e: '#2a2440', c: '#3a6ac0', a: '#b8c0d0', b: '#16203a' },
+    half: ['bbbbbbbb', 'bbbbbkkk', 'bbbbkhhh', 'bbbkhhhh', 'bbbkhhhh', 'bbbkhsss', 'bbbksess', 'bbbkssss', 'bbbbksss', 'bbbbbkks', 'bbbkkccc', 'bbkcccaa', 'bkcccaaa', 'bkccaaaa', 'kcccaaaa', 'kcccaaaa'] },
+  aide: { pal: { k: '#1a1622', v: '#7a6ab8', d: '#120f1c', g: '#ffe08a', w: '#e0c060', b: '#201a34' },
+    half: ['bbbbbbkk', 'bbbbbkvv', 'bbbbkvvv', 'bbbkvvvv', 'bbbkvvdd', 'bbkvvddd', 'bbkvvdgd', 'bbkvvddd', 'bbkvvvdd', 'bbkvvvvd', 'bkvvvvvv', 'bkvvwvvv', 'kvvvwvvv', 'kvvvwvvv', 'kvvvvwvv', 'kvvvvwvv'] },
+  demon: { pal: { k: '#0e0a14', r: '#d8d0c0', m: '#5a2a8a', y: '#ff4a4a', o: '#2a1040', p: '#b04ad0', b: '#1a0e24' },
+    half: ['brbbbbbb', 'brrbbbbb', 'bbrrbkkk', 'bbrkkmmm', 'bbbkmmmm', 'bbbkmmmm', 'bbbkmymm', 'bbbkmmmm', 'bbbkmkkk', 'bbbbkmmm', 'bbkkkkoo', 'bkooopoo', 'koooopoo', 'kooooopo', 'kooooooo', 'kooooooo'] },
+};
+const PT_URL = {};
+function buildPortraits() {
+  for (const k in PORTRAITS) {
+    try {
+      const P = PORTRAITS[k], cvs = document.createElement('canvas'); cvs.width = cvs.height = 16;
+      const c = cvs.getContext('2d');
+      P.half.forEach((row, y) => { const full = (row + row.split('').reverse().join('')).padEnd(16, 'b').slice(0, 16); full.split('').forEach((ch, x) => { c.fillStyle = P.pal[ch] || P.pal.b; c.fillRect(x, y, 1, 1); }); });
+      PT_URL[k] = cvs.toDataURL();
+    } catch (e) { }
+  }
+}
+
+/* 기록 조각 10개 — 해금 조건(cond)·제목·본문 */
+const FRAGS = [
+  { id: 'loop', cond: '처음으로 쓰러지기', nm: '첫 회귀', tx: '다시 눈을 뜬 곳은 들판의 출발점이었다. 상처는 사라졌지만 쓰러지던 순간의 감각은 그대로 남아 있었다. 누군가 "이번에도 기억하는구나" 하고 속삭였다.' },
+  { id: 'bargan', cond: '바르간 처치', nm: '돌진의 문', tx: '토르반은 언제나 맨 앞에 섰다. 돌진해 오는 문지기를 방패 하나로 받아 내며 먼저 가라고 외쳤다. 그 뒤로 그의 목소리를 듣지 못했다.' },
+  { id: 'igna', cond: '이그나 처치', nm: '불꽃의 문', tx: '하린의 화살은 불길 속에서도 빗나간 적이 없었다. 불꽃의 문을 넘던 날, 그녀는 마지막 화살을 내 손에 쥐여 주었다.' },
+  { id: 'morden', cond: '모르덴 처치', nm: '망자의 문', tx: '유르는 망자들의 이름을 하나씩 불러 잠재웠다. 그 주문이 끝났을 때 그는 더 이상 일어서지 못했다.' },
+  { id: 'seren', cond: '세렌 처치', nm: '거울의 문', tx: '거울 속의 나는 같은 말을 되풀이했다. 한 번만 더, 한 번만 더 하면 모두를 구할 수 있다고. 그 목소리가 내 것이라는 사실이 가장 무서웠다.' },
+  { id: 'castle', cond: '마왕성 도달', nm: '왕좌로 가는 계단', tx: '넷이 함께 오르던 계단을 혼자 올랐다. 왕좌 앞에서 검을 들었지만, 그날 나는 이기지 못했다.' },
+  { id: 'shadow', cond: '마왕 처치', nm: '되살아난 그림자', tx: '마왕은 분명 쓰러졌다. 그러나 들판의 시간이 되감기자 왕좌의 그림자도 다시 일어섰다. 고리는 나만이 아니라 모든 것을 되돌리고 있었다.' },
+  { id: 'cave', cond: '동굴 입구 소탕', nm: '모닥불', tx: '동굴 속 모닥불 앞에서 넷은 돌아가면 무엇을 할지 이야기했다. 토르반은 대장간을, 하린은 바다를, 유르는 책방을 말했다. 나는 대답하지 못했다.' },
+  { id: 'giant', cond: '잠든 거대 몹 처치', nm: '첫 수련', tx: '거대한 짐승 앞에서 검을 떨어뜨렸던 날, 토르반은 웃으며 검을 다시 쥐여 주었다. 쓰러져도 일어서는 법은 그때 배웠다.' },
+  { id: 'door', cond: '봉인된 문 열기', nm: '소원', tx: '모두가 쓰러진 왕좌 앞에서 나는 빌었다. 다시 한 번만. 대답한 것은 에다였다. 그 소원을 들어주겠다고, 내가 놓아줄 수 있을 때까지.' },
+];
+const FRAG_N = FRAGS.length;
+
+/* 대사 묶음 — [화자, 본문] */
+const SAY = {
+  intro: [['aide', '눈을 떴구나. 여기는 회귀의 들판이야.'], ['aide', '쓰러져도 너는 이곳으로 돌아와. 기억만은 가지고.'], ['hero', '마왕성으로 가야 해. 이번에는 반드시.'], ['aide', '사문의 수문장을 쓰러뜨려 네 개의 문을 열어. 길은 그 너머에 있어.']],
+  release: [['aide', '기억이 전부 돌아왔구나.'], ['hero', '토르반도, 하린도, 유르도 돌아오지 않아. 아무리 되감아도.'], ['aide', '그걸 알았으니, 이제 놓아줄 수 있겠어?'], ['hero', '응. 고마웠어, 에다.'], ['aide', '고리를 놓을게. 이번에 쓰러진 마왕은 다시 일어나지 못해.']],
+  ending1: [['hero', '끝났다. 이걸로.'], ['demon', '끝이라고? 이 들판에 끝은 없다.'], ['aide', '고리가 이어지는 한 그는 다시 일어나. 너도, 나도.'], ['hero', '그럼 고리를 끊으려면.'], ['aide', '잃어버린 기억을 전부 찾아. 그때 다시 이야기하자.']],
+  trueEnd: [['demon', '시간이, 흐른다?'], ['hero', '모두, 미안해. 그리고 고마워.'], ['aide', '잘 가, 리안. 이제 내일로 가.'], ['hero', '응. 앞으로 갈게.']],
+  demonMeet: [['demon', '또 그 눈이군. 몇 번을 되감아도 결말은 같다.'], ['hero', '이번에는 다르다.']],
+  demonFree: [['demon', '시간이 되감기지 않는다? 무슨 짓을 했지.'], ['hero', '끝내러 왔다.']],
+  firstDeath: [['aide', '쓰러졌구나. 괜찮아, 다시 시작하면 돼.']],
+  demonAgain: [['aide', '그는 또 일어날 거야. 남은 기억을 찾아.']],
+};
+const GK_SAY = {
+  bargan: '또 왔나. 이 문은 몇 번이든 막는다.',
+  igna: '불꽃은 기억을 태운다. 너도 태워 주지.',
+  morden: '망자는 돌아오지 않는다. 너만 빼고.',
+  seren: '거울 속의 너는 몇 번째 너지?',
+};
+/* 판 시작 한 줄 — 진행 상황별 */
+function startLine(s) {
+  const g = (s.gates || []).length, f = (s.frags || []).length;
+  if (s.trueEnd) return pick([['hero', '기억 속의 들판. 더 짙은 그림자와 겨룬다.'], ['aide', '고리는 끊겼어. 이건 네가 고른 싸움이야.']]);
+  if (s.demonKills) return ['aide', `남은 기억은 ${FRAG_N - f}개. 들판 구석구석에 흩어져 있어.`];
+  if (g >= 4) return pick([['aide', '왕좌는 그대로야. 너도, 그도.'], ['hero', '이번에는 계단 끝까지.']]);
+  if (g > 0) return pick([['hero', `열린 문은 ${g}개. 남은 문은 ${4 - g}개.`], ['aide', '열린 문 너머에서 무언가 기다리고 있어.']]);
+  return pick([['aide', '몇 번이든 돌아와. 그게 네가 바란 거니까.'], ['hero', '문을 연다. 하나씩.']]);
+}
+
+const toLines = arr => arr.map(([who, text]) => CAST[who] ? { name: CAST[who].name, color: CAST[who].color, pt: CAST[who].pt, text } : who);
+function storyRead() { const s = loadSave(); s.frags = s.frags || []; return s; }
+function storyWrite(s) { try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s)); } catch (e) { } }
+
+/* 판 시작 (step 첫 틱에서 호출) — 대사 표시 시 true */
+function storyRunStart() {
+  const s = storyRead(); let lines;
+  G.story = { freed: !!s.released && !s.trueEnd, newFrags: [] };
+  if (!s.intro) { s.intro = 1; storyWrite(s); lines = SAY.intro; }
+  else if (s.frags.length >= FRAG_N && !s.released && !s.trueEnd) { s.released = 1; storyWrite(s); G.story.freed = true; lines = SAY.release; }
+  else lines = [startLine(s)];
+  showDialog(toLines(lines));
+  return true;
+}
+/* 기록 조각 해금 — 즉시 저장 */
+function fragUnlock(id) {
+  if (!G || !G.story) return;
+  const s = storyRead(); if (s.frags.includes(id)) return;
+  s.frags.push(id); storyWrite(s); G.story.newFrags.push(id);
+  const F = FRAGS.find(f => f.id === id);
+  toast(`기록 조각 · ${F.nm} (${s.frags.length}/${FRAG_N})`, '#e8d8ff');
+}
+/* 보스 등장 대사 — 수문장은 첫 대면만, 마왕은 첫 대면·해제 판 */
+function storyBoss(k) {
+  vibe(80);
+  const s = storyRead();
+  if (k === 'demon') {
+    fragUnlock('castle');
+    if (G.story && G.story.freed) return showDialog(toLines(SAY.demonFree));
+    if (!s.demonTries && !s.metDemon) { s.metDemon = 1; storyWrite(s); return showDialog(toLines(SAY.demonMeet)); }
+    return;
+  }
+  s.metGk = s.metGk || [];
+  if (s.metGk.includes(k)) return;
+  s.metGk.push(k); storyWrite(s);
+  const D = GATEKEEPERS[k];
+  showDialog([{ name: D.name, color: D.color, text: GK_SAY[k] }]);
+}
+/* 판 종료 대사 (finishRun에서 저장 전에 호출) — 저장 항목 갱신 후 표시 함수 반환 (next: 결과 화면) */
+function storyRunEnd(s, next) {
+  const R = G.report, dm = R.demon, killed = dm && dm[0] === 'kill';
+  const say = (arr, after) => () => showDialog(toLines(arr), after || next);
+  if (killed && G.story && G.story.freed) { s.trueEnd = 1; s.released = 0; R.trueEnd = true; return say(SAY.trueEnd, () => showEnding(next)); }
+  if (killed && !s.ending1) { s.ending1 = 1; R.ending1 = true; return say(SAY.ending1); }
+  if (killed && !s.trueEnd) return say(SAY.demonAgain);
+  if (R.result === 'dead' && (s.runs || 0) <= 1) return say(SAY.firstDeath);
+  if (R.gate && R.gate[1] === 'kill' && !dm) return say([['hero', `${GATEKEEPERS[R.gate[0]].gate}이 열렸다. 남은 문은 ${Math.max(0, 4 - (s.gates || []).length)}개.`]]);
+  return next;
+}
+/* 진엔딩 화면 */
+function showEnding(next) {
+  STATE.mode = 'result';
+  UI.innerHTML = `<div class="layer ending"><h2>회귀의 들판</h2>
+    <p class="sub">고리가 끊긴 들판에 처음으로 다음 날 아침이 왔다.</p>
+    <p class="best">진엔딩 · 칭호 '고리를 끊은 자'</p>
+    <p class="hint">고난도 단계·도전 조건이 열렸습니다.</p>
+    <div class="menu"><button class="pri" id="endnext">결과 보기</button></div></div>`;
+  on('endnext', next);
+}
+/* ============================================================
+   메뉴·메타 진행 — 설정 8종(0.14) · 도감 4탭(0.14) · 고난도 3단계·도전 조건 6종·판 점수·칭호·색상 변형(0.15)
+   4단계 결정 안건 2·3: 진엔딩 후 고난도 1단계부터 해금, 단계 k 마왕 처치 시 k+1 해금
+   보상은 성능 영향 없음(판 점수 배율·칭호·주인공 색상), 배율·강화 수치는 초기값 (5단계 시험으로 확정)
+   ============================================================ */
+/* ---------- 설정 (기기 저장) ---------- */
+const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false };
+const SETTINGS = (() => { try { return Object.assign({}, SET_DEF, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return Object.assign({}, SET_DEF); } })();
+function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
+let vibeAt = 0;
+function vibe(ms) {
+  if (!SETTINGS.vibe || STATE.dev.auto || !navigator.vibrate) return;
+  const t = performance.now(); if (t - vibeAt < 220) return; vibeAt = t;
+  try { navigator.vibrate(ms); } catch (e) { }
+}
+const joyFixed = () => ({ x: VIEW.cw / 2, y: VIEW.ch - VIEW.sab - 130 });
+
+/* ---------- 고난도 단계·도전 조건 ---------- */
+const TIERS = [
+  { nm: '기본', k: 0, mul: 1 },
+  { nm: '고난도 1', k: 0.3, mul: 1.5 },
+  { nm: '고난도 2', k: 0.6, mul: 2 },
+  { nm: '고난도 3', k: 0.9, mul: 2.5 },
+];
+const CONDS = {
+  melee: { nm: '근접 무기만', ds: '근접 계열 무기만 등장', mul: 1.2, title: '칼끝만 믿는 자', ex: 'ranged' },
+  ranged: { nm: '원거리 무기만', ds: '원거리·마법 계열 무기만 등장, 시작 무기 화살', mul: 1.15, title: '먼 곳의 사수', ex: 'melee' },
+  two: { nm: '선택지 2개', ds: '레벨 업 선택지 3개 → 2개', mul: 1.3, title: '좁은 갈림길' },
+  noheal: { nm: '회복 없음', ds: '모든 체력 회복 효과 무효', mul: 1.35, title: '상처를 견딘 자' },
+  nojob: { nm: '전직 금지', ds: '전직 제단 미등장 (궁극기 없음)', mul: 1.3, title: '이름 없는 검사' },
+  slot3: { nm: '무기 3칸', ds: '무기 칸 5칸 → 3칸', mul: 1.25, title: '세 자루의 무기' },
+};
+const COND_ORDER = ['melee', 'ranged', 'two', 'noheal', 'nojob', 'slot3'];
+/* 칭호 — 진엔딩·고난도 단계별 첫 마왕 처치·도전 조건별 첫 마왕 처치 / 색상 — 진엔딩·고난도 단계 칭호에 연동 */
+const TITLES = Object.assign({ end: '고리를 끊은 자', t1: '고난도 1 돌파', t2: '고난도 2 돌파', t3: '고난도 3 돌파' },
+  Object.fromEntries(COND_ORDER.map(k => ['c_' + k, CONDS[k].title])));
+const COLORS = [
+  { id: 'base', nm: '푸른 망토', c: '#7fb4ff' },
+  { id: 'silver', nm: '은빛', c: '#d8dce8', need: 'end' },
+  { id: 'teal', nm: '청록', c: '#5fd0c0', need: 't1' },
+  { id: 'crimson', nm: '진홍', c: '#e05a6a', need: 't2' },
+  { id: 'gold', nm: '황금', c: '#f0c850', need: 't3' },
+];
+const META = (() => { try { return Object.assign({ tier: 0, conds: [] }, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_run') || '{}')); } catch (e) { return { tier: 0, conds: [] }; } })();
+function saveMeta() { try { localStorage.setItem(CFG.SAVE_KEY + '_run', JSON.stringify({ tier: META.tier, conds: META.conds })); } catch (e) { } }
+/* 판 시작 시 적용 옵션 — 진엔딩 전에는 항상 기본 */
+function runOpt() {
+  const s = loadSave();
+  if (!s.trueEnd) return { tier: 0, conds: [] };
+  const tier = clamp(META.tier | 0, 0, Math.min(3, s.tierMax || 1));
+  return { tier, conds: META.conds.filter(k => CONDS[k]) };
+}
+const optOf = () => (G && G.opt) || { tier: 0, conds: [] };
+const hasCond = k => optOf().conds.includes(k);
+const tierK = () => TIERS[optOf().tier].k;
+const slotW = () => hasCond('slot3') ? 3 : CFG.slots.weapon;
+const selN = () => hasCond('two') ? 2 : CFG.select.cards;
+const catOk = cat => hasCond('melee') ? cat === 'melee' : hasCond('ranged') ? cat !== 'melee' : true;
+const startWeapon = () => hasCond('ranged') ? 'arrow' : START_WEAPON;
+function optMul(o) { return TIERS[o.tier].mul * o.conds.reduce((m, k) => m * CONDS[k].mul, 1); }
+function optText(o) { return [o.tier ? TIERS[o.tier].nm : null].concat(o.conds.map(k => CONDS[k].nm)).filter(Boolean).join(' · '); }
+function playerColor() { const s = loadSaveCached(); const C = COLORS.find(x => x.id === s.color); return C && colorOpen(s, C) ? C.c : COLORS[0].c; }
+const colorOpen = (s, C) => !C.need || (s.titles || []).includes(C.need);
+let saveCache = null;                                       // 그리기용 저장 사본 (새 판·저장 변경 시 비움)
+function loadSaveCached() { if (!saveCache) saveCache = loadSave(); return saveCache; }
+function unlockTitle(s, id, R) { s.titles = s.titles || []; if (s.titles.includes(id)) return; s.titles.push(id); if (R) (R.newTitles = R.newTitles || []).push(TITLES[id]); }
+
+/* 판 종료 저장 — 도감 기록·점수·칭호 (finishRun에서 호출) */
+function metaSave(s) {
+  const R = G.report, o = optOf(), add = (k, arr) => { s[k] = s[k] || []; for (const x of arr) if (x && !s[k].includes(x)) s[k].push(x); };
+  add('seenW', G.p.weapons.map(w => w.id)); add('seenE', Object.keys(G.stats.kt)); add('seenJ', [G.p.job]);
+  const ok = G.ph.log.filter(x => x[2] === 'ok' && x[0] !== 'gate' && x[0] !== 'demon').length, dm = R.demon, dk = dm && dm[0] === 'kill', gk = R.gate && R.gate[1] === 'kill';
+  const base = Math.round(G.kills * 0.2) + ok * 150 + (gk ? 2000 : 0) + (dk ? 6000 : 0), mul = optMul(o);   // 점수 초기식 (5단계 조정)
+  R.score = Math.round(base * mul); R.mul = +mul.toFixed(2); R.opt = [o.tier, o.conds.join(',')];
+  R.newBestScore = R.score > (s.bestScore || 0); s.bestScore = Math.max(s.bestScore || 0, R.score);
+  if (dk && s.trueEnd) {                                     // 진엔딩 후 마왕 처치: 다음 단계 해금·칭호
+    if (o.tier > 0) unlockTitle(s, 't' + o.tier, R);
+    s.tierMax = Math.min(3, Math.max(s.tierMax || 1, o.tier + 1));
+    for (const k of o.conds) unlockTitle(s, 'c_' + k, R);
+  }
+  saveCache = null;
+}
+
+/* ---------- 설정 화면 ---------- */
+function showSettings(back) {
+  const T = (k, nm, ds) => `<div class="row"><div class="rt"><b>${nm}</b><span>${ds}</span></div><button class="tg ${SETTINGS[k] ? 'pri' : ''}" data-k="${k}">${SETTINGS[k] ? '켜짐' : '꺼짐'}</button></div>`;
+  const V = (k, nm) => `<div class="row"><div class="rt"><b>${nm}</b><span>소리 제작 시 적용</span></div><input type="range" min="0" max="100" step="10" value="${SETTINGS[k]}" data-v="${k}" aria-label="${nm}"><output>${SETTINGS[k]}</output></div>`;
+  UI.innerHTML = `<div class="layer scroll"><h2>설정</h2><div class="rows">
+    <div class="row"><div class="rt"><b>조이스틱</b><span>${SETTINGS.joy === 'fixed' ? '고정형: 화면 아래 중앙 기준' : '유동형: 처음 누른 위치 기준'}</span></div><button class="tg" id="s_joy">${SETTINGS.joy === 'fixed' ? '고정형' : '유동형'}</button></div>
+    ${T('autoUlt', '궁극기 자동 발동', '꺼짐: 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동')}
+    ${T('confirm2', '두 번 눌러 확정', '선택 카드를 한 번 더 눌러야 선택')}
+    ${T('dlgAuto', '대사 자동 넘김', '대사가 끝나면 잠시 후 다음 줄로')}
+    ${T('vibe', '진동', '피격·보스 등장 시 짧은 진동')}
+    ${T('shake', '화면 흔들림', '피격 시 화면 흔들림')}
+    ${V('sfx', '효과음 음량')}${V('bgm', '배경음 음량')}
+    </div><div class="menu"><button id="s_back">돌아가기</button></div></div>`;
+  UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); showSettings(back); }));
+  UI.querySelectorAll('input[data-v]').forEach(i => i.addEventListener('input', () => { SETTINGS[i.dataset.v] = +i.value; i.nextElementSibling.textContent = i.value; saveSettings(); }));
+  on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); showSettings(back); });
+  on('s_back', back);
+}
+
+/* ---------- 도감 (무기·적·기록 조각·해금 현황) ---------- */
+const CODEX_TABS = [['w', '무기'], ['e', '적'], ['f', '기록 조각'], ['u', '해금 현황']];
+function codexEnemies() {
+  return ENEMY_ORDER.map(k => ({ id: k, nm: ENEMIES[k].name, ds: `체력 ${ENEMIES[k].hp} · 속도 ${ENEMIES[k].speed}`, col: ENEMIES[k].color, seen: s => (s.seenE || []).includes(k) }))
+    .concat(GK_ORDER.map(k => ({ id: k, nm: GATEKEEPERS[k].name, ds: `사문의 수문장 · ${GATEKEEPERS[k].gate} · ${GATEKEEPERS[k].ds}`, col: GATEKEEPERS[k].color, seen: s => (s.metGk || []).includes(k) || (s.gates || []).includes(k) })))
+    .concat([{ id: 'demon', nm: DEMON.name, ds: '마왕성의 주인 · 그림자 군주 → 암흑 결계 → 종언', col: DEMON.color, seen: s => !!(s.metDemon || s.demonTries) }]);
+}
+function showCodex(tab, back) {
+  const s = loadSave(); let body = '';
+  const item = (seen, col, ic, nm, tag, ds) => `<div class="cx ${seen ? '' : 'lock'}"><span class="ic" style="background:${seen ? col : 'var(--panel2)'}">${esc(seen ? ic : '?')}</span><div><b>${esc(seen ? nm : '???')}</b>${tag ? `<span class="tag">${esc(tag)}</span>` : ''}<p>${esc(ds)}</p></div></div>`;
+  if (tab === 'w') body = WEAPON_ORDER.map(id => { const d = WEAPONS[id], v = (s.seenW || []).includes(id); return item(v, CFG.colors[d.cat], d.ic, d.name, CAT_NAME[d.cat], v ? d.desc : '획득 시 기록'); }).join('');
+  if (tab === 'e') body = codexEnemies().map(x => { const v = x.seen(s); return item(v, x.col, x.nm.slice(0, 1), x.nm, '', v ? x.ds : '조우 시 기록'); }).join('');
+  if (tab === 'f') body = FRAGS.map((f, i) => { const v = (s.frags || []).includes(f.id); return item(v, '#e8d8ff', String(i + 1), f.nm, '', v ? f.tx : '해금 조건 · ' + f.cond); }).join('');
+  if (tab === 'u') {
+    const n = (a) => (s[a] || []).length, ce = codexEnemies(), titles = s.titles || [];
+    body = `<div class="stats">
+      <span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>열린 문</span><span>${n('gates')}/4</span>
+      <span>마왕 처치</span><span>${s.demonKills || 0}회</span><span>기록 조각</span><span>${n('frags')}/${FRAG_N}</span><span>무기 도감</span><span>${WEAPON_ORDER.filter(id => (s.seenW || []).includes(id)).length}/${WEAPON_ORDER.length}</span>
+      <span>적 도감</span><span>${ce.filter(x => x.seen(s)).length}/${ce.length}</span><span>경험한 직업</span><span>${n('seenJ')}/${JOB_ORDER.length}</span>
+      <span>진엔딩</span><span>${s.trueEnd ? '달성' : '-'}</span><span>최고 점수</span><span>${s.bestScore || 0}</span><span>최고 단계</span><span>${s.trueEnd ? TIERS[Math.min(3, s.tierMax || 1)].nm + ' 개방' : '-'}</span></div>
+      <h3>칭호</h3><div class="chips">${titles.length ? `<button class="chipb ${!s.title ? 'pri' : ''}" data-t="">없음</button>` + titles.map(t => `<button class="chipb ${s.title === t ? 'pri' : ''}" data-t="${t}">${esc(TITLES[t])}</button>`).join('') : '<p class="hint">진엔딩·고난도·도전 조건 첫 돌파 시 해금</p>'}</div>
+      <h3>주인공 색상</h3><div class="chips">${COLORS.map(C => { const v = colorOpen(s, C); return `<button class="chipb ${(s.color || 'base') === C.id ? 'pri' : ''}" data-c="${C.id}" ${v ? '' : 'disabled'}><i style="background:${C.c}"></i>${v ? C.nm : '잠김'}</button>`; }).join('')}</div>`;
+  }
+  UI.innerHTML = `<div class="layer scroll"><h2>도감</h2>
+    <div class="tabs">${CODEX_TABS.map(([k, nm]) => `<button class="${tab === k ? 'pri' : ''}" data-tab="${k}">${nm}</button>`).join('')}</div>
+    <div class="cxl">${body}</div><div class="menu"><button id="cx_back">돌아가기</button></div></div>`;
+  UI.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => showCodex(b.dataset.tab, back)));
+  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; showCodex('u', back); };
+  UI.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => setS('title', b.dataset.t || null)));
+  UI.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => setS('color', b.dataset.c)));
+  on('cx_back', back);
+}
+
+/* ---------- 도전 준비 (진엔딩 후) ---------- */
+function showPrep(back) {
+  const s = loadSave(), mx = Math.min(3, s.tierMax || 1);
+  if (META.tier > mx) META.tier = mx;
+  const o = { tier: META.tier, conds: META.conds };
+  UI.innerHTML = `<div class="layer scroll"><h2>도전 준비</h2><p class="sub">점수 배율 ×${optMul(o).toFixed(2)} · 보상은 성능에 영향 없음</p>
+    <h3>고난도 단계</h3><div class="tabs">${TIERS.map((T, i) => `<button class="${META.tier === i ? 'pri' : ''}" data-tier="${i}" ${i > mx ? 'disabled' : ''}>${i > mx ? '잠김' : T.nm}</button>`).join('')}</div>
+    <p class="hint">${META.tier ? `적 체력·피해 +${Math.round(TIERS[META.tier].k * 100)}% · 배율 ×${TIERS[META.tier].mul}` : '기본 난이도'} · 단계별 마왕 처치 시 다음 단계 개방</p>
+    <h3>도전 조건</h3><div class="rows">${COND_ORDER.map(k => { const C = CONDS[k], v = META.conds.includes(k); return `<div class="row"><div class="rt"><b>${C.nm}</b><span>${C.ds} · ×${C.mul}${(s.titles || []).includes('c_' + k) ? ' · 돌파' : ''}</span></div><button class="tg ${v ? 'pri' : ''}" data-cond="${k}">${v ? '켜짐' : '꺼짐'}</button></div>`; }).join('')}</div>
+    <div class="menu"><button class="pri" id="pr_go">이대로 시작</button><button id="pr_back">돌아가기</button></div></div>`;
+  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); showPrep(back); }));
+  UI.querySelectorAll('[data-cond]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.cond, i = META.conds.indexOf(k);
+    if (i >= 0) META.conds.splice(i, 1); else { META.conds.push(k); const ex = CONDS[k].ex; if (ex) META.conds = META.conds.filter(x => x !== ex); }
+    saveMeta(); showPrep(back);
+  }));
+  on('pr_go', startRun);
+  on('pr_back', back);
 }
 /* ============================================================
    무기 — 레벨별 수치 계산 · 발동 · 투사체
@@ -1846,7 +2173,7 @@ function chestCands() {
   if (out.length < 3) for (const id of RELIC_ORDER) {
     const R = RELICS[id]; if (hasRelic(id)) continue;
     for (const [m, o] of [[R.a, R.b], [R.b, R.a]]) if (owns(o) && !owns(m) && !G.banished.has(m)) {
-      if (WEAPONS[m] && p.weapons.length < CFG.slots.weapon && !out.some(x => x.id === m)) out.push({ t: 'wnew', id: m, mat: id });
+      if (WEAPONS[m] && p.weapons.length < slotW() && catOk(WEAPONS[m].cat) && !out.some(x => x.id === m)) out.push({ t: 'wnew', id: m, mat: id });
       if (PASSIVES[m] && p.passives.length < CFG.slots.passive && !out.some(x => x.id === m)) out.push({ t: 'pnew', id: m, mat: id });
     }
   }
@@ -2005,6 +2332,7 @@ function jobCands(prev = []) {
 /* ---------- 제단 ---------- */
 function altarCheck() {
   const ph = G.ph, p = G.p;
+  if (hasCond('nojob')) return;                              // 도전 조건 전직 금지 (0.15)
   if (!p.job && ph.i + 1 >= JOB_CFG.altarAfter && ph.i + 1 < ph.order.length) {
     const q = ringAt(JOB_CFG.altarDist[0], JOB_CFG.altarDist[1]);
     G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: ph.i };
@@ -2287,7 +2615,7 @@ function levelCands() {
   const p = G.p, out = [], ban = G.banished, nW = p.weapons.length, K = CFG.select;
   const jc = id => jobCat(WEAPONS[id].cat) ? JOB_CFG.jobCatW : 1;   // 전직 계열 후보 비중 증가
   for (const w of p.weapons) if (w.lvl < CFG.weaponMax && !ban.has(w.id)) out.push({ t: 'wup', id: w.id, w: K.wupW * (nW >= 3 ? K.wupW3 : 1) * jc(w.id) });
-  if (nW < CFG.slots.weapon) for (const id of WEAPON_ORDER) if (!hasW(id) && !ban.has(id)) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * jc(id) });
+  if (nW < slotW()) for (const id of WEAPON_ORDER) if (!hasW(id) && !ban.has(id) && catOk(WEAPONS[id].cat)) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * jc(id) });
   for (const id of RELIC_ORDER) if (relicReady(id)) out.push({ t: 'relic', id, w: 2.5 });
   for (const ps of p.passives) if (ps.lvl < CFG.passiveMax && !ban.has(ps.id)) out.push({ t: 'pup', id: ps.id, w: K.pupW });
   if (p.passives.length < CFG.slots.passive) for (const id of PASSIVE_ORDER) if (!hasP(id) && !ban.has(id)) out.push({ t: 'pnew', id, w: K.pnewW });
@@ -2306,7 +2634,7 @@ function isFill(c) { return c.t === 'power' || c.t === 'heal'; }
 function openSelect() {
   G.pendingLv--; G.stats.selOpen++;
   STATE.mode = 'select'; clearInput();
-  G.sel = { kind: 'level', cards: drawCards(CFG.select.cards), banish: false, rerolled: false };
+  G.sel = { kind: 'level', cards: drawCards(selN()), banish: false, rerolled: false };
   renderSelect(); autoLater();
 }
 function autoLater() { if (STATE.dev.auto) { const s = G.sel; setTimeout(() => { if (G && G.sel === s) autoSelect(); }, rand(700, 1200) / Math.sqrt(STATE.dev.speed)); } }
@@ -2358,7 +2686,14 @@ function renderSelect() {
     <div class="sel-head"><h2>${h}</h2><p class="sub">${sub}</p></div>
     <div class="cards">${cards}</div>
     ${acts ? `<div class="sel-actions">${acts}</div>` : ''}</div>`;
-  UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => pickCard(+b.dataset.i)));
+  s.armed = null;
+  UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.i;
+    if (SETTINGS.confirm2 && !s.banish && s.armed !== i) {          // 두 번 눌러 확정 (0.14)
+      s.armed = i; UI.querySelectorAll('.card.armed').forEach(x => x.classList.remove('armed')); b.classList.add('armed'); return;
+    }
+    pickCard(i);
+  }));
   UI.querySelectorAll('.card[data-w]').forEach(b => b.addEventListener('click', () => offerWeapon(b.dataset.w)));
   on('reroll', reroll);
   on('banish', () => { if (!G.banishes) return; s.banish = !s.banish; renderSelect(); });
@@ -2367,7 +2702,7 @@ function renderSelect() {
 }
 function reroll() {
   if (!G.rerolls || !G.sel) return;
-  G.rerolls--; G.sel.cards = drawCards(CFG.select.cards); G.sel.banish = false; renderSelect();
+  G.rerolls--; G.sel.cards = drawCards(selN()); G.sel.banish = false; renderSelect();
 }
 function pickCard(i) {
   const s = G.sel; if (!s) return;
@@ -2392,7 +2727,7 @@ function applyCard(c) {
   if (G.sel && G.sel.kind === 'chest') (G.stats.chestPicks = G.stats.chestPicks || []).push(c.t + ':' + c.id);
   else G.stats.picks.push(p.level - G.pendingLv + ':' + c.t + ':' + c.id);
   switch (c.t) {
-    case 'wnew': addWeapon(c.id); if (p.weapons.length >= CFG.slots.weapon && G.stats.wFullAt == null) G.stats.wFullAt = Math.round(G.time); break;
+    case 'wnew': addWeapon(c.id); if (p.weapons.length >= slotW() && G.stats.wFullAt == null) G.stats.wFullAt = Math.round(G.time); break;
     case 'wup': p.weapons.find(x => x.id === c.id).lvl++; checkBranch('w', c.id); break;
     case 'pnew': p.passives.push({ id: c.id, lvl: 1 }); if (p.passives.length >= PASSIVE_ORDER.length && G.stats.pFullAt == null) G.stats.pFullAt = Math.round(G.time); break;
     case 'pup': p.passives.find(x => x.id === c.id).lvl++; checkBranch('p', c.id); break;
@@ -2462,7 +2797,7 @@ function render() {
   const c = ctx, dpr = VIEW.dpr, Z = VIEW.zoom, p = G.p;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.fillStyle = PAL[0]; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
-  const sh = p.flash > 0 ? 3 : 0;
+  const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, -camX * dpr * Z, -camY * dpr * Z);
   const vx0 = camX - 40, vy0 = camY - 40, vx1 = camX + VIEW.w + 40, vy1 = camY + VIEW.h + 40;
@@ -2598,7 +2933,7 @@ function drawPlayer(c) {
   const p = G.p;
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
   c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x, p.y + p.r * 0.85, p.r, p.r * 0.35, 0, 0, 7); c.fill();
-  c.fillStyle = '#7fb4ff'; c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill();
+  c.fillStyle = playerColor(); c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill();   // 색상 변형 (0.15)
   c.strokeStyle = '#fff'; c.lineWidth = 2.5; c.stroke();
   const fa = Math.atan2(p.face.y, p.face.x);
   c.fillStyle = '#fff'; c.beginPath();
@@ -2671,8 +3006,9 @@ function drawWeapons(c, inView) {
   }
 }
 function drawJoy(c) {
-  if (!INPUT.active) return;
   const R = CFG.joyR;
+  if (SETTINGS.joy === 'fixed' && STATE.mode === 'play' && !INPUT.active) { const f = joyFixed(); c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = 2; c.beginPath(); c.arc(f.x, f.y, R, 0, 7); c.stroke(); return; }   // 고정형 기준 위치 표시
+  if (!INPUT.active) return;
   c.fillStyle = 'rgba(255,255,255,0.10)'; c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 2;
   c.beginPath(); c.arc(INPUT.ox, INPUT.oy, R, 0, 7); c.fill(); c.stroke();
   c.fillStyle = 'rgba(255,255,255,0.45)'; c.beginPath(); c.arc(INPUT.ox + INPUT.dx * INPUT.mag * R, INPUT.oy + INPUT.dy * INPUT.mag * R, 22, 0, 7); c.fill();
@@ -2716,7 +3052,7 @@ function drawSlots(c, y) {
     }
   };
   const rowW = 5 * S + 4 * gap;
-  row(p.weapons, CFG.slots.weapon, 12, w => CFG.colors[WEAPONS[w.id].cat], w => WEAPONS[w.id].ic);
+  row(p.weapons, slotW(), 12, w => CFG.colors[WEAPONS[w.id].cat], w => WEAPONS[w.id].ic);
   row(p.passives, CFG.slots.passive, W - 12 - rowW, () => CFG.colors.passive, ps => PASSIVES[ps.id].ic);
 }
 /* ============================================================
@@ -2870,36 +3206,29 @@ const buildChips = () => (G.p.job ? `<span class="chip" style="border-color:#d9a
   + G.p.passives.map(x => `<span class="chip" style="border-color:${CFG.colors.passive}">${PASSIVES[x.id].name} ${x.lvl}${brName(x.id, x.br)}</span>`).join('')
   + G.p.relics.map(r => `<span class="chip" style="border-color:#ffd24a">유물 ${RELICS[r].name}</span>`).join('');
 
-/* 설정 (0.7) — 기기 저장, 궁극기 자동 발동 */
-const SETTINGS = (() => { try { return Object.assign({ autoUlt: false }, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return { autoUlt: false }; } })();
-function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
-function showSettings(back) {
-  UI.innerHTML = `<div class="layer"><h2>설정</h2>
-    <div class="menu"><button id="s_ult" class="${SETTINGS.autoUlt ? 'pri' : ''}">궁극기 자동 발동 · ${SETTINGS.autoUlt ? '켜짐' : '꺼짐'}</button>
-    <p class="hint">꺼짐: 게이지가 차면 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동 발동</p>
-    <button id="s_back">돌아가기</button></div></div>`;
-  on('s_ult', () => { SETTINGS.autoUlt = !SETTINGS.autoUlt; saveSettings(); showSettings(back); });
-  on('s_back', back);
-}
+/* 설정·도감·도전 준비 화면은 meta.js (0.14·0.15) */
 const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
 
 /* 시작 화면 — 배경은 새 판 들판(정지 상태), 기록 요약 표시 */
 function showTitle() {
   newRun(); STATE.mode = 'title';
-  const s = loadSave();
+  const s = loadSave(), ro = runOpt();
   UI.innerHTML = `<div class="layer title">
-    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">들판의 페이즈를 돌파하고 사문의 수문장을 쓰러뜨려 문을 열어라</p></div>
+    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">${s.trueEnd ? '고리가 끊긴 들판, 기억 속의 그림자와 겨루기' : '들판의 페이즈를 돌파하고 사문의 수문장을 쓰러뜨려 문을 열어라'}</p>${s.title && TITLES[s.title] ? `<p class="best">${TITLES[s.title]}</p>` : ''}</div>
     <button class="pri big" id="start">시작</button>
-    <button id="settings">설정</button>
-    <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${(s.gates || []).length}/4</span></div>
+    ${s.trueEnd ? `<p class="hint">${optText(ro) || '기본 난이도'} · 점수 배율 ×${optMul(ro).toFixed(2)}</p>` : ''}
+    <div class="menu row2">${s.trueEnd ? '<button id="prep">도전 준비</button>' : ''}<button id="codex">도감</button><button id="settings">설정</button></div>
+    <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${(s.gates || []).length}/4</span><span>기록 조각</span><span>${(s.frags || []).length}/${FRAG_N}</span>${s.bestScore ? `<span>최고 점수</span><span>${s.bestScore}</span>` : ''}</div>
     ${(s.gates || []).length ? `<p class="hint">${GK_ORDER.map(k => (s.gates.includes(k) ? '■ ' : '□ ') + GATEKEEPERS[k].gate).join(' · ')}</p>` : ''}
     ${(s.gates || []).length >= 4 ? `<p class="best">마왕성 출현 · 도전 ${s.demonTries || 0}회 · 처치 ${s.demonKills || 0}회</p>` : ''}
     <p class="hint">화면을 누른 채 끌어 이동 · 공격은 자동</p>
     <p class="ver">v${CFG.VERSION}</p></div>`;
   on('start', startRun);
   on('settings', () => showSettings(showTitle));
+  on('codex', () => showCodex('f', showTitle));
+  on('prep', () => showPrep(showTitle));
 }
-function startRun() { if (STATE.mode !== 'title') newRun(); STATE.mode = 'play'; hideUI(); }
+function startRun() { newRun(); STATE.mode = 'play'; hideUI(); }     // 도전 옵션 반영 위해 항상 새 판 (0.15)
 
 /* 일시정지 */
 function togglePause() { if (STATE.mode === 'play') pauseGame(); else if (STATE.mode === 'pause') resumeGame(); }
@@ -2936,6 +3265,9 @@ function showResult() {
     ${gk && D ? `<p class="best">${D.name} 처치 · ${D.gate} 개방 (열린 문 ${R.gates || 0}/4)</p>` : ''}
     ${dm ? `<p class="best">${dm[0] === 'kill' ? `마왕 처치 (누적 ${R.demonKills}회)` : `마왕 ${dm[3]}/3 페이즈 · 남은 체력 ${dm[2]}%`}</p>` : ''}
     ${R.newBest ? '<p class="best">최고 생존 기록 갱신</p>' : ''}
+    ${G.story && G.story.newFrags.length ? `<p class="frag">기록 조각 해금 · ${G.story.newFrags.map(id => FRAGS.find(f => f.id === id).nm).join(' · ')} (${R.frags}/${FRAG_N})</p>` : ''}
+    ${(R.newTitles || []).map(t => `<p class="best">칭호 해금 · ${esc(t)}</p>`).join('')}
+    <p class="score">점수 ${R.score || 0}${R.mul > 1 ? ` <small>×${R.mul}</small>` : ''}${R.newBestScore ? ' <small>최고 기록</small>' : ''}</p>
     <div class="stats"><span>생존 시간</span><span>${fmtTime(R.time)}</span><span>돌파 페이즈</span><span>${done}/${G.ph.order.length}</span><span>레벨</span><span>${R.level}</span><span>처치</span><span>${R.kills}</span><span>마지막 피격</span><span>${R.result === 'clear' ? '-' : (R.lastHit || '-')}</span></div>
     <div class="build">${buildChips()}</div>
     <div class="menu"><button class="pri" id="again">다시 시작</button><button id="home">처음 화면</button></div></div>`;
@@ -2957,16 +3289,20 @@ function showDialog(lines, done) {
 }
 function dlgLine() {
   const L = DLG.lines[DLG.i];
+  const pt = document.getElementById('dpt'), url = L.pt && PT_URL[L.pt];   // 초상화 도트 (0.13), 없으면 이름 첫 글자
   document.getElementById('dnm').textContent = L.name || '';
-  document.getElementById('dpt').style.background = L.color || 'var(--panel2)';
-  document.getElementById('dpt').textContent = (L.name || '?').slice(0, 1);
+  pt.style.background = url ? `${L.color || '#222'} url(${url}) center/100% 100% no-repeat` : (L.color || 'var(--panel2)');
+  pt.textContent = url ? '' : (L.name || '?').slice(0, 1);
   document.getElementById('dnx').style.visibility = 'hidden';
   DLG.shown = 0; clearInterval(DLG.timer);
   DLG.timer = setInterval(() => { DLG.shown += 1; dlgPaint(); if (DLG.shown >= L.text.length) dlgFull(); }, 28);
   dlgPaint();
 }
 function dlgPaint() { const t = document.getElementById('dtx'); if (t) t.textContent = DLG.lines[DLG.i].text.slice(0, DLG.shown); }
-function dlgFull() { clearInterval(DLG.timer); DLG.timer = null; DLG.shown = DLG.lines[DLG.i].text.length; dlgPaint(); const n = document.getElementById('dnx'); if (n) n.style.visibility = 'visible'; }
+function dlgFull() {
+  clearInterval(DLG.timer); DLG.timer = null; DLG.shown = DLG.lines[DLG.i].text.length; dlgPaint(); const n = document.getElementById('dnx'); if (n) n.style.visibility = 'visible';
+  if (SETTINGS.dlgAuto || STATE.dev.auto) { const L = DLG.lines, i = DLG.i; setTimeout(() => { if (DLG.lines === L && DLG.i === i && !DLG.timer) dlgTap(); }, STATE.dev.auto ? 400 : 1800); }   // 대사 자동 넘김 (0.14)
+}
 function dlgTap() {
   if (DLG.timer) return dlgFull();                         // 출력 중 누르면 전체 표시
   if (++DLG.i < DLG.lines.length) return dlgLine();
@@ -3006,6 +3342,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 resize();
+buildPortraits();
 DEV.init();
 showTitle();
 requestAnimationFrame(frame);

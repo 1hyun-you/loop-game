@@ -70,6 +70,7 @@ function jobCands(prev = []) {
 /* ---------- 제단 ---------- */
 function altarCheck() {
   const ph = G.ph, p = G.p;
+  if (hasCond('nojob')) return;                              // 도전 조건 전직 금지 (0.15)
   if (!p.job && ph.i + 1 >= JOB_CFG.altarAfter && ph.i + 1 < ph.order.length) {
     const q = ringAt(JOB_CFG.altarDist[0], JOB_CFG.altarDist[1]);
     G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: ph.i };

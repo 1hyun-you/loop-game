@@ -6,7 +6,7 @@ function render() {
   const c = ctx, dpr = VIEW.dpr, Z = VIEW.zoom, p = G.p;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.fillStyle = PAL[0]; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
-  const sh = p.flash > 0 ? 3 : 0;
+  const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, -camX * dpr * Z, -camY * dpr * Z);
   const vx0 = camX - 40, vy0 = camY - 40, vx1 = camX + VIEW.w + 40, vy1 = camY + VIEW.h + 40;
@@ -142,7 +142,7 @@ function drawPlayer(c) {
   const p = G.p;
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
   c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x, p.y + p.r * 0.85, p.r, p.r * 0.35, 0, 0, 7); c.fill();
-  c.fillStyle = '#7fb4ff'; c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill();
+  c.fillStyle = playerColor(); c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill();   // 색상 변형 (0.15)
   c.strokeStyle = '#fff'; c.lineWidth = 2.5; c.stroke();
   const fa = Math.atan2(p.face.y, p.face.x);
   c.fillStyle = '#fff'; c.beginPath();
@@ -215,8 +215,9 @@ function drawWeapons(c, inView) {
   }
 }
 function drawJoy(c) {
-  if (!INPUT.active) return;
   const R = CFG.joyR;
+  if (SETTINGS.joy === 'fixed' && STATE.mode === 'play' && !INPUT.active) { const f = joyFixed(); c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = 2; c.beginPath(); c.arc(f.x, f.y, R, 0, 7); c.stroke(); return; }   // 고정형 기준 위치 표시
+  if (!INPUT.active) return;
   c.fillStyle = 'rgba(255,255,255,0.10)'; c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 2;
   c.beginPath(); c.arc(INPUT.ox, INPUT.oy, R, 0, 7); c.fill(); c.stroke();
   c.fillStyle = 'rgba(255,255,255,0.45)'; c.beginPath(); c.arc(INPUT.ox + INPUT.dx * INPUT.mag * R, INPUT.oy + INPUT.dy * INPUT.mag * R, 22, 0, 7); c.fill();
@@ -260,6 +261,6 @@ function drawSlots(c, y) {
     }
   };
   const rowW = 5 * S + 4 * gap;
-  row(p.weapons, CFG.slots.weapon, 12, w => CFG.colors[WEAPONS[w.id].cat], w => WEAPONS[w.id].ic);
+  row(p.weapons, slotW(), 12, w => CFG.colors[WEAPONS[w.id].cat], w => WEAPONS[w.id].ic);
   row(p.passives, CFG.slots.passive, W - 12 - rowW, () => CFG.colors.passive, ps => PASSIVES[ps.id].ic);
 }

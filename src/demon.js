@@ -39,6 +39,7 @@ function dmSpawn() {
   G.stats.demon = { t0: G.time, st: [null, null], type: G.runType };
   toast('마왕 강림', DEMON.color); toast('그림자 군주', '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 200, dur: 1.0, color: DEMON.color });
+  storyBoss('demon');                                       // 마왕성 도달 조각·대사 (0.13)
 }
 
 function dmUpdate(e, dt, d, dx, dy) {
@@ -172,6 +173,7 @@ function dmOnBeam(h, x, y, pad) {
 function dmHzAlive(h) { return h.k === 'sect' ? h.t < h.warn + 0.3 : h.t < h.warn + h.dur; }
 
 function dmKilled(e) {
+  fragUnlock('shadow');                                     // 기록 조각 (0.13)
   const s = G.stats.demon; s.killed = true; s.dur = Math.round(G.time - s.t0);
   G.eb = []; G.hz = []; G.arena = null;
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 320, dur: 1.6, color: DEMON.color });

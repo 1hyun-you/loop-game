@@ -44,6 +44,7 @@ function gkSpawn() {
   toast(`사문의 수문장 · ${D.name}`, D.color); toast(D.gate + ' · ' + D.ds, '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 120, dur: 0.8, color: D.color });
   if (G.gk === 'seren') e.ai.cd = 0.8;
+  storyBoss(G.gk);                                          // 첫 대면 대사 (0.13)
 }
 
 /* 수문장 갱신 — game.js updateEnemies에서 개체별 호출 (이동·접촉·패턴) */
@@ -184,6 +185,7 @@ function gkKilled(e) {
   if (e.gk === 'demon') return dmKilled(e);
   if (e.clone) { gkRing(e.x, e.y, GK_CFG.seShards, 140, gkDmg(GK_CFG.seDmg) * 0.8, '거울 파편', rand(6.28), '#cfe0ff'); return; }
   const D = GATEKEEPERS[e.gk];
+  fragUnlock(e.gk);                                         // 기록 조각 (0.13)
   G.stats.gate.killed = true; G.stats.gate.dur = Math.round(G.time - G.stats.gate.t0);
   for (const o of G.enemies) if (o.clone && !o.dead) o.dead = true;
   G.eb = []; G.hz = [];

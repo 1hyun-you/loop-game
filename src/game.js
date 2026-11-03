@@ -16,10 +16,11 @@ function newRun() {
     pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, pendingCamp: false, pendingDoor: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
     stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
-      branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
+      kt: {}, branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
   };
+  G.opt = runOpt(); saveCache = null;                       // 고난도 단계·도전 조건 (0.15)
   recalc();
-  addWeapon(START_WEAPON);
+  addWeapon(startWeapon());
   G.gk = gkPick();                                          // 수문장 결정 (0.11)
   G.runType = runTypeOf();                                  // 판 구조: normal·final·retry (0.12)
   if (G.runType === 'retry') G.gk = null;
@@ -41,16 +42,17 @@ function recalc() {
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
   p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
-  if (p.maxHp > prevMax) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복
+  if (p.maxHp > prevMax && !hasCond('noheal')) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복 (도전 조건 회복 없음 제외)
   p.hp = Math.min(p.hp, p.maxHp);
 }
-function heal(v) { const p = G.p; if (hasCurse('blight')) v *= 0.6; p.hp = Math.min(p.maxHp, p.hp + v); }
+function heal(v) { const p = G.p; if (hasCond('noheal')) return; if (hasCurse('blight')) v *= 0.6; p.hp = Math.min(p.maxHp, p.hp + v); }
 function clearInput() { INPUT.active = false; INPUT.id = null; INPUT.mag = 0; }
 function toast(text, color = '#fff') { G.toasts.push({ text, color, t: 0, dur: 2 }); if (G.toasts.length > 3) G.toasts.shift(); }
 function fx(o) { if (G.fx.length < 220) G.fx.push(Object.assign({ t: 0 }, o)); }
 
 /* 한 틱 진행 */
 function step(dt) {
+  if (!G.storyOn) { G.storyOn = true; if (storyRunStart()) return; }   // 판 시작 대사 (0.13)
   G.time += dt;
   if (G.time >= (G.stats.dmgMin.length + 1) * 60) G.stats.dmgMin.push(Object.assign({}, G.stats.dmg));   // 분 단위 피해 누적 스냅숏
   updatePlayer(dt);
@@ -103,7 +105,7 @@ function ringPos(extra = 40) {
 function makeEnemy(type, x, y) {
   const d = ENEMIES[type], min = G.time / 60;
   const e = {
-    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),
+    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min) * (1 + tierK()), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),   // 고난도 체력 (0.15)
     speed: d.speed * rand(0.9, 1.1) * (1 + CFG.scale.speedPerMin * Math.min(min, 10)),
     color: d.color, shape: d.shape, xp: d.xp, flash: 0, kbx: 0, kby: 0, dead: false, ht: {},
   };
@@ -173,7 +175,7 @@ function damageEnemy(e, dmg, o = {}) {
   else onEnemyHit(e, o);
 }
 function killEnemy(e) {
-  e.dead = true; G.kills++;
+  e.dead = true; G.kills++; G.stats.kt[e.type] = 1;
   G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
   if (e.elite) eliteKilled(e);
   if (e.ev) eventMobKilled(e);
@@ -187,7 +189,8 @@ function hurtPlayer(dmg, src) {
   const p = G.p;
   if (p.invT > 0 || STATE.dev.god || G.result) return;
   if (playerAvoid()) return;
-  dmg *= playerHurtMul() * (hasCurse('frail') ? 1.15 : 1);
+  dmg *= playerHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
+  vibe(25);
   onPlayerHurt();
   p.hp -= dmg; p.invT = CFG.player.invuln; p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
@@ -256,11 +259,16 @@ function lastMinShare() {
 }
 function loadSave() { try { return JSON.parse(localStorage.getItem(CFG.SAVE_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function finishRun() {
+  if (G.result === 'dead') fragUnlock('loop');               // 기록 조각: 첫 회귀 (0.13)
   G.report = buildReport();
+  let show = showResult;
   try {
     const s = loadSave(); G.report.newBest = G.report.time > (s.bestTime || 0);
     s.runs = (s.runs || 0) + 1; s.bestTime = Math.max(s.bestTime || 0, G.report.time); if (G.report.result === 'clear') s.clears = (s.clears || 0) + 1; gkSave(s); dmSave(s); G.report.gates = s.gates.length; G.report.demonKills = s.demonKills || 0;
+    metaSave(s);                                             // 도감 기록·점수·칭호 (0.14·0.15)
+    show = storyRunEnd(s, showResult);                        // 판 종료 대사·엔딩 (0.13)
+    G.report.frags = (s.frags || []).length; G.report.story = [s.released ? 1 : 0, s.trueEnd ? 1 : 0, s.ending1 ? 1 : 0];
     localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s));
-  } catch (e) { }
-  showResult();
+  } catch (e) { console.error(e); if (window.__onErr) window.__onErr(e); }
+  show();
 }

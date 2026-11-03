@@ -10,36 +10,29 @@ const buildChips = () => (G.p.job ? `<span class="chip" style="border-color:#d9a
   + G.p.passives.map(x => `<span class="chip" style="border-color:${CFG.colors.passive}">${PASSIVES[x.id].name} ${x.lvl}${brName(x.id, x.br)}</span>`).join('')
   + G.p.relics.map(r => `<span class="chip" style="border-color:#ffd24a">유물 ${RELICS[r].name}</span>`).join('');
 
-/* 설정 (0.7) — 기기 저장, 궁극기 자동 발동 */
-const SETTINGS = (() => { try { return Object.assign({ autoUlt: false }, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return { autoUlt: false }; } })();
-function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
-function showSettings(back) {
-  UI.innerHTML = `<div class="layer"><h2>설정</h2>
-    <div class="menu"><button id="s_ult" class="${SETTINGS.autoUlt ? 'pri' : ''}">궁극기 자동 발동 · ${SETTINGS.autoUlt ? '켜짐' : '꺼짐'}</button>
-    <p class="hint">꺼짐: 게이지가 차면 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동 발동</p>
-    <button id="s_back">돌아가기</button></div></div>`;
-  on('s_ult', () => { SETTINGS.autoUlt = !SETTINGS.autoUlt; saveSettings(); showSettings(back); });
-  on('s_back', back);
-}
+/* 설정·도감·도전 준비 화면은 meta.js (0.14·0.15) */
 const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
 
 /* 시작 화면 — 배경은 새 판 들판(정지 상태), 기록 요약 표시 */
 function showTitle() {
   newRun(); STATE.mode = 'title';
-  const s = loadSave();
+  const s = loadSave(), ro = runOpt();
   UI.innerHTML = `<div class="layer title">
-    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">들판의 페이즈를 돌파하고 사문의 수문장을 쓰러뜨려 문을 열어라</p></div>
+    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">${s.trueEnd ? '고리가 끊긴 들판, 기억 속의 그림자와 겨루기' : '들판의 페이즈를 돌파하고 사문의 수문장을 쓰러뜨려 문을 열어라'}</p>${s.title && TITLES[s.title] ? `<p class="best">${TITLES[s.title]}</p>` : ''}</div>
     <button class="pri big" id="start">시작</button>
-    <button id="settings">설정</button>
-    <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${(s.gates || []).length}/4</span></div>
+    ${s.trueEnd ? `<p class="hint">${optText(ro) || '기본 난이도'} · 점수 배율 ×${optMul(ro).toFixed(2)}</p>` : ''}
+    <div class="menu row2">${s.trueEnd ? '<button id="prep">도전 준비</button>' : ''}<button id="codex">도감</button><button id="settings">설정</button></div>
+    <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${(s.gates || []).length}/4</span><span>기록 조각</span><span>${(s.frags || []).length}/${FRAG_N}</span>${s.bestScore ? `<span>최고 점수</span><span>${s.bestScore}</span>` : ''}</div>
     ${(s.gates || []).length ? `<p class="hint">${GK_ORDER.map(k => (s.gates.includes(k) ? '■ ' : '□ ') + GATEKEEPERS[k].gate).join(' · ')}</p>` : ''}
     ${(s.gates || []).length >= 4 ? `<p class="best">마왕성 출현 · 도전 ${s.demonTries || 0}회 · 처치 ${s.demonKills || 0}회</p>` : ''}
     <p class="hint">화면을 누른 채 끌어 이동 · 공격은 자동</p>
     <p class="ver">v${CFG.VERSION}</p></div>`;
   on('start', startRun);
   on('settings', () => showSettings(showTitle));
+  on('codex', () => showCodex('f', showTitle));
+  on('prep', () => showPrep(showTitle));
 }
-function startRun() { if (STATE.mode !== 'title') newRun(); STATE.mode = 'play'; hideUI(); }
+function startRun() { newRun(); STATE.mode = 'play'; hideUI(); }     // 도전 옵션 반영 위해 항상 새 판 (0.15)
 
 /* 일시정지 */
 function togglePause() { if (STATE.mode === 'play') pauseGame(); else if (STATE.mode === 'pause') resumeGame(); }
@@ -76,6 +69,9 @@ function showResult() {
     ${gk && D ? `<p class="best">${D.name} 처치 · ${D.gate} 개방 (열린 문 ${R.gates || 0}/4)</p>` : ''}
     ${dm ? `<p class="best">${dm[0] === 'kill' ? `마왕 처치 (누적 ${R.demonKills}회)` : `마왕 ${dm[3]}/3 페이즈 · 남은 체력 ${dm[2]}%`}</p>` : ''}
     ${R.newBest ? '<p class="best">최고 생존 기록 갱신</p>' : ''}
+    ${G.story && G.story.newFrags.length ? `<p class="frag">기록 조각 해금 · ${G.story.newFrags.map(id => FRAGS.find(f => f.id === id).nm).join(' · ')} (${R.frags}/${FRAG_N})</p>` : ''}
+    ${(R.newTitles || []).map(t => `<p class="best">칭호 해금 · ${esc(t)}</p>`).join('')}
+    <p class="score">점수 ${R.score || 0}${R.mul > 1 ? ` <small>×${R.mul}</small>` : ''}${R.newBestScore ? ' <small>최고 기록</small>' : ''}</p>
     <div class="stats"><span>생존 시간</span><span>${fmtTime(R.time)}</span><span>돌파 페이즈</span><span>${done}/${G.ph.order.length}</span><span>레벨</span><span>${R.level}</span><span>처치</span><span>${R.kills}</span><span>마지막 피격</span><span>${R.result === 'clear' ? '-' : (R.lastHit || '-')}</span></div>
     <div class="build">${buildChips()}</div>
     <div class="menu"><button class="pri" id="again">다시 시작</button><button id="home">처음 화면</button></div></div>`;
@@ -97,16 +93,20 @@ function showDialog(lines, done) {
 }
 function dlgLine() {
   const L = DLG.lines[DLG.i];
+  const pt = document.getElementById('dpt'), url = L.pt && PT_URL[L.pt];   // 초상화 도트 (0.13), 없으면 이름 첫 글자
   document.getElementById('dnm').textContent = L.name || '';
-  document.getElementById('dpt').style.background = L.color || 'var(--panel2)';
-  document.getElementById('dpt').textContent = (L.name || '?').slice(0, 1);
+  pt.style.background = url ? `${L.color || '#222'} url(${url}) center/100% 100% no-repeat` : (L.color || 'var(--panel2)');
+  pt.textContent = url ? '' : (L.name || '?').slice(0, 1);
   document.getElementById('dnx').style.visibility = 'hidden';
   DLG.shown = 0; clearInterval(DLG.timer);
   DLG.timer = setInterval(() => { DLG.shown += 1; dlgPaint(); if (DLG.shown >= L.text.length) dlgFull(); }, 28);
   dlgPaint();
 }
 function dlgPaint() { const t = document.getElementById('dtx'); if (t) t.textContent = DLG.lines[DLG.i].text.slice(0, DLG.shown); }
-function dlgFull() { clearInterval(DLG.timer); DLG.timer = null; DLG.shown = DLG.lines[DLG.i].text.length; dlgPaint(); const n = document.getElementById('dnx'); if (n) n.style.visibility = 'visible'; }
+function dlgFull() {
+  clearInterval(DLG.timer); DLG.timer = null; DLG.shown = DLG.lines[DLG.i].text.length; dlgPaint(); const n = document.getElementById('dnx'); if (n) n.style.visibility = 'visible';
+  if (SETTINGS.dlgAuto || STATE.dev.auto) { const L = DLG.lines, i = DLG.i; setTimeout(() => { if (DLG.lines === L && DLG.i === i && !DLG.timer) dlgTap(); }, STATE.dev.auto ? 400 : 1800); }   // 대사 자동 넘김 (0.14)
+}
 function dlgTap() {
   if (DLG.timer) return dlgFull();                         // 출력 중 누르면 전체 표시
   if (++DLG.i < DLG.lines.length) return dlgLine();
@@ -146,6 +146,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 resize();
+buildPortraits();
 DEV.init();
 showTitle();
 requestAnimationFrame(frame);

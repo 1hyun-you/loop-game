@@ -47,6 +47,7 @@ function eventSpawn(pl) {
 function eventEnd(outcome) {
   const c = G.ev.cur; if (!c) return;
   G.ev.log.push([c.type, outcome, Math.round(G.time - c.at)]);
+  if (outcome === 'ok') fragUnlock(c.type);                 // 곁가지 사건 첫 해결 조각 (0.13)
   if (c.mob && !c.mob.dead && outcome !== 'ok') c.mob.dead = true;
   G.ev.cur = null;
 }
@@ -112,7 +113,7 @@ function openCamp() {
 }
 function applyCamp(c) {
   const p = G.p; (G.stats.camp = G.stats.camp || []).push(c.id);
-  if (c.id === 'rest') { p.hp = p.maxHp; toast('휴식 · 체력 전부 회복', '#8ff0b0'); }
+  if (c.id === 'rest') { if (!hasCond('noheal')) p.hp = p.maxHp; toast('휴식 · 체력 전부 회복', '#8ff0b0'); }
   if (c.id === 'train') { G.pendingLv += 2; toast('수련 · 레벨 업 2회', '#7fe0ff'); }
   if (c.id === 'supply') { G.pendingChest++; }
 }

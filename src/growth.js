@@ -75,7 +75,7 @@ function chestCands() {
   if (out.length < 3) for (const id of RELIC_ORDER) {
     const R = RELICS[id]; if (hasRelic(id)) continue;
     for (const [m, o] of [[R.a, R.b], [R.b, R.a]]) if (owns(o) && !owns(m) && !G.banished.has(m)) {
-      if (WEAPONS[m] && p.weapons.length < CFG.slots.weapon && !out.some(x => x.id === m)) out.push({ t: 'wnew', id: m, mat: id });
+      if (WEAPONS[m] && p.weapons.length < slotW() && catOk(WEAPONS[m].cat) && !out.some(x => x.id === m)) out.push({ t: 'wnew', id: m, mat: id });
       if (PASSIVES[m] && p.passives.length < CFG.slots.passive && !out.some(x => x.id === m)) out.push({ t: 'pnew', id: m, mat: id });
     }
   }

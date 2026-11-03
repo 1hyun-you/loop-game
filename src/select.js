@@ -7,7 +7,7 @@ function levelCands() {
   const p = G.p, out = [], ban = G.banished, nW = p.weapons.length, K = CFG.select;
   const jc = id => jobCat(WEAPONS[id].cat) ? JOB_CFG.jobCatW : 1;   // 전직 계열 후보 비중 증가
   for (const w of p.weapons) if (w.lvl < CFG.weaponMax && !ban.has(w.id)) out.push({ t: 'wup', id: w.id, w: K.wupW * (nW >= 3 ? K.wupW3 : 1) * jc(w.id) });
-  if (nW < CFG.slots.weapon) for (const id of WEAPON_ORDER) if (!hasW(id) && !ban.has(id)) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * jc(id) });
+  if (nW < slotW()) for (const id of WEAPON_ORDER) if (!hasW(id) && !ban.has(id) && catOk(WEAPONS[id].cat)) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * jc(id) });
   for (const id of RELIC_ORDER) if (relicReady(id)) out.push({ t: 'relic', id, w: 2.5 });
   for (const ps of p.passives) if (ps.lvl < CFG.passiveMax && !ban.has(ps.id)) out.push({ t: 'pup', id: ps.id, w: K.pupW });
   if (p.passives.length < CFG.slots.passive) for (const id of PASSIVE_ORDER) if (!hasP(id) && !ban.has(id)) out.push({ t: 'pnew', id, w: K.pnewW });
@@ -26,7 +26,7 @@ function isFill(c) { return c.t === 'power' || c.t === 'heal'; }
 function openSelect() {
   G.pendingLv--; G.stats.selOpen++;
   STATE.mode = 'select'; clearInput();
-  G.sel = { kind: 'level', cards: drawCards(CFG.select.cards), banish: false, rerolled: false };
+  G.sel = { kind: 'level', cards: drawCards(selN()), banish: false, rerolled: false };
   renderSelect(); autoLater();
 }
 function autoLater() { if (STATE.dev.auto) { const s = G.sel; setTimeout(() => { if (G && G.sel === s) autoSelect(); }, rand(700, 1200) / Math.sqrt(STATE.dev.speed)); } }
@@ -78,7 +78,14 @@ function renderSelect() {
     <div class="sel-head"><h2>${h}</h2><p class="sub">${sub}</p></div>
     <div class="cards">${cards}</div>
     ${acts ? `<div class="sel-actions">${acts}</div>` : ''}</div>`;
-  UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => pickCard(+b.dataset.i)));
+  s.armed = null;
+  UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.i;
+    if (SETTINGS.confirm2 && !s.banish && s.armed !== i) {          // 두 번 눌러 확정 (0.14)
+      s.armed = i; UI.querySelectorAll('.card.armed').forEach(x => x.classList.remove('armed')); b.classList.add('armed'); return;
+    }
+    pickCard(i);
+  }));
   UI.querySelectorAll('.card[data-w]').forEach(b => b.addEventListener('click', () => offerWeapon(b.dataset.w)));
   on('reroll', reroll);
   on('banish', () => { if (!G.banishes) return; s.banish = !s.banish; renderSelect(); });
@@ -87,7 +94,7 @@ function renderSelect() {
 }
 function reroll() {
   if (!G.rerolls || !G.sel) return;
-  G.rerolls--; G.sel.cards = drawCards(CFG.select.cards); G.sel.banish = false; renderSelect();
+  G.rerolls--; G.sel.cards = drawCards(selN()); G.sel.banish = false; renderSelect();
 }
 function pickCard(i) {
   const s = G.sel; if (!s) return;
@@ -112,7 +119,7 @@ function applyCard(c) {
   if (G.sel && G.sel.kind === 'chest') (G.stats.chestPicks = G.stats.chestPicks || []).push(c.t + ':' + c.id);
   else G.stats.picks.push(p.level - G.pendingLv + ':' + c.t + ':' + c.id);
   switch (c.t) {
-    case 'wnew': addWeapon(c.id); if (p.weapons.length >= CFG.slots.weapon && G.stats.wFullAt == null) G.stats.wFullAt = Math.round(G.time); break;
+    case 'wnew': addWeapon(c.id); if (p.weapons.length >= slotW() && G.stats.wFullAt == null) G.stats.wFullAt = Math.round(G.time); break;
     case 'wup': p.weapons.find(x => x.id === c.id).lvl++; checkBranch('w', c.id); break;
     case 'pnew': p.passives.push({ id: c.id, lvl: 1 }); if (p.passives.length >= PASSIVE_ORDER.length && G.stats.pFullAt == null) G.stats.pFullAt = Math.round(G.time); break;
     case 'pup': p.passives.find(x => x.id === c.id).lvl++; checkBranch('p', c.id); break;

@@ -20,7 +20,9 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault();
   if (STATE.mode !== 'play' || INPUT.active) return;
   INPUT.active = true; INPUT.id = e.pointerId;
-  INPUT.ox = INPUT.x = e.clientX; INPUT.oy = INPUT.y = e.clientY; updJoy();
+  INPUT.ox = INPUT.x = e.clientX; INPUT.oy = INPUT.y = e.clientY;
+  if (SETTINGS.joy === 'fixed') { const f = joyFixed(); INPUT.ox = f.x; INPUT.oy = f.y; }   // 고정형: 화면 아래 중앙 기준 (0.14)
+  updJoy();
   try { cv.setPointerCapture(e.pointerId); } catch (_) { }
 }, { passive: false });
 cv.addEventListener('pointermove', e => { if (!INPUT.active || e.pointerId !== INPUT.id) return; INPUT.x = e.clientX; INPUT.y = e.clientY; updJoy(); });
