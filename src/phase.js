@@ -305,7 +305,7 @@ function drawPhaseGround(c) {
     c.strokeStyle = 'rgba(255,230,150,0.35)'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.moveTo(k.x, k.y); c.lineTo(k.tx, k.ty); c.stroke(); c.setLineDash([]);
     c.fillStyle = '#e8d070'; c.fillRect(k.tx - 1.5, k.ty - 28, 3, 28); c.fillRect(k.tx + 1.5, k.ty - 28, 14, 9);
     c.strokeStyle = 'rgba(255,230,150,0.3)'; c.beginPath(); c.arc(k.x, k.y, PH_CFG.cartNear, 0, 7); c.stroke();
-    c.fillStyle = k.hit > 0 ? '#fff' : '#9a6a3a'; c.fillRect(k.x - 16, k.y - 11, 32, 20); c.fillStyle = '#3a2410'; c.beginPath(); c.arc(k.x - 10, k.y + 10, 5, 0, 7); c.arc(k.x + 10, k.y + 10, 5, 0, 7); c.fill();
+    drawSpriteC(c, 'cart', 0, k.x, k.y, { mode: k.hit > 0 ? 'white' : 'n' });   // 0.20 도트
     c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);
   }
   if (ph.spring && !ph.spring.used) {

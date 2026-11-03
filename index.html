@@ -13,11 +13,13 @@
 <title>회귀의 들판</title>
 <meta name="theme-color" content="#16141e">
 <style>
+@font-face{font-family:Galmuri11;src:url(fonts/Galmuri11.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Galmuri11;src:url(fonts/Galmuri11-Bold.woff2) format('woff2');font-weight:700;font-display:swap}
 /* 단일 어두운 화면(게임 화면 전용), 세로형 전체 화면 캔버스 + 상단 겹침 UI */
 :root{
   color-scheme:dark;
   --bg:#16141e; --panel:#221f2e; --panel2:#2c2840; --line:#3d3854; --fg:#f0ecf7; --muted:#a49fb8; --accent:#7f74d6; --danger:#d0505c;
-  --f-body:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --f-body:Galmuri11,system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
   --f-mono:ui-monospace,Menlo,Consolas,monospace;
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
 }
@@ -129,7 +131,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.19',
+  VERSION: '0.20',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -891,7 +893,7 @@ function drawPhaseGround(c) {
     c.strokeStyle = 'rgba(255,230,150,0.35)'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.moveTo(k.x, k.y); c.lineTo(k.tx, k.ty); c.stroke(); c.setLineDash([]);
     c.fillStyle = '#e8d070'; c.fillRect(k.tx - 1.5, k.ty - 28, 3, 28); c.fillRect(k.tx + 1.5, k.ty - 28, 14, 9);
     c.strokeStyle = 'rgba(255,230,150,0.3)'; c.beginPath(); c.arc(k.x, k.y, PH_CFG.cartNear, 0, 7); c.stroke();
-    c.fillStyle = k.hit > 0 ? '#fff' : '#9a6a3a'; c.fillRect(k.x - 16, k.y - 11, 32, 20); c.fillStyle = '#3a2410'; c.beginPath(); c.arc(k.x - 10, k.y + 10, 5, 0, 7); c.arc(k.x + 10, k.y + 10, 5, 0, 7); c.fill();
+    drawSpriteC(c, 'cart', 0, k.x, k.y, { mode: k.hit > 0 ? 'white' : 'n' });   // 0.20 도트
     c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);
   }
   if (ph.spring && !ph.spring.used) {
@@ -1066,7 +1068,7 @@ function drawEventGround(c) {
     if (v.stay > 0) { c.strokeStyle = '#f0e0ff'; c.lineWidth = 4; c.beginPath(); c.arc(v.x, v.y, v.r + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v.stay / EV_CFG.doorStay); c.stroke(); }
   }
   if (v.type === 'giant' && v.mob && v.mob.sleep && !v.mob.dead) {
-    c.fillStyle = '#fff'; c.font = 'bold 14px system-ui'; c.textAlign = 'center'; c.fillText('Z', v.mob.x + 26, v.mob.y - 30 + Math.sin(G.time * 2) * 4);
+    c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; c.textAlign = 'center'; c.fillText('Z', v.mob.x + 26, v.mob.y - 30 + Math.sin(G.time * 2) * 4);
   }
 }
 /* ============================================================
@@ -1326,7 +1328,7 @@ function drawBossTop(c, inView) {
     if (e.rage) { c.strokeStyle = 'rgba(255,90,60,0.7)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 5, 0, 7); c.stroke(); }
     if (e.gk === 'seren' && !e.clone && (G.time % 1.3) < 0.2) { c.strokeStyle = 'rgba(255,255,255,0.95)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 8, 0, 7); c.stroke(); }   // 본체 미광
   }
-  for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; c.fillStyle = b.col; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.fill(); c.strokeStyle = 'rgba(80,20,0,0.7)'; c.lineWidth = 1.5; c.stroke(); }
+  for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; drawSpriteC(c, 'ball', 0, b.x, b.y, { tint: b.col, mul: b.r > 7 ? 2 : 1 }); }   // 0.20 도트 탄환
 }
 /* 상단 수문장 체력 막대 */
 function drawBossBar(c, y, txt) {
@@ -1335,7 +1337,7 @@ function drawBossBar(c, y, txt) {
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(24, y, bw, 8);
   c.fillStyle = e.rage || e.st === 2 ? '#ff6a4a' : D.color; c.fillRect(24, y, bw * Math.max(0, e.hp / e.maxHp), 8);
   if (e.gk === 'demon') { c.fillStyle = 'rgba(255,255,255,0.8)'; for (const k of DM_CFG.stages) c.fillRect(24 + bw * k - 1, y - 2, 2, 12); }   // 페이즈 전환 눈금
-  c.font = 'bold 12px system-ui'; c.fillStyle = '#fff'; txt(e.gk === 'demon' ? `${D.name} · ${['그림자 군주', '암흑 결계', '종언'][e.st]} (${e.st + 1}/3)` : `${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
+  c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#fff'; txt(e.gk === 'demon' ? `${D.name} · ${['그림자 군주', '암흑 결계', '종언'][e.st]} (${e.st + 1}/3)` : `${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
 }
 
 /* 저장: 처치 수문장 누적 (finishRun에서 호출) */
@@ -3092,12 +3094,12 @@ function drawSprite(c, name, frame, x, by, opt) {
   c.drawImage(s.cv, dx, dy, W, H);
 }
 function spriteFor(e) {
-  if (e.gk) return e.gk === 'bargan' ? 'bargan' : null;
-  if (e.shape === 'rune') return null;
+  if (e.gk) return SPR[e.gk] ? e.gk : null;
+  if (e.shape === 'rune') return 'rune';
   return SPR[e.type] ? e.type : null;
 }
 /* 큰 개체(거대 몹 등)는 텍셀 배율 정수 확대 */
-function spriteMul(e) { const base = ENEMIES[e.type]; if (e.gk || !base) return 1; return Math.max(1, Math.round(e.r / base.r - 0.25)); }
+function spriteMul(e) { const base = ENEMIES[e.type]; if (e.gk || !base || e.shape === 'rune') return 1; return Math.max(1, Math.round(e.r / base.r - 0.25)); }
 
 /* 지형 타일 */
 const TILE_CACHE = new Map();
@@ -3107,14 +3109,378 @@ function getTile(i) {
   if (!s) { s = bakeGrid(TILES[i], Object.assign({}, TILE_PAL, { y: DOT_PAL.y }), t, false, 'n', null); TILE_CACHE.set(key, s); }
   return s;
 }
+
+/* ============================================================
+   0.20 도트 전량 — 수문장 3인·마왕·특수 개체·보석·지면 물체·무기·투사체
+   ============================================================ */
+Object.assign(SPR, {
+  igna: { px: 2.5, frames: [[
+    '.........y..y...........',
+    '......y..yo.oy..y.......',
+    '.....yo.yoooooy.oy......',
+    '.....yooooorooooooy.....',
+    '......oorrrrrrrroo......',
+    '......krrrrrrrrrrk......',
+    '.....kRrkkssssskkrRk....',
+    '.....kRksssssssskRk.....',
+    '.....kRksykssyksskRk....',
+    '......kRssssssssRk......',
+    '.......kkSSSSSSkk.......',
+    '.....kkrrrkyykrrrkk.....',
+    '....krrorrrkkrrrorrk....',
+    '...krroorrrrrrrrroorrk..',
+    '...krookrrrryyrrrkoork..',
+    '...kok.krrrryyrrrk.kok..',
+    '...kyk.kRrrrrrrrRk.kyk..',
+    '....k..kRRrrrrrRRk..k...',
+    '.......kRRRrrrRRRk......',
+    '......kRRRRRRRRRRRk.....',
+    '......kkkkkkkkkkkkk.....',
+  ], [
+    '...........y..y.........',
+    '.......y..oy.yo..y......',
+    '......yo.yoooooy.oy.....',
+    '.....yooooorooooooy.....',
+    '......oorrrrrrrroo......',
+    '......krrrrrrrrrrk......',
+    '.....kRrkkssssskkrRk....',
+    '.....kRksssssssskRk.....',
+    '.....kRksykssyksskRk....',
+    '......kRssssssssRk......',
+    '.......kkSSSSSSkk.......',
+    '.....kkrrrkyykrrrkk.....',
+    '....krrorrrkkrrrorrk....',
+    '...krroorrrrrrrrroorrk..',
+    '..kyrookrrrryyrrrkoorky.',
+    '..kyk..krrrryyrrrk..kyk.',
+    '...k...kRrrrrrrrRk...k..',
+    '.......kRRrrrrrRRk......',
+    '.......kRRRrrrRRRk......',
+    '......kRRRRRRRRRRRk.....',
+    '......kkkkkkkkkkkkk.....',
+  ]] },
+  morden: { px: 2.5, frames: [[
+    '........kkkkkkk.........',
+    '.......kGGGGGGGk........',
+    '......kGGGGGGGGGk.......',
+    '.....kGGkkkkkkkGGk......',
+    '.....kGkeeeeeeekGk...ke.',
+    '.....kGkekkekkekGk..keek',
+    '.....kGkeeeeeeekGk..kekk',
+    '.....kGGkekekekGGk...kk.',
+    '......kGGkkkkkGGk....kn.',
+    '.....kGGGGGGGGGGGk...kn.',
+    '....kGgGGGGGGGGGgGk.kkn.',
+    '...kGggGGGcGGGGGggGkeen.',
+    '...kGgkGGGGcGGGGkgGkkkn.',
+    '...kGk.kGGGGGGGk.kGk.kn.',
+    '....k..kGGGGGGGGk.k..kn.',
+    '.......kGGgGGgGGk....kn.',
+    '......kGGGgGGgGGGk...kn.',
+    '......kGGgGGGGgGGk...kn.',
+    '.....kGGgGGGGGGgGGk..kk.',
+    '.....kkkkkkkkkkkkkk.....',
+  ], [
+    '........kkkkkkk.........',
+    '.......kGGGGGGGk........',
+    '......kGGGGGGGGGk.......',
+    '.....kGGkkkkkkkGGk......',
+    '.....kGkeeeeeeekGk......',
+    '.....kGkekkekkekGk...ke.',
+    '.....kGkeeeeeeekGk..keek',
+    '.....kGGkekekekGGk..kekk',
+    '......kGGkkkkkGGk....kk.',
+    '.....kGGGGGGGGGGGk...kn.',
+    '....kGgGGGGGGGGGgGk.kkn.',
+    '...kGggGGGcGGGGGggGkeen.',
+    '...kGgkGGGGcGGGGkgGkkkn.',
+    '...kGk.kGGGGGGGk.kGk.kn.',
+    '....k..kGGGGGGGGk.k..kn.',
+    '.......kGGgGGgGGk....kn.',
+    '......kGGGgGGgGGGk...kn.',
+    '......kGGgGGGGgGGk...kn.',
+    '.....kGGgGGGGGGgGGk..kk.',
+    '.....kkkkkkkkkkkkkk.....',
+  ]] },
+  seren: { px: 2.5, frames: [[
+    '.........kkkkk.........',
+    '.......kkWWWWWkk.......',
+    '......kWWWWWWWWWk......',
+    '.....kWWkkssskkWWk.....',
+    '.....kWksssssssskWk....',
+    '.....kWksckssckskWk....',
+    '.....kWksssssssskWk....',
+    '.....kWWkSsssSSkWWk....',
+    '.....kWWWkkkkkkWWWk....',
+    '....kWkcckMMMMkcckWk...',
+    '...kckccMMMMMMMMcckck..',
+    '...kMk.kMMcMMcMMk.kMk..',
+    '...kck.kMMMMMMMMk.kck..',
+    '....k..kcMMMMMMck..k...',
+    '.......kMMMMMMMMk......',
+    '......kMMcMMMMcMMk.....',
+    '......kMMMMMMMMMMk.....',
+    '.....kMMMcMMMMcMMMk....',
+    '.....kkkkkkkkkkkkkk....',
+  ], [
+    '.........kkkkk.........',
+    '.......kkWWWWWkk.......',
+    '......kWWWWWWWWWk......',
+    '.....kWWkkssskkWWk.....',
+    '.....kWksssssssskWk....',
+    '.....kWksckssckskWk....',
+    '.....kWksssssssskWk....',
+    '.....kWWkSsssSSkWWk....',
+    '.....kWWWkkkkkkWWWk....',
+    '....kWkcckMMMMkcckWk...',
+    '...kckccMMMMMMMMcckck..',
+    '...kMk.kMMcMMcMMk.kMk..',
+    '...kck.kMMMMMMMMk.kck..',
+    '....k..kcMMMMMMck..k...',
+    '.......kMMMMMMMMk......',
+    '......kMMMMcMMcMMk.....',
+    '......kMMMMMMMMMMk.....',
+    '.....kMMcMMMMMMcMMk....',
+    '.....kkkkkkkkkkkkkk....',
+  ]] },
+  demon: { px: 2.5, frames: [[
+    '..kk......................kk..',
+    '..kYk....................kYk..',
+    '...kYk..................kYk...',
+    '...kYYk....kkkkkkkk....kYYk...',
+    '....kYYkkkkUUUUUUUUkkkkYYk....',
+    '.....kkUUUUUUUUUUUUUUUUkk.....',
+    '......kUUUUUUUUUUUUUUUUk......',
+    '......kUUkkkUUUUUUkkkUUk......',
+    '......kUUkyykUUUUkyykUUk......',
+    '......kUUUkkUUUUUUkkUUUk......',
+    '.......kUUUUUkkkkUUUUUk.......',
+    '.......kUUUUkwwwwkUUUUk.......',
+    '........kkUUUkkkkUUUkk........',
+    '...kkkkkkUkkUUUUUUkkUkkkkkk...',
+    '..kRRRRkkuuuuuuuuuuuukkRRRRk..',
+    '.kRRRRkuuuUuuuyuuuUuuukRRRRRk.',
+    '.kRRRkuuUUuuuyyyuuuUUuukRRRRk.',
+    'kRRRRkuuUkuuuuyuuuukUuukRRRRRk',
+    'kRRRk.kuuk.kuuuuuuk.kuuk.kRRRk',
+    'kRRRk.kUUk.kuuUUuuk.kUUk.kRRRk',
+    'kRRk...kk..kuuuuuuk..kk...kRRk',
+    'kRRk......kUuuuuuuUk......kRRk',
+    'kRk......kUUuuuuuuUUk......kRk',
+    'kk......kUUUUuuuuUUUUk......kk',
+    '.......kUUUUUUUUUUUUUUk.......',
+    '.......kkkkkkkkkkkkkkkk.......',
+  ], [
+    '..kk......................kk..',
+    '..kYk....................kYk..',
+    '...kYk..................kYk...',
+    '...kYYk....kkkkkkkk....kYYk...',
+    '....kYYkkkkUUUUUUUUkkkkYYk....',
+    '.....kkUUUUUUUUUUUUUUUUkk.....',
+    '......kUUUUUUUUUUUUUUUUk......',
+    '......kUUkkkUUUUUUkkkUUk......',
+    '......kUUkrrkUUUUkrrkUUk......',
+    '......kUUUkkUUUUUUkkUUUk......',
+    '.......kUUUUUkkkkUUUUUk.......',
+    '.......kUUUUkwwwwkUUUUk.......',
+    '........kkUUUkkkkUUUkk........',
+    '...kkkkkkUkkUUUUUUkkUkkkkkk...',
+    '..kRRRRkkuuuuuuuuuuuukkRRRRk..',
+    '.kRRRRkuuuUuuuyuuuUuuukRRRRRk.',
+    'kRRRRkuuUUuuuyyyuuuUUuukRRRRRk',
+    'kRRRk.kuuUkuuuyuuuukUuuk.kRRRk',
+    'kRRk..kuuk.kuuuuuuk.kuuk..kRRk',
+    'kRRk..kUUk.kuuUUuuk.kUUk..kRRk',
+    'kRk....kk..kuuuuuuk..kk....kRk',
+    'kRk.......kUuuuuuuUk.......kRk',
+    'kk.......kUUuuuuuuUUk.......kk',
+    '........kUUUUuuuuUUUUk........',
+    '.......kUUUUUUUUUUUUUUk.......',
+    '.......kkkkkkkkkkkkkkkk.......',
+  ]] },
+  rune: { px: 2, frames: [[
+    '....kk....',
+    '...kuuk...',
+    '..kuwuuk..',
+    '..kuwuuk..',
+    '.kuuuuuUk.',
+    '.kuwuuuUk.',
+    '.kuuuuUUk.',
+    '.kuuuuUUk.',
+    '..kuuUUk..',
+    '..kuuUUk..',
+    '.kKKKKKKk.',
+    'kKmmmmmmKk',
+    'kkkkkkkkkk',
+  ], [
+    '....kk....',
+    '...kuuk...',
+    '..kuuwuk..',
+    '..kuuwuk..',
+    '.kuuuuwUk.',
+    '.kuuuuuUk.',
+    '.kuuuuUUk.',
+    '.kuuwuUUk.',
+    '..kuuUUk..',
+    '..kuuUUk..',
+    '.kKKKKKKk.',
+    'kKmmmmmmKk',
+    'kkkkkkkkkk',
+  ]] },
+  ghost: { px: 2, frames: [[
+    '..kkkk..',
+    '.kWWWWk.',
+    'kWkWWkWk',
+    'kWkWWkWk',
+    'kWWWWWWk',
+    'kWWWWWWk',
+    'kWkWWkWk',
+    '.k.kk.k.',
+  ], [
+    '..kkkk..',
+    '.kWWWWk.',
+    'kWkWWkWk',
+    'kWkWWkWk',
+    'kWWWWWWk',
+    'kWWWWWWk',
+    '.kWkkWk.',
+    '..k..k..',
+  ]] },
+  gem1: { px: 2, frames: [['.k.', 'kck', 'kwk', 'kck', '.k.']] },
+  gem2: { px: 2, frames: [['..k..', '.kwk.', 'kwcck', 'kccbk', '.kbk.', '..k..']] },
+  gem3: { px: 2, frames: [['..kkk..', '.kwwck.', 'kwccccK', 'kccccbk', '.kcbbk.', '..kbk..', '...k...']] },
+  chest: { px: 2, frames: [[
+    '.kkkkkkkkkk.',
+    'knnnnnnnnnnk',
+    'knNNNNNNNNnk',
+    'kkkkkyykkkkk',
+    'kyyyykYyyyyk',
+    'knnnnkykknnk',
+    'knnnnnnnnnnk',
+    'knNNNNNNNNnk',
+    'kkkkkkkkkkkk',
+  ]] },
+  altar: { px: 2, frames: [[
+    '.....kk.....',
+    '....kuwk....',
+    '...kuwuuk...',
+    '...kuuuUk...',
+    '....kuUk....',
+    '.....kk.....',
+    '..kkkkkkkk..',
+    '.kMMMMMMMMk.',
+    '..kmmmmmmk..',
+    '..kmMmmMmk..',
+    '..kmmmmmmk..',
+    '..kmMmmMmk..',
+    '.kMMMMMMMMk.',
+    'kmmmmmmmmmmk',
+    'kkkkkkkkkkkk',
+  ], [
+    '.....kk.....',
+    '....kwuk....',
+    '...kuuwuk...',
+    '...kuuuUk...',
+    '....kuUk....',
+    '.....kk.....',
+    '..kkkkkkkk..',
+    '.kMMMMMMMMk.',
+    '..kmmmmmmk..',
+    '..kmMmmMmk..',
+    '..kmmmmmmk..',
+    '..kmMmmMmk..',
+    '.kMMMMMMMMk.',
+    'kmmmmmmmmmmk',
+    'kkkkkkkkkkkk',
+  ]] },
+  turret: { px: 2, frames: [[
+    '..kkkkkk..',
+    '.kMMMMMMk.',
+    'kMmmmmmmMk',
+    'kmkkkkkkmk',
+    'kmkyyyykmk',
+    'kmkyyyykmk',
+    'kmkkkkkkmk',
+    'kMmmmmmmMk',
+    'knnnnnnnnk',
+    'kkkkkkkkkk',
+  ]] },
+  cart: { px: 2, frames: [[
+    '..kkkkkkkkkkkk..',
+    '.knnnnnnnnnnnnk.',
+    '.knyyyyyyyyyynk.',
+    '.knnnnnnnnnnnnk.',
+    '.kNnNnNnNnNnNnk.',
+    '.kNNNNNNNNNNNNk.',
+    'kkkkkkkkkkkkkkkk',
+    '.kmmk......kmmk.',
+    'kmMMmk....kmMMmk',
+    'kmMMmk....kmMMmk',
+    '.kmmk......kmmk.',
+  ]] },
+  /* 무기·투사체 (오른쪽 방향 기준, 회전 출력) */
+  blade: { px: 2, frames: [['..kk......', '.kWMkkkkk.', 'kyWMMMMMWk', '.kWMkkkkk.', '..kk......']] },
+  arrow: { px: 2, frames: [['kk.......kk.', 'kWkkkkkkkMMk', 'kk.......kk.']] },
+  knife: { px: 2, frames: [['kk.kkk.', 'nkkMWWk', 'kk.kkk.']] },
+  axe: { px: 2, frames: [['..kkk..', '.kMMMk.', 'kMWMnMk', '.kknkk.', '..knk..', '..knk..', '..kkk..']] },
+  fire: { px: 2, frames: [['..kkk..', '.kyyok.', 'kywyyok', 'kyyyook', '.koook.', '..kkk..']] },
+  orbp: { px: 2, frames: [['.kkk.', 'kwcck', 'kccbk', 'kcbbk', '.kkk.']] },
+  ball: { px: 2, frames: [['.kkk.', 'kwPPk', 'kPPpk', 'kPppk', '.kkk.']] },
+});
+DOT_PAL.b = '#3a8ac8';
+const GEM_SPR = v => v < 12 ? 'gem2' : 'gem3';   // 소형 보석 가독성 (gem1 미사용)
+
+/* 회전 출력 (투사체·회전검): 텍셀 크기 유지, 회전 각도 그대로 */
+function drawSpriteRot(c, name, frame, x, y, ang, opt) {
+  const s = getSprite(name, frame, opt), k = 1 / (VIEW.zoom * VIEW.dpr), W = s.cv.width * k, H = s.cv.height * k;
+  c.save(); c.translate(x, y); c.rotate(ang); c.drawImage(s.cv, -W / 2, -H / 2, W, H); c.restore();
+}
+function drawSpriteC(c, name, frame, x, y, opt) {
+  const s = getSprite(name, frame, opt), k = 1 / (VIEW.zoom * VIEW.dpr), W = s.cv.width * k, H = s.cv.height * k;
+  c.drawImage(s.cv, Math.round((x - W / 2) / k) * k, Math.round((y - H / 2) / k) * k, W, H);
+}
+
+/* 페이즈별 지형 색 (타일 재채색) — a 바탕, c 밝은 풀, d 어두운 풀, f·h·i 꽃·장식 */
+const TERRAIN = {
+  field: { a: '#62b04c', c: '#79c65a', d: '#4b923e', f: '#fff3b0', h: '#ffffff', i: '#f39ab0' },
+  calm: { a: '#78c462', c: '#96da7a', d: '#5ca84c', f: '#ffffff', h: '#ffe6f0', i: '#f0a0c8' },
+  fog: { a: '#7c9a82', c: '#92ae96', d: '#62806a', f: '#c8d4d0', h: '#e0e8e8', i: '#a8b8c0' },
+  camp: { a: '#8eaa4c', c: '#a8c462', d: '#6c8a3a', f: '#e0b070', h: '#f0d8a0', i: '#c08040' },
+  surge: { a: '#8c9a4a', c: '#a2aa5a', d: '#7a5a3a', f: '#d06050', h: '#f0a080', i: '#a03a30' },
+  warband: { a: '#b0a04a', c: '#c8b862', d: '#8a7a38', f: '#e8d890', h: '#fff0c0', i: '#a07a30' },
+  hunt: { a: '#c4ae4a', c: '#dcc664', d: '#9a8838', f: '#fff0a0', h: '#ffffff', i: '#e0a030' },
+  siege: { a: '#6e7a58', c: '#828e6a', d: '#545e44', f: '#b080a0', h: '#d0b0c8', i: '#804a70' },
+  seal: { a: '#6a8aa2', c: '#82a2ba', d: '#546e86', f: '#c0e0ff', h: '#ffffff', i: '#7fdcf6' },
+  escort: { a: '#a88a60', c: '#c0a072', d: '#866a48', f: '#6ab050', h: '#8ac860', i: '#4a8a40' },
+  ritual: { a: '#6c5c8c', c: '#8272a2', d: '#50446c', f: '#c8a0ff', h: '#e8d8ff', i: '#a07ee6' },
+  collapse: { a: '#8a7a64', c: '#a08e76', d: '#6a5a48', f: '#5a4a3a', h: '#b0a088', i: '#3a2e24' },
+  gate: { a: '#7a5242', c: '#92624c', d: '#5a3a30', f: '#e8503c', h: '#ffb070', i: '#9a2a2c' },
+  demon: { a: '#3e3058', c: '#524070', d: '#2c2240', f: '#a07ee6', h: '#c8b0ff', i: '#5e44a0' },
+};
+function getTileT(i, tid) {
+  const t = texelPx(2), key = i + '|' + t + '|' + tid;
+  let s = TILE_CACHE.get(key);
+  if (!s) { const T = TERRAIN[tid] || TERRAIN.field; s = bakeGrid(TILES[i], Object.assign({ y: DOT_PAL.y, b: T.a }, T), t, false, 'n', null); TILE_CACHE.set(key, s); }
+  return s;
+}
 /* ============================================================
    그리기 — 0.19 도트 적용 시작(주인공·잡몹 4종·바르간·지형), 나머지 도형은 0.20 교체
    ============================================================ */
 const PAL = [GROUND_BASE];   // 들판 바탕 (0.19 도트 타일)
+/* 페이즈별 지형 전환 (0.20): 예고 구간부터 다음 페이즈 지형으로 2초 교차 전환 */
+const TER = { cur: 'field', prev: null, k: 1 };
+function terrainTarget() {
+  const ph = G.ph; if (!ph) return 'field';
+  const id = ph.inGap ? ph.order[ph.i + 1] || ph.id : ph.id;
+  return id && TERRAIN[id] ? id : 'field';
+}
+function updateTerrain(dt) { const t = terrainTarget(); if (t !== TER.cur) { TER.prev = TER.cur; TER.cur = t; TER.k = 0; } if (TER.k < 1) TER.k = Math.min(1, TER.k + dt / 2); }
+let terLast = 0;
 function render() {
   const c = ctx, dpr = VIEW.dpr, Z = VIEW.zoom, p = G.p;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  c.fillStyle = PAL[0]; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
+  const tn = G.time; updateTerrain(Math.max(0, Math.min(0.1, tn - terLast))); terLast = tn;
+  c.fillStyle = TERRAIN[TER.cur].a; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
   const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
@@ -3142,22 +3508,29 @@ function render() {
   drawHUD(c);
   drawPhasePointer(c, camX, camY);
 }
-function drawGround(c, camX, camY) {
-  const T = 32, x0 = Math.floor(camX / T) - 1, y0 = Math.floor(camY / T) - 1, x1 = x0 + Math.ceil(VIEW.w / T) + 3, y1 = y0 + Math.ceil(VIEW.h / T) + 3;
-  for (let tx = x0; tx < x1; tx++) for (let ty = y0; ty < y1; ty++) {
-    const hv = hash2(tx, ty), i = hv < 0.55 ? 0 : hv < 0.78 ? 1 : hv < 0.94 ? 2 : 3;
-    if (!i) continue;                                         // 기본 타일은 바탕색으로 대체
-    const s = getTile(i); c.drawImage(s.cv, tx * T, ty * T, T, T);
+/* 지형: 16×16 타일 묶음(월드 512 단위)을 사전 저장해 반복 무늬로 1회 채움 (0.20 부하 절감) */
+const GROUND_PAT = new Map();
+function groundPattern(c, tid) {
+  const t = texelPx(2), key = tid + '|' + t;
+  let P = GROUND_PAT.get(key);
+  if (!P) {
+    const N = 16, S = 16 * t, cv = document.createElement('canvas'); cv.width = cv.height = N * S;
+    const g = cv.getContext('2d'); g.fillStyle = TERRAIN[tid].a; g.fillRect(0, 0, cv.width, cv.height);
+    for (let tx = 0; tx < N; tx++) for (let ty = 0; ty < N; ty++) { const hv = hash2(tx, ty), i = hv < 0.55 ? 0 : hv < 0.78 ? 1 : hv < 0.94 ? 2 : 3; if (i) g.drawImage(getTileT(i, tid).cv, tx * S, ty * S); }
+    P = { pat: c.createPattern(cv, 'repeat'), k: 1 / (VIEW.zoom * VIEW.dpr) };
+    if (P.pat.setTransform) P.pat.setTransform(new DOMMatrix([P.k, 0, 0, P.k, 0, 0]));
+    GROUND_PAT.set(key, P);
   }
+  return P.pat;
+}
+function drawGround(c, camX, camY) {
+  const x = camX - 64, y = camY - 64, w = VIEW.w + 128, h = VIEW.h + 128;
+  if (TER.k < 1 && TER.prev) { c.fillStyle = groundPattern(c, TER.prev); c.fillRect(x, y, w, h); c.globalAlpha = TER.k; }
+  c.fillStyle = groundPattern(c, TER.cur); c.fillRect(x, y, w, h); c.globalAlpha = 1;
 }
 function drawGems(c, inView) {
-  c.fillStyle = '#59c7f0'; c.beginPath();
-  for (const g of G.gems) {
-    if (!inView(g.x, g.y, 8)) continue;
-    const s = g.v < 3 ? 4 : g.v < 12 ? 5.5 : 7;
-    c.moveTo(g.x, g.y - s); c.lineTo(g.x + s * 0.7, g.y); c.lineTo(g.x, g.y + s); c.lineTo(g.x - s * 0.7, g.y); c.closePath();
-  }
-  c.fill();
+  const bob = Math.floor(G.time * 3) & 1;
+  for (const g of G.gems) { if (!inView(g.x, g.y, 8)) continue; drawSpriteC(c, GEM_SPR(g.v), 0, g.x, g.y - bob); }
 }
 function enemyPath(c, e) {
   const x = e.x, y = e.y, r = e.r;
@@ -3233,16 +3606,15 @@ function drawGrowthGround(c, inView) {
   for (const t of G.traps) { if (!inView(t.x, t.y, 14)) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
   for (const m of G.mines) { c.fillStyle = m.arm > 0 ? '#8a7040' : '#ffcf70'; c.beginPath(); c.arc(m.x, m.y, 5, 0, 7); c.fill(); }
   for (const ch of G.chests) {
-    const b = Math.sin(G.time * 5) * 2;
-    c.fillStyle = '#a8742a'; c.fillRect(ch.x - 11, ch.y - 8 + b, 22, 16); c.fillStyle = '#ffd24a'; c.fillRect(ch.x - 11, ch.y - 2 + b, 22, 3); c.fillRect(ch.x - 2, ch.y - 4 + b, 4, 6);
-    c.strokeStyle = '#3a2410'; c.lineWidth = 1.5; c.strokeRect(ch.x - 11, ch.y - 8 + b, 22, 16);
+    const b = Math.round(Math.sin(G.time * 5) * 1.5);
+    c.fillStyle = 'rgba(255,220,90,' + (0.16 + 0.08 * Math.sin(G.time * 5)) + ')'; c.beginPath(); c.arc(ch.x, ch.y, 20, 0, 7); c.fill();
+    drawSpriteC(c, 'chest', 0, ch.x, ch.y + b);
   }
   const a = G.altar;
   if (a) {
     const pulse = 0.5 + 0.5 * Math.sin(G.time * 3);
     c.fillStyle = `rgba(200,150,255,${0.15 + pulse * 0.1})`; c.beginPath(); c.arc(a.x, a.y, a.r + 14, 0, 7); c.fill();
-    c.fillStyle = '#4a3a6a'; c.fillRect(a.x - 14, a.y - 10, 28, 20); c.fillStyle = '#d9a8ff'; c.fillRect(a.x - 9, a.y - 22, 18, 12);
-    c.strokeStyle = '#efdcff'; c.lineWidth = 2; c.strokeRect(a.x - 14, a.y - 10, 28, 20);
+    drawSprite(c, 'altar', Math.floor(G.time * 3) & 1, a.x, a.y + 14);
     if (a.stay > 0) { c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(a.x, a.y, a.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * a.stay / JOB_CFG.altarStay); c.stroke(); }
   }
 }
@@ -3250,12 +3622,13 @@ function drawGrowthGround(c, inView) {
 function drawJobUnits(c, inView) {
   for (const t of G.turrets) {
     if (!inView(t.x, t.y, 12)) continue;
-    c.fillStyle = t.temp ? '#c89040' : '#8a6a3a'; c.fillRect(t.x - 9, t.y - 9, 18, 18);
-    c.strokeStyle = '#ffd890'; c.lineWidth = 4; c.beginPath(); c.moveTo(t.x, t.y); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y + Math.sin(t.a || 0) * 13); c.stroke();
+    drawSpriteC(c, 'turret', 0, t.x, t.y);
+    c.strokeStyle = '#1b1626'; c.lineWidth = 5; c.beginPath(); c.moveTo(t.x, t.y - 2); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y - 2 + Math.sin(t.a || 0) * 13); c.stroke();
+    c.strokeStyle = t.temp ? '#ffd24a' : '#b4c2d4'; c.lineWidth = 2.5; c.stroke();
   }
-  c.fillStyle = 'rgba(200,170,255,0.85)'; c.beginPath();
-  for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; c.moveTo(m.x + m.r, m.y); c.arc(m.x, m.y, m.r, 0, 7); }
-  c.fill();
+  c.globalAlpha = 0.9;
+  for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; drawSprite(c, 'ghost', (Math.floor(G.time * 5) + (m.id || 0)) & 1, m.x, m.y + m.r, { flip: (m.vx || 0) < 0 }); }
+  c.globalAlpha = 1;
 }
 function drawPlayer(c) {
   const p = G.p;
@@ -3303,29 +3676,19 @@ function drawWeapons(c, inView) {
   const p = G.p;
   for (const w of p.weapons) {
     if (w.id !== 'spin' || !w.n) continue;
-    c.fillStyle = '#ffd0c8'; c.strokeStyle = '#7a3a30'; c.lineWidth = 1.5;
-    for (let i = 0; i < w.n; i++) {
-      const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R, t = a + Math.PI / 2, L = w.bs * 1.3, H = w.bs * 0.45;
-      c.beginPath();
-      c.moveTo(bx + Math.cos(t) * L, by + Math.sin(t) * L); c.lineTo(bx + Math.cos(a) * H, by + Math.sin(a) * H);
-      c.lineTo(bx - Math.cos(t) * L, by - Math.sin(t) * L); c.lineTo(bx - Math.cos(a) * H, by - Math.sin(a) * H); c.closePath(); c.fill(); c.stroke();
-    }
+    const mul = w.bs > 15 ? 2 : 1;
+    for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; drawSpriteRot(c, 'blade', 0, p.x + Math.cos(a) * w.R, p.y + Math.sin(a) * w.R, a + Math.PI / 2, { mul }); }
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
-    if (pr.kind === 'arrow') {
-      c.strokeStyle = pr.color; c.lineWidth = 3; c.beginPath(); c.moveTo(pr.x - Math.cos(a) * 14, pr.y - Math.sin(a) * 14); c.lineTo(pr.x + Math.cos(a) * 4, pr.y + Math.sin(a) * 4); c.stroke();
-    } else if (pr.kind === 'boom') {
-      c.save(); c.translate(pr.x, pr.y); c.rotate(pr.spin); c.fillStyle = pr.color; c.strokeStyle = '#6a4a20'; c.lineWidth = 1.5;
-      c.beginPath(); c.moveTo(-pr.r, -pr.r * 0.35); c.lineTo(pr.r, -pr.r * 0.35); c.lineTo(pr.r * 0.6, pr.r * 0.6); c.lineTo(-pr.r * 0.6, pr.r * 0.6); c.closePath(); c.fill(); c.stroke();
-      c.restore();
-    } else if (pr.kind === 'orb' || pr.kind === 'shell') {
-      c.fillStyle = pr.color; c.beginPath(); c.arc(pr.x, pr.y, pr.r, 0, 7); c.fill();
-    } else if (pr.kind === 'fire') {
-      c.fillStyle = 'rgba(255,170,60,0.35)'; c.beginPath(); c.arc(pr.x - Math.cos(a) * 6, pr.y - Math.sin(a) * 6, pr.r * 1.3, 0, 7); c.fill();
-      c.fillStyle = pr.color; c.beginPath(); c.arc(pr.x, pr.y, pr.r, 0, 7); c.fill();
-      c.fillStyle = '#fff2c0'; c.beginPath(); c.arc(pr.x + Math.cos(a) * 2, pr.y + Math.sin(a) * 2, pr.r * 0.45, 0, 7); c.fill();
+    if (pr.kind === 'arrow') drawSpriteRot(c, pr.src === 'knife' ? 'knife' : 'arrow', 0, pr.x, pr.y, a);
+    else if (pr.kind === 'boom') drawSpriteRot(c, 'axe', 0, pr.x, pr.y, pr.spin, { mul: pr.r > 15 ? 2 : 1 });
+    else if (pr.kind === 'orb') drawSpriteC(c, 'orbp', 0, pr.x, pr.y, { mul: pr.r > 9 ? 2 : 1 });
+    else if (pr.kind === 'shell') drawSpriteC(c, 'ball', 0, pr.x, pr.y, { tint: '#ffd890' });
+    else if (pr.kind === 'fire') {
+      c.fillStyle = 'rgba(255,170,60,0.35)'; c.beginPath(); c.arc(pr.x - Math.cos(a) * 6, pr.y - Math.sin(a) * 6, pr.r * 1.2, 0, 7); c.fill();
+      drawSpriteC(c, 'fire', Math.floor(G.time * 10) & 1, pr.x, pr.y, { mul: pr.r > 10 ? 2 : 1 });
     }
   }
 }
@@ -3342,22 +3705,22 @@ function drawHUD(c) {
   const p = G.p, W = VIEW.cw, top = VIEW.sat + 6;
   c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, top - 6, W, 10);
   c.fillStyle = '#59c7f0'; c.fillRect(0, top - 6, W * Math.min(1, p.xp / p.need), 10);
-  c.font = 'bold 14px system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
+  c.font = 'bold 14px Galmuri11, system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
   const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
   txt('Lv ' + p.level, 12, top + 20, 'left');
-  if (p.job) { c.font = 'bold 12px system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : p.form === 'bear' ? ' · 곰' : ' · 정령') : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px system-ui'; }
-  c.font = 'bold 18px system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
+  if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : p.form === 'bear' ? ' · 곰' : ' · 정령') : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
+  c.font = 'bold 18px Galmuri11, system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
   const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)
-  c.font = 'bold 12px system-ui'; c.fillStyle = '#ffe08a';
+  c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#ffe08a';
   txt(P ? `${ph.i + 1}/${ph.order.length} ${P.name}` : (G.result === 'clear' ? '돌파' : '이동 중'), W / 2, top + 38, 'center');
   if (P) { const bw = 120; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4); }
   c.fillStyle = '#fff';
-  c.font = 'bold 14px system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
+  c.font = 'bold 14px Galmuri11, system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
   if (STATE.dev.fps && STATE.mode !== 'result') { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
   drawSlots(c, top + 58);
   drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
   let ty = VIEW.ch * 0.3;
-  for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px system-ui'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
+  for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px Galmuri11, system-ui'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
   c.globalAlpha = 1;
 }
 
@@ -3370,8 +3733,8 @@ function drawSlots(c, y) {
       c.fillStyle = it ? colorOf(it) : 'rgba(0,0,0,0.35)'; c.fillRect(x, y, S, S);
       c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 1.5; c.strokeRect(x + 0.5, y + 0.5, S - 1, S - 1);
       if (!it) continue;
-      c.fillStyle = '#14121c'; c.font = 'bold 13px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1);
-      c.font = 'bold 9px system-ui'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
+      c.fillStyle = '#14121c'; c.font = 'bold 13px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1);
+      c.font = 'bold 9px Galmuri11, system-ui'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
       const lv = String(it.lvl); c.strokeText(lv, x + S - 1, y + S - 1); c.fillStyle = '#fff'; c.fillText(lv, x + S - 1, y + S - 1);
     }
   };

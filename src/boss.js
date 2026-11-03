@@ -255,7 +255,7 @@ function drawBossTop(c, inView) {
     if (e.rage) { c.strokeStyle = 'rgba(255,90,60,0.7)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 5, 0, 7); c.stroke(); }
     if (e.gk === 'seren' && !e.clone && (G.time % 1.3) < 0.2) { c.strokeStyle = 'rgba(255,255,255,0.95)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 8, 0, 7); c.stroke(); }   // 본체 미광
   }
-  for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; c.fillStyle = b.col; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.fill(); c.strokeStyle = 'rgba(80,20,0,0.7)'; c.lineWidth = 1.5; c.stroke(); }
+  for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; drawSpriteC(c, 'ball', 0, b.x, b.y, { tint: b.col, mul: b.r > 7 ? 2 : 1 }); }   // 0.20 도트 탄환
 }
 /* 상단 수문장 체력 막대 */
 function drawBossBar(c, y, txt) {
@@ -264,7 +264,7 @@ function drawBossBar(c, y, txt) {
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(24, y, bw, 8);
   c.fillStyle = e.rage || e.st === 2 ? '#ff6a4a' : D.color; c.fillRect(24, y, bw * Math.max(0, e.hp / e.maxHp), 8);
   if (e.gk === 'demon') { c.fillStyle = 'rgba(255,255,255,0.8)'; for (const k of DM_CFG.stages) c.fillRect(24 + bw * k - 1, y - 2, 2, 12); }   // 페이즈 전환 눈금
-  c.font = 'bold 12px system-ui'; c.fillStyle = '#fff'; txt(e.gk === 'demon' ? `${D.name} · ${['그림자 군주', '암흑 결계', '종언'][e.st]} (${e.st + 1}/3)` : `${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
+  c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#fff'; txt(e.gk === 'demon' ? `${D.name} · ${['그림자 군주', '암흑 결계', '종언'][e.st]} (${e.st + 1}/3)` : `${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
 }
 
 /* 저장: 처치 수문장 누적 (finishRun에서 호출) */

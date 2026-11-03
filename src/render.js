@@ -2,10 +2,20 @@
    그리기 — 0.19 도트 적용 시작(주인공·잡몹 4종·바르간·지형), 나머지 도형은 0.20 교체
    ============================================================ */
 const PAL = [GROUND_BASE];   // 들판 바탕 (0.19 도트 타일)
+/* 페이즈별 지형 전환 (0.20): 예고 구간부터 다음 페이즈 지형으로 2초 교차 전환 */
+const TER = { cur: 'field', prev: null, k: 1 };
+function terrainTarget() {
+  const ph = G.ph; if (!ph) return 'field';
+  const id = ph.inGap ? ph.order[ph.i + 1] || ph.id : ph.id;
+  return id && TERRAIN[id] ? id : 'field';
+}
+function updateTerrain(dt) { const t = terrainTarget(); if (t !== TER.cur) { TER.prev = TER.cur; TER.cur = t; TER.k = 0; } if (TER.k < 1) TER.k = Math.min(1, TER.k + dt / 2); }
+let terLast = 0;
 function render() {
   const c = ctx, dpr = VIEW.dpr, Z = VIEW.zoom, p = G.p;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  c.fillStyle = PAL[0]; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
+  const tn = G.time; updateTerrain(Math.max(0, Math.min(0.1, tn - terLast))); terLast = tn;
+  c.fillStyle = TERRAIN[TER.cur].a; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
   const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
@@ -33,22 +43,29 @@ function render() {
   drawHUD(c);
   drawPhasePointer(c, camX, camY);
 }
-function drawGround(c, camX, camY) {
-  const T = 32, x0 = Math.floor(camX / T) - 1, y0 = Math.floor(camY / T) - 1, x1 = x0 + Math.ceil(VIEW.w / T) + 3, y1 = y0 + Math.ceil(VIEW.h / T) + 3;
-  for (let tx = x0; tx < x1; tx++) for (let ty = y0; ty < y1; ty++) {
-    const hv = hash2(tx, ty), i = hv < 0.55 ? 0 : hv < 0.78 ? 1 : hv < 0.94 ? 2 : 3;
-    if (!i) continue;                                         // 기본 타일은 바탕색으로 대체
-    const s = getTile(i); c.drawImage(s.cv, tx * T, ty * T, T, T);
+/* 지형: 16×16 타일 묶음(월드 512 단위)을 사전 저장해 반복 무늬로 1회 채움 (0.20 부하 절감) */
+const GROUND_PAT = new Map();
+function groundPattern(c, tid) {
+  const t = texelPx(2), key = tid + '|' + t;
+  let P = GROUND_PAT.get(key);
+  if (!P) {
+    const N = 16, S = 16 * t, cv = document.createElement('canvas'); cv.width = cv.height = N * S;
+    const g = cv.getContext('2d'); g.fillStyle = TERRAIN[tid].a; g.fillRect(0, 0, cv.width, cv.height);
+    for (let tx = 0; tx < N; tx++) for (let ty = 0; ty < N; ty++) { const hv = hash2(tx, ty), i = hv < 0.55 ? 0 : hv < 0.78 ? 1 : hv < 0.94 ? 2 : 3; if (i) g.drawImage(getTileT(i, tid).cv, tx * S, ty * S); }
+    P = { pat: c.createPattern(cv, 'repeat'), k: 1 / (VIEW.zoom * VIEW.dpr) };
+    if (P.pat.setTransform) P.pat.setTransform(new DOMMatrix([P.k, 0, 0, P.k, 0, 0]));
+    GROUND_PAT.set(key, P);
   }
+  return P.pat;
+}
+function drawGround(c, camX, camY) {
+  const x = camX - 64, y = camY - 64, w = VIEW.w + 128, h = VIEW.h + 128;
+  if (TER.k < 1 && TER.prev) { c.fillStyle = groundPattern(c, TER.prev); c.fillRect(x, y, w, h); c.globalAlpha = TER.k; }
+  c.fillStyle = groundPattern(c, TER.cur); c.fillRect(x, y, w, h); c.globalAlpha = 1;
 }
 function drawGems(c, inView) {
-  c.fillStyle = '#59c7f0'; c.beginPath();
-  for (const g of G.gems) {
-    if (!inView(g.x, g.y, 8)) continue;
-    const s = g.v < 3 ? 4 : g.v < 12 ? 5.5 : 7;
-    c.moveTo(g.x, g.y - s); c.lineTo(g.x + s * 0.7, g.y); c.lineTo(g.x, g.y + s); c.lineTo(g.x - s * 0.7, g.y); c.closePath();
-  }
-  c.fill();
+  const bob = Math.floor(G.time * 3) & 1;
+  for (const g of G.gems) { if (!inView(g.x, g.y, 8)) continue; drawSpriteC(c, GEM_SPR(g.v), 0, g.x, g.y - bob); }
 }
 function enemyPath(c, e) {
   const x = e.x, y = e.y, r = e.r;
@@ -124,16 +141,15 @@ function drawGrowthGround(c, inView) {
   for (const t of G.traps) { if (!inView(t.x, t.y, 14)) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
   for (const m of G.mines) { c.fillStyle = m.arm > 0 ? '#8a7040' : '#ffcf70'; c.beginPath(); c.arc(m.x, m.y, 5, 0, 7); c.fill(); }
   for (const ch of G.chests) {
-    const b = Math.sin(G.time * 5) * 2;
-    c.fillStyle = '#a8742a'; c.fillRect(ch.x - 11, ch.y - 8 + b, 22, 16); c.fillStyle = '#ffd24a'; c.fillRect(ch.x - 11, ch.y - 2 + b, 22, 3); c.fillRect(ch.x - 2, ch.y - 4 + b, 4, 6);
-    c.strokeStyle = '#3a2410'; c.lineWidth = 1.5; c.strokeRect(ch.x - 11, ch.y - 8 + b, 22, 16);
+    const b = Math.round(Math.sin(G.time * 5) * 1.5);
+    c.fillStyle = 'rgba(255,220,90,' + (0.16 + 0.08 * Math.sin(G.time * 5)) + ')'; c.beginPath(); c.arc(ch.x, ch.y, 20, 0, 7); c.fill();
+    drawSpriteC(c, 'chest', 0, ch.x, ch.y + b);
   }
   const a = G.altar;
   if (a) {
     const pulse = 0.5 + 0.5 * Math.sin(G.time * 3);
     c.fillStyle = `rgba(200,150,255,${0.15 + pulse * 0.1})`; c.beginPath(); c.arc(a.x, a.y, a.r + 14, 0, 7); c.fill();
-    c.fillStyle = '#4a3a6a'; c.fillRect(a.x - 14, a.y - 10, 28, 20); c.fillStyle = '#d9a8ff'; c.fillRect(a.x - 9, a.y - 22, 18, 12);
-    c.strokeStyle = '#efdcff'; c.lineWidth = 2; c.strokeRect(a.x - 14, a.y - 10, 28, 20);
+    drawSprite(c, 'altar', Math.floor(G.time * 3) & 1, a.x, a.y + 14);
     if (a.stay > 0) { c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(a.x, a.y, a.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * a.stay / JOB_CFG.altarStay); c.stroke(); }
   }
 }
@@ -141,12 +157,13 @@ function drawGrowthGround(c, inView) {
 function drawJobUnits(c, inView) {
   for (const t of G.turrets) {
     if (!inView(t.x, t.y, 12)) continue;
-    c.fillStyle = t.temp ? '#c89040' : '#8a6a3a'; c.fillRect(t.x - 9, t.y - 9, 18, 18);
-    c.strokeStyle = '#ffd890'; c.lineWidth = 4; c.beginPath(); c.moveTo(t.x, t.y); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y + Math.sin(t.a || 0) * 13); c.stroke();
+    drawSpriteC(c, 'turret', 0, t.x, t.y);
+    c.strokeStyle = '#1b1626'; c.lineWidth = 5; c.beginPath(); c.moveTo(t.x, t.y - 2); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y - 2 + Math.sin(t.a || 0) * 13); c.stroke();
+    c.strokeStyle = t.temp ? '#ffd24a' : '#b4c2d4'; c.lineWidth = 2.5; c.stroke();
   }
-  c.fillStyle = 'rgba(200,170,255,0.85)'; c.beginPath();
-  for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; c.moveTo(m.x + m.r, m.y); c.arc(m.x, m.y, m.r, 0, 7); }
-  c.fill();
+  c.globalAlpha = 0.9;
+  for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; drawSprite(c, 'ghost', (Math.floor(G.time * 5) + (m.id || 0)) & 1, m.x, m.y + m.r, { flip: (m.vx || 0) < 0 }); }
+  c.globalAlpha = 1;
 }
 function drawPlayer(c) {
   const p = G.p;
@@ -194,29 +211,19 @@ function drawWeapons(c, inView) {
   const p = G.p;
   for (const w of p.weapons) {
     if (w.id !== 'spin' || !w.n) continue;
-    c.fillStyle = '#ffd0c8'; c.strokeStyle = '#7a3a30'; c.lineWidth = 1.5;
-    for (let i = 0; i < w.n; i++) {
-      const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R, t = a + Math.PI / 2, L = w.bs * 1.3, H = w.bs * 0.45;
-      c.beginPath();
-      c.moveTo(bx + Math.cos(t) * L, by + Math.sin(t) * L); c.lineTo(bx + Math.cos(a) * H, by + Math.sin(a) * H);
-      c.lineTo(bx - Math.cos(t) * L, by - Math.sin(t) * L); c.lineTo(bx - Math.cos(a) * H, by - Math.sin(a) * H); c.closePath(); c.fill(); c.stroke();
-    }
+    const mul = w.bs > 15 ? 2 : 1;
+    for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; drawSpriteRot(c, 'blade', 0, p.x + Math.cos(a) * w.R, p.y + Math.sin(a) * w.R, a + Math.PI / 2, { mul }); }
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
-    if (pr.kind === 'arrow') {
-      c.strokeStyle = pr.color; c.lineWidth = 3; c.beginPath(); c.moveTo(pr.x - Math.cos(a) * 14, pr.y - Math.sin(a) * 14); c.lineTo(pr.x + Math.cos(a) * 4, pr.y + Math.sin(a) * 4); c.stroke();
-    } else if (pr.kind === 'boom') {
-      c.save(); c.translate(pr.x, pr.y); c.rotate(pr.spin); c.fillStyle = pr.color; c.strokeStyle = '#6a4a20'; c.lineWidth = 1.5;
-      c.beginPath(); c.moveTo(-pr.r, -pr.r * 0.35); c.lineTo(pr.r, -pr.r * 0.35); c.lineTo(pr.r * 0.6, pr.r * 0.6); c.lineTo(-pr.r * 0.6, pr.r * 0.6); c.closePath(); c.fill(); c.stroke();
-      c.restore();
-    } else if (pr.kind === 'orb' || pr.kind === 'shell') {
-      c.fillStyle = pr.color; c.beginPath(); c.arc(pr.x, pr.y, pr.r, 0, 7); c.fill();
-    } else if (pr.kind === 'fire') {
-      c.fillStyle = 'rgba(255,170,60,0.35)'; c.beginPath(); c.arc(pr.x - Math.cos(a) * 6, pr.y - Math.sin(a) * 6, pr.r * 1.3, 0, 7); c.fill();
-      c.fillStyle = pr.color; c.beginPath(); c.arc(pr.x, pr.y, pr.r, 0, 7); c.fill();
-      c.fillStyle = '#fff2c0'; c.beginPath(); c.arc(pr.x + Math.cos(a) * 2, pr.y + Math.sin(a) * 2, pr.r * 0.45, 0, 7); c.fill();
+    if (pr.kind === 'arrow') drawSpriteRot(c, pr.src === 'knife' ? 'knife' : 'arrow', 0, pr.x, pr.y, a);
+    else if (pr.kind === 'boom') drawSpriteRot(c, 'axe', 0, pr.x, pr.y, pr.spin, { mul: pr.r > 15 ? 2 : 1 });
+    else if (pr.kind === 'orb') drawSpriteC(c, 'orbp', 0, pr.x, pr.y, { mul: pr.r > 9 ? 2 : 1 });
+    else if (pr.kind === 'shell') drawSpriteC(c, 'ball', 0, pr.x, pr.y, { tint: '#ffd890' });
+    else if (pr.kind === 'fire') {
+      c.fillStyle = 'rgba(255,170,60,0.35)'; c.beginPath(); c.arc(pr.x - Math.cos(a) * 6, pr.y - Math.sin(a) * 6, pr.r * 1.2, 0, 7); c.fill();
+      drawSpriteC(c, 'fire', Math.floor(G.time * 10) & 1, pr.x, pr.y, { mul: pr.r > 10 ? 2 : 1 });
     }
   }
 }
@@ -233,22 +240,22 @@ function drawHUD(c) {
   const p = G.p, W = VIEW.cw, top = VIEW.sat + 6;
   c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, top - 6, W, 10);
   c.fillStyle = '#59c7f0'; c.fillRect(0, top - 6, W * Math.min(1, p.xp / p.need), 10);
-  c.font = 'bold 14px system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
+  c.font = 'bold 14px Galmuri11, system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
   const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
   txt('Lv ' + p.level, 12, top + 20, 'left');
-  if (p.job) { c.font = 'bold 12px system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : p.form === 'bear' ? ' · 곰' : ' · 정령') : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px system-ui'; }
-  c.font = 'bold 18px system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
+  if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : p.form === 'bear' ? ' · 곰' : ' · 정령') : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
+  c.font = 'bold 18px Galmuri11, system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
   const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)
-  c.font = 'bold 12px system-ui'; c.fillStyle = '#ffe08a';
+  c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#ffe08a';
   txt(P ? `${ph.i + 1}/${ph.order.length} ${P.name}` : (G.result === 'clear' ? '돌파' : '이동 중'), W / 2, top + 38, 'center');
   if (P) { const bw = 120; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4); }
   c.fillStyle = '#fff';
-  c.font = 'bold 14px system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
+  c.font = 'bold 14px Galmuri11, system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
   if (STATE.dev.fps && STATE.mode !== 'result') { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
   drawSlots(c, top + 58);
   drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
   let ty = VIEW.ch * 0.3;
-  for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px system-ui'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
+  for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px Galmuri11, system-ui'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
   c.globalAlpha = 1;
 }
 
@@ -261,8 +268,8 @@ function drawSlots(c, y) {
       c.fillStyle = it ? colorOf(it) : 'rgba(0,0,0,0.35)'; c.fillRect(x, y, S, S);
       c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 1.5; c.strokeRect(x + 0.5, y + 0.5, S - 1, S - 1);
       if (!it) continue;
-      c.fillStyle = '#14121c'; c.font = 'bold 13px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1);
-      c.font = 'bold 9px system-ui'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
+      c.fillStyle = '#14121c'; c.font = 'bold 13px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1);
+      c.font = 'bold 9px Galmuri11, system-ui'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
       const lv = String(it.lvl); c.strokeText(lv, x + S - 1, y + S - 1); c.fillStyle = '#fff'; c.fillText(lv, x + S - 1, y + S - 1);
     }
   };

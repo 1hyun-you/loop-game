@@ -19,7 +19,7 @@ fs.mkdirSync(path.dirname(OUT), { recursive: true });
 // 게시 환경과 같은 문서 골격으로 감싸서 제공 (http 주소: 저장 유지)
 // 0.4a부터 index.html 자체에 문서 골격 포함 → 그대로 제공, 설치 정보 파일·아이콘은 실제 파일 제공
 const page = () => fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const MIME = { '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
+const MIME = { '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.woff2': 'font/woff2' };
 const SERVER = http.createServer((q, s) => {
   const u = decodeURIComponent((q.url || '/').split('?')[0]), ext = path.extname(u), f = path.join(ROOT, u);
   if (MIME[ext] && f.startsWith(ROOT) && fs.existsSync(f)) { s.setHeader('content-type', MIME[ext]); return s.end(fs.readFileSync(f)); }
