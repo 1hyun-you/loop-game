@@ -4,7 +4,7 @@
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.26a',
+  VERSION: '0.27',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -19,7 +19,7 @@ const CFG = {
   // 성장 — 기획서: 무기 5칸·보조 효과 5칸, 다시 뽑기·제외 판당 2~3회
   slots: { weapon: 5, passive: 5 },
   weaponMax: 6, passiveMax: 5,
-  select: { cards: 3, rerolls: 3, banishes: 2, wupW: 3, wupW3: 1.2, wnewW: 1.2, wnewW3: 1.0, pupW: 2.2, pnewW: 1 },   // 후보 가중치 (3칸 이상 보유 시 W3)
+  select: { cards: 3, rerolls: 3, banishes: 2, wupW: 3, wupW3: 1.2, wnewW: 1.2, wnewW3: 1.0, pupW: 2.2, pnewW: 1, wnewPool: 10 },   // 후보 가중치 (3칸 이상 보유 시 W3)
   fill: { heal: 30, power: 0.04 },      // 후보 소진 시 대체 카드
   colors: { melee: '#e0655a', ranged: '#5fbf6a', magic: '#5f8fe8', passive: '#d6b45a' },
 };

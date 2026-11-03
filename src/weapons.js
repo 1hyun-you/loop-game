@@ -145,7 +145,7 @@ Object.assign(WEAPON_FIRE, {
   /* 마력 구체: 추적 구체 · 군집 분기: 구체 +2·피해 -20% · 신성 폭발 분기: 명중 시 작은 폭발 */
   orb(w, S) {
     const D = WEAPONS.orb.base, p = G.p;
-    for (let i = 0; i < S.n; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: rand(Math.PI * 2), sp: D.sp, r: 6, dmg: S.dmg, pierce: 0, life: D.life, color: '#9fb8ff', src: 'mbolt', home: true, nova: w.br === 'nova' });
+    for (let i = 0; i < S.n; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: rand(Math.PI * 2), sp: D.sp, r: hasRelic('bigorb') ? 12 : 6, dmg: S.dmg, pierce: 0, life: D.life, color: '#9fb8ff', src: 'mbolt', home: true, nova: w.br === 'nova' });
   },
 });
 function shieldBash(x, y, R, dmg, kb) {
@@ -202,7 +202,7 @@ function updateWeapons(dt) {
       if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;   // 연속 발동 분기
     }
   }
-  updateTraps(dt);
+  updateTraps(dt); updateArsenal(dt);                       // 0.27 철퇴·광선·폭탄·회오리
   // 지연 실행 (연속 베기 등)
   for (const L of G.later) { L.t -= dt; if (L.t <= 0) { L.done = true; L.f(); } }
   if (G.later.length) G.later = G.later.filter(L => !L.done);
@@ -220,7 +220,7 @@ function updateProjectiles(dt) {
         const dx = p.x - pr.x, dy = p.y - pr.y, d = Math.hypot(dx, dy) || 1;
         pr.vx += dx / d * 1100 * dt; pr.vy += dy / d * 1100 * dt;
         const sp = Math.hypot(pr.vx, pr.vy); if (sp > 520) { pr.vx *= 520 / sp; pr.vy *= 520 / sp; }
-        if (d < 22 && pr.t > 0.6) { pr.dead = true; continue; }
+        if (d < 22 && pr.t > 0.6) { pr.dead = true; if (hasRelic('clockwork')) clockTick(); continue; }
       }
       pr.x += pr.vx * dt; pr.y += pr.vy * dt;
       if (pr.burst && !pr.burstDone && pr.t > 0.45) { pr.burstDone = true; explode(pr.x, pr.y, 56, pr.dmg * 1.2, 'boomerang', '#f0c890'); }
@@ -245,6 +245,7 @@ function updateProjectiles(dt) {
       if (pr.nova) explode(pr.x, pr.y, 42, pr.dmg * 0.6, 'nova', '#b8c8ff');
       if (pr.split) { pr.split = false; const a = Math.atan2(pr.vy, pr.vx); for (const da of [-0.5, 0, 0.5]) { const s2 = shoot({ kind: 'arrow', x: pr.x, y: pr.y, ang: a + da, sp: 480, r: 4, dmg: pr.dmg * 0.5, pierce: 0, life: 0.5, color: '#d8ffc8', src: 'split' }); s2.hits.add(e.id); } }
       if (--pr.pierce < 0) { pr.dead = true; return false; }
+      if (pr.bounce) { bounceProj(pr, e); return false; }   // 0.27 수리검 튕김
     });
     if (pr.life <= 0 && !pr.dead) { pr.dead = true; if (pr.kind === 'fire' || pr.kind === 'shell') fireBurst(pr); }
   }

@@ -49,7 +49,7 @@ function jobWeaponKill(e) {
 function jobCeremony(id, second) {
   const p = G.p, col = JOB_COL[id];
   if (second) { const o = JOB2[id].concat(JOB2_STAT).find(x => x.k === p.job2); banner('2차 전직 · ' + o.nm, '전용 무기 ' + EXW[id].name + ' 획득', col, 2.2); }
-  else banner(JOBS[id].name + ' 전직', JOBS[id].rule.split(',')[0], col, 2.2);
+  else { banner(JOBS[id].name + ' 전직', '전용 무기 ' + EXW1[id].name + ' 획득', col, 2.2); toast(JOBS[id].rule.split(',')[0], col); }
   sfx('ult'); shake(4, 0.3);
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 150, dur: 0.7, color: col, fill: true, follow: true });
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 40, r1: 220, dur: 0.9, color: '#ffffff', follow: true });

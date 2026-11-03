@@ -237,6 +237,7 @@ function drawFx(c) {
 /* 무기 표시: 회전검 칼날, 투사체 */
 function drawWeapons(c, inView) {
   const p = G.p;
+  drawArsenal(c, inView);                                   // 0.27 신규 무기 그리기
   for (const w of p.weapons) {
     if (w.id !== 'spin' || !w.n) continue;
     const mul = w.bs > 15 ? 2 : 1;
@@ -247,7 +248,8 @@ function drawWeapons(c, inView) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
     if (pr.jt) { c.globalAlpha = 0.35; c.fillStyle = pr.jt; c.beginPath(); c.arc(pr.x, pr.y, pr.r + 5, 0, 7); c.fill(); c.globalAlpha = 1; }   // 직업 변환 발광 (0.26)
-    if (pr.kind === 'arrow') drawSpriteRot(c, pr.src === 'knife' ? 'knife' : 'arrow', 0, pr.x, pr.y, a);
+    if (pr.kind === 'star') drawSpriteRot(c, 'star', 0, pr.x, pr.y, pr.t * 16);
+    else if (pr.kind === 'arrow') drawSpriteRot(c, pr.src === 'knife' ? 'knife' : 'arrow', 0, pr.x, pr.y, a);
     else if (pr.kind === 'boom') drawSpriteRot(c, 'axe', 0, pr.x, pr.y, pr.spin, { mul: pr.r > 15 ? 2 : 1 });
     else if (pr.kind === 'orb') drawSpriteC(c, 'orbp', 0, pr.x, pr.y, { mul: pr.r > 9 ? 2 : 1 });
     else if (pr.kind === 'shell') drawSpriteC(c, 'ball', 0, pr.x, pr.y, { tint: '#ffd890' });
@@ -314,12 +316,13 @@ function drawSlots(c, y) {
   const pcd = { magnet: ['vacuum', () => 1 - (T.vac == null ? 30 : T.vac) / 30], vit: ['shield', () => p.shield ? 1 : 1 - T.shield / 12], haste: ['charge', () => 1 - T.charge / 8] };
   p.passives.forEach((ps, i) => { const q = pcd[ps.id]; if (q && ps.br === q[0]) pie(px0 + i * (S + gap) + S / 2, y + S / 2, S / 2 - 2, q[1]()); });
   let dx0 = 12 + slotW() * (S + gap) + 6;
-  if (p.exw) {                                              // 0.26 전용 무기 칸: 금색 마름모 틀 + 재사용 원형
-    const X = EXW[p.exw.id], cx = dx0 + S / 2, cy = y + S / 2, h = S / 2 + 1;
-    c.fillStyle = '#ffd24a'; c.beginPath(); c.moveTo(cx, cy - h); c.lineTo(cx + h, cy); c.lineTo(cx, cy + h); c.lineTo(cx - h, cy); c.closePath(); c.fill();
+  for (const [st, TB, fc] of [[p.exw1, EXW1, '#ffe8a0'], [p.exw, EXW, '#ffd24a']]) {   // 0.26 전용 무기 칸: 금색 마름모 틀 + 재사용 원형 (0.27 1차·2차 2칸)
+    if (!st) continue;
+    const X = TB[st.id], cx = dx0 + S / 2, cy = y + S / 2, h = S / 2 + 1;
+    c.fillStyle = fc; c.beginPath(); c.moveTo(cx, cy - h); c.lineTo(cx + h, cy); c.lineTo(cx, cy + h); c.lineTo(cx - h, cy); c.closePath(); c.fill();
     c.strokeStyle = '#7a5a10'; c.lineWidth = 2; c.stroke();
     c.fillStyle = '#14121c'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(X.ic, cx, cy);
-    if (X.cd > 0.6) pie(cx, cy, S / 2 - 5, 1 - Math.max(0, p.exw.t) / X.cd);
+    if (X.cd > 0.6) pie(cx, cy, S / 2 - 5, 1 - Math.max(0, st.t) / X.cd);
     dx0 += S + gap + 2;
   }
   const dials = jobDials();

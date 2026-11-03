@@ -68,7 +68,8 @@ function pickPhaseOrder(retry) {
   for (const t in by) out.push(...shuffle(by[t].slice()).slice(0, retry ? 1 : PH_CFG.perType));
   const rest = shuffle(pool.filter(id => !out.includes(id)));
   while (out.length < n && rest.length) out.push(rest.pop());
-  const o = shuffle(out), f = o.findIndex(id => !REST_PH.includes(id));   // 첫 페이즈는 휴식형 제외, 이후 순서는 강함 판정으로 매번 결정
+  const o = shuffle(out); let f = o.findIndex(id => phTier(id) === 1);   // 첫 페이즈는 기본형(휴식형 제외) 우선 (0.27: 봉인석·전투형 첫 페이즈 조기 사망 대응), 이후 순서는 강함 판정으로 매번 결정
+  if (f < 0) f = o.findIndex(id => !REST_PH.includes(id));
   if (f > 0) [o[0], o[f]] = [o[f], o[0]];
   return o;
 }

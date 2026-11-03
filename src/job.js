@@ -98,7 +98,7 @@ function offerWeapon(id) {
 }
 function leaveAltar() { G.altar = null; G.sel = null; hideUI(); STATE.mode = 'play'; G.stats.altarLeave++; toast('제단을 떠남 · 다음 페이즈 뒤 재등장', '#bfb6d6'); }
 function applyJob(id) {
-  const p = G.p; p.job = id; p.jobAt = G.ph.i; p.ult = 50; G.altar = null;
+  const p = G.p; p.job = id; p.jobAt = G.ph.i; p.ult = 50; G.altar = null; p.exw1 = { id, t: 1 };   // 0.27 1차 전용 무기
   G.stats.job = id; G.stats.jobAt = Math.round(G.time);
   if (id === 'druid') petsInit();
   recalc(); jobCeremony(id, false);                         // 0.26 전직 연출·무기 변환 안내
@@ -136,6 +136,7 @@ function onEnemyHit(e, o) {
   const p = G.p, src = o.src;
   if (src === 'knife' && hasRelic('arcknife') && Math.random() < 0.2) shoot({ kind: 'orb', x: e.x, y: e.y, ang: rand(Math.PI * 2), sp: 270, r: 6, dmg: WEAPONS.orb.base.dmg * 0.6 * p.mod.dmg, pierce: 0, life: 1.6, color: '#9fb8ff', src: 'mbolt', home: true });
   if (src === 'arrow' && hasRelic('thunderarrow') && Math.random() < 0.2) chainBolt(e, 2, WEAPONS.lightning.base.dmg * 0.5 * p.mod.dmg, 'thunder');
+  arsenalHit(e, o);                                         // 0.27 유물 명중 연계
   if (!p.job || e.dead) return;
   jobWeaponHit(e, o);                                       // 0.26 공용 무기 직업 변환
   if (p.job === 'archer' && RANGED_SRC[src]) {
@@ -370,5 +371,5 @@ function updateJob(dt) {
     if (T.dance > 0) { T.danceT = (T.danceT || 0) - dt; if (T.danceT <= 0) { T.danceT = 0.15; const ts = shuffle(enemiesInRange(p.x, p.y, 160)).slice(0, 4), d = (30 + p.level * 2) * p.mod.dmg; for (const e of ts) { fx({ kind: 'pop', x: e.x, y: e.y, r: 8, color: '#202030', dur: 0.15 }); damageEnemy(e, d, { src: 'ult' }); } } }
   }
   if (T.rain > 0) { T.rainT = (T.rainT || 0) - dt; if (T.rainT <= 0) { T.rainT = 0.1; const q = ringAt(0, 200), d = (24 + p.level * 1.5) * p.mod.dmg; fx({ kind: 'ring', x: q.x, y: q.y, r0: 4, r1: 40, dur: 0.2, color: '#d8ffc8' }); gridQuery(q.x, q.y, 40, e => damageEnemy(e, d, { src: 'ult' })); } }
-  updateTurrets(dt); updateMinions(dt); updateMines(dt); updateExw(dt); updateUlt(dt);
+  updateTurrets(dt); updateMinions(dt); updateMines(dt); updateExw(dt); updateExw1(dt); updateUlt(dt);
 }

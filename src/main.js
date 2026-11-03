@@ -6,6 +6,7 @@ function hideUI() { UI.innerHTML = ''; }
 const brName = (id, k) => k ? ' · ' + BRANCHES[id].find(o => o.k === k).nm : '';
 const buildChips = () => (G.p.job ? `<span class="chip" style="border-color:#d9a8ff">${JOBS[G.p.job].name}${G.p.job2 ? ' · ' + JOB2[G.p.job].concat(JOB2_STAT).find(o => o.k === G.p.job2).nm : ''}</span>` : '')
   + G.p.weapons.map(w => `<span class="chip" style="border-color:${CFG.colors[WEAPONS[w.id].cat]}">${WEAPONS[w.id].name} ${w.lvl}${brName(w.id, w.br)}</span>`).join('')
+  + (G.p.exw1 ? `<span class="chip" style="border-color:#ffe08a">${EXW1[G.p.exw1.id].name}</span>` : '')
   + (G.p.exw ? `<span class="chip" style="border-color:#ffe08a">${EXW[G.p.exw.id].name}</span>` : '')
   + G.p.passives.map(x => `<span class="chip" style="border-color:${CFG.colors.passive}">${PASSIVES[x.id].name} ${x.lvl}${brName(x.id, x.br)}</span>`).join('')
   + G.p.relics.map(r => `<span class="chip" style="border-color:#ffd24a">유물 ${RELICS[r].name}</span>`).join('');
