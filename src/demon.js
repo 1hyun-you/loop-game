@@ -20,7 +20,8 @@ const DM_CFG = {
   bmN: [0, 3, 4], bmLen: 340, bmW: 18, bmWarn: 1.1, bmDur: [0, 3.2, 3.6], bmRot: [0, 0.55, 0.8], bmDmg: 8,   // 회전 광선
   mtN: 7, mtGap: 0.32, mtR: 58, mtWarn: 0.9, mtDmg: 17,      // 운석 낙하
   // 0.16 처치 시간 편차 억제 (5단계 결정 안건 1-3): 페이즈별 최소 지속 시간(이전 하한 체력 고정) + 목표 초과 시 받는 피해 점증
-  stMin: [60, 55, 40], stTgt: [80, 70, 50], catchUp: 0.04, catchMax: 3, finalHp: 0.75, preDmg: 0.7,   // preDmg: 진엔딩 전 패턴 피해 배율 (진엔딩 경로 안정화)
+  stMin: [60, 55, 40], stTgt: [70, 60, 45], catchUp: 0.04, catchMax: 3, finalHp: 0.75, preDmg: 0.6,
+  erode: 20, seg: [0.4, 0.35, 0.25],   // 0.18: 목표 시간 초과 시 페이즈 남은 구간을 20초에 걸쳐 잠식 → 처치 시간 상한 약 235초 (최소 지속 합 155초)   // preDmg: 진엔딩 전 패턴 피해 배율 (진엔딩 경로 안정화)
 };
 const bossDef = (k) => k === 'demon' ? DEMON : GATEKEEPERS[k];
 
@@ -52,12 +53,17 @@ function dmUpdate(e, dt, d, dx, dy) {
   // 페이즈 전환
   const nx = e.st < 2 && e.hp <= e.maxHp * DM_CFG.stages[e.st];
   if (nx) {
+    (G.stats.demon.tr || (G.stats.demon.tr = [])).push([e.id, e.st, Math.round(G.time - e.stT0), Math.round(e.hp / e.maxHp * 100), G.gkMob === e ? 1 : 0]);   // 전환 추적 (0.18 조기 전환 원인 확인)
     e.st++; e.stT0 = G.time; e.inv = DM_CFG.trans; ai.cd = DM_CFG.trans + 0.6; G.eb = []; G.hz = G.hz.filter(h => h.k === 'arena');
     G.stats.demon.st[e.st - 1] = Math.round(G.time - G.stats.demon.t0);
     toast(e.st === 1 ? '암흑 결계' : '종언', '#c9a8ff'); fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 280, dur: 1.0, color: '#c9a8ff' });
     if (e.st === 1) G.arena = { x: p.x, y: p.y, R: DM_CFG.arR0, t: 0, tick: 0 };
   }
   if (e.inv > 0) e.inv -= dt;
+  else if (G.time - e.stT0 > DM_CFG.stTgt[e.st]) {               // 잠식 (0.18): 목표 시간 초과 시 체력 자연 감소, 페이즈 경계에서 정지
+    const loss = e.maxHp * DM_CFG.seg[e.st] / DM_CFG.erode * dt, floor = e.st < 2 ? e.maxHp * DM_CFG.stages[e.st] : 0;
+    e.hp = Math.max(floor, e.hp - loss); if (e.st === 2 && e.hp <= 0) { killEnemy(e); return; }
+  }
   let mv = 1;
   if (ai.blink) {                                                // 그림자 도약: 예고 후 착지
     ai.blink.t -= dt; mv = 0;
@@ -215,7 +221,7 @@ function drawDemonGround(c) {
 function dmReport() {
   const s = G.stats.demon; if (!s) return null;
   const e = G.gkMob;
-  return [s.killed ? 'kill' : G.result, s.dur || Math.round(G.time - s.t0), e && e.gk === 'demon' ? Math.round(Math.max(0, e.hp) / e.maxHp * 100) : 0, e && e.gk === 'demon' ? e.st + 1 : 0, s.st[0], s.st[1], s.type, s.n];
+  return [s.killed ? 'kill' : G.result, s.dur || Math.round(G.time - s.t0), e && e.gk === 'demon' ? Math.round(Math.max(0, e.hp) / e.maxHp * 100) : 0, e && e.gk === 'demon' ? e.st + 1 : 0, s.st[0], s.st[1], s.type, s.n, s.tr || []];
 }
 function dmSave(s) {
   const d = G.stats.demon; if (!d) return;

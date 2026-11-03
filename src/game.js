@@ -167,8 +167,8 @@ function updateEnemies(dt) {
 function damageEnemy(e, dmg, o = {}) {
   if (e.dead || e.inv > 0) return;                         // 마왕 페이즈 전환 중 무적 (0.12)
   dmg *= jobDmgMul(e, o);
-  if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16)
   if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
+  if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16) — 모든 피해 배율 적용 후 보정 (0.18: 칼날 폭풍 배율이 보정 뒤에 곱해져 페이즈 조기 전환되던 결함 수정)
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
   const eff = Math.min(dmg, Math.max(0, e.hp));          // 실제 깎은 체력 기준 집계(초과 피해 제외, 0.2a)
   e.hp -= dmg; e.flash = 0.08;
