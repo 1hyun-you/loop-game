@@ -60,9 +60,9 @@ button.pri{background:#463c8c;border-color:var(--accent)}
 button:disabled{opacity:.4}
 .build{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
 .chip{font-size:13px;padding:3px 9px;border-radius:20px;border:1.5px solid var(--line);background:var(--panel)}
-.devbtn{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);bottom:calc(var(--sab) + 10px);z-index:6;pointer-events:auto;
+.devbtn{position:fixed;left:8px;bottom:calc(var(--sab) + 10px);z-index:6;pointer-events:auto;
   padding:6px 9px;font-size:12px;font-family:var(--f-mono);border-radius:7px;background:rgba(34,31,46,.8)}
-.dev{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);bottom:calc(var(--sab) + 48px);
+.dev{position:fixed;left:8px;right:8px;bottom:calc(var(--sab) + 48px);
   max-width:420px;margin:0 auto;z-index:7;pointer-events:auto;background:rgba(14,12,20,.95);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px}
 .dev .g{display:flex;flex-wrap:wrap;gap:6px}
 .dev button{padding:7px 10px;font-size:13px;border-radius:7px}
@@ -81,7 +81,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
 .hint{margin:0;color:var(--muted);font-size:14px;text-align:center}
 .ver{position:absolute;bottom:calc(var(--sab) + 12px);right:16px;margin:0;color:var(--muted);font:12px var(--f-mono)}
 .best{margin:0;color:#ffe08a;font-weight:700}
-.pausebtn{position:fixed;top:calc(var(--sat) + 6px);right:calc(env(safe-area-inset-right,0px) + 8px);z-index:6;width:40px;height:40px;padding:0;
+.pausebtn{position:fixed;top:calc(var(--sat) + 6px);right:8px;z-index:6;width:40px;height:40px;padding:0;
   font-size:15px;font-weight:800;border-radius:10px;background:rgba(34,31,46,.75);pointer-events:auto}
 /* 대사창 틀 — 하단 고정 */
 .dlg-wrap{position:absolute;inset:0;pointer-events:auto;display:flex;align-items:flex-end;justify-content:center;padding:0 12px calc(var(--sab) + 18px)}

@@ -15,7 +15,7 @@ Object.assign(WEAPONS, {
     base: { dmg: 22, cd: 2.6, R: 96, size: 15, dur: 0.7, kb: 260 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { cd: 0.15 }, { dmg: 0.3 }, { area: 0.1, dmg: 0.2 }] },
   shuriken: { name: '수리검', cat: 'ranged', ic: '수', desc: '명중할 때마다 다음 적에게 튕기는 수리검',
-    base: { dmg: 11, cd: 1.1, n: 1, pierce: 3, sp: 520, life: 1.4 },
+    base: { dmg: 10, cd: 1.1, n: 1, pierce: 3, sp: 520, life: 1.4 },
     ups: [{ n: 1 }, { dmg: 0.3 }, { pierce: 1 }, { cd: 0.15 }, { n: 1, dmg: 0.2 }] },
   bomb: { name: '폭탄 투척', cat: 'ranged', ic: '탄', desc: '적이 가장 많이 모인 곳에 폭탄 투척, 착지 시 폭발',
     base: { dmg: 30, cd: 2.2, n: 1, R: 68, fly: 0.6 },

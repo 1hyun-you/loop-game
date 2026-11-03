@@ -72,9 +72,9 @@ button.pri{background:#463c8c;border-color:var(--accent)}
 button:disabled{opacity:.4}
 .build{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
 .chip{font-size:13px;padding:3px 9px;border-radius:20px;border:1.5px solid var(--line);background:var(--panel)}
-.devbtn{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);bottom:calc(var(--sab) + 10px);z-index:6;pointer-events:auto;
+.devbtn{position:fixed;left:8px;bottom:calc(var(--sab) + 10px);z-index:6;pointer-events:auto;
   padding:6px 9px;font-size:12px;font-family:var(--f-mono);border-radius:7px;background:rgba(34,31,46,.8)}
-.dev{position:fixed;left:calc(env(safe-area-inset-left,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);bottom:calc(var(--sab) + 48px);
+.dev{position:fixed;left:8px;right:8px;bottom:calc(var(--sab) + 48px);
   max-width:420px;margin:0 auto;z-index:7;pointer-events:auto;background:rgba(14,12,20,.95);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px}
 .dev .g{display:flex;flex-wrap:wrap;gap:6px}
 .dev button{padding:7px 10px;font-size:13px;border-radius:7px}
@@ -93,7 +93,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
 .hint{margin:0;color:var(--muted);font-size:14px;text-align:center}
 .ver{position:absolute;bottom:calc(var(--sab) + 12px);right:16px;margin:0;color:var(--muted);font:12px var(--f-mono)}
 .best{margin:0;color:#ffe08a;font-weight:700}
-.pausebtn{position:fixed;top:calc(var(--sat) + 6px);right:calc(env(safe-area-inset-right,0px) + 8px);z-index:6;width:40px;height:40px;padding:0;
+.pausebtn{position:fixed;top:calc(var(--sat) + 6px);right:8px;z-index:6;width:40px;height:40px;padding:0;
   font-size:15px;font-weight:800;border-radius:10px;background:rgba(34,31,46,.75);pointer-events:auto}
 /* 대사창 틀 — 하단 고정 */
 .dlg-wrap{position:absolute;inset:0;pointer-events:auto;display:flex;align-items:flex-end;justify-content:center;padding:0 12px calc(var(--sab) + 18px)}
@@ -289,6 +289,10 @@ function resize() {
   VIEW.w = VIEW.cw / VIEW.zoom; VIEW.h = VIEW.ch / VIEW.zoom;
   VIEW.sat = document.getElementById('sa').getBoundingClientRect().height || 0;
   VIEW.sab = document.getElementById('sb').getBoundingClientRect().height || 0;
+  /* 0.27 화면 고정 보강: 안전 영역 값을 확정 시점에만 고정 반영, 상단 끌기 때 시스템 표시줄이 잠깐 나타나며
+     안전 영역 값이 흔들려도 UI 재배치(레이아웃 재계산) 없음 */
+  const rs = document.documentElement.style;
+  rs.setProperty('--sat', VIEW.sat + 'px'); rs.setProperty('--sab', VIEW.sab + 'px');
 }
 let rsT = 0;
 window.addEventListener('resize', () => {
@@ -4208,7 +4212,7 @@ function updatePets(dt) {
     if (m.bite > 0) m.bite -= dt;
     if (m.sk <= 0 && (e || m.kind === 'wolf')) {                       // 주기 자동 스킬
       m.sk = S.sk;
-      if (m.kind === 'wolf') { let n = 0; gridQuery(m.x, m.y, S.skR, t => { n++; t.slowT = Math.max(t.slowT || 0, 2); t.lpk = 'wolf'; damageEnemy(t, S.dmg * (bondHas('wolf', 'howl2') ? 0.4 : 0.6), { src: 'howl' }); }); if (n && bondHas('wolf', 'alpha')) G.tm.alpha = 4; fx({ kind: 'ring', x: m.x, y: m.y, r0: 8, r1: S.skR, dur: 0.4, color: '#c8d4e0' }); if (!n) m.sk = 1; }
+      if (m.kind === 'wolf') { let n = 0; gridQuery(m.x, m.y, S.skR, t => { n++; t.slowT = Math.max(t.slowT || 0, 2); t.lpk = 'wolf'; damageEnemy(t, S.dmg * (bondHas('wolf', 'howl2') ? 0.3 : 0.45), { src: 'howl' }); }); if (n && bondHas('wolf', 'alpha')) G.tm.alpha = 4; fx({ kind: 'ring', x: m.x, y: m.y, r0: 8, r1: S.skR, dur: 0.4, color: '#c8d4e0' }); if (!n) m.sk = 1; }
       else {
         const x = m.x, y = m.y, R = S.skR, dm = S.dmg; gridQuery(x, y, R, t => { t.lpk = 'bear'; damageEnemy(t, dm * 2.5, { src: 'maul', kb: 260, fx: x, fy: y }); }); fx({ kind: 'ring', x, y, r0: 10, r1: R, dur: 0.35, color: '#c89060', fill: true });
         if (p.job2 === 'ursa') heal(1); if (bondHas('bear', 'guard')) heal(2);
@@ -4314,7 +4318,7 @@ Object.assign(WEAPONS, {
     base: { dmg: 22, cd: 2.6, R: 96, size: 15, dur: 0.7, kb: 260 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { cd: 0.15 }, { dmg: 0.3 }, { area: 0.1, dmg: 0.2 }] },
   shuriken: { name: '수리검', cat: 'ranged', ic: '수', desc: '명중할 때마다 다음 적에게 튕기는 수리검',
-    base: { dmg: 11, cd: 1.1, n: 1, pierce: 3, sp: 520, life: 1.4 },
+    base: { dmg: 10, cd: 1.1, n: 1, pierce: 3, sp: 520, life: 1.4 },
     ups: [{ n: 1 }, { dmg: 0.3 }, { pierce: 1 }, { cd: 0.15 }, { n: 1, dmg: 0.2 }] },
   bomb: { name: '폭탄 투척', cat: 'ranged', ic: '탄', desc: '적이 가장 많이 모인 곳에 폭탄 투척, 착지 시 폭발',
     base: { dmg: 30, cd: 2.2, n: 1, R: 68, fly: 0.6 },

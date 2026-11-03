@@ -18,6 +18,10 @@ function resize() {
   VIEW.w = VIEW.cw / VIEW.zoom; VIEW.h = VIEW.ch / VIEW.zoom;
   VIEW.sat = document.getElementById('sa').getBoundingClientRect().height || 0;
   VIEW.sab = document.getElementById('sb').getBoundingClientRect().height || 0;
+  /* 0.27 화면 고정 보강: 안전 영역 값을 확정 시점에만 고정 반영, 상단 끌기 때 시스템 표시줄이 잠깐 나타나며
+     안전 영역 값이 흔들려도 UI 재배치(레이아웃 재계산) 없음 */
+  const rs = document.documentElement.style;
+  rs.setProperty('--sat', VIEW.sat + 'px'); rs.setProperty('--sab', VIEW.sab + 'px');
 }
 let rsT = 0;
 window.addEventListener('resize', () => {
