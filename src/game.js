@@ -16,13 +16,13 @@ function newRun() {
     enemies: [], gems: [], eb: [], hz: [], gk: null, gkMob: null, proj: [], fx: [], toasts: [], later: [], chests: [], pools: [], traps: [], turrets: [], minions: [], mines: [], altar: null, banner: null, sanct: null,
     pendingLv: 0, pendingBr: [], pendingChest: 0, pendingJob2: false, pendingCamp: false, pendingDoor: false, rerolls: CFG.select.rerolls, banishes: CFG.select.banishes, banished: new Set(), sel: null,
     tm: { shield: 3, trail: 0, charge: 8, storm: 0, inv: 0, dance: 0, rain: 0, overdrive: 0, guard: 0, passCd: 0, furyHold: 0, run: 0, stopT: 0, turret: 1, readyAt: 0 },
-    stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
+    stats: { crisis: [], start: null, dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
       kt: {}, branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
   };
   if (typeof perfReset === 'function') perfReset();        // 성능 측정 판 단위 (0.18)
   G.opt = runOpt(); saveCache = null;                       // 고난도 단계·도전 조건 (0.15)
   recalc();
-  addWeapon(startWeapon());
+  startPickInit();                                           // 0.24 시작 무기 3지선다
   G.gk = gkPick();                                          // 수문장 결정 (0.11)
   G.runType = runTypeOf();                                  // 판 구조: normal·final·retry (0.12)
   if (G.runType === 'retry') G.gk = null;
@@ -72,7 +72,8 @@ function step(dt) {
   updateMisc(dt);
   if (G.result) { G.endT -= dt; if (G.endT <= 0 && !G.finished) { G.finished = true; finishRun(); } }
   else if (STATE.mode === 'play') {                         // 선택 화면 우선순위: 2차 전직 → 분기 → 보물 상자 → 레벨업
-    if (G.pendingJob2) openJob2();
+    if (G.pendingStart) openStart();
+    else if (G.pendingJob2) openJob2();
     else if (G.pendingBr.length) openBranch();
     else if (G.pendingDoor) openDoor();
     else if (G.pendingCamp) openCamp();
@@ -113,6 +114,7 @@ function makeEnemy(type, x, y) {
     color: d.color, shape: d.shape, xp: d.xp, flash: 0, kbx: 0, kby: 0, dead: false, ht: {},
   };
   if (d.mb) e.mb = d.mb;                                     // 잡몹 행동 유형 (0.23)
+  if (G.ph && G.ph.cart && !G.ph.cart.done && !G.ph.inGap && Math.random() < PH_CFG.cartAggro) e.tgtCart = true;   // 0.24 수레 표적
   e.maxHp = e.hp; G.enemies.push(e); return e;
 }
 function aliveCount() { let n = 0; for (const e of G.enemies) if (!e.dead) n++; return n; }
@@ -149,8 +151,11 @@ function updateEnemies(dt) {
     if (e.sleep || e.fixed) sp = 0;                                               // 잠든 거대 몹·마법진 (0.10)                                       // 빙결·속박 (0.8)
     if (e.bl > 0) { e.bl -= dt; e.blT = (e.blT || 0) - dt; if (e.blT <= 0) { e.blT = 0.5; damageEnemy(e, e.blD, { src: 'bleed' }); if (e.dead) continue; } }
     if (e.gk) { gkUpdate(e, dt, d, dx, dy); continue; }                      // 수문장 전용 이동·패턴 (0.11)
+    if (e.thief) { thiefMove(e, dt, d, dx, dy); continue; }                    // 도망치는 보물 몹 (0.24)
     const z = G.ph.zone; if (z && dist2(e.x, e.y, z.x, z.y) < z.r * z.r) sp *= PH_CFG.zoneSlow;   // 봉인석 구역 둔화 (0.3)
-    e.x += dx / d * sp * dt; e.y += dy / d * sp * dt;
+    const ct = e.tgtCart && G.ph.cart && !G.ph.cart.done ? G.ph.cart : null;   // 수레 표적 적 (0.24): 수레로 돌진, 붙으면 정지
+    if (ct) { const cx = ct.x - e.x, cy = ct.y - e.y, cd = Math.hypot(cx, cy) || 1; if (cd > e.r + ct.r) { e.x += cx / cd * sp * dt; e.y += cy / cd * sp * dt; } }
+    else { e.x += dx / d * sp * dt; e.y += dy / d * sp * dt; }
     if (d > farR && !e.fixed && !e.sleep) { const q = e.cmd ? ringAt(VIEW.w * 0.6, VIEW.w * 0.7) : ringPos(10); e.x = q.x; e.y = q.y; e.kbx = e.kby = 0; }   // 시야 밖 재배치
     if (d < e.r + p.r - 3 && !e.fixed && !e.sleep) hurtPlayer(e.dmg, ENEMIES[e.type].name);
   }
@@ -182,7 +187,8 @@ function damageEnemy(e, dmg, o = {}) {
 }
 function killEnemy(e) {
   e.dead = true; G.kills++; G.stats.kt[e.type] = 1; sfx(e.gk && !e.clone ? 'bossdie' : 'kill');
-  G.gems.push({ x: e.x, y: e.y, v: e.xp, mag: false }); G.stats.xpDrop += e.xp;
+  const xv = e.xp * crisisXpMul(); if (xv > 0) { G.gems.push({ x: e.x, y: e.y, v: xv, mag: false }); G.stats.xpDrop += xv; }   // 균열 폭주 경험치 2배 (0.24)
+  if (e.thief) crisisThiefKilled(e);
   if (e.elite) eliteKilled(e);
   if (e.ev) eventMobKilled(e);
   if (e.gk) gkKilled(e);
@@ -200,6 +206,7 @@ function hurtPlayer(dmg, src) {
   dmg *= playerHurtMul() * traitHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
   vibe(25); sfx('hurt');
   onPlayerHurt();
+  G.ph.hurtEma += dmg / 40;                                  // 강함 판정용 최근 피해 (0.24)
   p.hp -= dmg; p.invT = CFG.player.invuln + (tr('guard') ? 0.2 : 0); p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
   if (p.hp <= 0 && pBr('regen') === 'second' && !p.revived) { p.revived = true; p.hp = p.maxHp * 0.4; p.invT = 2; toast('불굴', '#ffb070'); return; }
@@ -257,7 +264,7 @@ function buildReport() {
     branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
     job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults,
     altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
-    order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.stats.gate.killed ? 0 : G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, runType: G.runType, demon: dmReport(), events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [], traits: G.stats.traits || [], mobs: Object.keys(G.stats.kt),
+    order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.stats.gate.killed ? 0 : G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, runType: G.runType, demon: dmReport(), events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [], traits: G.stats.traits || [], mobs: Object.keys(G.stats.kt), crisis: G.stats.crisis, start: G.stats.start,
   };
 }
 /* 마지막 1분 피해 비중 (빌드 완성도 반영 판독용) */

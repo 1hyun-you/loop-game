@@ -13,7 +13,15 @@ function resize() {
   VIEW.sat = document.getElementById('sa').getBoundingClientRect().height || 0;
   VIEW.sab = document.getElementById('sb').getBoundingClientRect().height || 0;
 }
-window.addEventListener('resize', resize);
+/* 0.25 상단 알림창 끌기 등 일시적 크기 변화로 캔버스가 재생성되며 흔들리던 현상 제거:
+   폭이 그대로이고 높이 변화가 30% 미만이면 0.4초 지연 후 크기가 유지될 때만 반영 */
+let rsT = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(rsT);
+  const w = window.innerWidth, h = window.innerHeight;
+  if (w !== VIEW.cw || Math.abs(h - VIEW.ch) > VIEW.ch * 0.3) return resize();
+  rsT = setTimeout(() => { if (window.innerWidth === w && window.innerHeight === h) resize(); }, 400);
+});
 
 const INPUT = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0, dx: 0, dy: 0, mag: 0, keys: {} };
 cv.addEventListener('pointerdown', e => {

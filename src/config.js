@@ -4,7 +4,7 @@
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.23',
+  VERSION: '0.25',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -81,6 +81,7 @@ const WEAPONS = {
 };
 const WEAPON_ORDER = ['cleave', 'spin', 'shield', 'slam', 'arrow', 'boomerang', 'knife', 'trap', 'fireball', 'lightning', 'icering', 'orb'];
 const START_WEAPON = 'cleave';
+const START_POOL = ['cleave', 'spin', 'arrow', 'boomerang', 'fireball', 'lightning'];   // 0.24 시작 무기 3지선다 후보 (1단계 공용 무기 6종)
 
 /* 보조 효과 8종 — 1단계 4종 + 3단계 4종, 단계당 효과, 최대 5단계 */
 const PASSIVES = {

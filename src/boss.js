@@ -217,7 +217,7 @@ function updateBossFx(dt) {
     if (h.k === 'sect' || h.k === 'beam') continue;                 // 마왕 패턴은 dmFx에서 처리
     if (h.follow && !h.fired) { h.x = h.follow.x; h.y = h.follow.y; }
     if (h.k === 'circ' && h.t >= h.warn && !h.fired) {
-      h.fired = true; fx({ kind: 'ring', x: h.x, y: h.y, r0: h.r * 0.4, r1: h.r * 1.1, dur: 0.35, color: h.pool ? '#ff7a30' : '#ff5a4a' });
+      h.fired = true; fx({ kind: 'ring', x: h.x, y: h.y, r0: h.r * 0.4, r1: h.r * 1.1, dur: 0.35, color: h.pool ? '#e0306a' : '#ff5a4a' });
       if (!G.result && dist2(p.x, p.y, h.x, h.y) < (h.r + p.r * 0.5) ** 2) hurtPlayer(h.dmg * (h.pool ? 1.6 : 1), h.src);
     }
     if (h.pool && h.fired) { h.tick = (h.tick || 0) - dt; if (h.tick <= 0) { h.tick = 0.5; if (!G.result && dist2(p.x, p.y, h.x, h.y) < (h.r + p.r * 0.5) ** 2) hurtPlayer(h.dmg, h.src); } }
@@ -242,7 +242,8 @@ function drawBossGround(c) {
       c.strokeStyle = 'rgba(255,120,90,0.9)'; c.lineWidth = 2; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.stroke();
     } else if (h.pool) {
       const k = 1 - (h.t - h.warn) / h.pool;
-      c.fillStyle = `rgba(255,110,30,${0.35 * k + 0.1})`; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.fill();
+      c.fillStyle = `rgba(200,30,70,${0.35 * k + 0.1})`; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.fill();   // 0.25 적 장판 적자색 (아군 화염 장판 주황과 구분)
+      c.setLineDash([5, 4]); c.strokeStyle = `rgba(255,90,130,${0.8 * k})`; c.lineWidth = 2; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.stroke(); c.setLineDash([]);
     }
   }
 }
@@ -256,6 +257,10 @@ function drawBossTop(c, inView) {
     if (e.rage) { c.strokeStyle = 'rgba(255,90,60,0.7)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 5, 0, 7); c.stroke(); }
     if (e.gk === 'seren' && !e.clone && (G.time % 1.3) < 0.2) { c.strokeStyle = 'rgba(255,255,255,0.95)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 8, 0, 7); c.stroke(); }   // 본체 미광
   }
+  // 0.25 피아 구분: 적 탄환은 검은 외곽 + 적자색 테두리 + 맥동 (아군 공격은 청백·금색 계열)
+  const pu = 0.5 + 0.5 * Math.sin(G.time * 14);
+  c.fillStyle = 'rgba(20,6,16,0.85)'; c.beginPath(); for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; c.moveTo(b.x + b.r + 3.5, b.y); c.arc(b.x, b.y, b.r + 3.5, 0, 7); } c.fill();
+  c.strokeStyle = `rgba(255,${50 + pu * 40},${90 + pu * 40},0.95)`; c.lineWidth = 2; c.beginPath(); for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; c.moveTo(b.x + b.r + 2, b.y); c.arc(b.x, b.y, b.r + 2, 0, 7); } c.stroke();
   for (const b of G.eb) { if (!inView(b.x, b.y, b.r)) continue; drawSpriteC(c, 'ball', 0, b.x, b.y, { tint: b.col, mul: b.r > 7 ? 2 : 1 }); }   // 0.20 도트 탄환
 }
 /* 상단 수문장 체력 막대 */

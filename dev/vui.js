@@ -29,7 +29,9 @@ const SERVER = http.createServer((q, s) => { s.setHeader('content-type', 'text/h
   await wait(300); chk('intro dialog', await ev(() => STATE.mode === 'talk' && !!document.getElementById('dlg')));
   chk('portrait img', await ev(() => /url\(/.test(document.getElementById('dpt').style.background)));
   for (let i = 0; i < 12 && await ev(() => STATE.mode === 'talk'); i++) { await click('dlg'); await wait(120); await click('dlg'); await wait(120); }
-  chk('play after dialog', await ev(() => STATE.mode === 'play'));
+  chk('start pick', await ev(() => STATE.mode === 'select' && G.sel.kind === 'start' && document.querySelectorAll('.card').length === 3));   // 0.24 시작 무기 3지선다
+  await click('.card[data-i="1"]'); await click('.card[data-i="1"]');
+  chk('play after start pick', await ev(() => STATE.mode === 'play' && G.p.weapons.length === 1));
   // 고정형 조이스틱: 화면 아무 곳 터치 → 기준점은 고정 위치
   await p.mouse.move(100, 300); await p.mouse.down(); await wait(100);
   chk('fixed joy origin', await ev(() => { const f = joyFixed(); return INPUT.active && INPUT.ox === f.x && INPUT.oy === f.y; }));
@@ -46,7 +48,7 @@ const SERVER = http.createServer((q, s) => { s.setHeader('content-type', 'text/h
   await click('[data-tier="2"]'); await click('[data-cond="melee"]'); await click('[data-cond="ranged"]');
   chk('melee/ranged exclusive', await ev(() => META.conds.join() === 'ranged' && META.tier === 2));
   await click('pr_go'); await wait(200);
-  chk('run opt applied', await ev(() => G.opt.tier === 2 && G.opt.conds[0] === 'ranged' && G.p.weapons[0].id === 'arrow'));
+  chk('run opt applied', await ev(() => G.opt.tier === 2 && G.opt.conds[0] === 'ranged' && G.startCands.every(id => WEAPONS[id].cat !== 'melee')));
   await ev(() => showCodex('u', showTitle)); await click('[data-c="teal"]');
   chk('color teal', await ev(() => loadSave().color === 'teal' && playerColor() === '#5fd0c0'));
   await click('[data-t="end"]'); chk('title equip', await ev(() => loadSave().title === 'end'));

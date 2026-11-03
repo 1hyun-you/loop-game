@@ -17,6 +17,8 @@ function shake(a, dur) { const j = JC(); if (a >= j.ska || j.sk <= 0) { j.ska = 
 function shakeAmt() { const j = G.jc; return j && j.sk > 0 ? j.ska * Math.min(1, j.sk * 4) : 0; }
 
 /* 파편 */
+/* 0.25 폭발 불티 — 폭발형 원 효과마다 1회, 동시 개수는 burst 상한 적용 */
+function sparkBurst(x, y, R, col) { burst(x, y, Math.min(10, 3 + Math.round(R / 14)), col, R * 2.6, 0.35, 2.5); }
 function burst(x, y, n, col, sp = 120, life = 0.45, sz = 3) {
   const j = JC(); n = Math.min(n, JUICE.ptMax - j.pt.length); if (n <= 0) return;
   for (let i = 0; i < n; i++) {

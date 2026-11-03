@@ -32,25 +32,43 @@ function showTitle() {
   on('codex', () => showCodex('f', showTitle));
   on('prep', () => showPrep(showTitle));
 }
+/* 0.25 휴대폰 뒤로가기: 플레이 중 일시정지, 일시정지·하위 화면은 이전 화면, 처음 화면은 2초 내 두 번 눌러 종료 */
+const BACK = { armT: 0 };
+function backInit() { try { history.pushState({ g: 1 }, ''); } catch (e) { } window.addEventListener('popstate', onBack); }
+function backHint(t) { let d = document.getElementById('backhint'); if (!d) { d = document.createElement('div'); d.id = 'backhint'; document.body.appendChild(d); } d.textContent = t; d.style.display = 'block'; clearTimeout(BACK.h); BACK.h = setTimeout(() => { d.style.display = 'none'; }, 2000); }
+function onBack() {
+  const sub = ['s_back', 'cx_back', 'pr_back'].map(id => document.getElementById(id)).find(Boolean);
+  if (STATE.mode === 'title' && !sub) {
+    if (performance.now() - BACK.armT < 2000) { window.removeEventListener('popstate', onBack); history.back(); return; }   // 앱 종료(이전 기록으로 이동)
+    BACK.armT = performance.now(); backHint('한 번 더 누르면 종료');
+  } else if (sub) sub.click();
+  else if (STATE.mode === 'play') pauseGame();
+  else if (STATE.mode === 'pause') { if (PAUSE_ABIL.on) { PAUSE_ABIL.on = false; STATE.mode = 'play'; pauseGame(); } else resumeGame(); }
+  else if (STATE.mode === 'select' && G.sel && G.sel.abil) toggleAbil();
+  else if (STATE.mode === 'result') { const h = document.getElementById('home'); if (h) h.click(); }
+  try { history.pushState({ g: 1 }, ''); } catch (e) { }
+}
 function startRun() { newRun(); STATE.mode = 'play'; hideUI(); }     // 도전 옵션 반영 위해 항상 새 판 (0.15)
 
 /* 일시정지 */
 function togglePause() { if (STATE.mode === 'play') pauseGame(); else if (STATE.mode === 'pause') resumeGame(); }
+const PAUSE_ABIL = { on: false };
 function pauseGame() {
   if (STATE.mode !== 'play' || !G || G.result) return;
   STATE.mode = 'pause'; INPUT.active = false; INPUT.id = null; INPUT.mag = 0;
   const P = curPhase(), ph = G.ph;
   UI.innerHTML = `<div class="layer">
     <h2>일시정지</h2>
-    <div class="stats"><span>경과 시간</span><span>${fmtTime(G.time)}</span><span>페이즈</span><span>${P ? `${ph.i + 1}/${ph.order.length} ${P.name}` : '이동 중'}</span><span>레벨</span><span>${G.p.level}</span><span>체력</span><span>${Math.ceil(G.p.hp)}/${G.p.maxHp}</span></div>
-    <div class="build">${buildChips()}</div>
-    <div class="menu"><button class="pri" id="resume">계속</button><button id="psettings">설정</button><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div>`;
+    <div class="stats" ${PAUSE_ABIL.on ? 'style="display:none"' : ''}><span>경과 시간</span><span>${fmtTime(G.time)}</span><span>페이즈</span><span>${P ? `${ph.i + 1}/${ph.order.length} ${curPhaseName()}` : '이동 중'}</span><span>레벨</span><span>${G.p.level}</span><span>체력</span><span>${Math.ceil(G.p.hp)}/${G.p.maxHp}</span></div>
+    ${PAUSE_ABIL.on ? abilityHTML() : `<div class="build">${buildChips()}</div>`}
+    <div class="menu"><button class="pri" id="resume">계속</button><button id="pabil">${PAUSE_ABIL.on ? '능력 닫기' : '내 능력'}</button><button id="psettings">설정</button><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div>`;
   on('resume', resumeGame);
+  on('pabil', () => { PAUSE_ABIL.on = !PAUSE_ABIL.on; STATE.mode = 'play'; pauseGame(); });
   on('psettings', () => showSettings(() => { STATE.mode = 'play'; pauseGame(); }));
   on('restart', () => { if (confirmStep('restart')) newRun(); });
   on('home', () => { if (confirmStep('home')) showTitle(); });
 }
-function resumeGame() { if (STATE.mode !== 'pause') return; STATE.mode = 'play'; hideUI(); lastT = performance.now(); }
+function resumeGame() { if (STATE.mode !== 'pause') return; PAUSE_ABIL.on = false; STATE.mode = 'play'; hideUI(); lastT = performance.now(); }
 /* 진행 중인 판을 버리는 버튼은 한 번 더 눌러 확정 (오터치 방지) */
 function confirmStep(id) {
   const b = document.getElementById(id); if (!b) return true;
@@ -160,5 +178,5 @@ function frame(now) {
 resize();
 buildPortraits();
 DEV.init();
-showTitle();
+showTitle(); backInit();
 requestAnimationFrame(frame);

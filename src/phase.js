@@ -28,7 +28,7 @@ const PHASES = {
   seal: { name: '봉인석', type: '기믹형', goal: 'zone', fail: 170, spawnMul: 0.45, tint: [90, 140, 230],
     hint: '봉인석 4개 해제 (빛나는 구역에 머물기, 구역 안 적 둔화)' },
   escort: { name: '수레 호위', type: '기믹형', goal: 'escort', fail: 170, spawnMul: 0.6, tint: [200, 160, 110],
-    hint: '수레 곁에 머물러 목적지까지 호위' },
+    hint: '수레를 노리는 적을 막아 목적지까지 호위' },
   ritual: { name: '의식 저지', type: '기믹형', goal: 'ritual', fail: 120, spawnMul: 0.55, tint: [150, 90, 210],
     hint: '마법진 3개 파괴 (시간 초과 시 정예 소환)' },
   collapse: { name: '붕괴 지대', type: '기믹형', goal: 'time', dur: 120, spawnMul: 0.6, tint: [140, 120, 100],
@@ -40,42 +40,76 @@ const PHASES = {
   demon: { name: '마왕전', type: '보스', goal: 'boss', fail: 420, spawnMul: 0.3, tint: [70, 40, 110],
     hint: '마왕 처치' },
 };
+/* 0.24 위험 변형 — 강한 상태에서 휴식형이 걸리면 습격 변형으로 등장 */
+const AMBUSH = { calm: { name: '언덕 매복', hint: '매복 습격 · 회복의 샘을 지켜라' }, camp: { name: '야영지 야습', hint: '야습 격퇴 · 야영지 보상 1회 선택' } };
+const REST_PH = ['calm', 'camp'];
 const PHASE_ORDER = ['horde', 'calm', 'fog', 'camp', 'surge', 'warband', 'hunt', 'siege', 'seal', 'escort', 'ritual', 'collapse'];
 const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 16,   // 0.17 대장 체력 7→16배 (0.15 기록 처치 5~37초)
   zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
   perRun: [7, 8], perType: 2, retryN: 5, finalGap: 9,              // 재도전 판 페이즈 수 (0.12), 마왕성 출현 예고 구간(초)
   huntN: 4, huntAt: [0, 15, 35, 55],                                   // 엘리트 사냥: 처치 목표·출현 시각(초)
   siegeEvery: 13, siegeFirst: 4, siegeN: 30, siegeR: 300,              // 포위진: 원형 포위 주기·수·반경
-  cartHp: 300, cartR: 16, cartDist: 1000, cartSpeed: 10, cartNear: 150, cartHurt: 0.25, cartHurtMax: 8,   // 수레 호위
+  cartHp: 300, cartR: 16, cartDist: 1000, cartSpeed: 18, cartNear: 150, cartHurt: 0.25, cartHurtMax: 8,   // 수레 호위 (0.24 속도 10→18, 스스로 전진)
   ritN: 3, ritHp: 10, ritR: 24, ritDist: [200, 320], ritEvery: 6, ritSummon: 3,                           // 의식 저지 (체력: 같은 시각 오우거 배수)
   crackEvery: 2.0, crackN: 3, crackR: 52, crackWarn: 1.3, crackDmg: 16,   // 붕괴 지대
   campDist: [160, 240], campR: 28,
+  // 0.24 흐름 개편: 강함 판정·위험 변형·처치 가속·수레 재설계
+  strongAt: 0.82, weakAt: 0.55, ambushMul: 1.35, ambushElites: 2,
+  pickW: { strong: [0.4, 1, 2.6], mid: [1, 1.2, 1.4], weak: [2.4, 1.4, 1] },   // 다음 페이즈 가중치 [휴식형, 기본형, 전투·기믹형]
+  accPerKill: 0.025, accMax: 0.2,                                     // 시간형 페이즈: 처치 1회당 시계 추가 진행(초), 단축 상한 20% (0.24 시험: 30% 상한 시 무적 판 길이 11.7분)
+  cartAggro: 0.45, cartBlock: 0.2,                                    // 수레 표적 적 비율, 붙은 적 1체당 감속 20% (5체 정지)
 };
 
 /* 판당 투입 페이즈 구성 — 유형별 perType종 이상 보장 후 나머지 무작위 */
 function pickPhaseOrder(retry) {
   const n = retry ? PH_CFG.retryN : Math.random() < 0.5 ? PH_CFG.perRun[0] : PH_CFG.perRun[1], by = {}, out = [];
-  for (const id of PHASE_ORDER) (by[PHASES[id].type] = by[PHASES[id].type] || []).push(id);
+  const pool = PHASE_ORDER.filter(id => !REST_PH.includes(id)).concat([pick(REST_PH)]);   // 0.24 휴식형 판당 최대 1회
+  for (const id of pool) (by[PHASES[id].type] = by[PHASES[id].type] || []).push(id);
   for (const t in by) out.push(...shuffle(by[t].slice()).slice(0, retry ? 1 : PH_CFG.perType));
-  const rest = shuffle(PHASE_ORDER.filter(id => !out.includes(id)));
+  const rest = shuffle(pool.filter(id => !out.includes(id)));
   while (out.length < n && rest.length) out.push(rest.pop());
-  return shuffle(out);
+  const o = shuffle(out), f = o.findIndex(id => !REST_PH.includes(id));   // 첫 페이즈는 휴식형 제외, 이후 순서는 강함 판정으로 매번 결정
+  if (f > 0) [o[0], o[f]] = [o[f], o[0]];
+  return o;
 }
+/* 0.24 강함 판정 (0~1): 체력 여유·최근 피해량·주변 적 누적 */
+function strength() {
+  const p = G.p, ph = G.ph, cap = Math.min(CFG.spawn.max, CFG.spawn.rampBase + G.time * CFG.spawn.ramp);
+  const hpK = p.hp / p.maxHp, hurtK = 1 - clamp((ph.hurtEma || 0) * 40 / p.maxHp, 0, 1), crowdK = 1 - clamp((aliveCount() - 40) / (cap * 0.6), 0, 1);
+  return clamp(0.4 * hpK + 0.35 * hurtK + 0.25 * crowdK, 0, 1);
+}
+const phTier = id => REST_PH.includes(id) ? 0 : PHASES[id].type === '기본형' ? 1 : 2;
+/* 다음 페이즈 결정 — 남은 후보 중 강함에 따라 가중 선택, 강할 때 휴식형은 습격 변형 */
+function phaseChooseNext() {
+  const ph = G.ph, a = ph.i + 1, b = ph.order.length - 1;            // 마지막(수문장전·마왕전) 고정
+  if (a >= b) return;
+  const s = strength(), early = a < CFG.early.phases + 1;   // 초반 완화 구간 직후 페이즈까지는 강해도 보통 가중치 (초반 사망 방지)
+  const W = s <= PH_CFG.weakAt ? PH_CFG.pickW.weak : s >= PH_CFG.strongAt && !early ? PH_CFG.pickW.strong : PH_CFG.pickW.mid;
+  const cands = ph.order.slice(a, b).map((id, k) => ({ k: a + k, id, w: W[phTier(id)] }));
+  const c = weightedPick(cands); [ph.order[a], ph.order[c.k]] = [ph.order[c.k], ph.order[a]];
+  ph.nextAmbush = REST_PH.includes(c.id) && s >= PH_CFG.strongAt;
+  ph.str = s;
+}
+function phaseName(id, amb) { return amb && AMBUSH[id] ? AMBUSH[id].name : PHASES[id].name; }
 function phaseInit() {
   G.ph = { order: pickPhaseOrder(G.runType === 'retry'), i: -1, id: null, t: 0, gapT: 2.5, inGap: true, tint: null, tintFrom: null, tintK: 1,
-    zone: null, spring: null, cmd: null, cart: null, rits: null, cracks: [], camp: null, hunt: 0, log: [] };
+    zone: null, spring: null, cmd: null, cart: null, rits: null, cracks: [], camp: null, hunt: 0, log: [], hurtEma: 0, acc: 0, k0: 0, ambush: false, nextAmbush: false };
   G.ph.order.push(G.runType === 'retry' ? 'demon' : 'gate');   // 수문장전 마지막 고정 (0.11), 재도전 판은 마왕전 (0.12)
   eventInit();
 }
 function curPhase() { return G.ph.id ? PHASES[G.ph.id] : null; }
-function phaseSpawnMul() { return (G.ph.inGap ? 0.6 : curPhase().spawnMul) * eventSpawnMul() * (hasCurse('horde') ? 1.15 : 1); }
+function phaseSpawnMul() { return (G.ph.inGap ? 0.6 : G.ph.ambush ? PH_CFG.ambushMul : curPhase().spawnMul) * eventSpawnMul() * (hasCurse('horde') ? 1.15 : 1); }
+function curPhaseName() { return G.ph.id ? phaseName(G.ph.id, G.ph.ambush) : null; }
 function phaseBias() { const P = curPhase(); return !G.ph.inGap && P && P.bias || null; }
 
 function phaseStart() {
-  const ph = G.ph; ph.i++; ph.id = ph.order[ph.i]; ph.t = 0; ph.inGap = false;
-  const P = PHASES[ph.id];
+  const ph = G.ph; ph.i++; ph.id = ph.order[ph.i]; ph.t = 0; ph.inGap = false; ph.acc = 0; ph.k0 = G.kills;
+  ph.ambush = !!ph.nextAmbush && REST_PH.includes(ph.id); ph.nextAmbush = false;
+  const P = PHASES[ph.id], A = ph.ambush ? AMBUSH[ph.id] : null;
   scheduleElites();
-  if (ph.id !== 'gate' && ph.id !== 'demon') banner(P.name, `${ph.i + 1}/${ph.order.length} · ${P.hint}`);   // 페이즈 전환 알림판 (0.22)
+  if (ph.id !== 'gate' && ph.id !== 'demon') banner(A ? A.name : P.name, `${ph.i + 1}/${ph.order.length} · ${A ? A.hint : P.hint}`, A ? '#ff8a6a' : undefined);   // 페이즈 전환 알림판 (0.22)
+  if (A) { for (let i = 0; i < PH_CFG.ambushElites; i++) spawnElite(); shake(3, 0.4); }
+  crisisPlan();                                               // 후반 고비 사건 (0.24)
   if (ph.id === 'gate') gkSpawn();
   if (ph.id === 'demon') dmSpawn();
   if (ph.id === 'calm') { const q = ringAt(180, 260); ph.spring = { x: q.x, y: q.y, r: 22, used: false }; }
@@ -109,7 +143,7 @@ function newZone(i) { const q = ringAt(PH_CFG.zoneDist[0], PH_CFG.zoneDist[1]); 
 
 function phaseEnd(outcome) {
   const ph = G.ph;
-  ph.log.push([ph.id, Math.round(ph.t), outcome].concat(ph.cmd ? [Math.round(Math.max(0, ph.cmd.hp) / ph.cmd.maxHp * 100), Math.round(Math.sqrt(dist2(ph.cmd.x, ph.cmd.y, G.p.x, G.p.y)))] : []));
+  ph.log.push([ph.id + (ph.ambush ? '*' : ''), Math.round(ph.t), outcome, Math.round((ph.str || 0) * 100), Math.round(ph.acc)].concat(ph.cmd ? [Math.round(Math.max(0, ph.cmd.hp) / ph.cmd.maxHp * 100), Math.round(Math.sqrt(dist2(ph.cmd.x, ph.cmd.y, G.p.x, G.p.y)))] : []));
   ph.zone = null; ph.spring = null;
   if (ph.cmd && !ph.cmd.dead) { ph.cmd.dead = true; fx({ kind: 'ring', x: ph.cmd.x, y: ph.cmd.y, r0: 10, r1: 60, dur: 0.5, color: '#e8a83c' }); }
   ph.cmd = null;
@@ -136,7 +170,8 @@ function phaseEnd(outcome) {
     fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 260, dur: 1.2, color: '#ffe08a' });
     return;
   }
-  ph.inGap = true; ph.gapT = PH_CFG.gap; ph.id = null;
+  ph.inGap = true; ph.gapT = PH_CFG.gap; ph.id = null; ph.ambush = false;
+  phaseChooseNext();                                          // 0.24 다음 페이즈 강함 판정
   altarCheck();
   toast(outcome === 'ok' ? '페이즈 돌파' : '페이즈 종료', '#9fe0a0');
 }
@@ -149,14 +184,22 @@ function updatePhase(dt) {
     ph.gapT -= dt;
     const nx = ph.order[ph.i + 1];
     if (nx && ph.gapT <= PH_CFG.warnAt && !ph.warned) {
-      ph.warned = true; ph.tintFrom = ph.tint; ph.tint = PHASES[nx].tint; ph.tintK = 0;
-      toast('다음: ' + PHASES[nx].name, '#cfc6ff');
+      ph.warned = true; ph.tintFrom = ph.tint; ph.tint = ph.nextAmbush ? [200, 70, 60] : PHASES[nx].tint; ph.tintK = 0;
+      toast('다음: ' + phaseName(nx, ph.nextAmbush), ph.nextAmbush ? '#ff9a7a' : '#cfc6ff');
     }
     if (ph.gapT <= 0) { ph.warned = false; phaseStart(); }
     return;
   }
-  if (!eventPaused()) ph.t += dt;          // 곁가지 사건 진행 중 페이즈 타이머 정지 (3단계 결정 안건 6)
-  const P = PHASES[ph.id];
+  const P = PHASES[ph.id], dk = G.kills - ph.k0; ph.k0 = G.kills;
+  if (!eventPaused()) {
+    ph.t += dt;          // 곁가지 사건 진행 중 페이즈 타이머 정지 (3단계 결정 안건 6)
+    if (P.goal === 'time' && (ph.ambush || !REST_PH.includes(ph.id)) && dk > 0) {   // 0.24 처치 가속 (휴식형 제외, 습격 변형 포함)
+      const b = Math.min(dk * PH_CFG.accPerKill, P.dur * PH_CFG.accMax - ph.acc);
+      if (b > 0) { ph.t += b; ph.acc += b; ph.accT = 0.6; }
+    }
+  }
+  if (ph.accT > 0) ph.accT -= dt;
+  ph.hurtEma *= Math.max(0, 1 - dt / 40);
   updatePhaseGimmick(P, dt);
   if (G.result) return;
   if (P.goal === 'hunt' && ph.hunt >= PH_CFG.huntN) return phaseEnd('ok');
@@ -219,14 +262,13 @@ function updatePhaseGimmick(P, dt) {
   }
   // 떠돌이 야영지: 접촉 시 보상 1회 선택
   if (ph.camp && !ph.camp.used && dist2(p.x, p.y, ph.camp.x, ph.camp.y) < (ph.camp.r + p.r) ** 2) { ph.camp.used = true; G.pendingCamp = true; }
-  // 수레 호위: 플레이어 근접 시에만 전진, 접촉 적에게 손상
+  // 수레 호위 (0.24 재설계): 수레는 스스로 전진, 적 일부가 수레를 노리고 돌진, 붙은 적 수만큼 감속·손상
   const c = ph.cart;
   if (c && !c.done) {
-    const near = dist2(p.x, p.y, c.x, c.y) < PH_CFG.cartNear ** 2;
-    c.moving = near && !paused;
-    if (c.moving) { const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy); if (d < 8) { c.done = true; } else { c.x += dx / d * PH_CFG.cartSpeed * dt; c.y += dy / d * PH_CFG.cartSpeed * dt; } }
     let n = 0, hurt = 0;
-    gridQuery(c.x, c.y, c.r + 18, e => { if (e.fixed || e.sleep || n >= PH_CFG.cartHurtMax) return; if (dist2(e.x, e.y, c.x, c.y) < (e.r + c.r) ** 2) { n++; hurt += e.dmg; } });
+    gridQuery(c.x, c.y, c.r + 18, e => { if (e.fixed || e.sleep || e.dead || n >= PH_CFG.cartHurtMax) return; if (dist2(e.x, e.y, c.x, c.y) < (e.r + c.r + 2) ** 2) { n++; hurt += e.dmg; } });
+    c.block = n; c.sp = paused ? 0 : PH_CFG.cartSpeed * Math.max(0, 1 - n * PH_CFG.cartBlock); c.moving = c.sp > 0;
+    if (c.moving) { const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy); if (d < 8) { c.done = true; } else { c.x += dx / d * c.sp * dt; c.y += dy / d * c.sp * dt; } }
     if (hurt) { c.hp -= hurt * PH_CFG.cartHurt * dt; c.hit = 0.15; }
     c.hit -= dt;
   }
@@ -265,7 +307,7 @@ function phaseCleanup(outcome) {
 /* 진행도(0~1) — 상단 표시용 */
 function phaseProgress() {
   const ph = G.ph, P = curPhase(); if (!P) return 0;
-  if (P.goal === 'time') return ph.t / P.dur;
+  if (P.goal === 'time') return Math.min(1, ph.t / P.dur);
   if (P.goal === 'boss') return G.gkMob ? 1 - Math.max(0, G.gkMob.hp) / G.gkMob.maxHp : 0;
   if (P.goal === 'kill') return ph.cmd ? 1 - Math.max(0, ph.cmd.hp) / ph.cmd.maxHp : 1;
   if (P.goal === 'zone') return ph.zone ? (ph.zone.i + ph.zone.prog / PH_CFG.zoneNeed) / PH_CFG.zoneN : 1;
@@ -304,7 +346,7 @@ function drawPhaseGround(c) {
     const k = ph.cart;
     c.strokeStyle = 'rgba(255,230,150,0.35)'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.moveTo(k.x, k.y); c.lineTo(k.tx, k.ty); c.stroke(); c.setLineDash([]);
     c.fillStyle = '#e8d070'; c.fillRect(k.tx - 1.5, k.ty - 28, 3, 28); c.fillRect(k.tx + 1.5, k.ty - 28, 14, 9);
-    c.strokeStyle = 'rgba(255,230,150,0.3)'; c.beginPath(); c.arc(k.x, k.y, PH_CFG.cartNear, 0, 7); c.stroke();
+    if (k.block) { c.fillStyle = '#ff8a6a'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.fillText(k.sp > 0 ? '감속' : '정지', k.x, k.y - 26); }
     drawSpriteC(c, 'cart', 0, k.x, k.y, { mode: k.hit > 0 ? 'white' : 'n' });   // 0.20 도트
     c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);
   }

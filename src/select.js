@@ -30,6 +30,34 @@ function openSelect() {
   G.sel = { kind: 'level', cards: drawCards(selN()), banish: false, rerolled: false };
   renderSelect(); autoLater();
 }
+/* 0.24 시작 무기 3지선다 — 도전 조건 계열 제한 반영, 후보 부족 시 같은 계열 공용 무기로 보충 */
+function startPickInit() {
+  let pool = START_POOL.filter(id => catOk(WEAPONS[id].cat));
+  if (pool.length < 3) pool = pool.concat(shuffle(WEAPON_ORDER.filter(id => !pool.includes(id) && catOk(WEAPONS[id].cat))).slice(0, 3 - pool.length));
+  G.startCands = shuffle(pool).slice(0, 3);
+  if (G.startCands.length <= 1) { addWeapon(G.startCands[0] || startWeapon()); G.stats.start = G.p.weapons[0].id; } else G.pendingStart = true;
+}
+function openStart() {
+  G.pendingStart = false; STATE.mode = 'select'; clearInput();
+  G.sel = { kind: 'start', cards: G.startCands.map(id => ({ t: 'wnew', id })), banish: false };
+  renderSelect(); autoLater();
+}
+/* 0.25 보유 능력 목록 (선택 화면·일시정지 화면) */
+function abilityHTML() {
+  const p = G.p, row = (col, ic, nm, lv, ds, cls = '') => `<div class="ab ${cls}"><span class="ic" style="background:${col}">${esc(ic)}</span><span><b>${esc(nm)}</b><span class="lv">${esc(lv)}</span><p>${esc(ds)}</p></span></div>`;
+  const brNm = (id, k) => { const o = k && BRANCHES[id] && BRANCHES[id].find(x => x.k === k); return o ? `\n분기 · ${o.nm}: ${o.ds}` : ''; };
+  let h = '';
+  if (p.job) { const J = JOBS[p.job], J2 = p.job2 && JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2);
+    h += '<h3>직업</h3>' + row(jobColor(p.job), J.ic, J.name, J2 ? '2차 · ' + J2.nm : '1차', J.rule + '\n궁극기 · ' + J.ult + (J2 ? '\n' + J2.nm + ' · ' + J2.ds : ''));
+    if (p.exw) { const X = EXW[p.exw.id]; h += row('#ffd24a', X.ic, X.name, '전용 무기', X.ds, 'exw'); } }
+  if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; return row(CFG.colors[d.cat], d.ic, d.name, 'Lv ' + w.lvl, d.desc + brNm(w.id, w.br)); }).join('');
+  if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br)); }).join('');
+  if (p.relics.length) h += '<h3>유물</h3>' + p.relics.map(id => row('#ffd24a', RELICS[id].ic, RELICS[id].name, '', RELICS[id].ds)).join('');
+  const tk = Object.keys(p.tr || {}); if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => row('#c8b0ff', TRAITS[k].ic, TRAITS[k].nm, '', TRAITS[k].ds)).join('');
+  if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => row('#8a6aa0', '저', CURSES[k].name, '', CURSES[k].ds)).join('');
+  return `<div class="abil">${h || '<p class="sub">보유 능력 없음</p>'}</div>`;
+}
+function toggleAbil() { const s = G.sel; if (!s) return; s.abil = !s.abil; renderSelect(); }
 function autoLater() { if (STATE.dev.auto) { const s = G.sel; setTimeout(() => { if (G && G.sel === s) autoSelect(); }, rand(700, 1200) / Math.sqrt(STATE.dev.speed)); } }
 function cardInfo(c) {
   const p = G.p;
@@ -60,6 +88,7 @@ const SEL_HEAD = {
   job: s => ['전직 제단', s.offer ? '봉헌할 무기 선택 · 무기가 사라지고 다른 직업 3종 호출' : '직업 선택 · 무기 봉헌 시 다시 호출'],
   camp: () => ['떠돌이 야영지', '휴식·보상 중 하나를 선택'],
   door: () => ['봉인된 문', '저주를 받아들이면 문이 열림'],
+  start: () => ['출발 무기', '이번 판의 첫 무기 선택'],
   job2: () => ['2차 전직', `${JOBS[G.p.job].name} · 필수 선택 · 전용 무기 ${EXW[G.p.job].name} 지급`],
 };
 function renderSelect() {
@@ -77,8 +106,8 @@ function renderSelect() {
   if (kind === 'level') acts = `<button id="reroll" ${G.rerolls ? '' : 'disabled'}>다시 뽑기 (${G.rerolls})</button><button id="banish" class="${s.banish ? 'on' : ''}" ${G.banishes ? '' : 'disabled'}>${s.banish ? '제외 취소' : `제외 (${G.banishes})`}</button>`;
   if (kind === 'job') acts = `<button id="offer" class="${s.offer ? 'on' : ''}" ${G.p.weapons.length >= 2 ? '' : 'disabled'}>${s.offer ? '봉헌 취소' : '무기 봉헌'}</button><button id="leave">떠나기</button>`;
   UI.innerHTML = `<div class="layer sel sel-${kind}">
-    <div class="sel-head"><h2>${h}</h2><p class="sub">${sub}</p></div>
-    <div class="cards">${cards}</div>
+    <div class="sel-head"><h2>${h}</h2><p class="sub">${sub}</p>${kind === 'start' ? '' : `<button id="abtn">${s.abil ? '닫기' : '내 능력'}</button>`}</div>
+    ${s.abil ? abilityHTML() : `<div class="cards">${cards}</div>`}
     ${acts ? `<div class="sel-actions">${acts}</div>` : ''}</div>`;
   s.armed = null;
   UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => { sfx('pick');
@@ -93,6 +122,7 @@ function renderSelect() {
   on('banish', () => { if (!G.banishes) return; s.banish = !s.banish; renderSelect(); });
   on('offer', () => { if (G.p.weapons.length < 2) return; s.offer = !s.offer; renderSelect(); });
   on('leave', leaveAltar);
+  on('abtn', toggleAbil);
 }
 function reroll() {
   if (!G.rerolls || !G.sel) return;
@@ -106,6 +136,7 @@ function pickCard(i) {
   if (s.kind === 'job2') { applyJob2(c.k); return closeSel(); }
   if (s.kind === 'camp') { applyCamp(c); return closeSel(); }
   if (s.kind === 'door') { applyDoor(c); return closeSel(); }
+  if (s.kind === 'start') { addWeapon(c.id); G.stats.start = c.id; recalc(); return closeSel(); }
   if (s.banish) {
     if (isFill(c) || !G.banishes) return;
     G.banished.add(c.id); G.banishes--; s.banish = false;
@@ -174,6 +205,7 @@ function autoSelect() {
   }
   if (s.kind === 'camp') { const p = G.p; return pickCard(p.hp < p.maxHp * 0.5 ? 0 : Math.random() < 0.55 ? 2 : 1); }
   if (s.kind === 'door') return pickCard(Math.random() < ai.curse ? 0 : 1);
+  if (s.kind === 'start') { const sc = s.cards.map(c => (ai.cat[WEAPONS[c.id].cat] || 0) + rand(0, 1.2)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; }); return pickCard(bi); }
   if (s.kind === 'chest') { const sc = s.cards.map(c => cardScore(c)); let bi = 0; sc.forEach((v, i) => { if (v > sc[bi]) bi = i; }); return pickCard(bi); }
   // 원하지 않는 계열 신규 무기는 가끔 제외 (사람의 제외 사용 재현)
   if (!s.banished && G.banishes > 0 && G.p.weapons.length >= 2) {
