@@ -29,6 +29,8 @@ const out = {
   build: { weaponsAvg: avg(ok.map(r => r.build.w.length)), passivesAvg: avg(ok.map(r => r.build.p.length)), wFull: ok.filter(r => r.wFullAt != null).length, wFullAtAvg: avg(ok.filter(r => r.wFullAt != null).map(r => r.wFullAt)) },
   lastMinTop: (() => { const t = ok.map(r => r.lastMin && r.lastMin[0] ? r.lastMin[0][1] : 0); return { avg: avg(t), p50: q(t, .5), over35: t.filter(x => x > 35).length, w4plus: avg(ok.filter(r => r.build.w.length >= 4).map(r => r.lastMin[0][1])) }; })(),
   topShare: { avg: avg(topShare), p50: q(topShare, .5), over35: topShare.filter(x => x > 35).length },
+  topShareW4: (() => { const t = ok.filter(r => r.build && r.build.w.length >= 4).map(r => r.dmg && r.dmg[0] ? r.dmg[0][1] : 0); return { runs: t.length, avg: avg(t), over35: t.filter(x => x > 35).length }; })(),   // 0.17 판독 대상: 무기 4개 이상 보유 판 한정
+  progress: (() => { const te = ok.findIndex(r => r.trueEnd), e1 = ok.findIndex(r => r.ending1); return { ending1Run: e1 < 0 ? null : e1 + 1, trueEndRun: te < 0 ? null : te + 1, fragsByRun: ok.slice(0, 8).map(r => r.frags) }; })(),   // 0.16 진엔딩 도달 판
   wBalance: (() => { const v = Object.values(dmgAll).map(avg); return { spreadPt: v.length ? +(Math.max(...v) - Math.min(...v)).toFixed(1) : null, target: 20 }; })(),   // 대체 지표: 무기별 보유 시 평균 비중 최대·최소 차(%p)
   dmgShareAvg: Object.fromEntries(Object.entries(dmgAll).map(([k, v]) => [k, avg(v)]).sort((x, y) => y[1] - x[1])),
   pickMix, newWeaponPicks: wPick, rerollsAvg: avg(ok.map(r => r.rerolls || 0)), banishAvg: avg(ok.map(r => r.banish || 0)),

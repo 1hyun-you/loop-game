@@ -127,9 +127,20 @@ window.addEventListener('blur', () => { if (!STATE.dev.auto) pauseGame(); });
    주 반복
    ============================================================ */
 let lastT = performance.now();
+/* 성능 측정 (0.18, 5단계 결정 안건 3) — 판 진행 중 실제 프레임 간격 누적: 1ms 단위 분포로 평균·하위 1%·하위 5% FPS 산출 */
+const PERF = { bins: new Uint32Array(101), n: 0, sum: 0 };
+function perfAdd(dt) { const ms = Math.min(100, Math.round(dt * 1000)); PERF.bins[ms]++; PERF.n++; PERF.sum += dt; }
+function perfReset() { PERF.bins.fill(0); PERF.n = 0; PERF.sum = 0; }
+function perfStat() {
+  if (PERF.n < 30) return null;
+  const at = q => { let acc = 0; for (let ms = 100; ms >= 0; ms--) { acc += PERF.bins[ms]; if (acc >= PERF.n * q) return ms; } return 0; };
+  const f = ms => Math.min(60, Math.round(1000 / Math.max(1, ms)));
+  return { avg: Math.min(60, Math.round(PERF.n / PERF.sum)), low1: f(at(0.01)), low5: f(at(0.05)), sec: Math.round(PERF.sum), slow: Math.round(PERF.bins.slice(21).reduce((s, x) => s + x, 0) / PERF.n * 1000) / 10 };
+}
 function frame(now) {
   const raw = Math.min(0.05, Math.max(0, (now - lastT) / 1000)); lastT = now;
   if (raw > 0) STATE.fps = STATE.fps * 0.92 + (1 / raw) * 0.08;
+  if (raw > 0 && STATE.mode === 'play' && !document.hidden) perfAdd(raw);
   try {
     if (STATE.mode === 'play' && G) {
       const sp = STATE.dev.speed, n = Math.ceil(sp);

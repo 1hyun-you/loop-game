@@ -129,7 +129,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.15a',
+  VERSION: '0.18',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -138,6 +138,7 @@ const CFG = {
   xp: { base: 5, linear: 5, pow: 1.75, powMul: 0.9 },
   spawn: { base: 1.6, perMin: 2.7, max: 460, soft: 300, softSpan: 250, softMin: 0.35, ramp: 1.25, rampBase: 170 },
   scale: { hpPerMin: 0.45, dmgPerMin: 0.07, speedPerMin: 0.04 },
+  early: { phases: 2, hp: 0.8, spawn: 0.8, xp: 1.25 },   // 0.16 초반 완화: 첫 2페이즈(예고 구간 포함) 적 체력·출현 밀도 하향, 경험치 획득 증가(레벨업 간격 단축)
   gemMerge: 300,
   joyR: 56,
   // 성장 — 기획서: 무기 5칸·보조 효과 5칸, 다시 뽑기·제외 판당 2~3회
@@ -312,6 +313,7 @@ function moveVec() {
 const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: false, speed: 1, gk: null, demon: null } };   // gk: 수문장 지정, demon: 판 구조 지정 final·retry (시험용)
 let G = null;
 
+function earlyOn() { return !!(G && G.ph && G.ph.i < CFG.early.phases && !isBossPhase()); }   // 0.16 초반 완화 구간
 function xpNeed(l) { return Math.floor(CFG.xp.base + CFG.xp.linear * l + Math.pow(l, CFG.xp.pow) * CFG.xp.powMul); }
 
 function newRun() {
@@ -326,6 +328,7 @@ function newRun() {
     stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
       kt: {}, branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
   };
+  if (typeof perfReset === 'function') perfReset();        // 성능 측정 판 단위 (0.18)
   G.opt = runOpt(); saveCache = null;                       // 고난도 단계·도전 조건 (0.15)
   recalc();
   addWeapon(startWeapon());
@@ -413,7 +416,7 @@ function ringPos(extra = 40) {
 function makeEnemy(type, x, y) {
   const d = ENEMIES[type], min = G.time / 60;
   const e = {
-    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min) * (1 + tierK()), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),   // 고난도 체력 (0.15)
+    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min) * (1 + tierK()) * (earlyOn() ? CFG.early.hp : 1), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),   // 고난도 체력 (0.15)
     speed: d.speed * rand(0.9, 1.1) * (1 + CFG.scale.speedPerMin * Math.min(min, 10)),
     color: d.color, shape: d.shape, xp: d.xp, flash: 0, kbx: 0, kby: 0, dead: false, ht: {},
   };
@@ -422,7 +425,7 @@ function makeEnemy(type, x, y) {
 function aliveCount() { let n = 0; for (const e of G.enemies) if (!e.dead) n++; return n; }
 function updateSpawn(dt) {
   const S = CFG.spawn, min = G.time / 60;
-  let rate = (S.base + S.perMin * min) * phaseSpawnMul();
+  let rate = (S.base + S.perMin * min) * phaseSpawnMul() * (earlyOn() ? CFG.early.spawn : 1);
   let alive = aliveCount();
   if (alive > S.soft) rate *= Math.max(S.softMin, 1 - (alive - S.soft) / S.softSpan);
   G.spawnAcc += rate * dt;
@@ -473,6 +476,7 @@ function updateEnemies(dt) {
 function damageEnemy(e, dmg, o = {}) {
   if (e.dead || e.inv > 0) return;                         // 마왕 페이즈 전환 중 무적 (0.12)
   dmg *= jobDmgMul(e, o);
+  if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16)
   if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
   const eff = Math.min(dmg, Math.max(0, e.hp));          // 실제 깎은 체력 기준 집계(초과 피해 제외, 0.2a)
@@ -526,7 +530,7 @@ function updateGems(dt) {
   }
 }
 function addXp(v) {
-  const p = G.p; p.xp += v * (pBr('magnet') === 'greed' ? 1.15 : 1);
+  const p = G.p; p.xp += v * (pBr('magnet') === 'greed' ? 1.15 : 1) * (earlyOn() ? CFG.early.xp : 1);
   while (p.xp >= p.need) { p.xp -= p.need; levelUp(); }
 }
 function levelUp() {
@@ -567,7 +571,7 @@ function lastMinShare() {
 }
 function loadSave() { try { return JSON.parse(localStorage.getItem(CFG.SAVE_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function finishRun() {
-  if (G.result === 'dead') fragUnlock('loop');               // 기록 조각: 첫 회귀 (0.13)
+  fragUnlock('loop');                                       // 기록 조각: 첫 회귀 (0.13), 0.16: 첫 판 종료로 완화
   G.report = buildReport();
   let show = showResult;
   try {
@@ -600,7 +604,8 @@ const PHASES = {
     hint: '야영지에서 휴식·보상 1회 선택' },
   surge: { name: '몰아치는 무리', type: '전투형', goal: 'time', dur: 150, spawnMul: 1.8, bias: { bat: 6, slime: 6 }, tint: [200, 70, 60],
     hint: '물량 폭주' },
-  warband: { name: '오우거 전열', type: '전투형', goal: 'kill', fail: 150, spawnMul: 0.9, bias: { brute: 1.5, skel: 5, slime: 3 }, tint: [190, 130, 60],
+  warband: { name: '오우거 전열', type: '전투형', goal: 'kill', fail: 150, min: 40,   // 0.17 최소 지속 40초 (대장 조기 처치 시 잔여 전열 소탕 구간)
+    spawnMul: 0.9, bias: { brute: 1.5, skel: 5, slime: 3 }, tint: [190, 130, 60],
     hint: '오우거 대장 처치' },
   hunt: { name: '엘리트 사냥', type: '전투형', goal: 'hunt', fail: 150, spawnMul: 0.7, tint: [235, 205, 90],
     hint: '정예 4체 처치 (완료 시 보물 상자)' },
@@ -622,7 +627,8 @@ const PHASES = {
     hint: '마왕 처치' },
 };
 const PHASE_ORDER = ['horde', 'calm', 'fog', 'camp', 'surge', 'warband', 'hunt', 'siege', 'seal', 'escort', 'ritual', 'collapse'];
-const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 7, zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
+const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 16,   // 0.17 대장 체력 7→16배 (0.15 기록 처치 5~37초)
+  zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
   perRun: [7, 8], perType: 2, retryN: 5, finalGap: 9,              // 재도전 판 페이즈 수 (0.12), 마왕성 출현 예고 구간(초)
   huntN: 4, huntAt: [0, 15, 35, 55],                                   // 엘리트 사냥: 처치 목표·출현 시각(초)
   siegeEvery: 13, siegeFirst: 4, siegeN: 30, siegeR: 300,              // 포위진: 원형 포위 주기·수·반경
@@ -748,7 +754,7 @@ function updatePhase(dt) {
     ph.spring.used = true; heal(p.maxHp * PH_CFG.springHeal); toast('회복의 샘', '#8ff0b0');
     fx({ kind: 'ring', x: ph.spring.x, y: ph.spring.y, r0: 8, r1: 60, dur: 0.5, color: '#8ff0b0' });
   }
-  if (P.goal === 'kill' && ph.cmd && ph.cmd.dead) return phaseEnd('ok');
+  if (P.goal === 'kill' && ph.cmd && ph.cmd.dead && ph.t >= (P.min || 0)) return phaseEnd('ok');
   if (P.goal === 'boss' && G.gkMob && G.gkMob.dead) return phaseEnd('ok');
   if (P.goal === 'zone' && ph.zone) {
     const z = ph.zone;
@@ -951,8 +957,9 @@ const CURSES = {
 function eventInit() {
   const ph = G.ph, idx = [];
   ph.order.forEach((id, i) => { if (i > 0 && PHASES[id].type !== '기믹형' && PHASES[id].type !== '보스' && id !== 'camp') idx.push(i); });
-  const n = Math.min(idx.length, Math.random() < 0.5 ? EV_CFG.perRun[0] : EV_CFG.perRun[1]);
-  const at = shuffle(idx).slice(0, n).sort((a, b) => a - b), types = shuffle(Object.keys(EVENTS));
+  const evLeft = Object.keys(EVENTS).some(k => !(loadSave().frags || []).includes(k));   // 0.16: 사건 조각 미해금 시 2회 보장
+  const n = Math.min(idx.length, evLeft || Math.random() >= 0.5 ? EV_CFG.perRun[1] : EV_CFG.perRun[0]);
+  const at = shuffle(idx).slice(0, n).sort((a, b) => a - b), got = (loadSave().frags || []), types = shuffle(Object.keys(EVENTS)).sort((a, b) => got.includes(a) - got.includes(b));   // 0.16: 미해금 조각 유형 우선 등장
   G.ev = { plan: at.map((i, k) => ({ i, type: types[k], at: rand(EV_CFG.at[0], EV_CFG.at[1]) })), cur: null, log: [] };
 }
 function eventPaused() { const c = G.ev && G.ev.cur; return !!(c && c.state === 'active'); }
@@ -973,7 +980,7 @@ function eventSpawn(pl) {
 function eventEnd(outcome) {
   const c = G.ev.cur; if (!c) return;
   G.ev.log.push([c.type, outcome, Math.round(G.time - c.at)]);
-  if (outcome === 'ok') fragUnlock(c.type);                 // 곁가지 사건 첫 해결 조각 (0.13)
+  if (outcome === 'ok' || outcome === 'refuse') fragUnlock(c.type);   // 곁가지 사건 첫 해결 조각 (0.13), 0.16: 봉인된 문은 열기만 해도 해금
   if (c.mob && !c.mob.dead && outcome !== 'ok') c.mob.dead = true;
   G.ev.cur = null;
 }
@@ -1091,7 +1098,7 @@ const GK_CFG = {
 };
 const isBossPhase = () => G.ph && (G.ph.id === 'gate' || G.ph.id === 'demon');
 const gkLv = (a) => a[G.gkMob && G.gkMob.rage ? 1 : 0];
-function gkDmg(v) { return v * (1 + CFG.scale.dmgPerMin * G.time / 60); }
+function gkDmg(v) { return v * (1 + CFG.scale.dmgPerMin * G.time / 60) * (G.ph && G.ph.id === 'demon' && !loadSaveCached().trueEnd ? DM_CFG.preDmg : 1); }   // 0.16 진엔딩 전 마왕 패턴 피해 완화
 
 /* 판 시작 시 수문장 결정 */
 function gkPick() {
@@ -1357,6 +1364,8 @@ const DM_CFG = {
   arR0: 330, arR1: 230, arShrink: 25, arDmg: 7,              // 암흑 결계 (반경·수축 시간·0.5초당 피해)
   bmN: [0, 3, 4], bmLen: 340, bmW: 18, bmWarn: 1.1, bmDur: [0, 3.2, 3.6], bmRot: [0, 0.55, 0.8], bmDmg: 8,   // 회전 광선
   mtN: 7, mtGap: 0.32, mtR: 58, mtWarn: 0.9, mtDmg: 17,      // 운석 낙하
+  // 0.16 처치 시간 편차 억제 (5단계 결정 안건 1-3): 페이즈별 최소 지속 시간(이전 하한 체력 고정) + 목표 초과 시 받는 피해 점증
+  stMin: [60, 55, 40], stTgt: [80, 70, 50], catchUp: 0.04, catchMax: 3, finalHp: 0.75, preDmg: 0.7,   // preDmg: 진엔딩 전 패턴 피해 배율 (진엔딩 경로 안정화)
 };
 const bossDef = (k) => k === 'demon' ? DEMON : GATEKEEPERS[k];
 
@@ -1371,10 +1380,10 @@ function runTypeOf() {
 
 function dmSpawn() {
   const q = ringAt(DM_CFG.spawn[0], DM_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
-  e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : 1); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
-  e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0;
+  e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : DM_CFG.finalHp); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
+  e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0; e.stT0 = G.time;
   G.gkMob = e; G.eb = []; G.hz = []; G.arena = null;
-  G.stats.demon = { t0: G.time, st: [null, null], type: G.runType };
+  G.stats.demon = { t0: G.time, st: [null, null], type: G.runType, n: ((G.stats.demon && G.stats.demon.n) || 0) + 1 };   // n: 생성 횟수 (0.18 계측)
   toast('마왕 강림', DEMON.color); toast('그림자 군주', '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 200, dur: 1.0, color: DEMON.color });
   storyBoss('demon');                                       // 마왕성 도달 조각·대사 (0.13)
@@ -1388,7 +1397,7 @@ function dmUpdate(e, dt, d, dx, dy) {
   // 페이즈 전환
   const nx = e.st < 2 && e.hp <= e.maxHp * DM_CFG.stages[e.st];
   if (nx) {
-    e.st++; e.inv = DM_CFG.trans; ai.cd = DM_CFG.trans + 0.6; G.eb = []; G.hz = G.hz.filter(h => h.k === 'arena');
+    e.st++; e.stT0 = G.time; e.inv = DM_CFG.trans; ai.cd = DM_CFG.trans + 0.6; G.eb = []; G.hz = G.hz.filter(h => h.k === 'arena');
     G.stats.demon.st[e.st - 1] = Math.round(G.time - G.stats.demon.t0);
     toast(e.st === 1 ? '암흑 결계' : '종언', '#c9a8ff'); fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 280, dur: 1.0, color: '#c9a8ff' });
     if (e.st === 1) G.arena = { x: p.x, y: p.y, R: DM_CFG.arR0, t: 0, tick: 0 };
@@ -1510,6 +1519,15 @@ function dmOnBeam(h, x, y, pad) {
 }
 function dmHzAlive(h) { return h.k === 'sect' ? h.t < h.warn + 0.3 : h.t < h.warn + h.dur; }
 
+/* 받는 피해 보정 (damageEnemy에서 호출, 0.16): 최소 지속 시간 전에는 해당 페이즈 하한 체력 아래로 내려가지 않음, 목표 시간 초과 시 피해 점증 */
+function dmAdjust(e, dmg) {
+  if (e.stT0 == null) e.stT0 = G.time;
+  const el = G.time - e.stT0, floor = e.st < 2 ? e.maxHp * DM_CFG.stages[e.st] : 0;
+  if (el > DM_CFG.stTgt[e.st]) dmg *= Math.min(DM_CFG.catchMax, 1 + (el - DM_CFG.stTgt[e.st]) * DM_CFG.catchUp);
+  if (el < DM_CFG.stMin[e.st]) dmg = Math.min(dmg, Math.max(0, e.hp - floor - 1));
+  else if (e.st < 2) dmg = Math.min(dmg, Math.max(0, e.hp - floor));   // 한 번의 피해로 다음 페이즈를 건너뛰지 않도록 페이즈 경계에서 정지
+  return dmg;
+}
 function dmKilled(e) {
   fragUnlock('shadow');                                     // 기록 조각 (0.13)
   const s = G.stats.demon; s.killed = true; s.dur = Math.round(G.time - s.t0);
@@ -1542,7 +1560,7 @@ function drawDemonGround(c) {
 function dmReport() {
   const s = G.stats.demon; if (!s) return null;
   const e = G.gkMob;
-  return [s.killed ? 'kill' : G.result, s.dur || Math.round(G.time - s.t0), e && e.gk === 'demon' ? Math.round(Math.max(0, e.hp) / e.maxHp * 100) : 0, e && e.gk === 'demon' ? e.st + 1 : 0, s.st[0], s.st[1], s.type];
+  return [s.killed ? 'kill' : G.result, s.dur || Math.round(G.time - s.t0), e && e.gk === 'demon' ? Math.round(Math.max(0, e.hp) / e.maxHp * 100) : 0, e && e.gk === 'demon' ? e.st + 1 : 0, s.st[0], s.st[1], s.type, s.n];
 }
 function dmSave(s) {
   const d = G.stats.demon; if (!d) return;
@@ -1584,7 +1602,7 @@ function buildPortraits() {
 
 /* 기록 조각 10개 — 해금 조건(cond)·제목·본문 */
 const FRAGS = [
-  { id: 'loop', cond: '처음으로 쓰러지기', nm: '첫 회귀', tx: '다시 눈을 뜬 곳은 들판의 출발점이었다. 상처는 사라졌지만 쓰러지던 순간의 감각은 그대로 남아 있었다. 누군가 "이번에도 기억하는구나" 하고 속삭였다.' },
+  { id: 'loop', cond: '첫 판 마치기', nm: '첫 회귀', tx: '다시 눈을 뜬 곳은 들판의 출발점이었다. 상처는 사라졌지만 마지막 순간의 감각은 그대로 남아 있었다. 누군가 "이번에도 기억하는구나" 하고 속삭였다.' },
   { id: 'bargan', cond: '바르간 처치', nm: '돌진의 문', tx: '토르반은 언제나 맨 앞에 섰다. 돌진해 오는 문지기를 방패 하나로 받아 내며 먼저 가라고 외쳤다. 그 뒤로 그의 목소리를 듣지 못했다.' },
   { id: 'igna', cond: '이그나 처치', nm: '불꽃의 문', tx: '하린의 화살은 불길 속에서도 빗나간 적이 없었다. 불꽃의 문을 넘던 날, 그녀는 마지막 화살을 내 손에 쥐여 주었다.' },
   { id: 'morden', cond: '모르덴 처치', nm: '망자의 문', tx: '유르는 망자들의 이름을 하나씩 불러 잠재웠다. 그 주문이 끝났을 때 그는 더 이상 일어서지 못했다.' },
@@ -1653,7 +1671,7 @@ function storyBoss(k) {
   if (k === 'demon') {
     fragUnlock('castle');
     if (G.story && G.story.freed) return showDialog(toLines(SAY.demonFree));
-    if (!s.demonTries && !s.metDemon) { s.metDemon = 1; storyWrite(s); return showDialog(toLines(SAY.demonMeet)); }
+    if (!s.demonTries && !s.metDemon) { const t = storyRead(); t.metDemon = 1; storyWrite(t); return showDialog(toLines(SAY.demonMeet)); }   // 0.16: 조각 해금 직후 재읽기 (이전 사본 저장 시 '왕좌로 가는 계단' 조각 유실 결함)
     return;
   }
   s.metGk = s.metGk || [];
@@ -1716,6 +1734,7 @@ const CONDS = {
   slot3: { nm: '무기 3칸', ds: '무기 칸 5칸 → 3칸', mul: 1.25, title: '세 자루의 무기' },
 };
 const COND_ORDER = ['melee', 'ranged', 'two', 'noheal', 'nojob', 'slot3'];
+const META_CAP = { kPerCond: 0.12, kMin: 0.45, condMul: 2.5 };   // 0.17 (5단계 결정 안건 1-4·1-5): 조건 1개당 고난도 적 강화 -12%(하한 45%), 조건 점수 배율 누적 상한 2.5
 /* 칭호 — 진엔딩·고난도 단계별 첫 마왕 처치·도전 조건별 첫 마왕 처치 / 색상 — 진엔딩·고난도 단계 칭호에 연동 */
 const TITLES = Object.assign({ end: '고리를 끊은 자', t1: '고난도 1 돌파', t2: '고난도 2 돌파', t3: '고난도 3 돌파' },
   Object.fromEntries(COND_ORDER.map(k => ['c_' + k, CONDS[k].title])));
@@ -1737,12 +1756,12 @@ function runOpt() {
 }
 const optOf = () => (G && G.opt) || { tier: 0, conds: [] };
 const hasCond = k => optOf().conds.includes(k);
-const tierK = () => TIERS[optOf().tier].k;
+const tierK = () => TIERS[optOf().tier].k * Math.max(META_CAP.kMin, 1 - META_CAP.kPerCond * optOf().conds.length);   // 0.17 조건 수만큼 적 강화 완화
 const slotW = () => hasCond('slot3') ? 3 : CFG.slots.weapon;
 const selN = () => hasCond('two') ? 2 : CFG.select.cards;
 const catOk = cat => hasCond('melee') ? cat === 'melee' : hasCond('ranged') ? cat !== 'melee' : true;
 const startWeapon = () => hasCond('ranged') ? 'arrow' : START_WEAPON;
-function optMul(o) { return TIERS[o.tier].mul * o.conds.reduce((m, k) => m * CONDS[k].mul, 1); }
+function optMul(o) { return TIERS[o.tier].mul * Math.min(META_CAP.condMul, o.conds.reduce((m, k) => m * CONDS[k].mul, 1)); }   // 0.17 조건 배율 누적 상한
 function optText(o) { return [o.tier ? TIERS[o.tier].nm : null].concat(o.conds.map(k => CONDS[k].nm)).filter(Boolean).join(' · '); }
 function playerColor() { const s = loadSaveCached(); const C = COLORS.find(x => x.id === s.color); return C && colorOpen(s, C) ? C.c : COLORS[0].c; }
 const colorOpen = (s, C) => !C.need || (s.titles || []).includes(C.need);
@@ -3030,7 +3049,7 @@ function drawHUD(c) {
   if (P) { const bw = 120; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4); }
   c.fillStyle = '#fff';
   c.font = 'bold 14px system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
-  if (STATE.dev.fps) { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
+  if (STATE.dev.fps) { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
   drawSlots(c, top + 58);
   drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
   let ty = VIEW.ch * 0.3;
@@ -3092,6 +3111,7 @@ const DEV = {
       <button data-k="demon">마왕전 이동</button>
       <button data-k="sv_release">고리 해제 직전</button>
       <button data-k="sv_post">진엔딩 후</button>
+      <button data-k="perf">성능 측정 초기화</button>
       <button data-k="sv_restore" class="${devHasBak() ? '' : 'off'}">저장 복원</button></div>
       <pre id="devinfo"></pre>`;
     this.info();
@@ -3106,6 +3126,7 @@ const DEV = {
       if (k === 'demon' && STATE.mode === 'play' && !isBossPhase()) { G.runType = 'retry'; G.ph.order = G.ph.order.slice(0, G.ph.i + 1).concat('demon'); G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
       if (k === 'sv_release' || k === 'sv_post') return devPreset(k.slice(3));
       if (k === 'sv_restore') return devRestore();
+      if (k === 'perf') perfReset();
       if (k === 'ult' && G.p.job) G.p.ult = JOB_CFG.ultNeed;
       if (k === 'elite' && STATE.mode === 'play') spawnElite();
       if (k === 'altar' && !G.p.job) { const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i }; }
@@ -3115,7 +3136,7 @@ const DEV = {
   },
   info() {
     const el = this.el && this.el.querySelector('#devinfo'); if (!el || !G) return;
-    el.textContent = `버전 ${CFG.VERSION} · 시간 ${fmtTime(G.time)} · 체력 ${Math.round(G.p.hp)}/${G.p.maxHp}\n경험치 ${Math.floor(G.p.xp)}/${G.p.need} · 무기 ${G.p.weapons.map(w => WEAPONS[w.id].name + w.lvl).join(' ')}\n직업 ${G.p.job ? JOBS[G.p.job].name + (G.p.job2 ? '/' + G.p.job2 : '') + ' 궁극기 ' + Math.floor(G.p.ult) : '-'} · 유물 ${G.p.relics.length}\n보조 ${G.p.passives.map(x => PASSIVES[x.id].name + x.lvl).join(' ') || '-'} · 다시 뽑기 ${G.rerolls} · 제외 ${G.banishes}`;
+    el.textContent = `버전 ${CFG.VERSION} · 시간 ${fmtTime(G.time)} · 체력 ${Math.round(G.p.hp)}/${G.p.maxHp}\n경험치 ${Math.floor(G.p.xp)}/${G.p.need} · 무기 ${G.p.weapons.map(w => WEAPONS[w.id].name + w.lvl).join(' ')}\n성능 ${(() => { const P = perfStat(); return P ? `평균 ${P.avg} FPS · 하위 1% ${P.low1} · 하위 5% ${P.low5} · 20ms 초과 ${P.slow}% · 측정 ${P.sec}초` : '측정 중'; })()}\n직업 ${G.p.job ? JOBS[G.p.job].name + (G.p.job2 ? '/' + G.p.job2 : '') + ' 궁극기 ' + Math.floor(G.p.ult) : '-'} · 유물 ${G.p.relics.length}\n보조 ${G.p.passives.map(x => PASSIVES[x.id].name + x.lvl).join(' ') || '-'} · 다시 뽑기 ${G.rerolls} · 제외 ${G.banishes}`;
   },
 };
 
@@ -3351,9 +3372,20 @@ window.addEventListener('blur', () => { if (!STATE.dev.auto) pauseGame(); });
    주 반복
    ============================================================ */
 let lastT = performance.now();
+/* 성능 측정 (0.18, 5단계 결정 안건 3) — 판 진행 중 실제 프레임 간격 누적: 1ms 단위 분포로 평균·하위 1%·하위 5% FPS 산출 */
+const PERF = { bins: new Uint32Array(101), n: 0, sum: 0 };
+function perfAdd(dt) { const ms = Math.min(100, Math.round(dt * 1000)); PERF.bins[ms]++; PERF.n++; PERF.sum += dt; }
+function perfReset() { PERF.bins.fill(0); PERF.n = 0; PERF.sum = 0; }
+function perfStat() {
+  if (PERF.n < 30) return null;
+  const at = q => { let acc = 0; for (let ms = 100; ms >= 0; ms--) { acc += PERF.bins[ms]; if (acc >= PERF.n * q) return ms; } return 0; };
+  const f = ms => Math.min(60, Math.round(1000 / Math.max(1, ms)));
+  return { avg: Math.min(60, Math.round(PERF.n / PERF.sum)), low1: f(at(0.01)), low5: f(at(0.05)), sec: Math.round(PERF.sum), slow: Math.round(PERF.bins.slice(21).reduce((s, x) => s + x, 0) / PERF.n * 1000) / 10 };
+}
 function frame(now) {
   const raw = Math.min(0.05, Math.max(0, (now - lastT) / 1000)); lastT = now;
   if (raw > 0) STATE.fps = STATE.fps * 0.92 + (1 / raw) * 0.08;
+  if (raw > 0 && STATE.mode === 'play' && !document.hidden) perfAdd(raw);
   try {
     if (STATE.mode === 'play' && G) {
       const sp = STATE.dev.speed, n = Math.ceil(sp);

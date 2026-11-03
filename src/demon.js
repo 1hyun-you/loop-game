@@ -19,6 +19,8 @@ const DM_CFG = {
   arR0: 330, arR1: 230, arShrink: 25, arDmg: 7,              // 암흑 결계 (반경·수축 시간·0.5초당 피해)
   bmN: [0, 3, 4], bmLen: 340, bmW: 18, bmWarn: 1.1, bmDur: [0, 3.2, 3.6], bmRot: [0, 0.55, 0.8], bmDmg: 8,   // 회전 광선
   mtN: 7, mtGap: 0.32, mtR: 58, mtWarn: 0.9, mtDmg: 17,      // 운석 낙하
+  // 0.16 처치 시간 편차 억제 (5단계 결정 안건 1-3): 페이즈별 최소 지속 시간(이전 하한 체력 고정) + 목표 초과 시 받는 피해 점증
+  stMin: [60, 55, 40], stTgt: [80, 70, 50], catchUp: 0.04, catchMax: 3, finalHp: 0.75, preDmg: 0.7,   // preDmg: 진엔딩 전 패턴 피해 배율 (진엔딩 경로 안정화)
 };
 const bossDef = (k) => k === 'demon' ? DEMON : GATEKEEPERS[k];
 
@@ -33,10 +35,10 @@ function runTypeOf() {
 
 function dmSpawn() {
   const q = ringAt(DM_CFG.spawn[0], DM_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
-  e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : 1); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
-  e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0;
+  e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : DM_CFG.finalHp); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
+  e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0; e.stT0 = G.time;
   G.gkMob = e; G.eb = []; G.hz = []; G.arena = null;
-  G.stats.demon = { t0: G.time, st: [null, null], type: G.runType };
+  G.stats.demon = { t0: G.time, st: [null, null], type: G.runType, n: ((G.stats.demon && G.stats.demon.n) || 0) + 1 };   // n: 생성 횟수 (0.18 계측)
   toast('마왕 강림', DEMON.color); toast('그림자 군주', '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 200, dur: 1.0, color: DEMON.color });
   storyBoss('demon');                                       // 마왕성 도달 조각·대사 (0.13)
@@ -50,7 +52,7 @@ function dmUpdate(e, dt, d, dx, dy) {
   // 페이즈 전환
   const nx = e.st < 2 && e.hp <= e.maxHp * DM_CFG.stages[e.st];
   if (nx) {
-    e.st++; e.inv = DM_CFG.trans; ai.cd = DM_CFG.trans + 0.6; G.eb = []; G.hz = G.hz.filter(h => h.k === 'arena');
+    e.st++; e.stT0 = G.time; e.inv = DM_CFG.trans; ai.cd = DM_CFG.trans + 0.6; G.eb = []; G.hz = G.hz.filter(h => h.k === 'arena');
     G.stats.demon.st[e.st - 1] = Math.round(G.time - G.stats.demon.t0);
     toast(e.st === 1 ? '암흑 결계' : '종언', '#c9a8ff'); fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 280, dur: 1.0, color: '#c9a8ff' });
     if (e.st === 1) G.arena = { x: p.x, y: p.y, R: DM_CFG.arR0, t: 0, tick: 0 };
@@ -172,6 +174,15 @@ function dmOnBeam(h, x, y, pad) {
 }
 function dmHzAlive(h) { return h.k === 'sect' ? h.t < h.warn + 0.3 : h.t < h.warn + h.dur; }
 
+/* 받는 피해 보정 (damageEnemy에서 호출, 0.16): 최소 지속 시간 전에는 해당 페이즈 하한 체력 아래로 내려가지 않음, 목표 시간 초과 시 피해 점증 */
+function dmAdjust(e, dmg) {
+  if (e.stT0 == null) e.stT0 = G.time;
+  const el = G.time - e.stT0, floor = e.st < 2 ? e.maxHp * DM_CFG.stages[e.st] : 0;
+  if (el > DM_CFG.stTgt[e.st]) dmg *= Math.min(DM_CFG.catchMax, 1 + (el - DM_CFG.stTgt[e.st]) * DM_CFG.catchUp);
+  if (el < DM_CFG.stMin[e.st]) dmg = Math.min(dmg, Math.max(0, e.hp - floor - 1));
+  else if (e.st < 2) dmg = Math.min(dmg, Math.max(0, e.hp - floor));   // 한 번의 피해로 다음 페이즈를 건너뛰지 않도록 페이즈 경계에서 정지
+  return dmg;
+}
 function dmKilled(e) {
   fragUnlock('shadow');                                     // 기록 조각 (0.13)
   const s = G.stats.demon; s.killed = true; s.dur = Math.round(G.time - s.t0);
@@ -204,7 +215,7 @@ function drawDemonGround(c) {
 function dmReport() {
   const s = G.stats.demon; if (!s) return null;
   const e = G.gkMob;
-  return [s.killed ? 'kill' : G.result, s.dur || Math.round(G.time - s.t0), e && e.gk === 'demon' ? Math.round(Math.max(0, e.hp) / e.maxHp * 100) : 0, e && e.gk === 'demon' ? e.st + 1 : 0, s.st[0], s.st[1], s.type];
+  return [s.killed ? 'kill' : G.result, s.dur || Math.round(G.time - s.t0), e && e.gk === 'demon' ? Math.round(Math.max(0, e.hp) / e.maxHp * 100) : 0, e && e.gk === 'demon' ? e.st + 1 : 0, s.st[0], s.st[1], s.type, s.n];
 }
 function dmSave(s) {
   const d = G.stats.demon; if (!d) return;

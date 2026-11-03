@@ -4,6 +4,7 @@
 const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: false, speed: 1, gk: null, demon: null } };   // gk: 수문장 지정, demon: 판 구조 지정 final·retry (시험용)
 let G = null;
 
+function earlyOn() { return !!(G && G.ph && G.ph.i < CFG.early.phases && !isBossPhase()); }   // 0.16 초반 완화 구간
 function xpNeed(l) { return Math.floor(CFG.xp.base + CFG.xp.linear * l + Math.pow(l, CFG.xp.pow) * CFG.xp.powMul); }
 
 function newRun() {
@@ -18,6 +19,7 @@ function newRun() {
     stats: { dmg: {}, hurt: {}, xpDrop: 0, xpGot: 0, selOpen: 0, dmgMin: [],  maxEnemies: 0, levelAt: [], picks: [], wFullAt: null, pFullAt: null,
       kt: {}, branches: [], relics: [], elites: 0, eliteKills: 0, chests: 0, job: null, jobAt: null, job2: null, job2At: null, ults: 0, altarSeen: 0, altarOpen: 0, altarLeave: 0, offers: 0, passes: 0 }, lastHit: '',
   };
+  if (typeof perfReset === 'function') perfReset();        // 성능 측정 판 단위 (0.18)
   G.opt = runOpt(); saveCache = null;                       // 고난도 단계·도전 조건 (0.15)
   recalc();
   addWeapon(startWeapon());
@@ -105,7 +107,7 @@ function ringPos(extra = 40) {
 function makeEnemy(type, x, y) {
   const d = ENEMIES[type], min = G.time / 60;
   const e = {
-    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min) * (1 + tierK()), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),   // 고난도 체력 (0.15)
+    id: ++G.eid, type, x, y, r: d.r, hp: d.hp * (1 + CFG.scale.hpPerMin * min) * (1 + tierK()) * (earlyOn() ? CFG.early.hp : 1), dmg: d.dmg * (1 + CFG.scale.dmgPerMin * min),   // 고난도 체력 (0.15)
     speed: d.speed * rand(0.9, 1.1) * (1 + CFG.scale.speedPerMin * Math.min(min, 10)),
     color: d.color, shape: d.shape, xp: d.xp, flash: 0, kbx: 0, kby: 0, dead: false, ht: {},
   };
@@ -114,7 +116,7 @@ function makeEnemy(type, x, y) {
 function aliveCount() { let n = 0; for (const e of G.enemies) if (!e.dead) n++; return n; }
 function updateSpawn(dt) {
   const S = CFG.spawn, min = G.time / 60;
-  let rate = (S.base + S.perMin * min) * phaseSpawnMul();
+  let rate = (S.base + S.perMin * min) * phaseSpawnMul() * (earlyOn() ? CFG.early.spawn : 1);
   let alive = aliveCount();
   if (alive > S.soft) rate *= Math.max(S.softMin, 1 - (alive - S.soft) / S.softSpan);
   G.spawnAcc += rate * dt;
@@ -165,6 +167,7 @@ function updateEnemies(dt) {
 function damageEnemy(e, dmg, o = {}) {
   if (e.dead || e.inv > 0) return;                         // 마왕 페이즈 전환 중 무적 (0.12)
   dmg *= jobDmgMul(e, o);
+  if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16)
   if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
   const eff = Math.min(dmg, Math.max(0, e.hp));          // 실제 깎은 체력 기준 집계(초과 피해 제외, 0.2a)
@@ -218,7 +221,7 @@ function updateGems(dt) {
   }
 }
 function addXp(v) {
-  const p = G.p; p.xp += v * (pBr('magnet') === 'greed' ? 1.15 : 1);
+  const p = G.p; p.xp += v * (pBr('magnet') === 'greed' ? 1.15 : 1) * (earlyOn() ? CFG.early.xp : 1);
   while (p.xp >= p.need) { p.xp -= p.need; levelUp(); }
 }
 function levelUp() {
@@ -259,7 +262,7 @@ function lastMinShare() {
 }
 function loadSave() { try { return JSON.parse(localStorage.getItem(CFG.SAVE_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function finishRun() {
-  if (G.result === 'dead') fragUnlock('loop');               // 기록 조각: 첫 회귀 (0.13)
+  fragUnlock('loop');                                       // 기록 조각: 첫 회귀 (0.13), 0.16: 첫 판 종료로 완화
   G.report = buildReport();
   let show = showResult;
   try {

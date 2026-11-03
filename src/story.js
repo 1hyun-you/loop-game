@@ -34,7 +34,7 @@ function buildPortraits() {
 
 /* 기록 조각 10개 — 해금 조건(cond)·제목·본문 */
 const FRAGS = [
-  { id: 'loop', cond: '처음으로 쓰러지기', nm: '첫 회귀', tx: '다시 눈을 뜬 곳은 들판의 출발점이었다. 상처는 사라졌지만 쓰러지던 순간의 감각은 그대로 남아 있었다. 누군가 "이번에도 기억하는구나" 하고 속삭였다.' },
+  { id: 'loop', cond: '첫 판 마치기', nm: '첫 회귀', tx: '다시 눈을 뜬 곳은 들판의 출발점이었다. 상처는 사라졌지만 마지막 순간의 감각은 그대로 남아 있었다. 누군가 "이번에도 기억하는구나" 하고 속삭였다.' },
   { id: 'bargan', cond: '바르간 처치', nm: '돌진의 문', tx: '토르반은 언제나 맨 앞에 섰다. 돌진해 오는 문지기를 방패 하나로 받아 내며 먼저 가라고 외쳤다. 그 뒤로 그의 목소리를 듣지 못했다.' },
   { id: 'igna', cond: '이그나 처치', nm: '불꽃의 문', tx: '하린의 화살은 불길 속에서도 빗나간 적이 없었다. 불꽃의 문을 넘던 날, 그녀는 마지막 화살을 내 손에 쥐여 주었다.' },
   { id: 'morden', cond: '모르덴 처치', nm: '망자의 문', tx: '유르는 망자들의 이름을 하나씩 불러 잠재웠다. 그 주문이 끝났을 때 그는 더 이상 일어서지 못했다.' },
@@ -103,7 +103,7 @@ function storyBoss(k) {
   if (k === 'demon') {
     fragUnlock('castle');
     if (G.story && G.story.freed) return showDialog(toLines(SAY.demonFree));
-    if (!s.demonTries && !s.metDemon) { s.metDemon = 1; storyWrite(s); return showDialog(toLines(SAY.demonMeet)); }
+    if (!s.demonTries && !s.metDemon) { const t = storyRead(); t.metDemon = 1; storyWrite(t); return showDialog(toLines(SAY.demonMeet)); }   // 0.16: 조각 해금 직후 재읽기 (이전 사본 저장 시 '왕좌로 가는 계단' 조각 유실 결함)
     return;
   }
   s.metGk = s.metGk || [];

@@ -31,6 +31,7 @@ const CONDS = {
   slot3: { nm: '무기 3칸', ds: '무기 칸 5칸 → 3칸', mul: 1.25, title: '세 자루의 무기' },
 };
 const COND_ORDER = ['melee', 'ranged', 'two', 'noheal', 'nojob', 'slot3'];
+const META_CAP = { kPerCond: 0.12, kMin: 0.45, condMul: 2.5 };   // 0.17 (5단계 결정 안건 1-4·1-5): 조건 1개당 고난도 적 강화 -12%(하한 45%), 조건 점수 배율 누적 상한 2.5
 /* 칭호 — 진엔딩·고난도 단계별 첫 마왕 처치·도전 조건별 첫 마왕 처치 / 색상 — 진엔딩·고난도 단계 칭호에 연동 */
 const TITLES = Object.assign({ end: '고리를 끊은 자', t1: '고난도 1 돌파', t2: '고난도 2 돌파', t3: '고난도 3 돌파' },
   Object.fromEntries(COND_ORDER.map(k => ['c_' + k, CONDS[k].title])));
@@ -52,12 +53,12 @@ function runOpt() {
 }
 const optOf = () => (G && G.opt) || { tier: 0, conds: [] };
 const hasCond = k => optOf().conds.includes(k);
-const tierK = () => TIERS[optOf().tier].k;
+const tierK = () => TIERS[optOf().tier].k * Math.max(META_CAP.kMin, 1 - META_CAP.kPerCond * optOf().conds.length);   // 0.17 조건 수만큼 적 강화 완화
 const slotW = () => hasCond('slot3') ? 3 : CFG.slots.weapon;
 const selN = () => hasCond('two') ? 2 : CFG.select.cards;
 const catOk = cat => hasCond('melee') ? cat === 'melee' : hasCond('ranged') ? cat !== 'melee' : true;
 const startWeapon = () => hasCond('ranged') ? 'arrow' : START_WEAPON;
-function optMul(o) { return TIERS[o.tier].mul * o.conds.reduce((m, k) => m * CONDS[k].mul, 1); }
+function optMul(o) { return TIERS[o.tier].mul * Math.min(META_CAP.condMul, o.conds.reduce((m, k) => m * CONDS[k].mul, 1)); }   // 0.17 조건 배율 누적 상한
 function optText(o) { return [o.tier ? TIERS[o.tier].nm : null].concat(o.conds.map(k => CONDS[k].nm)).filter(Boolean).join(' · '); }
 function playerColor() { const s = loadSaveCached(); const C = COLORS.find(x => x.id === s.color); return C && colorOpen(s, C) ? C.c : COLORS[0].c; }
 const colorOpen = (s, C) => !C.need || (s.titles || []).includes(C.need);

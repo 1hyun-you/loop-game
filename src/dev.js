@@ -34,6 +34,7 @@ const DEV = {
       <button data-k="demon">마왕전 이동</button>
       <button data-k="sv_release">고리 해제 직전</button>
       <button data-k="sv_post">진엔딩 후</button>
+      <button data-k="perf">성능 측정 초기화</button>
       <button data-k="sv_restore" class="${devHasBak() ? '' : 'off'}">저장 복원</button></div>
       <pre id="devinfo"></pre>`;
     this.info();
@@ -48,6 +49,7 @@ const DEV = {
       if (k === 'demon' && STATE.mode === 'play' && !isBossPhase()) { G.runType = 'retry'; G.ph.order = G.ph.order.slice(0, G.ph.i + 1).concat('demon'); G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
       if (k === 'sv_release' || k === 'sv_post') return devPreset(k.slice(3));
       if (k === 'sv_restore') return devRestore();
+      if (k === 'perf') perfReset();
       if (k === 'ult' && G.p.job) G.p.ult = JOB_CFG.ultNeed;
       if (k === 'elite' && STATE.mode === 'play') spawnElite();
       if (k === 'altar' && !G.p.job) { const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i }; }
@@ -57,7 +59,7 @@ const DEV = {
   },
   info() {
     const el = this.el && this.el.querySelector('#devinfo'); if (!el || !G) return;
-    el.textContent = `버전 ${CFG.VERSION} · 시간 ${fmtTime(G.time)} · 체력 ${Math.round(G.p.hp)}/${G.p.maxHp}\n경험치 ${Math.floor(G.p.xp)}/${G.p.need} · 무기 ${G.p.weapons.map(w => WEAPONS[w.id].name + w.lvl).join(' ')}\n직업 ${G.p.job ? JOBS[G.p.job].name + (G.p.job2 ? '/' + G.p.job2 : '') + ' 궁극기 ' + Math.floor(G.p.ult) : '-'} · 유물 ${G.p.relics.length}\n보조 ${G.p.passives.map(x => PASSIVES[x.id].name + x.lvl).join(' ') || '-'} · 다시 뽑기 ${G.rerolls} · 제외 ${G.banishes}`;
+    el.textContent = `버전 ${CFG.VERSION} · 시간 ${fmtTime(G.time)} · 체력 ${Math.round(G.p.hp)}/${G.p.maxHp}\n경험치 ${Math.floor(G.p.xp)}/${G.p.need} · 무기 ${G.p.weapons.map(w => WEAPONS[w.id].name + w.lvl).join(' ')}\n성능 ${(() => { const P = perfStat(); return P ? `평균 ${P.avg} FPS · 하위 1% ${P.low1} · 하위 5% ${P.low5} · 20ms 초과 ${P.slow}% · 측정 ${P.sec}초` : '측정 중'; })()}\n직업 ${G.p.job ? JOBS[G.p.job].name + (G.p.job2 ? '/' + G.p.job2 : '') + ' 궁극기 ' + Math.floor(G.p.ult) : '-'} · 유물 ${G.p.relics.length}\n보조 ${G.p.passives.map(x => PASSIVES[x.id].name + x.lvl).join(' ') || '-'} · 다시 뽑기 ${G.rerolls} · 제외 ${G.banishes}`;
   },
 };
 

@@ -25,8 +25,9 @@ const CURSES = {
 function eventInit() {
   const ph = G.ph, idx = [];
   ph.order.forEach((id, i) => { if (i > 0 && PHASES[id].type !== '기믹형' && PHASES[id].type !== '보스' && id !== 'camp') idx.push(i); });
-  const n = Math.min(idx.length, Math.random() < 0.5 ? EV_CFG.perRun[0] : EV_CFG.perRun[1]);
-  const at = shuffle(idx).slice(0, n).sort((a, b) => a - b), types = shuffle(Object.keys(EVENTS));
+  const evLeft = Object.keys(EVENTS).some(k => !(loadSave().frags || []).includes(k));   // 0.16: 사건 조각 미해금 시 2회 보장
+  const n = Math.min(idx.length, evLeft || Math.random() >= 0.5 ? EV_CFG.perRun[1] : EV_CFG.perRun[0]);
+  const at = shuffle(idx).slice(0, n).sort((a, b) => a - b), got = (loadSave().frags || []), types = shuffle(Object.keys(EVENTS)).sort((a, b) => got.includes(a) - got.includes(b));   // 0.16: 미해금 조각 유형 우선 등장
   G.ev = { plan: at.map((i, k) => ({ i, type: types[k], at: rand(EV_CFG.at[0], EV_CFG.at[1]) })), cur: null, log: [] };
 }
 function eventPaused() { const c = G.ev && G.ev.cur; return !!(c && c.state === 'active'); }
@@ -47,7 +48,7 @@ function eventSpawn(pl) {
 function eventEnd(outcome) {
   const c = G.ev.cur; if (!c) return;
   G.ev.log.push([c.type, outcome, Math.round(G.time - c.at)]);
-  if (outcome === 'ok') fragUnlock(c.type);                 // 곁가지 사건 첫 해결 조각 (0.13)
+  if (outcome === 'ok' || outcome === 'refuse') fragUnlock(c.type);   // 곁가지 사건 첫 해결 조각 (0.13), 0.16: 봉인된 문은 열기만 해도 해금
   if (c.mob && !c.mob.dead && outcome !== 'ok') c.mob.dead = true;
   G.ev.cur = null;
 }

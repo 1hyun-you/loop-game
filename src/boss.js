@@ -27,7 +27,7 @@ const GK_CFG = {
 };
 const isBossPhase = () => G.ph && (G.ph.id === 'gate' || G.ph.id === 'demon');
 const gkLv = (a) => a[G.gkMob && G.gkMob.rage ? 1 : 0];
-function gkDmg(v) { return v * (1 + CFG.scale.dmgPerMin * G.time / 60); }
+function gkDmg(v) { return v * (1 + CFG.scale.dmgPerMin * G.time / 60) * (G.ph && G.ph.id === 'demon' && !loadSaveCached().trueEnd ? DM_CFG.preDmg : 1); }   // 0.16 진엔딩 전 마왕 패턴 피해 완화
 
 /* 판 시작 시 수문장 결정 */
 function gkPick() {

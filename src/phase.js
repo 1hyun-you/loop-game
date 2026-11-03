@@ -18,7 +18,8 @@ const PHASES = {
     hint: '야영지에서 휴식·보상 1회 선택' },
   surge: { name: '몰아치는 무리', type: '전투형', goal: 'time', dur: 150, spawnMul: 1.8, bias: { bat: 6, slime: 6 }, tint: [200, 70, 60],
     hint: '물량 폭주' },
-  warband: { name: '오우거 전열', type: '전투형', goal: 'kill', fail: 150, spawnMul: 0.9, bias: { brute: 1.5, skel: 5, slime: 3 }, tint: [190, 130, 60],
+  warband: { name: '오우거 전열', type: '전투형', goal: 'kill', fail: 150, min: 40,   // 0.17 최소 지속 40초 (대장 조기 처치 시 잔여 전열 소탕 구간)
+    spawnMul: 0.9, bias: { brute: 1.5, skel: 5, slime: 3 }, tint: [190, 130, 60],
     hint: '오우거 대장 처치' },
   hunt: { name: '엘리트 사냥', type: '전투형', goal: 'hunt', fail: 150, spawnMul: 0.7, tint: [235, 205, 90],
     hint: '정예 4체 처치 (완료 시 보물 상자)' },
@@ -40,7 +41,8 @@ const PHASES = {
     hint: '마왕 처치' },
 };
 const PHASE_ORDER = ['horde', 'calm', 'fog', 'camp', 'surge', 'warband', 'hunt', 'siege', 'seal', 'escort', 'ritual', 'collapse'];
-const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 7, zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
+const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: [150, 230], springHeal: 0.5, cmdHp: 16,   // 0.17 대장 체력 7→16배 (0.15 기록 처치 5~37초)
+  zoneSlow: 0.35, cmdR: 26, zonePush: 2.2, zoneKb: 420,   // 0.3a 봉인석 보완: 구역 거리 단축·둔화 강화·해제 파동
   perRun: [7, 8], perType: 2, retryN: 5, finalGap: 9,              // 재도전 판 페이즈 수 (0.12), 마왕성 출현 예고 구간(초)
   huntN: 4, huntAt: [0, 15, 35, 55],                                   // 엘리트 사냥: 처치 목표·출현 시각(초)
   siegeEvery: 13, siegeFirst: 4, siegeN: 30, siegeR: 300,              // 포위진: 원형 포위 주기·수·반경
@@ -166,7 +168,7 @@ function updatePhase(dt) {
     ph.spring.used = true; heal(p.maxHp * PH_CFG.springHeal); toast('회복의 샘', '#8ff0b0');
     fx({ kind: 'ring', x: ph.spring.x, y: ph.spring.y, r0: 8, r1: 60, dur: 0.5, color: '#8ff0b0' });
   }
-  if (P.goal === 'kill' && ph.cmd && ph.cmd.dead) return phaseEnd('ok');
+  if (P.goal === 'kill' && ph.cmd && ph.cmd.dead && ph.t >= (P.min || 0)) return phaseEnd('ok');
   if (P.goal === 'boss' && G.gkMob && G.gkMob.dead) return phaseEnd('ok');
   if (P.goal === 'zone' && ph.zone) {
     const z = ph.zone;
