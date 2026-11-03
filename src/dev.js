@@ -31,7 +31,10 @@ const DEV = {
       <button data-k="elite">정예 호출</button>
       <button data-k="altar">제단 호출</button>
       <button data-k="gate">수문장전 이동</button>
-      <button data-k="demon">마왕전 이동</button></div>
+      <button data-k="demon">마왕전 이동</button>
+      <button data-k="sv_release">고리 해제 직전</button>
+      <button data-k="sv_post">진엔딩 후</button>
+      <button data-k="sv_restore" class="${devHasBak() ? '' : 'off'}">저장 복원</button></div>
       <pre id="devinfo"></pre>`;
     this.info();
     this.el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
@@ -43,6 +46,8 @@ const DEV = {
       if (k === 'restart') newRun();
       if (k === 'gate' && STATE.mode === 'play' && G.ph.id !== 'gate') { G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
       if (k === 'demon' && STATE.mode === 'play' && !isBossPhase()) { G.runType = 'retry'; G.ph.order = G.ph.order.slice(0, G.ph.i + 1).concat('demon'); G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
+      if (k === 'sv_release' || k === 'sv_post') return devPreset(k.slice(3));
+      if (k === 'sv_restore') return devRestore();
       if (k === 'ult' && G.p.job) G.p.ult = JOB_CFG.ultNeed;
       if (k === 'elite' && STATE.mode === 'play') spawnElite();
       if (k === 'altar' && !G.p.job) { const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i }; }
@@ -55,6 +60,28 @@ const DEV = {
     el.textContent = `버전 ${CFG.VERSION} · 시간 ${fmtTime(G.time)} · 체력 ${Math.round(G.p.hp)}/${G.p.maxHp}\n경험치 ${Math.floor(G.p.xp)}/${G.p.need} · 무기 ${G.p.weapons.map(w => WEAPONS[w.id].name + w.lvl).join(' ')}\n직업 ${G.p.job ? JOBS[G.p.job].name + (G.p.job2 ? '/' + G.p.job2 : '') + ' 궁극기 ' + Math.floor(G.p.ult) : '-'} · 유물 ${G.p.relics.length}\n보조 ${G.p.passives.map(x => PASSIVES[x.id].name + x.lvl).join(' ') || '-'} · 다시 뽑기 ${G.rerolls} · 제외 ${G.banishes}`;
   },
 };
+
+/* 진행 상태 바로가기 (0.15a) — 시험 도구 --preset 동일 내용 주입, 최초 적용 시 실제 저장 데이터 백업 */
+const DEV_BAK = () => CFG.SAVE_KEY + '_devbak';
+function devHasBak() { try { return !!localStorage.getItem(DEV_BAK()); } catch (e) { return false; } }
+function devPreset(pre) {
+  try {
+    if (!devHasBak()) localStorage.setItem(DEV_BAK(), JSON.stringify({ main: localStorage.getItem(CFG.SAVE_KEY), run: localStorage.getItem(CFG.SAVE_KEY + '_run') }));
+    const all = GK_ORDER.slice(), s = { runs: 0, clears: 10, gates: all, demonTries: 3, demonKills: 1, ending1: 1, intro: 1, metGk: all, metDemon: 1, frags: FRAGS.map(f => f.id) };
+    if (pre === 'post') Object.assign(s, { trueEnd: 1, tierMax: 3, titles: ['end'] });
+    localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s));
+    localStorage.setItem(CFG.SAVE_KEY + '_run', JSON.stringify({ tier: 0, conds: [] }));
+  } catch (e) { }
+  location.reload();
+}
+function devRestore() {
+  try {
+    const b = JSON.parse(localStorage.getItem(DEV_BAK()) || 'null'); if (!b) return;
+    const put = (k, v) => v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v);
+    put(CFG.SAVE_KEY, b.main); put(CFG.SAVE_KEY + '_run', b.run); localStorage.removeItem(DEV_BAK());
+  } catch (e) { }
+  location.reload();
+}
 
 /* 자동 이동 — 시험용 (켜면 레벨업 카드도 자동 선택) (초안 자동 로직 v2 축약: 16방향 위험도 + 경험치 무리 추적 + 적 무리 접근) */
 const AUTO = { dir: { x: 0, y: -1 }, next: 0, out: null, run: null };

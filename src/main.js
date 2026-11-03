@@ -61,7 +61,7 @@ function confirmStep(id) {
 
 /* 결과 화면 */
 function showResult() {
-  STATE.mode = 'result';
+  STATE.mode = 'result'; G.toasts = [];   // 판 종료 시 남은 알림 문구 제거 (0.15a)
   const R = G.report, done = G.ph.log.filter(x => x[2] === 'ok').length;
   const D = GATEKEEPERS[G.gk], dm = R.demon, gk = R.gate && R.gate[1] === 'kill';
   const head = dm ? (dm[0] === 'kill' ? '마왕 처치' : R.result === 'retreat' ? '마왕성 소멸' : '쓰러졌다') : R.result === 'clear' ? '들판 돌파' : R.result === 'retreat' ? '수문장 퇴각' : '쓰러졌다';
