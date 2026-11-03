@@ -129,7 +129,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.18',
+  VERSION: '0.19',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -217,7 +217,7 @@ const PASSIVES = {
   area: { name: '공격 범위', ic: '범', per: 0.08, desc: L => `모든 무기 범위 +${8 * L}%` },
   multi: { name: '투사체 수', ic: '투', per: 0.05, desc: L => `개수형 무기 개수 +${multiN(L)}, 해당 무기 피해 +${5 * L}%` },
   magnet: { name: '경험치 흡수', ic: '흡', per: 0.3, desc: L => `경험치 흡수 범위 +${30 * L}%` },
-  regen: { name: '체력 회복', ic: '회', per: 0.25, desc: L => `초당 체력 ${(0.25 * L).toFixed(2)} 회복` },
+  regen: { name: '체력 회복', ic: '생', per: 0.25, desc: L => `초당 체력 ${(0.25 * L).toFixed(2)} 회복` },
 };
 const PASSIVE_ORDER = ['vit', 'might', 'swift', 'haste', 'area', 'multi', 'magnet', 'regen'];
 function multiN(L) { return L >= 3 ? 2 : L >= 1 ? 1 : 0; }
@@ -2816,16 +2816,309 @@ function autoSelect() {
   pickCard(bi);
 }
 /* ============================================================
-   그리기 — 도형 임시 그래픽 (도트 교체는 3단계)
+   도트 그래픽 기반 (0.19, 표현·보강 단계)
+   — 공통 색상표 · 문자 격자 그림 정의 · 사전 그림 저장(오프스크린 캔버스) · 정수 배율 출력
+   — 화풍: 밝은 판타지 레트로, 외곽선 진보라(k), 1텍셀 = 월드 2 단위 기본
    ============================================================ */
-const PAL = ['#3c6a3a', '#467a42', '#5a8c50'];   // 들판 바탕·격자·장식
+const DOT_PAL = {
+  k: '#1b1626', K: '#3a2e4a', w: '#ffffff', W: '#dfe6ee',
+  s: '#f6cfa0', S: '#cf8f66',
+  y: '#ffd24a', Y: '#c8902a',
+  r: '#e8503c', R: '#9a2a2c', o: '#ee8a3e', O: '#a85a2c',
+  g: '#6ad05a', G: '#3a8c40', v: '#b6f07e',
+  u: '#a07ee6', U: '#5e44a0',
+  n: '#8a5a3a', N: '#583824',
+  e: '#ece4cc', E: '#a49a80',
+  m: '#6c7890', M: '#b4c2d4', c: '#7fdcf6',
+};
+/* 그림 정의: 프레임별 문자 격자, P/p = 주인공 색상 변형(밝음/어두움), px = 텍셀당 월드 단위 */
+const SPR = {
+  hero: { px: 2, frames: [[
+    '................',
+    '.....kkkkk......',
+    '....kyyyyyk.....',
+    '...kyyyyyyyk....',
+    '...kyyssssyk....',
+    '...kysskskSk....',
+    '...kSsssssSk....',
+    '....kkSSSkk.....',
+    '...kPPPPPPPk....',
+    '..ksPPPPPPPsk...',
+    '..kSpPPPPPpSk...',
+    '...knnnynnnk....',
+    '...kpPPkPPpk....',
+    '...knnk.knnk....',
+    '...kNNk.kNNk....',
+    '....kk...kk.....',
+  ], [
+    '................',
+    '.....kkkkk......',
+    '....kyyyyyk.....',
+    '...kyyyyyyyk....',
+    '...kyyssssyk....',
+    '...kysskskSk....',
+    '...kSsssssSk....',
+    '....kkSSSkk.....',
+    '...kPPPPPPPk....',
+    '..ksPPPPPPPsk...',
+    '..kSpPPPPPpSk...',
+    '...knnnynnnk....',
+    '...kpPPkPPpk....',
+    '..knnk...knnk...',
+    '..kNNk...kkk....',
+    '...kk...........',
+  ]] },
+  slime: { px: 2, frames: [[
+    '....kkkk....',
+    '..kkvvggkk..',
+    '.kvvgggggGk.',
+    'kvgggggggggk',
+    'kgwkgggwkggk',
+    'kggggggggGGk',
+    'kgggggggGGGk',
+    '.kGGGGGGGGk.',
+    '..kkkkkkkk..',
+  ], [
+    '............',
+    '............',
+    '...kkkkkk...',
+    '.kkvvgggggk.',
+    'kvgggggggGGk',
+    'kgwkgggwkgGk',
+    'kggggggggGGk',
+    '.kGGGGGGGGk.',
+    '..kkkkkkkk..',
+  ]] },
+  bat: { px: 2, frames: [[
+    'k..........k',
+    'kk........kk',
+    'kuk.kkkk.kuk',
+    'kuukuuuukuuk',
+    '.kuuwuuwuuk.',
+    '..kuuuuuuk..',
+    '...kUUUUk...',
+    '....k..k....',
+  ], [
+    '............',
+    '............',
+    '....kkkk....',
+    '..kkuuuukk..',
+    '.kuuwuuwuuk.',
+    'kuuuUuuUuuuk',
+    'kuk.kUUk.kuk',
+    'kk........kk',
+  ]] },
+  skel: { px: 2, frames: [[
+    '...kkkkkk...',
+    '..keeeeeek..',
+    '.keeeeeeeek.',
+    '.kekkeekkek.',
+    '.kekkeekkek.',
+    '.keeeeeeeek.',
+    '..keekkeek..',
+    '...keeeek...',
+    '..kkEkkEkk..',
+    '.keEeeeeEek.',
+    '.kkkEeeEkkk.',
+    '...keEEek...',
+    '...kek.kek..',
+    '...kek.kek..',
+    '..kkk...kkk.',
+  ], [
+    '...kkkkkk...',
+    '..keeeeeek..',
+    '.keeeeeeeek.',
+    '.kekkeekkek.',
+    '.kekkeekkek.',
+    '.keeeeeeeek.',
+    '..keekkeek..',
+    '...keeeek...',
+    '..kkEkkEkk..',
+    '.keEeeeeEek.',
+    '.kkkEeeEkkk.',
+    '...keEEek...',
+    '..kek...kek.',
+    '..kek...kek.',
+    '.kkk.....kk.',
+  ]] },
+  brute: { px: 2, frames: [[
+    '......kkkkkkkk......',
+    '....kkooooooookk....',
+    '...koooooooooooOk...',
+    '..kooookkookkoooOk..',
+    '..koooorkoorkoooOk..',
+    '..kooooooooooooOOk..',
+    '..koooowkkkkwooOOk..',
+    '..kOooookwwkoooOOk..',
+    '...kOOooooooooOOk...',
+    '.kkkkOOOOOOOOOOkkkk.',
+    'kooookNNNNNNNNkooook',
+    'kooOkNnnnnnnnnNkOook',
+    'kOOk.kNnnnnnnNk.kOOk',
+    '.kk..kNNNNNNNNk..kk.',
+    '.....kooook.kook....',
+    '.....kOOOk..kOOk....',
+    '.....kkkk...kkkk....',
+  ], [
+    '......kkkkkkkk......',
+    '....kkooooooookk....',
+    '...koooooooooooOk...',
+    '..kooookkookkoooOk..',
+    '..koooorkoorkoooOk..',
+    '..kooooooooooooOOk..',
+    '..koooowkkkkwooOOk..',
+    '..kOooookwwkoooOOk..',
+    '...kOOooooooooOOk...',
+    '.kkkkOOOOOOOOOOkkkk.',
+    'kooookNNNNNNNNkooook',
+    'kooOkNnnnnnnnnNkOook',
+    'kOOk.kNnnnnnnNk.kOOk',
+    '.kk..kNNNNNNNNk..kk.',
+    '....kook.kooook.....',
+    '....kOOk..kOOOk.....',
+    '....kkkk..kkkkk.....',
+  ]] },
+  bargan: { px: 2.5, frames: [[
+    '....k..............k....',
+    '...kMk............kMk...',
+    '...kMMk..........kMMk...',
+    '....kMMk.kkkkkk.kMMk....',
+    '.....kMMkmmmmmmkMMk.....',
+    '......kkmmmmmmmmkk......',
+    '.....kmmmmmmmmmmmmk.....',
+    '.....kmkkkmmmmkkkmk.....',
+    '.....kmkrrkmmkrrkmk.....',
+    '.....kmmkkmmmmkkmmk.....',
+    '......kmmmmkkmmmmk......',
+    '...kkkkkmmmmmmmmkkkkk...',
+    '..kRRrrkkkkkkkkkkrrRRk..',
+    '.kRrrrrkRrrrrrrRkrrrrRk.',
+    '.kRrrrkRrryyyyrrRkrrrRk.',
+    '.kRRrkRrrrykkyrrrRkrRRk.',
+    '..kkkkRrrryyyyrrrRkkkk..',
+    '......kRrrrrrrrrRk......',
+    '......kkRRRRRRRRkk......',
+    '......kmmk....kmmk......',
+    '.....kmMMk....kMMmk.....',
+    '.....kmmmk....kmmmk.....',
+    '.....kkkkk....kkkkk.....',
+  ], [
+    '....k..............k....',
+    '...kMk............kMk...',
+    '...kMMk..........kMMk...',
+    '....kMMk.kkkkkk.kMMk....',
+    '.....kMMkmmmmmmkMMk.....',
+    '......kkmmmmmmmmkk......',
+    '.....kmmmmmmmmmmmmk.....',
+    '.....kmkkkmmmmkkkmk.....',
+    '.....kmkrrkmmkrrkmk.....',
+    '.....kmmkkmmmmkkmmk.....',
+    '......kmmmmkkmmmmk......',
+    '...kkkkkmmmmmmmmkkkkk...',
+    '..kRRrrkkkkkkkkkkrrRRk..',
+    '.kRrrrrkRrrrrrrRkrrrrRk.',
+    '.kRrrrkRrryyyyrrRkrrrRk.',
+    '.kRRrkRrrrykkyrrrRkrRRk.',
+    '..kkkkRrrryyyyrrrRkkkk..',
+    '......kRrrrrrrrrRk......',
+    '......kkRRRRRRRRkk......',
+    '.....kmmk......kmmk.....',
+    '....kmMMk......kMMmk....',
+    '....kmmmk......kmmmk....',
+    '....kkkkk......kkkkk....',
+  ]] },
+};
+/* 지형 타일 (16×16, 밝은 풀밭) — 변형 4종을 좌표 해시로 배치 */
+const TILE_PAL = { a: '#62b04c', b: '#59a545', c: '#79c65a', d: '#4b923e', f: '#fff3b0', h: '#ffffff', i: '#f39ab0' };
+const TILES = [
+  ['aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa',
+    'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa'],
+  ['aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaacaaaaaaaaaaaa', 'aacdcaaaaaaaaaaa', 'aaadaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaacaaaaa', 'aaaaaaaaacacaaaa',
+    'aaaaaaaaadadaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaacaaaaaaaaa', 'aaaaacdcaaaaaaaa', 'aaaaaadaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa'],
+  ['aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaacaaaa', 'aaaaaaaaaacdcaaa', 'aaaaaaaaaaadaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa',
+    'aaaaaaaaaaaaaaaa', 'aaacaaaaaaaaaaaa', 'aacdcaaaaaaaaaaa', 'aaadaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa'],
+  ['aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaafaaaaaaaaa', 'aaaaafyfaaaaaaaa', 'aaaaaafaaaaaaaaa', 'aaaaaadaaaaahaaa', 'aaaaaaaaaaahihaa',
+    'aaaaaaaaaaaahaaa', 'aaaaaaaaaaaadaaa', 'aaaaaaaaaaaaaaaa', 'aaacaaaaaaaaaaaa', 'aacdcaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa'],
+];
+const GROUND_BASE = TILE_PAL.a;
+
+/* 색 보조 */
+function shadeHex(hex, k) {
+  const n = parseInt(hex.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(v * k)));
+  return '#' + ((f(n >> 16 & 255) << 16) | (f(n >> 8 & 255) << 8) | f(n & 255)).toString(16).padStart(6, '0');
+}
+/* 사전 그림 저장: 이름·프레임·변형·텍셀 배율·좌우 반전·색상 변형 단위 캐시 */
+const SPR_CACHE = new Map();
+function bakeGrid(rows, pal, t, flip, mode, outline) {
+  const h = rows.length, w = Math.max(...rows.map(r => r.length)), pad = outline ? 1 : 0;
+  const cv = document.createElement('canvas'); cv.width = (w + pad * 2) * t; cv.height = (h + pad * 2) * t;
+  const c = cv.getContext('2d');
+  const at = (x, y) => { const r = rows[y]; if (!r) return '.'; const ch = r[flip ? w - 1 - x : x]; return ch === undefined ? '.' : ch; };
+  if (outline) {
+    c.fillStyle = outline;
+    for (let y = -1; y <= h; y++) for (let x = -1; x <= w; x++) {
+      if (x >= 0 && y >= 0 && x < w && y < h && at(x, y) !== '.') continue;
+      let near = false;
+      for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < w && yy < h && at(xx, yy) !== '.') { near = true; break; } }
+      if (near) c.fillRect((x + pad) * t, (y + pad) * t, t, t);
+    }
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const ch = at(x, y); if (ch === '.') continue;
+    c.fillStyle = mode === 'white' ? (ch === 'k' ? '#ffe8e8' : '#ffffff') : (pal[ch] || '#ff00ff');
+    c.fillRect((x + pad) * t, (y + pad) * t, t, t);
+  }
+  return { cv, w, h, pad };
+}
+/* 텍셀 하나의 실제 화면 픽셀 수 (정수 배율) */
+function texelPx(px) { return Math.max(1, Math.round(px * VIEW.zoom * VIEW.dpr)); }
+function getSprite(name, frame, opt) {
+  const D = SPR[name], o = opt || {}, mul = o.mul || 1, t = texelPx(D.px * mul), flip = !!o.flip, mode = o.mode || 'n', tint = o.tint || '';
+  const key = name + '|' + frame + '|' + t + '|' + (flip ? 1 : 0) + '|' + mode + '|' + tint;
+  let s = SPR_CACHE.get(key);
+  if (!s) {
+    const pal = tint ? Object.assign({}, DOT_PAL, { P: tint, p: shadeHex(tint, 0.68) }) : DOT_PAL;
+    s = bakeGrid(D.frames[frame % D.frames.length], pal, t, flip, mode === 'white' ? 'white' : 'n', mode === 'gold' ? '#ffd24a' : mode === 'rage' ? '#ff5a3a' : null);
+    s.t = t; SPR_CACHE.set(key, s);
+    if (SPR_CACHE.size > 600) SPR_CACHE.delete(SPR_CACHE.keys().next().value);
+  }
+  return s;
+}
+/* 월드 좌표 출력: 발밑(by) 기준 하단 정렬·가로 중앙, 텍셀 경계 정렬 */
+function drawSprite(c, name, frame, x, by, opt) {
+  const s = getSprite(name, frame, opt), k = 1 / (VIEW.zoom * VIEW.dpr);
+  const W = s.cv.width * k, H = s.cv.height * k;
+  const dx = Math.round((x - W / 2) / k) * k, dy = Math.round((by - H + s.pad * s.t * k) / k) * k;
+  c.drawImage(s.cv, dx, dy, W, H);
+}
+function spriteFor(e) {
+  if (e.gk) return e.gk === 'bargan' ? 'bargan' : null;
+  if (e.shape === 'rune') return null;
+  return SPR[e.type] ? e.type : null;
+}
+/* 큰 개체(거대 몹 등)는 텍셀 배율 정수 확대 */
+function spriteMul(e) { const base = ENEMIES[e.type]; if (e.gk || !base) return 1; return Math.max(1, Math.round(e.r / base.r - 0.25)); }
+
+/* 지형 타일 */
+const TILE_CACHE = new Map();
+function getTile(i) {
+  const t = texelPx(2), key = i + '|' + t;
+  let s = TILE_CACHE.get(key);
+  if (!s) { s = bakeGrid(TILES[i], Object.assign({}, TILE_PAL, { y: DOT_PAL.y }), t, false, 'n', null); TILE_CACHE.set(key, s); }
+  return s;
+}
+/* ============================================================
+   그리기 — 0.19 도트 적용 시작(주인공·잡몹 4종·바르간·지형), 나머지 도형은 0.20 교체
+   ============================================================ */
+const PAL = [GROUND_BASE];   // 들판 바탕 (0.19 도트 타일)
 function render() {
   const c = ctx, dpr = VIEW.dpr, Z = VIEW.zoom, p = G.p;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.fillStyle = PAL[0]; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
   const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
-  c.setTransform(dpr * Z, 0, 0, dpr * Z, -camX * dpr * Z, -camY * dpr * Z);
+  c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
+  c.imageSmoothingEnabled = false;
   const vx0 = camX - 40, vy0 = camY - 40, vx1 = camX + VIEW.w + 40, vy1 = camY + VIEW.h + 40;
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   drawGround(c, camX, camY);
@@ -2850,17 +3143,12 @@ function render() {
   drawPhasePointer(c, camX, camY);
 }
 function drawGround(c, camX, camY) {
-  const T = 96, x0 = Math.floor(camX / T) - 1, y0 = Math.floor(camY / T) - 1, x1 = x0 + Math.ceil(VIEW.w / T) + 3, y1 = y0 + Math.ceil(VIEW.h / T) + 3;
-  c.fillStyle = PAL[1];
-  for (let tx = x0; tx < x1; tx++) for (let ty = y0; ty < y1; ty++) if ((tx + ty) & 1) c.fillRect(tx * T, ty * T, T, T);
-  const t2 = 48, a0 = Math.floor(camX / t2) - 1, b0 = Math.floor(camY / t2) - 1, a1 = a0 + Math.ceil(VIEW.w / t2) + 3, b1 = b0 + Math.ceil(VIEW.h / t2) + 3;
-  c.strokeStyle = PAL[2]; c.lineWidth = 2; c.beginPath();
-  for (let tx = a0; tx < a1; tx++) for (let ty = b0; ty < b1; ty++) {
-    if (hash2(tx, ty) > 0.16) continue;
-    const x = tx * t2 + hash2(ty, tx) * 40, y = ty * t2 + hash2(tx + 7, ty) * 40;
-    c.moveTo(x, y); c.lineTo(x - 3, y - 7); c.moveTo(x + 3, y); c.lineTo(x + 4, y - 8); c.moveTo(x + 6, y); c.lineTo(x + 9, y - 6);
+  const T = 32, x0 = Math.floor(camX / T) - 1, y0 = Math.floor(camY / T) - 1, x1 = x0 + Math.ceil(VIEW.w / T) + 3, y1 = y0 + Math.ceil(VIEW.h / T) + 3;
+  for (let tx = x0; tx < x1; tx++) for (let ty = y0; ty < y1; ty++) {
+    const hv = hash2(tx, ty), i = hv < 0.55 ? 0 : hv < 0.78 ? 1 : hv < 0.94 ? 2 : 3;
+    if (!i) continue;                                         // 기본 타일은 바탕색으로 대체
+    const s = getTile(i); c.drawImage(s.cv, tx * T, ty * T, T, T);
   }
-  c.stroke();
 }
 function drawGems(c, inView) {
   c.fillStyle = '#59c7f0'; c.beginPath();
@@ -2882,9 +3170,10 @@ function enemyPath(c, e) {
   }
 }
 function drawEnemies(c, inView) {
-  const byColor = new Map(), flash = [];
+  const byColor = new Map(), flash = [], sprites = [];
   for (const e of G.enemies) {
     if (e.dead || !inView(e.x, e.y, e.r)) continue;
+    if (spriteFor(e)) { sprites.push(e); continue; }        // 도트 그림 대상 (0.19)
     if (e.flash > 0) { flash.push(e); continue; }
     let a = byColor.get(e.color); if (!a) { a = []; byColor.set(e.color, a); } a.push(e);
   }
@@ -2896,15 +3185,16 @@ function drawEnemies(c, inView) {
   for (const a of byColor.values()) for (const e of a) { if (e.fixed) continue; const ex = G.p.x > e.x ? 1.5 : -1.5; c.rect(e.x - e.r * 0.4 + ex, e.y - e.r * 0.15, 2, 2.5); c.rect(e.x + e.r * 0.25 + ex, e.y - e.r * 0.15, 2, 2.5); }
   c.fill();
   if (flash.length) { c.fillStyle = '#fff'; c.beginPath(); for (const e of flash) enemyPath(c, e); c.fill(); }
+  drawEnemySprites(c, sprites);
   // 대장·마법진·거대 몹 체력 막대 (0.10)
   for (const e of G.enemies) {
     if (e.dead || !e.cmd || e.gk || !inView(e.x, e.y, e.r)) continue;
     const w = e.r * 2.2, y = e.y - e.r - 10; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 5); c.fillStyle = e.rit ? '#c8a0ff' : '#ff8a5a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 5);
   }
-  // 엘리트: 금색 테두리 · 보호막 · 돌진 예고 · 체력 막대
+  // 엘리트: 금색 테두리(도트는 외곽선 변형) · 보호막 · 돌진 예고 · 체력 막대
   for (const e of G.enemies) {
     if (e.dead || !e.elite || !inView(e.x, e.y, e.r)) continue;
-    c.strokeStyle = '#ffd24a'; c.lineWidth = 3; c.beginPath(); enemyPath(c, e); c.stroke();
+    if (!spriteFor(e)) { c.strokeStyle = '#ffd24a'; c.lineWidth = 3; c.beginPath(); enemyPath(c, e); c.stroke(); }
     if (e.sh > 0) { c.strokeStyle = 'rgba(140,200,255,0.85)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 6, 0, 7); c.stroke(); }
     if (e.tele > 0) { c.strokeStyle = 'rgba(255,80,60,0.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(G.p.x, G.p.y); c.stroke(); }
     const w = e.r * 2, y = e.y - e.r - 9; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 4); c.fillStyle = '#ffd24a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 4);
@@ -2913,6 +3203,18 @@ function drawEnemies(c, inView) {
   for (const e of G.enemies) if (!e.dead && e.frz > 0 && inView(e.x, e.y, e.r)) { c.moveTo(e.x + e.r + 3, e.y); c.arc(e.x, e.y, e.r + 3, 0, 7); }
   c.stroke();
   if (G.p.job === 'archer') { c.fillStyle = '#b8ff9a'; for (const e of G.enemies) if (!e.dead && e.mk && inView(e.x, e.y, e.r)) for (let i = 0; i < e.mk; i++) c.fillRect(e.x - 8 + i * 4, e.y - e.r - 6, 3, 3); }
+}
+/* 도트 적 그리기: 그림자 → (엘리트 금색 외곽선) → 본체/피격 반짝임, 플레이어 방향으로 좌우 반전 */
+function drawEnemySprites(c, list) {
+  if (!list.length) return;
+  c.fillStyle = 'rgba(0,0,0,0.2)'; c.beginPath();
+  for (const e of list) { c.moveTo(e.x + e.r, e.y + e.r * 0.8); c.ellipse(e.x, e.y + e.r * 0.8, e.r, e.r * 0.32, 0, 0, 7); }
+  c.fill();
+  for (const e of list) {
+    const nm = spriteFor(e), fr = Math.floor(G.time * (e.type === 'bat' ? 8 : 4) + e.id * 0.37) & 1, flip = G.p.x < e.x, mul = spriteMul(e), by = e.y + e.r * 0.95;
+    if (e.elite || e.rage) drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.rage ? 'rage' : 'gold' });
+    drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.flash > 0 ? 'white' : 'n' });
+  }
 }
 /* 지면: 장판·잔상·보물 상자·전직 제단·지뢰 */
 function drawGrowthGround(c, inView) {
@@ -2959,13 +3261,9 @@ function drawPlayer(c) {
   const p = G.p;
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
   c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x, p.y + p.r * 0.85, p.r, p.r * 0.35, 0, 0, 7); c.fill();
-  c.fillStyle = playerColor(); c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill();   // 색상 변형 (0.15)
-  c.strokeStyle = '#fff'; c.lineWidth = 2.5; c.stroke();
-  const fa = Math.atan2(p.face.y, p.face.x);
-  c.fillStyle = '#fff'; c.beginPath();
-  c.moveTo(p.x + Math.cos(fa) * (p.r + 7), p.y + Math.sin(fa) * (p.r + 7));
-  c.lineTo(p.x + Math.cos(fa + 0.5) * (p.r + 1), p.y + Math.sin(fa + 0.5) * (p.r + 1));
-  c.lineTo(p.x + Math.cos(fa - 0.5) * (p.r + 1), p.y + Math.sin(fa - 0.5) * (p.r + 1)); c.closePath(); c.fill();
+  const mv = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.05; p._lx = p.x; p._ly = p.y;   // 이동 중 걷기 동작 (0.19)
+  if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;
+  drawSprite(c, 'hero', mv ? Math.floor(G.time * 8) & 1 : 0, p.x, p.y + p.r * 1.1, { flip: !!p._fl, tint: playerColor() });   // 색상 변형 (0.15)
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
   c.fillStyle = p.hp / p.maxHp > 0.3 ? '#5fe07a' : '#ff5a5a'; c.fillRect(x, y, w * Math.max(0, p.hp / p.maxHp), h);
@@ -3055,7 +3353,7 @@ function drawHUD(c) {
   if (P) { const bw = 120; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4); }
   c.fillStyle = '#fff';
   c.font = 'bold 14px system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
-  if (STATE.dev.fps) { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
+  if (STATE.dev.fps && STATE.mode !== 'result') { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
   drawSlots(c, top + 58);
   drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
   let ty = VIEW.ch * 0.3;

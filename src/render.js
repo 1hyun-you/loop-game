@@ -1,14 +1,15 @@
 /* ============================================================
-   그리기 — 도형 임시 그래픽 (도트 교체는 3단계)
+   그리기 — 0.19 도트 적용 시작(주인공·잡몹 4종·바르간·지형), 나머지 도형은 0.20 교체
    ============================================================ */
-const PAL = ['#3c6a3a', '#467a42', '#5a8c50'];   // 들판 바탕·격자·장식
+const PAL = [GROUND_BASE];   // 들판 바탕 (0.19 도트 타일)
 function render() {
   const c = ctx, dpr = VIEW.dpr, Z = VIEW.zoom, p = G.p;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.fillStyle = PAL[0]; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
   const sh = p.flash > 0 && SETTINGS.shake ? 3 : 0;         // 화면 흔들림 설정 (0.14)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
-  c.setTransform(dpr * Z, 0, 0, dpr * Z, -camX * dpr * Z, -camY * dpr * Z);
+  c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
+  c.imageSmoothingEnabled = false;
   const vx0 = camX - 40, vy0 = camY - 40, vx1 = camX + VIEW.w + 40, vy1 = camY + VIEW.h + 40;
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   drawGround(c, camX, camY);
@@ -33,17 +34,12 @@ function render() {
   drawPhasePointer(c, camX, camY);
 }
 function drawGround(c, camX, camY) {
-  const T = 96, x0 = Math.floor(camX / T) - 1, y0 = Math.floor(camY / T) - 1, x1 = x0 + Math.ceil(VIEW.w / T) + 3, y1 = y0 + Math.ceil(VIEW.h / T) + 3;
-  c.fillStyle = PAL[1];
-  for (let tx = x0; tx < x1; tx++) for (let ty = y0; ty < y1; ty++) if ((tx + ty) & 1) c.fillRect(tx * T, ty * T, T, T);
-  const t2 = 48, a0 = Math.floor(camX / t2) - 1, b0 = Math.floor(camY / t2) - 1, a1 = a0 + Math.ceil(VIEW.w / t2) + 3, b1 = b0 + Math.ceil(VIEW.h / t2) + 3;
-  c.strokeStyle = PAL[2]; c.lineWidth = 2; c.beginPath();
-  for (let tx = a0; tx < a1; tx++) for (let ty = b0; ty < b1; ty++) {
-    if (hash2(tx, ty) > 0.16) continue;
-    const x = tx * t2 + hash2(ty, tx) * 40, y = ty * t2 + hash2(tx + 7, ty) * 40;
-    c.moveTo(x, y); c.lineTo(x - 3, y - 7); c.moveTo(x + 3, y); c.lineTo(x + 4, y - 8); c.moveTo(x + 6, y); c.lineTo(x + 9, y - 6);
+  const T = 32, x0 = Math.floor(camX / T) - 1, y0 = Math.floor(camY / T) - 1, x1 = x0 + Math.ceil(VIEW.w / T) + 3, y1 = y0 + Math.ceil(VIEW.h / T) + 3;
+  for (let tx = x0; tx < x1; tx++) for (let ty = y0; ty < y1; ty++) {
+    const hv = hash2(tx, ty), i = hv < 0.55 ? 0 : hv < 0.78 ? 1 : hv < 0.94 ? 2 : 3;
+    if (!i) continue;                                         // 기본 타일은 바탕색으로 대체
+    const s = getTile(i); c.drawImage(s.cv, tx * T, ty * T, T, T);
   }
-  c.stroke();
 }
 function drawGems(c, inView) {
   c.fillStyle = '#59c7f0'; c.beginPath();
@@ -65,9 +61,10 @@ function enemyPath(c, e) {
   }
 }
 function drawEnemies(c, inView) {
-  const byColor = new Map(), flash = [];
+  const byColor = new Map(), flash = [], sprites = [];
   for (const e of G.enemies) {
     if (e.dead || !inView(e.x, e.y, e.r)) continue;
+    if (spriteFor(e)) { sprites.push(e); continue; }        // 도트 그림 대상 (0.19)
     if (e.flash > 0) { flash.push(e); continue; }
     let a = byColor.get(e.color); if (!a) { a = []; byColor.set(e.color, a); } a.push(e);
   }
@@ -79,15 +76,16 @@ function drawEnemies(c, inView) {
   for (const a of byColor.values()) for (const e of a) { if (e.fixed) continue; const ex = G.p.x > e.x ? 1.5 : -1.5; c.rect(e.x - e.r * 0.4 + ex, e.y - e.r * 0.15, 2, 2.5); c.rect(e.x + e.r * 0.25 + ex, e.y - e.r * 0.15, 2, 2.5); }
   c.fill();
   if (flash.length) { c.fillStyle = '#fff'; c.beginPath(); for (const e of flash) enemyPath(c, e); c.fill(); }
+  drawEnemySprites(c, sprites);
   // 대장·마법진·거대 몹 체력 막대 (0.10)
   for (const e of G.enemies) {
     if (e.dead || !e.cmd || e.gk || !inView(e.x, e.y, e.r)) continue;
     const w = e.r * 2.2, y = e.y - e.r - 10; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 5); c.fillStyle = e.rit ? '#c8a0ff' : '#ff8a5a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 5);
   }
-  // 엘리트: 금색 테두리 · 보호막 · 돌진 예고 · 체력 막대
+  // 엘리트: 금색 테두리(도트는 외곽선 변형) · 보호막 · 돌진 예고 · 체력 막대
   for (const e of G.enemies) {
     if (e.dead || !e.elite || !inView(e.x, e.y, e.r)) continue;
-    c.strokeStyle = '#ffd24a'; c.lineWidth = 3; c.beginPath(); enemyPath(c, e); c.stroke();
+    if (!spriteFor(e)) { c.strokeStyle = '#ffd24a'; c.lineWidth = 3; c.beginPath(); enemyPath(c, e); c.stroke(); }
     if (e.sh > 0) { c.strokeStyle = 'rgba(140,200,255,0.85)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 6, 0, 7); c.stroke(); }
     if (e.tele > 0) { c.strokeStyle = 'rgba(255,80,60,0.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(G.p.x, G.p.y); c.stroke(); }
     const w = e.r * 2, y = e.y - e.r - 9; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 4); c.fillStyle = '#ffd24a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 4);
@@ -96,6 +94,18 @@ function drawEnemies(c, inView) {
   for (const e of G.enemies) if (!e.dead && e.frz > 0 && inView(e.x, e.y, e.r)) { c.moveTo(e.x + e.r + 3, e.y); c.arc(e.x, e.y, e.r + 3, 0, 7); }
   c.stroke();
   if (G.p.job === 'archer') { c.fillStyle = '#b8ff9a'; for (const e of G.enemies) if (!e.dead && e.mk && inView(e.x, e.y, e.r)) for (let i = 0; i < e.mk; i++) c.fillRect(e.x - 8 + i * 4, e.y - e.r - 6, 3, 3); }
+}
+/* 도트 적 그리기: 그림자 → (엘리트 금색 외곽선) → 본체/피격 반짝임, 플레이어 방향으로 좌우 반전 */
+function drawEnemySprites(c, list) {
+  if (!list.length) return;
+  c.fillStyle = 'rgba(0,0,0,0.2)'; c.beginPath();
+  for (const e of list) { c.moveTo(e.x + e.r, e.y + e.r * 0.8); c.ellipse(e.x, e.y + e.r * 0.8, e.r, e.r * 0.32, 0, 0, 7); }
+  c.fill();
+  for (const e of list) {
+    const nm = spriteFor(e), fr = Math.floor(G.time * (e.type === 'bat' ? 8 : 4) + e.id * 0.37) & 1, flip = G.p.x < e.x, mul = spriteMul(e), by = e.y + e.r * 0.95;
+    if (e.elite || e.rage) drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.rage ? 'rage' : 'gold' });
+    drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.flash > 0 ? 'white' : 'n' });
+  }
 }
 /* 지면: 장판·잔상·보물 상자·전직 제단·지뢰 */
 function drawGrowthGround(c, inView) {
@@ -142,13 +152,9 @@ function drawPlayer(c) {
   const p = G.p;
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
   c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x, p.y + p.r * 0.85, p.r, p.r * 0.35, 0, 0, 7); c.fill();
-  c.fillStyle = playerColor(); c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill();   // 색상 변형 (0.15)
-  c.strokeStyle = '#fff'; c.lineWidth = 2.5; c.stroke();
-  const fa = Math.atan2(p.face.y, p.face.x);
-  c.fillStyle = '#fff'; c.beginPath();
-  c.moveTo(p.x + Math.cos(fa) * (p.r + 7), p.y + Math.sin(fa) * (p.r + 7));
-  c.lineTo(p.x + Math.cos(fa + 0.5) * (p.r + 1), p.y + Math.sin(fa + 0.5) * (p.r + 1));
-  c.lineTo(p.x + Math.cos(fa - 0.5) * (p.r + 1), p.y + Math.sin(fa - 0.5) * (p.r + 1)); c.closePath(); c.fill();
+  const mv = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.05; p._lx = p.x; p._ly = p.y;   // 이동 중 걷기 동작 (0.19)
+  if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;
+  drawSprite(c, 'hero', mv ? Math.floor(G.time * 8) & 1 : 0, p.x, p.y + p.r * 1.1, { flip: !!p._fl, tint: playerColor() });   // 색상 변형 (0.15)
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
   c.fillStyle = p.hp / p.maxHp > 0.3 ? '#5fe07a' : '#ff5a5a'; c.fillRect(x, y, w * Math.max(0, p.hp / p.maxHp), h);
@@ -238,7 +244,7 @@ function drawHUD(c) {
   if (P) { const bw = 120; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4); }
   c.fillStyle = '#fff';
   c.font = 'bold 14px system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
-  if (STATE.dev.fps) { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
+  if (STATE.dev.fps && STATE.mode !== 'result') { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
   drawSlots(c, top + 58);
   drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
   let ty = VIEW.ch * 0.3;
