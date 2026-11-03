@@ -131,7 +131,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.22',
+  VERSION: '0.23',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -355,6 +355,7 @@ function recalc() {
     cd: Math.max(0.4, 1 - PASSIVES.haste.per * passLv('haste')),
   };
   p.maxHp = CFG.player.hp + PASSIVES.vit.per * passLv('vit') + (p.vet ? 30 : 0);
+  traitMod(p);                                              // 숙련 특성 (0.23)
   if (p.maxHp > prevMax && !hasCond('noheal')) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복 (도전 조건 회복 없음 제외)
   p.hp = Math.min(p.hp, p.maxHp);
 }
@@ -422,6 +423,7 @@ function makeEnemy(type, x, y) {
     speed: d.speed * rand(0.9, 1.1) * (1 + CFG.scale.speedPerMin * Math.min(min, 10)),
     color: d.color, shape: d.shape, xp: d.xp, flash: 0, kbx: 0, kby: 0, dead: false, ht: {},
   };
+  if (d.mb) e.mb = d.mb;                                     // 잡몹 행동 유형 (0.23)
   e.maxHp = e.hp; G.enemies.push(e); return e;
 }
 function aliveCount() { let n = 0; for (const e of G.enemies) if (!e.dead) n++; return n; }
@@ -454,6 +456,7 @@ function updateEnemies(dt) {
     if (e.elite) sp *= eliteMove(e, dt);
     if (e.slowT > 0) { e.slowT -= dt; sp *= 0.55; }
     if (e.frz > 0) { e.frz -= dt; sp = 0; }
+    if (e.mb && !e.frz) { sp = mobMove(e, dt, sp, d, dx, dy); if (e.dead) continue; }   // 사격·자폭·돌진·흔들림 (0.23)
     if (e.sleep || e.fixed) sp = 0;                                               // 잠든 거대 몹·마법진 (0.10)                                       // 빙결·속박 (0.8)
     if (e.bl > 0) { e.bl -= dt; e.blT = (e.blT || 0) - dt; if (e.blT <= 0) { e.blT = 0.5; damageEnemy(e, e.blD, { src: 'bleed' }); if (e.dead) continue; } }
     if (e.gk) { gkUpdate(e, dt, d, dx, dy); continue; }                      // 수문장 전용 이동·패턴 (0.11)
@@ -477,7 +480,7 @@ function updateEnemies(dt) {
 /* 피해·처치 */
 function damageEnemy(e, dmg, o = {}) {
   if (e.dead || e.inv > 0) return;                         // 마왕 페이즈 전환 중 무적 (0.12)
-  dmg *= jobDmgMul(e, o);
+  dmg *= jobDmgMul(e, o) * traitDmgMul(e) * (e.mb ? mobDmgMul(e, o) : 1);   // 숙련 특성·방패병 (0.23)
   if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
   if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16) — 모든 피해 배율 적용 후 보정 (0.18: 칼날 폭풍 배율이 보정 뒤에 곱해져 페이즈 조기 전환되던 결함 수정)
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
@@ -497,17 +500,18 @@ function killEnemy(e) {
   if (e.slowT > 0 && wBr('icering') === 'shatter') { const x = e.x, y = e.y, d = wStats(G.p.weapons.find(w => w.id === 'icering')).dmg * 2.5; G.later.push({ t: 0, f: () => explode(x, y, 46, d, 'shatter', '#bfe8ff') }); }
   if (pBr('regen') === 'vamp') heal(0.4);
   onEnemyKill(e);
+  if (e.mb) mobKilled(e); traitKill(e);                     // 분열·숙련 특성 (0.23)
   fx({ kind: 'pop', x: e.x, y: e.y, r: e.r, color: e.color, dur: 0.22 });
   jKill(e);                                                  // 처치 파편 (0.22)
 }
 function hurtPlayer(dmg, src) {
   const p = G.p;
   if (p.invT > 0 || STATE.dev.god || G.result) return;
-  if (playerAvoid()) return;
-  dmg *= playerHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
+  if (playerAvoid() || traitAvoid()) return;
+  dmg *= playerHurtMul() * traitHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
   vibe(25); sfx('hurt');
   onPlayerHurt();
-  p.hp -= dmg; p.invT = CFG.player.invuln; p.flash = 0.2; G.lastHit = src;
+  p.hp -= dmg; p.invT = CFG.player.invuln + (tr('guard') ? 0.2 : 0); p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
   if (p.hp <= 0 && pBr('regen') === 'second' && !p.revived) { p.revived = true; p.hp = p.maxHp * 0.4; p.invT = 2; toast('불굴', '#ffb070'); return; }
   if (p.hp <= 0) { p.hp = 0; sfx('dead'); G.result = 'dead'; G.endT = 1.4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 200, dur: 1, color: '#ff6a6a' }); }
@@ -515,7 +519,7 @@ function hurtPlayer(dmg, src) {
 
 /* 경험치·레벨업 (레벨업마다 3지선다 대기열 적재) */
 function updateGems(dt) {
-  const p = G.p, R = CFG.player.pickup * (1 + PASSIVES.magnet.per * passLv('magnet')), R2 = R * R;
+  const p = G.p, R = CFG.player.pickup * (1 + PASSIVES.magnet.per * passLv('magnet')) * (tr('magnet') ? 1.25 : 1), R2 = R * R;
   for (const g of G.gems) {
     const d2 = dist2(g.x, g.y, p.x, p.y);
     if (!g.mag && d2 < R2) g.mag = true;
@@ -533,7 +537,7 @@ function updateGems(dt) {
   }
 }
 function addXp(v) {
-  const p = G.p; p.xp += v * (pBr('magnet') === 'greed' ? 1.15 : 1) * (earlyOn() ? CFG.early.xp : 1);
+  const p = G.p; p.xp += v * (pBr('magnet') === 'greed' ? 1.15 : 1) * (earlyOn() ? CFG.early.xp : 1) * (tr('study') ? 1.08 : 1);
   while (p.xp >= p.need) { p.xp -= p.need; levelUp(); }
 }
 function levelUp() {
@@ -547,7 +551,7 @@ function levelUp() {
 function updateMisc(dt) {
   for (const f of G.fx) f.t += dt; G.fx = G.fx.filter(f => f.t < f.dur);
   for (const t of G.toasts) t.t += dt; G.toasts = G.toasts.filter(t => t.t < t.dur);
-  updateJuice(dt);
+  updateJuice(dt); updateTraits(dt);
 }
 
 /* 판 종료 */
@@ -564,7 +568,7 @@ function buildReport() {
     branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
     job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults,
     altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
-    order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.stats.gate.killed ? 0 : G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, runType: G.runType, demon: dmReport(), events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [],
+    order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.stats.gate.killed ? 0 : G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, runType: G.runType, demon: dmReport(), events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [], traits: G.stats.traits || [], mobs: Object.keys(G.stats.kt),
   };
 }
 /* 마지막 1분 피해 비중 (빌드 완성도 반영 판독용) */
@@ -2653,7 +2657,7 @@ function purify() {
 function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0, G.minions.length + 1); G.minions.push({ x, y, r: G.p.job2 === 'lord' ? 9 : 7, life: 20, hitT: 0 }); }
 
 /* ---------- 궁극기 ---------- */
-function ultGain(v) { const p = G.p; if (!p.job || p.ult >= JOB_CFG.ultNeed) return; p.ult = Math.min(JOB_CFG.ultNeed, p.ult + v); if (p.ult >= JOB_CFG.ultNeed) { G.tm.readyAt = G.time; toast('궁극기 준비 · 손 떼고 정지', '#ffe08a'); } }
+function ultGain(v) { const p = G.p; if (tr('focus')) v *= 1.15; if (!p.job || p.ult >= JOB_CFG.ultNeed) return; p.ult = Math.min(JOB_CFG.ultNeed, p.ult + v); if (p.ult >= JOB_CFG.ultNeed) { G.tm.readyAt = G.time; toast('궁극기 준비 · 손 떼고 정지', '#ffe08a'); } }
 function ultReady() { return G.p.job && G.p.ult >= JOB_CFG.ultNeed; }
 function useUlt() {
   const p = G.p, j = p.job, D = (60 + p.level * 4) * p.mod.dmg;
@@ -2800,10 +2804,11 @@ function drawCards(n, exclude = []) {
   const same = (a, b) => a.t === b.t && a.id === b.id;
   const pool = levelCands().filter(c => !exclude.some(x => same(x, c))), res = [];
   while (res.length < n && pool.length) { const c = weightedPick(pool); res.push(c); pool.splice(pool.indexOf(c), 1); }
+  for (const t of traitCands(exclude.concat(res))) if (res.length < n) res.push(t);   // 숙련 특성 우선 (0.23)
   for (const f of FILL_CARDS) if (res.length < n && !res.some(x => same(x, f)) && !exclude.some(x => same(x, f))) res.push(f);
   return res;
 }
-function isFill(c) { return c.t === 'power' || c.t === 'heal'; }
+function isFill(c) { return c.t === 'power' || c.t === 'heal' || c.t === 'trait'; }
 
 function openSelect() {
   G.pendingLv--; G.stats.selOpen++;
@@ -2828,6 +2833,7 @@ function cardInfo(c) {
     case 'campSupply': return { k: 'k-fill', col: '#ffd24a', ic: '급', nm: '보급', tag: '야영지', ds: '보물 상자 1개 (유물 후보 우선)' };
     case 'doorYes': return { k: 'k-fill', col: '#c8a0ff', ic: '문', nm: '문을 연다', tag: '저주 감수', ds: `저주 ${CURSES[c.id].name}(${CURSES[c.id].ds}) 이번 판 지속\n즉시 레벨 업 ${EV_CFG.doorLv}회` };
     case 'doorNo': return { k: 'k-fill', col: '#8a86a0', ic: '×', nm: '물러난다', tag: '보상 없음', ds: '문이 다시 닫힘' };
+    case 'trait': { const d = TRAITS[c.id]; return { k: 'k-fill', col: '#c8b0ff', ic: d.ic, nm: d.nm, tag: '숙련 특성', ds: d.ds }; }
     case 'power': return { k: 'k-fill', col: '#ffb070', ic: '↑', nm: '단련', tag: '추가 성장', ds: `모든 피해 +${Math.round(CFG.fill.power * 100)}% (중첩)` };
     default: return { k: 'k-fill', col: '#e04848', ic: '+', nm: '응급 처치', tag: '회복', ds: `체력 ${CFG.fill.heal} 회복` };
   }
@@ -2907,6 +2913,7 @@ function applyCard(c) {
     case 'pup': p.passives.find(x => x.id === c.id).lvl++; checkBranch('p', c.id); break;
     case 'relic': p.relics.push(c.id); G.stats.relics.push(c.id); toast(`유물 ${RELICS[c.id].name}`, '#ffd24a'); break;
     case 'power': p.bonusDmg += CFG.fill.power; break;
+    case 'trait': applyTrait(c.id); break;
     default: heal(CFG.fill.heal);
   }
   recalc();
@@ -2932,6 +2939,7 @@ function cardScore(c) {
     case 'pup': s = 3.4 + (core ? 2 : 0.3); break;
     case 'heal': s = p.hp < p.maxHp * 0.4 ? 6 : 1; break;
     case 'power': s = 3; break;
+    case 'trait': s = 3.4; break;
     case 'relic': s = 6.5; break;
   }
   if ((c.t === 'pnew' || c.t === 'pup') && low && c.id === 'vit') s += 2;
@@ -3609,6 +3617,166 @@ function getTileT(i, tid) {
   if (!s) { const T = TERRAIN[tid] || TERRAIN.field; s = bakeGrid(TILES[i], Object.assign({ y: DOT_PAL.y, b: T.a }, T), t, false, 'n', null); TILE_CACHE.set(key, s); }
   return s;
 }
+/* ============================================================
+   잡몹 확대·숙련 특성 (0.23, 표현·보강 단계)
+   — 잡몹 6종 추가(4→10종): 원거리 사격·분열·자폭·돌진·방패·흔들림 이동
+   — 숙련 특성 20종: 무기·보조 효과 전부 최대 후 대체 카드 대신 3지선다(칸 미점유, 종류별 1회)
+   ============================================================ */
+Object.assign(ENEMIES, {
+  gob: { name: '고블린 궁수', hp: 12, speed: 60, dmg: 6, r: 10, color: '#7fbf4a', shape: 'tri', xp: 2, from: 2, w: 1.3, mb: 'shoot' },
+  jelly: { name: '분열 젤리', hp: 22, speed: 44, dmg: 8, r: 12, color: '#6ad8f0', shape: 'blob', xp: 2, from: 3, w: 2, mb: 'split' },
+  mush: { name: '자폭 버섯', hp: 14, speed: 66, dmg: 8, r: 10, color: '#e8503c', shape: 'blob', xp: 2, from: 4.5, w: 1.4, mb: 'bomb' },
+  boar: { name: '돌진 멧돼지', hp: 40, speed: 50, dmg: 14, r: 13, color: '#8a5a3a', shape: 'hex', xp: 3, from: 6, w: 1.4, mb: 'dash' },
+  knight: { name: '방패병', hp: 60, speed: 42, dmg: 12, r: 13, color: '#9aa8bc', shape: 'sq', xp: 4, from: 7.5, w: 1.3, mb: 'shield' },
+  wisp: { name: '떠도는 불꽃', hp: 10, speed: 105, dmg: 7, r: 9, color: '#b08cf0', shape: 'tri', xp: 2, from: 9, w: 1.8, mb: 'weave' },
+});
+ENEMY_ORDER.push('gob', 'jelly', 'mush', 'boar', 'knight', 'wisp');
+const MOB = {
+  shoot: { keep: [140, 200], range: 240, cd: [4, 5.5], sp: 130, dmgK: 0.5 },   // 0.23 1차: 받은 피해 1위(2030, 2위 457) → 2차 1008 → 주기·피해 추가 하향
+  bomb: { near: 44, fuse: 0.75, R: 54, dmgK: 2.4 },
+  dash: { near: 230, cd: [3, 4.5], tele: 0.55, dur: 0.45, spK: 4.2 },
+  shield: { mul: 0.55 },                 // 치명타·출혈은 방패 무시
+  split: { n: 2, hpK: 0.3 },
+  weave: { amp: 0.9, freq: 3.2 },
+};
+/* 이동 보정: 기본 추적 속도(sp)를 받아 행동별로 바꾼 속도 반환 (game.js updateEnemies) */
+function mobMove(e, dt, sp, d, dx, dy) {
+  const k = e.mb;
+  if (k === 'shoot') {
+    const C = MOB.shoot; e.cd = (e.cd == null ? rand(C.cd[0], C.cd[1]) : e.cd) - dt;
+    if (e.cd <= 0 && d < C.range && !G.result) { e.cd = rand(C.cd[0], C.cd[1]); gkShot(e.x, e.y, dx / d * C.sp, dy / d * C.sp, e.dmg * C.dmgK, ENEMIES.gob.name, '#c8ff7a'); }
+    return d < C.keep[0] ? -sp * 0.8 : d < C.keep[1] ? 0 : sp;
+  }
+  if (k === 'bomb') {
+    const C = MOB.bomb;
+    if (e.fuse != null) { e.fuse -= dt; e.flash = Math.floor(e.fuse * 12) & 1 ? 0.05 : 0; if (e.fuse <= 0) mobBlast(e); return 0; }
+    if (d < C.near && !G.result) { e.fuse = C.fuse; gkCircle(e.x, e.y, C.R, C.fuse, e.dmg * C.dmgK, ENEMIES.mush.name); return 0; }
+    return sp;
+  }
+  if (k === 'dash') {
+    const C = MOB.dash; e.cd = (e.cd == null ? rand(C.cd[0], C.cd[1]) : e.cd) - dt;
+    if (e.dsh > 0) { e.dsh -= dt; e.x += e.ddx * e.speed * C.spK * dt; e.y += e.ddy * e.speed * C.spK * dt; return 0; }
+    if (e.tl > 0) { e.tl -= dt; if (e.tl <= 0) e.dsh = C.dur; return 0; }
+    if (e.cd <= 0 && d < C.near && !G.result && sp > 0) {
+      e.cd = rand(C.cd[0], C.cd[1]); e.tl = C.tele; e.ddx = dx / d; e.ddy = dy / d;
+      G.hz.push({ k: 'line', x: e.x, y: e.y, dx: e.ddx, dy: e.ddy, len: e.speed * C.spK * C.dur, w: e.r * 2, warn: C.tele, t: 0, dmg: 0, follow: e });
+      return 0;
+    }
+    return sp;
+  }
+  if (k === 'weave') { const C = MOB.weave, s = Math.cos(G.time * C.freq + e.id) * sp * C.amp; e.x += -dy / d * s * dt; e.y += dx / d * s * dt; return sp; }
+  return sp;
+}
+function mobBlast(e) { e.dead = true; burst(e.x, e.y, 8, '#ff9a4a', 160, 0.5, 3); }
+function mobDmgMul(e, o) { return e.mb === 'shield' && !o.crit && o.src !== 'bleed' ? MOB.shield.mul : 1; }
+function mobKilled(e) {
+  if (e.mb !== 'split') return;
+  const C = MOB.split;
+  for (let i = 0; i < C.n; i++) { const a = rand(Math.PI * 2), c = makeEnemy('slime', e.x + Math.cos(a) * 10, e.y + Math.sin(a) * 10); c.hp = c.maxHp = e.maxHp * C.hpK; c.xp = 1; c.kbx = Math.cos(a) * 90; c.kby = Math.sin(a) * 90; }
+}
+
+/* ---------- 숙련 특성 ---------- */
+const TRAITS = {
+  sharp: { nm: '날 세우기', ic: '날', ds: '모든 피해 +6%' },
+  tough: { nm: '굳은살', ic: '살', ds: '최대 체력 +25' },
+  stride: { nm: '가벼운 발', ic: '발', ds: '이동 속도 +6%' },
+  tempo: { nm: '숨 고르기', ic: '숨', ds: '재사용 시간 -5%' },
+  giant: { nm: '거인 사냥', ic: '거', ds: '대형 적·엘리트·보스 피해 +15%' },
+  execute: { nm: '마무리', ic: '끝', ds: '체력 25% 이하 적에게 피해 +25%' },
+  first: { nm: '첫 일격', ic: '첫', ds: '체력이 가득 찬 적에게 피해 +30%' },
+  last: { nm: '최후의 저항', ic: '저', ds: '내 체력 30% 이하일 때 피해 +20%' },
+  armor: { nm: '강철 피부', ic: '철', ds: '받는 피해 -8%' },
+  dodge: { nm: '회피 본능', ic: '피', ds: '6% 확률로 피해 무시' },
+  calm: { nm: '냉정', ic: '냉', ds: '보스전 중 받는 피해 -10%' },
+  guard: { nm: '버티기', ic: '버', ds: '피격 후 무적 시간 +0.2초' },
+  leech: { nm: '피의 갈증', ic: '갈', ds: '처치 시 5% 확률로 체력 2 회복' },
+  hunter: { nm: '사냥꾼의 보상', ic: '사', ds: '엘리트 처치 시 체력 15 회복' },
+  breath: { nm: '응급 호흡', ic: '호', ds: '10초마다 체력 3 회복' },
+  magnet: { nm: '자석 손', ic: '자', ds: '경험치 흡수 범위 +25%' },
+  study: { nm: '배움', ic: '배', ds: '획득 경험치 +8%' },
+  focus: { nm: '집중', ic: '집', ds: '궁극기 충전 +15%' },
+  chain: { nm: '연쇄 폭발', ic: '폭', ds: '처치 시 8% 확률로 주변 소폭발' },
+  luck: { nm: '행운', ic: '운', ds: '즉시 다시 뽑기 +1·제외 +1' },
+};
+const TRAIT_ORDER = Object.keys(TRAITS);
+const tr = k => !!(G.p.tr && G.p.tr[k]);
+function traitCands(exclude) { const t = G.p.tr || {}; return shuffle(TRAIT_ORDER.filter(k => !t[k] && !exclude.some(x => x.t === 'trait' && x.id === k))).map(id => ({ t: 'trait', id })); }
+function applyTrait(k) {
+  const p = G.p; (p.tr = p.tr || {})[k] = 1; (G.stats.traits = G.stats.traits || []).push(k);
+  if (k === 'luck') { G.rerolls++; G.banishes++; }
+  toast('숙련 특성 · ' + TRAITS[k].nm, '#c8b0ff');
+}
+/* 능력치 반영 (recalc에서 호출) */
+function traitMod(p) {
+  if (!p.tr) return;
+  if (p.tr.sharp) p.mod.dmg *= 1.06;
+  if (p.tr.stride) p.mod.speed *= 1.06;
+  if (p.tr.tempo) p.mod.cd = Math.max(0.4, p.mod.cd * 0.95);
+  if (p.tr.tough) p.maxHp += 25;
+}
+function traitDmgMul(e) {
+  const p = G.p; if (!p.tr) return 1; let m = 1;
+  if (p.tr.giant && (e.r >= 16 || e.elite || e.boss)) m *= 1.15;
+  if (p.tr.execute && e.hp <= e.maxHp * 0.25) m *= 1.25;
+  if (p.tr.first && e.hp >= e.maxHp) m *= 1.3;
+  if (p.tr.last && p.hp <= p.maxHp * 0.3) m *= 1.2;
+  return m;
+}
+function traitHurtMul() { const p = G.p; if (!p.tr) return 1; return (p.tr.armor ? 0.92 : 1) * (p.tr.calm && isBossPhase() ? 0.9 : 1); }
+function traitAvoid() { return tr('dodge') && Math.random() < 0.06; }
+function traitKill(e) {
+  const p = G.p; if (!p.tr) return;
+  if (p.tr.leech && Math.random() < 0.05) heal(2);
+  if (p.tr.hunter && e.elite) heal(15);
+  if (p.tr.chain && Math.random() < 0.08) { const x = e.x, y = e.y; G.later.push({ t: 0, f: () => explode(x, y, 40, 10 * p.mod.dmg * (1 + G.time / 600), 'trait', '#c8b0ff') }); }
+}
+function updateTraits(dt) { const p = G.p; if (!p.tr || !p.tr.breath) return; p.brT = (p.brT || 0) + dt; if (p.brT >= 10) { p.brT = 0; heal(3); } }
+
+/* 잡몹 6종 도트 (밝은 판타지 레트로, 2프레임) */
+Object.assign(SPR, {
+  gob: { px: 2, frames: [[
+    '...kkkkk....', '..kgggggk...', '.kgwkgwkgk.n', '.kgggggggknn', '..kGGGGGk.n.',
+    '..knnnnnk.n.', '.knnNNNnnkn.', '..knnnnnk...', '..kGk.kGk...', '..kk...kk...',
+  ], [
+    '...kkkkk....', '..kgggggk...', '.kgwkgwkgk.n', '.kgggggggknn', '..kGGGGGk.n.',
+    '..knnnnnk.n.', '.knnNNNnnkn.', '..knnnnnk...', '.kGk...kGk..', '.kk.....kk..',
+  ]] },
+  jelly: { px: 2, frames: [[
+    '....kkkk....', '..kkwcccck..', '.kwcccccccck', 'kcccccccccck', 'kckkcccckkck',
+    'kcccccccccck', 'kcccMMMMccck', '.kcccccccck.', '..kkkkkkkk..',
+  ], [
+    '............', '....kkkk....', '.kkwcccccck.', 'kcccccccccck', 'kckkcccckkck',
+    'kcccccccccck', 'kcccMMMMccck', '.kccccccccck', '..kkkkkkkkk.',
+  ]] },
+  mush: { px: 2, frames: [[
+    '...kkkkkk...', '.kkrrwrrrkk.', 'krrwrrrrwrrk', 'krrrrrwrrrrk', 'kRRRRRRRRRRk',
+    '.kkkkkkkkkk.', '...keeeek...', '...kekkek...', '...keeeek...', '....kkkk....',
+  ], [
+    '............', '...kkkkkk...', '.kkrrwrrrkk.', 'krrwrrrrwrrk', 'kRRRRRRRRRRk',
+    '.kkkkkkkkkk.', '...keeeek...', '...kekkek...', '...keeeek...', '....kkkk....',
+  ]] },
+  boar: { px: 2, frames: [[
+    '............', '..kkkkkkk...', '.kNnnnnnnkk.', 'kNnnnnnnnnnk', 'kNnnnnnnkwnk',
+    'kNnnnnnnnnek', '.kNNNNNNNkwk', '..kNk..kNk..', '..kk....kk..',
+  ], [
+    '............', '..kkkkkkk...', '.kNnnnnnnkk.', 'kNnnnnnnnnnk', 'kNnnnnnnkwnk',
+    'kNnnnnnnnnek', '.kNNNNNNNkwk', '.kNk....kNk.', '.kk......kk.',
+  ]] },
+  knight: { px: 2, frames: [[
+    '...kkkkk....', '..kMMMMMk...', '..kMkkkMk...', '..kMMMMMkkk.', '.kmMMMMkuuuk',
+    '.kmMMMMkuyuk', '.kmmmmmkuuuk', '..kmmmmkkkk.', '..kmk.kmk...', '..kkk.kkk...',
+  ], [
+    '...kkkkk....', '..kMMMMMk...', '..kMkkkMk...', '..kMMMMMkkk.', '.kmMMMMkuuuk',
+    '.kmMMMMkuyuk', '.kmmmmmkuuuk', '..kmmmmkkkk.', '.kmk...kmk..', '.kkk...kkk..',
+  ]] },
+  wisp: { px: 2, frames: [[
+    '.....k....', '....kuk...', '...kuuuk..', '..kuwwwuk.', '.kuwkwkwuk',
+    '.kuwwwwwuk', '.kuuwwwuuk', '..kuuuuuk.', '...kuUuk..', '....kUk...',
+  ], [
+    '....k.....', '...kuk....', '..kuuuk...', '..kuwwwuk.', '.kuwkwkwuk',
+    '.kuwwwwwuk', '.kuuwwwuuk', '..kuuuuuk.', '..kuUuk...', '...kUk....',
+  ]] },
+});
 /* ============================================================
    타격 연출 (0.22) — 피격 반짝임·밀림 강화, 처치 파편, 치명타 강조,
    레벨업·상자 개봉·보스 등장·페이즈 전환 연출, 피해 숫자(설정, 기본 꺼짐)

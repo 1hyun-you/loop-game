@@ -18,10 +18,11 @@ function drawCards(n, exclude = []) {
   const same = (a, b) => a.t === b.t && a.id === b.id;
   const pool = levelCands().filter(c => !exclude.some(x => same(x, c))), res = [];
   while (res.length < n && pool.length) { const c = weightedPick(pool); res.push(c); pool.splice(pool.indexOf(c), 1); }
+  for (const t of traitCands(exclude.concat(res))) if (res.length < n) res.push(t);   // 숙련 특성 우선 (0.23)
   for (const f of FILL_CARDS) if (res.length < n && !res.some(x => same(x, f)) && !exclude.some(x => same(x, f))) res.push(f);
   return res;
 }
-function isFill(c) { return c.t === 'power' || c.t === 'heal'; }
+function isFill(c) { return c.t === 'power' || c.t === 'heal' || c.t === 'trait'; }
 
 function openSelect() {
   G.pendingLv--; G.stats.selOpen++;
@@ -46,6 +47,7 @@ function cardInfo(c) {
     case 'campSupply': return { k: 'k-fill', col: '#ffd24a', ic: '급', nm: '보급', tag: '야영지', ds: '보물 상자 1개 (유물 후보 우선)' };
     case 'doorYes': return { k: 'k-fill', col: '#c8a0ff', ic: '문', nm: '문을 연다', tag: '저주 감수', ds: `저주 ${CURSES[c.id].name}(${CURSES[c.id].ds}) 이번 판 지속\n즉시 레벨 업 ${EV_CFG.doorLv}회` };
     case 'doorNo': return { k: 'k-fill', col: '#8a86a0', ic: '×', nm: '물러난다', tag: '보상 없음', ds: '문이 다시 닫힘' };
+    case 'trait': { const d = TRAITS[c.id]; return { k: 'k-fill', col: '#c8b0ff', ic: d.ic, nm: d.nm, tag: '숙련 특성', ds: d.ds }; }
     case 'power': return { k: 'k-fill', col: '#ffb070', ic: '↑', nm: '단련', tag: '추가 성장', ds: `모든 피해 +${Math.round(CFG.fill.power * 100)}% (중첩)` };
     default: return { k: 'k-fill', col: '#e04848', ic: '+', nm: '응급 처치', tag: '회복', ds: `체력 ${CFG.fill.heal} 회복` };
   }
@@ -125,6 +127,7 @@ function applyCard(c) {
     case 'pup': p.passives.find(x => x.id === c.id).lvl++; checkBranch('p', c.id); break;
     case 'relic': p.relics.push(c.id); G.stats.relics.push(c.id); toast(`유물 ${RELICS[c.id].name}`, '#ffd24a'); break;
     case 'power': p.bonusDmg += CFG.fill.power; break;
+    case 'trait': applyTrait(c.id); break;
     default: heal(CFG.fill.heal);
   }
   recalc();
@@ -150,6 +153,7 @@ function cardScore(c) {
     case 'pup': s = 3.4 + (core ? 2 : 0.3); break;
     case 'heal': s = p.hp < p.maxHp * 0.4 ? 6 : 1; break;
     case 'power': s = 3; break;
+    case 'trait': s = 3.4; break;
     case 'relic': s = 6.5; break;
   }
   if ((c.t === 'pnew' || c.t === 'pup') && low && c.id === 'vit') s += 2;
