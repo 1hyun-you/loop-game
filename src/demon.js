@@ -41,7 +41,7 @@ function dmSpawn() {
   const q = ringAt(DM_CFG.spawn[0], DM_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : DM_CFG.finalHp); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
   e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0; e.stun = 0; e.stT0 = G.time;
-  G.gkMob = e; G.eb = []; G.hz = []; G.arena = null;
+  G.gkMob = e; G.eb = []; G.hz = []; G.arena = null; G.rocks = [];
   G.stats.demon = { t0: G.time, st: [null, null], type: G.runType, n: ((G.stats.demon && G.stats.demon.n) || 0) + 1 };   // n: 생성 횟수 (0.18 계측)
   toast('마왕 강림', DEMON.color); toast('그림자 군주', '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 200, dur: 1.0, color: DEMON.color });
@@ -97,21 +97,22 @@ function dmUpdate(e, dt, d, dx, dy) {
 /* 패턴 선택 — 반환값: 패턴 직후 이동 배율 */
 function dmPattern(e, ai) {
   const p = G.p, st = e.st, k = ai.n;
+  const r = bpNext(ai, [['scythe', 'homing', 'blink', 'hands'], ['beams', 'scho', 'blink', 'wave'], ['beho', 'meteor', 'blsc', 'split']][st]);   // 0.33 순번표 + 페이즈 전용 신규 1종
+  if (r === 'hands') { bpHands(e); return 0.5; }
+  if (r === 'wave') { bpWave(e); return 0.3; }
+  if (r === 'split') { bpSplit(e); return 0.4; }
   if (st === 0) {
-    const r = k % 3;
-    if (r === 1) { dmScythe(e); return 0.3; }
-    if (r === 2) { dmHoming(e); return 0.6; }
+    if (r === 'scythe') { dmScythe(e); return 0.3; }
+    if (r === 'homing') { dmHoming(e); return 0.6; }
     dmBlink(e); return 0;
   }
   if (st === 1) {
-    const r = k % 3;
-    if (r === 1) { dmBeams(e); return 0.2; }
-    if (r === 2) { dmScythe(e); dmHoming(e, 2); return 0.4; }
+    if (r === 'beams') { dmBeams(e); return 0.2; }
+    if (r === 'scho') { dmScythe(e); dmHoming(e, 2); return 0.4; }
     dmBlink(e); return 0;
   }
-  const r = k % 3;
-  if (r === 1) { dmBeams(e); dmHoming(e); return 0.2; }
-  if (r === 2) { dmMeteors(e); return 0.5; }
+  if (r === 'beho') { dmBeams(e); dmHoming(e); return 0.2; }
+  if (r === 'meteor') { dmMeteors(e); return 0.5; }
   dmBlink(e); G.later.push({ t: DM_CFG.blWarn + 0.15, f: () => { if (!e.dead && !G.result) dmScythe(e); } }); return 0;
 }
 function dmScythe(e) {
@@ -176,7 +177,7 @@ function dmFx(dt) {
 function dmInSect(h, x, y, pad) {
   const dx = x - h.x, dy = y - h.y, d = Math.hypot(dx, dy); if (d > h.r + pad) return false;
   let da = Math.atan2(dy, dx) - h.a; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283;
-  return Math.abs(da) <= h.arc / 2 || d < 30;
+  return Math.abs(da) <= h.arc / 2 || (d < 30 && !h.noCore);   // 0.33 분할 낙하는 중심 판정 없음
 }
 function dmOnBeam(h, x, y, pad) {
   const ux = Math.cos(h.a), uy = Math.sin(h.a), rx = x - h.x, ry = y - h.y, al = rx * ux + ry * uy;
@@ -197,7 +198,7 @@ function dmAdjust(e, dmg) {
 function dmKilled(e) {
   fragUnlock('shadow');                                     // 기록 조각 (0.13)
   const s = G.stats.demon; s.killed = true; s.dur = Math.round(G.time - s.t0);
-  G.eb = []; G.hz = []; G.arena = null;
+  G.eb = []; G.hz = []; G.arena = null; G.rocks = [];
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 320, dur: 1.6, color: DEMON.color });
 }
 

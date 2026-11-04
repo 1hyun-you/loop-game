@@ -95,9 +95,11 @@ function autoDanger(qx, qy) {
   if (G.hz) for (const h of G.hz) {                                                       // 수문장 예고 구역·장판 회피 (0.11)
     if (h.k === 'sect') { if (!h.fired && dmInSect(h, qx, qy, p.r + 12)) d += 30 + 30 * h.t / h.warn; continue; }   // 마왕 낫·광선 (0.12)
     if (h.k === 'beam') { if (h.t > h.warn - 0.5 && dmOnBeam(h, qx, qy, p.r + 14)) d += 45; continue; }
+    if (h.k === 'mir') { if (h.t > h.warn - 0.5 && bpOnMirror(h, qx, qy, p.r + 14)) d += 45; continue; }   // 0.33 거울진
     if (h.k === 'circ') { if (h.fired && !h.pool) continue; const dd = Math.sqrt(dist2(h.x, h.y, qx, qy)) - h.r - p.r * 0.5; if (dd < 12) d += h.fired ? 25 : 30 + 30 * h.t / h.warn; }
     else if (h.t <= h.warn + 0.6) { const rx = qx - h.x, ry = qy - h.y, al = rx * h.dx + ry * h.dy; if (al > -20 && al < h.len + 20 && Math.abs(rx * h.dy - ry * h.dx) < h.w / 2 + p.r + 10) d += 45; }
   }
+  if (G.rocks) for (const r of G.rocks) if (dist2(r.x, r.y, qx, qy) < (r.r + p.r + 6) ** 2) d += 20;   // 0.33 바위 장애물
   if (G.eb) for (const b of G.eb) {                                                       // 적 탄환 진행 경로 회피 (0.11)
     const rx = qx - b.x, ry = qy - b.y; if (Math.abs(rx) > 120 || Math.abs(ry) > 120) continue;
     const sp = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / sp, uy = b.vy / sp, al = rx * ux + ry * uy; if (al < -10 || al > 130) continue;

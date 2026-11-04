@@ -40,7 +40,7 @@ function gkSpawn() {
   const D = GATEKEEPERS[G.gk], q = ringAt(GK_CFG.spawn[0], GK_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * GK_CFG.hpMul * D.hp; e.dmg *= GK_CFG.dmgMul; e.r = D.r; e.speed = D.speed; e.color = D.color; e.shape = D.shape; e.xp = 0;
   e.cmd = true; e.boss = true; e.gk = G.gk; e.ai = { cd: 2.2, act: null, at: 0 }; e.rage = false;
-  G.gkMob = e; G.eb = []; G.hz = [];
+  G.gkMob = e; G.eb = []; G.hz = []; G.rocks = [];
   G.stats.gate = { id: G.gk, t0: G.time, rageAt: null };
   toast(`사문의 수문장 · ${D.name}`, D.color); toast(D.gate + ' · ' + D.ds, '#fff');
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 120, dur: 0.8, color: D.color });
@@ -57,6 +57,7 @@ function gkUpdate(e, dt, d, dx, dy) {
   if (e.frz > 0) e.frz = 0;
   if (e.clone) return gkClone(e, dt, d, dx, dy);
   const ai = e.ai, D = GATEKEEPERS[e.gk];
+  if (e.stunT > 0) { e.stunT -= dt; if (d < e.r + p.r - 3) hurtPlayer(e.dmg * 0.5, D.name); return; }   // 0.33 바르간 기절 (공격 기회)
   if (!e.rage && e.hp <= e.maxHp * GK_CFG.rage) {
     e.rage = true; G.stats.gate.rageAt = Math.round(G.time - G.stats.gate.t0);
     toast(`${D.name} 격노`, '#ff7a5a'); fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 160, dur: 0.7, color: '#ff7a5a' });
@@ -92,14 +93,20 @@ function gkBargan(e, ai, dt, d, mx, my) {
   }
   if (ai.act === 'dash') {
     ai.dash -= dt; e.x += ai.dx * GK_CFG.bgDashSp * dt; e.y += ai.dy * GK_CFG.bgDashSp * dt;
-    if (ai.dash <= 0) { ai.dash = 0; if (ai.again) { ai.again = false; gkDashAim(e, ai, 0.35); } else ai.act = null; }
+    if (bpDashHit(e, ai)) return 0;                                  // 0.33 바위 충돌 기절
+    if (ai.dash <= 0) { ai.dash = 0; if (ai.chain > 1) { ai.chain--; gkDashAim(e, ai, 0.45); } else if (ai.again) { ai.again = false; ai.chain = 0; gkDashAim(e, ai, 0.35); } else { ai.chain = 0; ai.act = null; } }
     return 0;
   }
   if (ai.act === 'slam') { ai.at -= dt; if (ai.at <= 0) ai.act = null; return 0; }
   ai.cd -= dt;
   if (ai.cd <= 0) {
     ai.cd = gkLv(GK_CFG.bgEvery);
-    if (Math.random() < (d > 160 ? 0.75 : 0.4)) { gkDashAim(e, ai, gkLv(GK_CFG.bgTele)); ai.again = e.rage; }
+    const L = ['dash', 'slam', 'crack', 'rock'].concat(e.rage ? ['dash2'] : []).concat(e.rage && G.time > (ai.arenaCd || 0) ? ['arena'] : []);   // 0.33 순번표
+    let k = bpNext(ai, L); if (k === 'slam' && d > 220) k = 'dash';
+    if (k === 'crack') { bpCrack(e); ai.act = 'slam'; ai.at = gkLv(BP_CFG.crWarn) + 0.15; }
+    else if (k === 'rock') bpRocks(e);
+    else if (k === 'arena') bpArena(e, ai);
+    else if (k === 'dash' || k === 'dash2') { gkDashAim(e, ai, gkLv(GK_CFG.bgTele)); ai.again = e.rage; }
     else {
       ai.act = 'slam'; ai.at = GK_CFG.bgSlamWarn + 0.2;
       gkCircle(e.x, e.y, GK_CFG.bgSlamR, GK_CFG.bgSlamWarn, gkDmg(GK_CFG.bgSlamDmg), '바르간 강타', { follow: e });
@@ -116,11 +123,14 @@ function gkDashAim(e, ai, tele) {
 
 /* 이그나 — 거리 유지, 원형 탄막·조준 부채꼴·화염 장판 */
 function gkIgna(e, ai, dt) {
+  if (ai.sun > 0) return bpSunTick(e, ai, dt) ? 0 : 1;            // 0.33 격노 전용 태양: 제자리 고정
   ai.cd -= dt;
   if (ai.cd <= 0) {
-    ai.cd = gkLv(GK_CFG.igEvery); ai.n = (ai.n || 0) + 1;
-    const k = ai.n % 3, sp = gkLv(GK_CFG.igSp), dmg = gkDmg(GK_CFG.igDmg);
-    if (k === 1) { const n = gkLv(GK_CFG.igRing); gkRing(e.x, e.y, n, sp, dmg, '이그나 화염탄', rand(6.28)); if (e.rage) G.later.push({ t: 0.4, f: () => { if (!e.dead) gkRing(e.x, e.y, n, sp, dmg, '이그나 화염탄', rand(6.28)); } }); }
+    ai.cd = gkLv(GK_CFG.igEvery);
+    const K = bpNext(ai, ['ring', 'fan', 'pool', 'twist', 'grid'].concat(e.rage && G.time > (ai.sunCd || 0) ? ['sun'] : [])), sp = gkLv(GK_CFG.igSp), dmg = gkDmg(GK_CFG.igDmg);   // 0.33 순번표
+    const k = { ring: 1, fan: 2, pool: 0 }[K];
+    if (K === 'twist') bpTwister(e); else if (K === 'grid') bpGrid(e); else if (K === 'sun') { bpSun(e, ai); return 0; }
+    else if (k === 1) { const n = gkLv(GK_CFG.igRing); gkRing(e.x, e.y, n, sp, dmg, '이그나 화염탄', rand(6.28)); if (e.rage) G.later.push({ t: 0.4, f: () => { if (!e.dead) gkRing(e.x, e.y, n, sp, dmg, '이그나 화염탄', rand(6.28)); } }); }
     else if (k === 2) for (let v = 0; v < (e.rage ? 4 : 3); v++) G.later.push({ t: v * 0.28, f: () => { if (!e.dead && !G.result) gkFan(e, GK_CFG.igFan, 0.55, sp * 1.15, dmg, '이그나 화염탄'); } });
     else for (let i = 0; i < GK_CFG.igPoolN + (e.rage ? 2 : 0); i++) { const p = G.p, a = rand(6.28), R = i ? rand(40, 130) : 0; gkCircle(p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, GK_CFG.igPoolR, GK_CFG.igPoolWarn, gkDmg(GK_CFG.igPoolDmg), '이그나 장판', { pool: GK_CFG.igPoolDur }); }
     return 0.3;
@@ -130,11 +140,14 @@ function gkIgna(e, ai, dt) {
 
 /* 모르덴 — 원거리 유지, 망자 소환(외곽·포위)·뼈 화살, 격노 시 정예 소환 */
 function gkMorden(e, ai, dt) {
+  bpGraveTick(ai, dt);                                            // 0.33 무덤 소환
   ai.cd -= dt;
   if (ai.cd <= 0) {
     ai.cd = gkLv(GK_CFG.moEvery); ai.n = (ai.n || 0) + 1;
-    const k = ai.n % 3, p = G.p, min = G.time / 60;
-    if (k === 1) { const n = gkLv(GK_CFG.moRaise); for (let i = 0; i < n && aliveCount() < CFG.spawn.max; i++) { const a = rand(6.28), R = rand(60, 110); const m = makeEnemy(i % 3 ? 'skel' : 'slime', e.x + Math.cos(a) * R, e.y + Math.sin(a) * R); m.color = '#a8b8a0'; } toast('망자 소환', '#a8c8a8'); fx({ kind: 'ring', x: e.x, y: e.y, r0: 20, r1: 120, dur: 0.5, color: '#a8c8a8' }); }
+    const K = bpNext(ai, ['raise', 'prison', 'bolt', 'march', 'mark'].concat(e.rage && G.time > (ai.graveCd || 0) && !(ai.graves && ai.graves.length) ? ['grave'] : []));   // 0.33 순번표
+    const k = { raise: 1, prison: 2, bolt: 0 }[K], p = G.p;
+    if (K === 'march') bpMarch(e); else if (K === 'mark') bpMark(); else if (K === 'grave') bpGraves(e, ai);
+    else if (k === 1) { const n = gkLv(GK_CFG.moRaise); for (let i = 0; i < n && aliveCount() < CFG.spawn.max; i++) { const a = rand(6.28), R = rand(60, 110); const m = makeEnemy(i % 3 ? 'skel' : 'slime', e.x + Math.cos(a) * R, e.y + Math.sin(a) * R); m.color = '#a8b8a0'; } toast('망자 소환', '#a8c8a8'); fx({ kind: 'ring', x: e.x, y: e.y, r0: 20, r1: 120, dur: 0.5, color: '#a8c8a8' }); }
     else if (k === 2) {
       const a0 = rand(6.28); for (let i = 0; i < GK_CFG.moPrison && aliveCount() < CFG.spawn.max; i++) { const a = a0 + i * 6.283 / GK_CFG.moPrison; const m = makeEnemy('skel', p.x + Math.cos(a) * GK_CFG.moPrisonR, p.y + Math.sin(a) * GK_CFG.moPrisonR); m.color = '#a8b8a0'; }
       toast('뼈의 감옥', '#a8c8a8');
@@ -149,8 +162,13 @@ function gkMorden(e, ai, dt) {
 
 /* 세렌 — 분신 분열(본체 1·분신 3~4), 본체만 주기적 미광, 분신 파괴 시 파편 탄막, 본체 근접 시 칼날 */
 function gkSeren(e, ai, dt, d) {
-  ai.cd -= dt; ai.shot = (ai.shot || GK_CFG.seShot) - dt; ai.blade = (ai.blade || 0) - dt;
-  if (ai.cd <= 0 || (ai.hp0 && ai.hp0 - e.hp > e.maxHp * GK_CFG.seBreak)) { ai.cd = gkLv(GK_CFG.seEvery); gkSplit(e); }
+  ai.cd -= dt; ai.shot = (ai.shot || GK_CFG.seShot) - dt; ai.blade = (ai.blade || 0) - dt; ai.cd2 = (ai.cd2 == null ? 3.5 : ai.cd2) - dt;
+  if (ai.refl > 0) bpReflectTick(e, ai, dt);                       // 0.33 반사막
+  if (ai.swapT > 0) bpSwapTick(e, ai, dt);                         // 0.33 위치 교환
+  const orb = ai.orb && bpMirrorTick(e, ai, dt);                    // 0.33 거울진 (분열 정지)
+  if (!orb && (ai.cd <= 0 || (ai.hp0 && ai.hp0 - e.hp > e.maxHp * GK_CFG.seBreak))) { ai.cd = gkLv(GK_CFG.seEvery); gkSplit(e); }
+  if (!orb && ai.cd2 <= 0) { ai.cd2 = gkLv(BP_CFG.seEvery2); const K = bpNext(ai, ['mirror', 'reflect'].concat(e.rage ? ['swap'] : [])); if (K === 'mirror') bpMirror(e, ai); else if (K === 'reflect') bpReflect(e, ai); else bpSwap(e, ai); }   // 0.33 순번표
+  if (orb) return 0;
   if (ai.shot <= 0) {
     ai.shot = GK_CFG.seShot * (e.rage ? 0.75 : 1);
     const imgs = [e].concat(G.enemies.filter(o => o.clone && !o.dead));
@@ -175,6 +193,7 @@ function gkSplit(e) {
 function gkClone(e, dt, d, dx, dy) {
   const p = G.p;
   if (!e.real || e.real.dead) { e.dead = true; return; }
+  if (e.real.ai.orb) { if (d < e.r + p.r - 3) hurtPlayer(e.dmg, '세렌'); return; }   // 0.33 거울진 중 위치는 본체가 지정
   gkKeep(e, d, 200, 150, 260);
   const s = e.strafe, mx = dx / d, my = dy / d;
   let sx = mx * s.k - my * s.dir * (1 - Math.abs(s.k)), sy = my * s.k + mx * s.dir * (1 - Math.abs(s.k)); const m = Math.hypot(sx, sy) || 1;
@@ -188,8 +207,8 @@ function gkKilled(e) {
   const D = GATEKEEPERS[e.gk];
   fragUnlock(e.gk);                                         // 기록 조각 (0.13)
   G.stats.gate.killed = true; G.stats.gate.dur = Math.round(G.time - G.stats.gate.t0);
-  for (const o of G.enemies) if (o.clone && !o.dead) o.dead = true;
-  G.eb = []; G.hz = [];
+  for (const o of G.enemies) if ((o.clone || o.grave) && !o.dead) o.dead = true;
+  G.eb = []; G.hz = []; G.rocks = [];
   fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 260, dur: 1.2, color: D.color });
 }
 
@@ -204,7 +223,7 @@ function gkShot(x, y, vx, vy, dmg, src, col) { if (G.eb.length < 260) G.eb.push(
 
 /* 적 탄환·예고 구역 갱신 (step에서 매 틱 호출) */
 function updateBossFx(dt) {
-  if (!G.eb || (!G.eb.length && !G.hz.length && !G.arena)) return;
+  if (!G.eb || (!G.eb.length && !G.hz.length && !G.arena && !(G.rocks && G.rocks.length))) return;
   const p = G.p;
   dmFx(dt);                                                        // 마왕 결계·광선·부채꼴·추적탄 (0.12)
   for (const b of G.eb) {
@@ -215,22 +234,30 @@ function updateBossFx(dt) {
   for (const h of G.hz) {
     h.t += dt;
     if (h.k === 'sect' || h.k === 'beam') continue;                 // 마왕 패턴은 dmFx에서 처리
-    if (h.follow && !h.fired) { h.x = h.follow.x; h.y = h.follow.y; }
+    if (h.k === 'mir') { bpMirFx(h, dt); continue; }                // 0.33 거울진
+    if (h.follow && !h.fired && !(h.lock && h.t > h.lock)) { h.x = h.follow.x; h.y = h.follow.y; }   // 0.33 lock: 추적 후 위치 고정
+    if (h.k === 'line' && h.hit && h.t >= h.warn && !h.fired) {     // 0.33 대지 균열
+      h.fired = true; for (let i = 1; i <= 5; i++) fx({ kind: 'ring', x: h.x + h.dx * h.len * i / 5, y: h.y + h.dy * h.len * i / 5, r0: 6, r1: h.w, dur: 0.35, color: '#e0a070' });
+      const rx = p.x - h.x, ry = p.y - h.y, al = rx * h.dx + ry * h.dy; if (!G.result && al > -10 && al < h.len && Math.abs(rx * h.dy - ry * h.dx) < h.w / 2 + p.r * 0.5) hurtPlayer(h.dmg, h.src);
+    }
     if (h.k === 'circ' && h.t >= h.warn && !h.fired) {
       h.fired = true; fx({ kind: 'ring', x: h.x, y: h.y, r0: h.r * 0.4, r1: h.r * 1.1, dur: 0.35, color: h.pool ? '#e0306a' : '#ff5a4a' });
       if (!G.result && dist2(p.x, p.y, h.x, h.y) < (h.r + p.r * 0.5) ** 2) hurtPlayer(h.dmg * (h.pool ? 1.6 : 1), h.src);
+      if (h.rock) G.rocks.push({ x: h.x, y: h.y, r: BP_CFG.rkObR, t: BP_CFG.rkLife });   // 0.33 바위 장애물
     }
+    if (h.grow && h.fired) { if (h.follow && !h.follow.dead) { h.x = h.follow.x; h.y = h.follow.y; } h.r = Math.min(h.rMax, h.r + h.grow * dt); }   // 0.33 확장 장판
     if (h.pool && h.fired) { h.tick = (h.tick || 0) - dt; if (h.tick <= 0) { h.tick = 0.5; if (!G.result && dist2(p.x, p.y, h.x, h.y) < (h.r + p.r * 0.5) ** 2) hurtPlayer(h.dmg, h.src); } }
   }
-  G.hz = G.hz.filter(h => h.k === 'sect' || h.k === 'beam' ? dmHzAlive(h) : h.k === 'line' ? h.t < h.warn + GK_CFG.bgDashT : h.t < h.warn + (h.pool || 0.35));
+  bpRocksTick(dt);                                                 // 0.33 바위 장애물
+  G.hz = G.hz.filter(h => h.k === 'sect' || h.k === 'beam' ? dmHzAlive(h) : h.k === 'mir' ? h.t < h.warn + h.dur : h.k === 'line' ? h.t < h.warn + GK_CFG.bgDashT : h.t < h.warn + (h.pool || 0.35));
 }
 
 /* 그리기: 예고·장판(지면), 탄환·수문장 장식(적 위) */
 function drawBossGround(c) {
   if (!G.hz) return;
-  drawDemonGround(c);
+  drawDemonGround(c); drawBpGround(c);                             // 0.33 거울진·바위
   for (const h of G.hz) {
-    if (h.k === 'sect' || h.k === 'beam') continue;
+    if (h.k === 'sect' || h.k === 'beam' || h.k === 'mir') continue;
     const a = Math.min(1, h.t / h.warn);
     if (h.k === 'line') {
       if (h.t > h.warn) continue;
@@ -262,6 +289,7 @@ function drawBossTop(c, inView) {
   for (const e of G.enemies) {
     if (e.dead || !e.gk || !inView(e.x, e.y, e.r)) continue;
     drawSprite(c, 'crown', 0, e.x, e.y - e.r - 1 + (f2(2) ? -1 : 0));             // 0.30 도트 관 (수문장 표식), 격노는 도트 외곽선(rage)으로 표시
+    drawBpTop(c, e);                                                              // 0.33 기절 별·반사막·교환 예고
     if (e.gk === 'seren' && !e.clone && (G.time % 1.3) < 0.2) { c.strokeStyle = 'rgba(255,255,255,0.95)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 8, 0, 7); c.stroke(); }   // 본체 미광
   }
   drawEnemyShots(c, inView);

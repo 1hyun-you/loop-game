@@ -277,10 +277,11 @@ function drawSprite(c, name, frame, x, by, opt) {
 function spriteFor(e) {
   if (e.gk) return SPR[e.gk] ? e.gk : null;
   if (e.shape === 'rune') return 'rune';
+  if (e.shape === 'grave') return 'grave';                  // 0.33 모르덴 무덤
   return SPR[e.type] ? e.type : null;
 }
 /* 큰 개체(거대 몹 등)는 텍셀 배율 정수 확대 */
-function spriteMul(e) { const base = ENEMIES[e.type]; if (e.gk || !base || e.shape === 'rune') return 1; return Math.max(1, Math.round(e.r / base.r - 0.25)); }
+function spriteMul(e) { const base = ENEMIES[e.type]; if (e.gk || !base || e.shape === 'rune' || e.shape === 'grave') return 1; return Math.max(1, Math.round(e.r / base.r - 0.25)); }
 
 /* 지형 타일 */
 const TILE_CACHE = new Map();
