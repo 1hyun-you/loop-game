@@ -89,7 +89,7 @@ function updatePlayer(dt) {
   const p = G.p;
   p.invT -= dt; p.flash -= dt;
   if (G.result) { p.moving = false; return; }
-  const mv = moveVec(), sp = CFG.player.speed * p.mod.speed * (G.tm.alpha > 0 ? 1.2 : 1);   // 0.26a 늑대 우두머리의 함성
+  const mv = moveVec(), sp = CFG.player.speed * p.mod.speed * (G.tm.alpha > 0 ? 1.2 : 1) * ultSpdMul();   // 0.26a 늑대 우두머리의 함성
   p.moving = mv.m > 0.05;
   if (p.moving) {
     p.x += mv.x * sp * dt; p.y += mv.y * sp * dt;
@@ -176,9 +176,11 @@ function updateEnemies(dt) {
 /* 피해·처치 */
 function damageEnemy(e, dmg, o = {}) {
   if (e.dead) return;                                       // 0.31 마왕 전환 무적 폐지
-  dmg *= jobDmgMul(e, o) * traitDmgMul(e) * (e.mb ? mobDmgMul(e, o) : 1);   // 숙련 특성·방패병 (0.23)
+  if (e.mhp == null) e.mhp = e.hp;                          // 0.32 최대 체력 기록 (처형 판정)
+  dmg *= ultDmgMul() * jobDmgMul(e, o) * traitDmgMul(e) * (e.mb ? mobDmgMul(e, o) : 1);   // 숙련 특성·방패병 (0.23)
   if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
   if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16) — 모든 피해 배율 적용 후 보정 (0.18: 칼날 폭풍 배율이 보정 뒤에 곱해져 페이즈 조기 전환되던 결함 수정)
+  if (ultHoldDmg(e, dmg, o)) return;                        // 0.32 시간 단절 피해 보류
   if (e.sh > 0) { const a = Math.min(e.sh, dmg); e.sh -= a; dmg -= a; G.stats.dmg[o.src || '기타'] = (G.stats.dmg[o.src || '기타'] || 0) + a; e.flash = 0.05; if (dmg <= 0) return; }
   const eff = Math.min(dmg, Math.max(0, e.hp));          // 실제 깎은 체력 기준 집계(초과 피해 제외, 0.2a)
   e.hp -= dmg; sfx('hit'); jHit(e, eff, o);                   // 타격 연출·피해 숫자 (0.22)
@@ -196,6 +198,7 @@ function killEnemy(e) {
   if (e.elite) eliteKilled(e);
   if (e.ev) eventMobKilled(e);
   if (e.gk) gkKilled(e);
+  ultOnKill(e);                                              // 0.32 사령술사·정복왕
   if (e.slowT > 0 && wBr('icering') === 'shatter') { const x = e.x, y = e.y, d = wStats(G.p.weapons.find(w => w.id === 'icering')).dmg * 2.5; G.later.push({ t: 0, f: () => explode(x, y, 46, d, 'shatter', '#bfe8ff') }); }
   if (pBr('regen') === 'vamp') heal(0.4);
   relicKill(e);                                              // 0.27 유물 처치 연계
@@ -208,12 +211,13 @@ function hurtPlayer(dmg, src) {
   const p = G.p;
   if (p.invT > 0 || STATE.dev.god || G.result) return;
   if (playerAvoid() || traitAvoid()) return;
+  if (ultBlockHit()) return;                                 // 0.32 성군 보호막
   dmg *= playerHurtMul() * traitHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
   vibe(25); sfx('hurt');
   onPlayerHurt();
   G.ph.hurtEma += dmg / 40;                                  // 강함 판정용 최근 피해 (0.24)
   p.hp -= dmg; p.invT = CFG.player.invuln + (tr('guard') ? 0.2 : 0); p.flash = 0.2; G.lastHit = src;
-  G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg;
+  G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg; ultOnHurt();   // 0.32 성자 반격 섬광
   if (p.hp <= 0 && pBr('regen') === 'second' && !p.revived) { p.revived = true; p.hp = p.maxHp * 0.4; p.invT = 2; toast('불굴', '#ffb070'); return; }
   if (p.hp <= 0) { p.hp = 0; sfx('dead'); G.result = 'dead'; G.endT = 1.4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 200, dur: 1, color: '#ff6a6a' }); }
 }

@@ -167,6 +167,7 @@ function playerHurtMul() {
   const p = G.p; let m = 1;
   if (p.job === 'warrior') m *= 1 - 0.3 * p.fury / 100;
   if (G.tm.wall > 0) m *= 0.6;
+  m *= ultHurtMul();                                              // 0.32 광전사·수호기사
   if (p.job === 'sovereign' && inBanner()) m *= 0.85;
   return m;
 }
@@ -209,7 +210,7 @@ function reaction(e) {
   gridQuery(e.x, e.y, R, t => damageEnemy(t, dmg, { src: 'react' }));
 }
 /* 0.9 직업 보조 함수 */
-function inBanner() { const b = G.banner, p = G.p; return b && dist2(b.x, b.y, p.x, p.y) < b.r * b.r; }
+function inBanner() { const b = G.banner, p = G.p, r = b ? b.r * ultBannerR() : 0; return !!(b && dist2(b.x, b.y, p.x, p.y) < r * r) || ultInBanner(); }   // 0.32 호령 반경 2배·정복왕 추가 군기
 function purify() {
   const p = G.p, j = p.job2 === 'judge', R = 110 * (j ? 1.35 : 1), d = (20 + p.level * 2) * p.mod.dmg * (j ? 2 : 1);
   heal(p.maxHp * (p.job2 === 'saint' ? 0.2 : 0.1));
@@ -232,26 +233,7 @@ function ultHitGain(e) {
   const C = JOB_CFG, B = ultBucket(), v = Math.min(C.ultBossHit, C.ultBossCap - B.b); if (v <= 0) return; B.b += v; ultGain(v);
 }
 function ultReady() { return G.p.job && G.p.ult >= JOB_CFG.ultNeed; }
-function useUlt() {
-  const p = G.p, j = p.job, D = (90 + p.level * 7) * p.mod.dmg;   // 0.26a 위력 상향 (60+4L → 90+7L)
-  p.ult = 0; p.ultRef = 0; G.ultB && (G.ultB.ref = 0); G.tm.ultWin = JOB_CFG.ultWin; G.stats.ults++; G.tm.stopT = 0; sfx('ult');
-  toast(JOBS[j].ult.split(':')[0], '#ffe08a'); rcBig(JOB_COL[j] || '#ffe08a', 0.3);   // 3등급 반응 (0.28)
-  if (j === 'warrior') { G.tm.inv = 3; ultBlast(p.x, p.y, 200, D * 1.5, 460, '#ffb070'); G.ultLater = [{ t: G.time + 0.6, x: p.x, y: p.y, r: 230, d: D, kb: 260, col: '#ffd0a0' }]; }   // 0.26a 범위·피해 상향 + 여진
-  if (j === 'rogue') { G.tm.inv = 2.5; G.tm.dance = 2.5; ultSlashes(12, D * 1.4); }   // 0.26a 즉시 그림자 베기 추가
-  if (j === 'archer') { G.tm.rain = 4.5; ultBlast(p.x, p.y, 120, D * 0.8, 300, '#bfe8ff'); }   // 0.26a 지속 4.5초 + 발동 충격
-  if (j === 'engineer') { for (let i = 0; i < 4; i++) addTurret(p.x + Math.cos(i * 1.57 + 0.78) * 40, p.y + Math.sin(i * 1.57 + 0.78) * 40, true); G.tm.overdrive = 10; ultBlast(p.x, p.y, 150, D, 320, '#9ad8ff'); }   // 0.26a 과부하 폭발 추가
-  if (j === 'mage') {
-    let best = null, bn = -1;
-    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6, cx = p.x + Math.cos(a) * 110, cy = p.y + Math.sin(a) * 110; let n = 0; gridQuery(cx, cy, 140, () => { n++; }); if (n > bn) { bn = n; best = { x: cx, y: cy }; } }
-    const c = best || p; fx({ kind: 'ring', x: c.x, y: c.y, r0: 20, r1: 180, dur: 0.6, color: '#ff7a3a', fill: true });
-    gridQuery(c.x, c.y, 180, e => damageEnemy(e, D * 3, { src: 'ult', kb: 300, fx: c.x, fy: c.y })); G.ultLater = [{ t: G.time + 0.5, x: c.x, y: c.y, r: 120, d: D * 1.2, kb: 160, col: '#ffb070' }];   // 0.26a 피해 2→3배 + 잔불 폭발
-  }
-  if (j === 'summoner') { for (let i = 0; i < 8; i++) addMinion(p.x + Math.cos(i) * 30, p.y + Math.sin(i) * 30); ultBlast(p.x, p.y, 160, D, 280, '#c9a8ff'); }   // 0.26a 영혼 파동 추가
-  if (j === 'sovereign') { G.tm.roar = 5; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 260, dur: 0.6, color: '#ffd24a' }); }
-  if (j === 'chrono') { startRewind(); ultBlast(p.x, p.y, 220, D * 0.9, 0, '#9ff0ff'); }   // 0.26a 시간 정지 순간 충격                          // 0.26 과거의 나
-  if (j === 'priest') { G.sanct = { x: p.x, y: p.y, r: 170 }; G.tm.sanct = 7; ultBlast(p.x, p.y, 170, D * 0.8, 200, '#fff3b0'); }   // 0.26a 성역 확대 + 축복 파동
-  if (j === 'druid') { G.tm.wrath = 10; ultBlast(p.x, p.y, 170, D, 300, '#7fd07a'); for (const m of G.pets) ultBlast(m.x, m.y, 90, D * 0.6, 200, '#a8e08a'); }   // 0.26a 분노 10초 + 포효
-}
+/* useUlt: 0.32 재설계로 src/ult.js 이관 */
 function autoUltSetting() { return SETTINGS.autoUlt || (STATE.dev.auto && G.ai && G.ai.autoUlt); }
 function ultBlast(x, y, r, d, kb, col) { fx({ kind: 'ring', x, y, r0: 10, r1: r, dur: 0.5, color: col, fill: true }); gridQuery(x, y, r, e => damageEnemy(e, d, { src: 'ult', kb, fx: x, fy: y })); }
 function ultSlashes(n, d) {
@@ -349,6 +331,7 @@ function updateJob(dt) {
     const b = G.banner;
     if (b && p.job2 === 'conqueror') { T.bt = (T.bt || 0) - dt; if (T.bt <= 0) { T.bt = 0.5; const d = (6 + p.level * 0.6) * p.mod.dmg; gridQuery(b.x, b.y, b.r, e => damageEnemy(e, d, { src: 'banner' })); } }
     if (p.job2 === 'benevolent' && inBanner()) heal(p.maxHp * 0.02 * dt);
+    benevolentHeal(dt);
   }
   if (p.job === 'druid') {
     updatePets(dt);
@@ -371,5 +354,5 @@ function updateJob(dt) {
     if (T.dance > 0) { T.danceT = (T.danceT || 0) - dt; if (T.danceT <= 0) { T.danceT = 0.15; const ts = shuffle(enemiesInRange(p.x, p.y, 160)).slice(0, 4), d = (30 + p.level * 2) * p.mod.dmg; for (const e of ts) { fx({ kind: 'pop', x: e.x, y: e.y, r: 8, color: '#202030', dur: 0.15 }); damageEnemy(e, d, { src: 'ult' }); } } }
   }
   if (T.rain > 0) { T.rainT = (T.rainT || 0) - dt; if (T.rainT <= 0) { T.rainT = 0.1; const q = ringAt(0, 200), d = (24 + p.level * 1.5) * p.mod.dmg; fx({ kind: 'ring', x: q.x, y: q.y, r0: 4, r1: 40, dur: 0.2, color: '#d8ffc8' }); gridQuery(q.x, q.y, 40, e => damageEnemy(e, d, { src: 'ult' })); } }
-  updateTurrets(dt); updateMinions(dt); updateMines(dt); updateExw(dt); updateExw1(dt); updateUlt(dt);
+  updateTurrets(dt); updateMinions(dt); updateMines(dt); updateExw(dt); updateExw1(dt); updateUlt(dt); updateUltFx(dt);
 }

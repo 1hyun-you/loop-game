@@ -196,7 +196,7 @@ function updateWeapons(dt) {
   for (const w of G.p.weapons) {
     const S = wStats(w);
     if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
-    w.t -= dt * (G.tm.roar > 0 ? 2 : 1);                                      // 군주 궁극기: 재사용 2배 속도
+    w.t -= dt * ultCdMul();                                      // 군주 궁극기: 재사용 2배 속도
     if (w.t <= 0) {
       const r = WEAPON_FIRE[w.id](w, S); w.t = r === false ? 0.25 : S.cd; if (r !== false) rcFire(w);   // 공격 반응 (0.28)
      
