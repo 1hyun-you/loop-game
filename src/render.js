@@ -41,6 +41,7 @@ function render() {
   drawPhaseFog(c);
   drawPhaseTint(c);
   drawReactScreen(c);                                       // 피격 가장자리·색 섬광 (0.28)
+  drawTopBand(c);                                           // 0.30 상태 표시줄 이어지는 상단 띠
   drawJoy(c);
   if (STATE.mode === 'title') return;          // 시작 화면에서는 상단 정보 숨김
   drawHUD(c);
@@ -124,7 +125,7 @@ function drawEnemySprites(c, list) {
   c.fill();
   for (const e of list) {
     const nm = spriteFor(e), fr = Math.floor(G.time * (e.type === 'bat' ? 8 : 4) + e.id * 0.37) & 1, flip = G.p.x < e.x, mul = spriteMul(e), by = e.y + e.r * 0.95;
-    if (e.elite || e.rage) drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.rage ? 'rage' : 'gold' });
+    if (e.elite || e.rage || e.thief) drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.rage ? 'rage' : 'gold' });
     drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.flash > 0 ? 'white' : 'n' });
   }
 }

@@ -203,17 +203,20 @@ function drawDemonGround(c) {
   if (A) {
     c.strokeStyle = 'rgba(30,8,50,0.62)'; c.lineWidth = 900; c.beginPath(); c.arc(A.x, A.y, A.R + 450, 0, 7); c.stroke();
     c.strokeStyle = 'rgba(190,140,255,0.85)'; c.lineWidth = 3; c.beginPath(); c.arc(A.x, A.y, A.R, 0, 7); c.stroke();
+    drawArenaPillars(c, A);                                                          // 0.30 결계 기둥 도트
   }
   for (const h of G.hz) {
     const a = Math.min(1, h.t / h.warn);
     if (h.k === 'sect' && !h.fired) {
       c.fillStyle = `rgba(150,70,230,${0.12 + 0.25 * a})`; c.beginPath(); c.moveTo(h.x, h.y); c.arc(h.x, h.y, h.r, h.a - h.arc / 2, h.a + h.arc / 2); c.closePath(); c.fill();
       c.strokeStyle = 'rgba(200,150,255,0.9)'; c.lineWidth = 2; c.stroke();
+      drawWarnMark(c, h.x + Math.cos(h.a) * h.r * 0.55, h.y + Math.sin(h.a) * h.r * 0.55, a);   // 0.30 위험 표식
     } else if (h.k === 'beam') {
       c.save(); c.translate(h.x, h.y); c.rotate(h.a);
       if (h.t <= h.warn) { c.fillStyle = `rgba(190,120,255,${0.15 + 0.2 * a})`; c.fillRect(0, -2, h.len, 4); }
-      else { c.fillStyle = 'rgba(170,90,255,0.75)'; c.fillRect(0, -h.w / 2, h.len, h.w); c.fillStyle = 'rgba(255,240,255,0.9)'; c.fillRect(0, -3, h.len, 6); }
+      else { c.fillStyle = 'rgba(170,90,255,0.35)'; c.fillRect(0, -h.w / 2 - 4, h.len, h.w + 8); }
       c.restore();
+      if (h.t > h.warn) drawDemonBeam(c, h);                                         // 0.30 광선 도트 마디
     }
   }
 }

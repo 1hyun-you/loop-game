@@ -132,18 +132,20 @@ function applyCamp(c) {
 function drawEventGround(c) {
   const E = G.ev, v = E && E.cur; if (!v || v.state === 'done') return;
   if (v.type === 'cave') {
-    c.fillStyle = v.state === 'active' ? 'rgba(20,30,40,0.55)' : 'rgba(20,30,40,0.8)'; c.beginPath(); c.ellipse(v.x, v.y, v.r + 6, v.r, 0, 0, 7); c.fill();
-    c.strokeStyle = '#7fe0ff'; c.lineWidth = 2; c.stroke();
+    c.strokeStyle = 'rgba(127,224,255,0.5)'; c.lineWidth = 2; c.beginPath(); c.ellipse(v.x, v.y, v.r + 6, v.r, 0, 0, 7); c.stroke();
+    drawSprite(c, 'cave', 0, v.x, v.y + 18, { mul: 2, mode: v.state === 'active' ? 'gold' : 'n' });   // 0.30 동굴 입구 도트
     if (v.state === 'idle' && v.stay > 0) { c.strokeStyle = '#e8f8ff'; c.lineWidth = 4; c.beginPath(); c.arc(v.x, v.y, v.r + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v.stay / EV_CFG.caveEnter); c.stroke(); }
     if (v.state === 'active') { c.strokeStyle = '#ffd24a'; c.lineWidth = 4; c.beginPath(); c.arc(v.x, v.y, v.r + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v.act / EV_CFG.caveDur); c.stroke(); }
   }
   if (v.type === 'door') {
     c.fillStyle = 'rgba(200,160,255,0.15)'; c.beginPath(); c.arc(v.x, v.y, v.r + 8, 0, 7); c.fill();
-    c.fillStyle = '#4a3a5a'; c.fillRect(v.x - 13, v.y - 22, 26, 30); c.strokeStyle = '#c8a0ff'; c.lineWidth = 2; c.strokeRect(v.x - 13, v.y - 22, 26, 30);
+    drawSprite(c, 'sdoor', f2(2), v.x, v.y + 14, { mul: 2 });                                    // 0.30 봉인된 문 도트
     if (v.stay > 0) { c.strokeStyle = '#f0e0ff'; c.lineWidth = 4; c.beginPath(); c.arc(v.x, v.y, v.r + 10, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * v.stay / EV_CFG.doorStay); c.stroke(); }
   }
   if (v.type === 'giant' && v.mob && v.mob.sleep && !v.mob.dead) {
-    c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; c.textAlign = 'center'; c.fillText('Z', v.mob.x + 26, v.mob.y - 30 + Math.sin(G.time * 2) * 4);
+    const zt = G.time % 2.4;                                                          // 0.30 'Z' 도트 3개가 차례로 떠오름
+    for (let i = 0; i < 3; i++) { const q = (zt / 2.4 + i / 3) % 1; c.globalAlpha = Math.sin(q * Math.PI); drawSpriteC(c, 'zzz', 0, v.mob.x + v.mob.r * 0.7 + q * 14, v.mob.y - v.mob.r - 6 - q * 26, { mul: q > 0.5 ? 2 : 1 }); }
+    c.globalAlpha = 1;
   }
 }
 

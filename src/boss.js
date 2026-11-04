@@ -238,13 +238,14 @@ function drawBossGround(c) {
       c.fillStyle = 'rgba(255,40,70,0.13)'; c.fillRect(0, -h.w / 2, h.len, h.w);
       c.fillStyle = `rgba(255,40,70,${0.18 + 0.22 * a})`; c.fillRect(0, -h.w / 2, h.len * a, h.w);       // 0.26a 진행 방향으로 차오르는 예고
       c.strokeStyle = `rgba(255,${90 + 120 * a},${110 + 100 * a},0.9)`; c.lineWidth = 2; c.strokeRect(0, -h.w / 2, h.len, h.w);
-      c.restore();
+      c.restore(); drawChevrons(c, h, a);   // 0.30 돌진 방향 도트 화살표
     } else if (!h.fired) {
       c.fillStyle = 'rgba(255,40,70,0.12)'; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.fill();
       c.fillStyle = `rgba(255,40,70,${0.16 + 0.2 * a})`; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 6.2832); c.moveTo(h.x + h.r * (1 - a), h.y); c.arc(h.x, h.y, h.r * (1 - a), 6.2832, 0, true); c.fill();   // 0.26a 가장자리부터 차오름
       c.strokeStyle = `rgba(255,${90 + 140 * a},${110 + 120 * a},0.95)`; c.lineWidth = 2 + a; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.stroke();
       c.save(); c.translate(h.x, h.y); c.rotate(G.time * 1.6); c.setLineDash([6, 8]); c.strokeStyle = 'rgba(255,120,140,0.55)'; c.lineWidth = 1.5;
       c.beginPath(); c.arc(0, 0, h.r * 0.78, 0, 7); c.stroke(); c.restore(); c.setLineDash([]);
+      drawWarnMark(c, h.x, h.y, a);                                                  // 0.30 중심 위험 표식
     } else if (h.pool) {
       const k = 1 - (h.t - h.warn) / h.pool;
       const g = c.createRadialGradient(h.x, h.y, h.r * 0.1, h.x, h.y, h.r);
@@ -252,6 +253,7 @@ function drawBossGround(c) {
       c.fillStyle = g; c.beginPath(); c.arc(h.x, h.y, h.r, 0, 7); c.fill();
       c.save(); c.translate(h.x, h.y); c.rotate(-G.time * 1.2); c.setLineDash([5, 6]); c.strokeStyle = `rgba(255,110,150,${0.8 * k})`; c.lineWidth = 2;
       c.beginPath(); c.arc(0, 0, h.r - 2, 0, 7); c.stroke(); c.restore(); c.setLineDash([]);
+      drawLavaPool(c, h, k);                                                         // 0.30 장판 기포 도트
     }
   }
 }
@@ -259,10 +261,7 @@ function drawBossTop(c, inView) {
   if (!G.eb) return;
   for (const e of G.enemies) {
     if (e.dead || !e.gk || !inView(e.x, e.y, e.r)) continue;
-    c.fillStyle = '#ffd24a'; c.beginPath();                                       // 관 장식 (수문장 표식)
-    for (let i = 0; i < 3; i++) { const x = e.x - 10 + i * 10; c.moveTo(x - 4, e.y - e.r + 2); c.lineTo(x, e.y - e.r - 9); c.lineTo(x + 4, e.y - e.r + 2); }
-    c.fill();
-    if (e.rage) { c.strokeStyle = 'rgba(255,90,60,0.7)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 5, 0, 7); c.stroke(); }
+    drawSprite(c, 'crown', 0, e.x, e.y - e.r - 1 + (f2(2) ? -1 : 0));             // 0.30 도트 관 (수문장 표식), 격노는 도트 외곽선(rage)으로 표시
     if (e.gk === 'seren' && !e.clone && (G.time % 1.3) < 0.2) { c.strokeStyle = 'rgba(255,255,255,0.95)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 8, 0, 7); c.stroke(); }   // 본체 미광
   }
   drawEnemyShots(c, inView);

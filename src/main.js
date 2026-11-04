@@ -130,6 +130,7 @@ function dlgFull() {
   if (SETTINGS.dlgAuto || STATE.dev.auto) { const L = DLG.lines, i = DLG.i; setTimeout(() => { if (DLG.lines === L && DLG.i === i && !DLG.timer) dlgTap(); }, STATE.dev.auto ? 400 : 1800); }   // 대사 자동 넘김 (0.14)
 }
 function dlgTap() {
+  if (!DLG.lines) return;                                  // 0.30 닫힌 직후 중복 입력 무시
   if (DLG.timer) return dlgFull();                         // 출력 중 누르면 전체 표시
   if (++DLG.i < DLG.lines.length) return dlgLine();
   hideUI(); STATE.mode = DLG.prev; const f = DLG.done; DLG.lines = null; DLG.done = null; lastT = performance.now(); if (f) f();
@@ -169,6 +170,7 @@ function frame(now) {
       for (let i = 0; i < n; i++) { step(raw * sp / n * rs); if (STATE.mode !== 'play') break; }
     }
     if (G) render();
+    statusSync(now);                                          // 0.30 상태 표시줄 색 맞춤
     auWatch();
     syncPauseBtn();
     if (DEV.open && Math.floor(now / 500) !== Math.floor((now - raw * 1000) / 500)) DEV.info();

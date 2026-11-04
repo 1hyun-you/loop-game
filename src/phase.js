@@ -68,8 +68,8 @@ function pickPhaseOrder(retry) {
   for (const t in by) out.push(...shuffle(by[t].slice()).slice(0, retry ? 1 : PH_CFG.perType));
   const rest = shuffle(pool.filter(id => !out.includes(id)));
   while (out.length < n && rest.length) out.push(rest.pop());
-  const o = shuffle(out); let f = o.findIndex(id => phTier(id) === 1);   // 첫 페이즈는 기본형(휴식형 제외) 우선 (0.27: 봉인석·전투형 첫 페이즈 조기 사망 대응), 이후 순서는 강함 판정으로 매번 결정
-  if (f < 0) f = o.findIndex(id => !REST_PH.includes(id));
+  const o = shuffle(out); let f = o.findIndex(id => phTier(id) === 1 && id !== 'fog');   // 첫 페이즈는 기본형(휴식형·안개 평원 제외) 우선 (0.30 안개 평원 제외) (0.27: 봉인석·전투형 첫 페이즈 조기 사망 대응), 이후 순서는 강함 판정으로 매번 결정
+  if (f < 0) f = o.findIndex(id => !REST_PH.includes(id) && id !== 'fog');
   if (f > 0) [o[0], o[f]] = [o[f], o[0]];
   return o;
 }
@@ -326,12 +326,12 @@ function drawPhaseGround(c) {
     c.fillStyle = `rgba(120,170,255,${0.14 + pulse * 0.08})`; c.beginPath(); c.arc(z.x, z.y, z.r, 0, 7); c.fill();
     c.strokeStyle = 'rgba(160,200,255,0.8)'; c.lineWidth = 3; c.beginPath(); c.arc(z.x, z.y, z.r, 0, 7); c.stroke();
     c.strokeStyle = '#e8f0ff'; c.lineWidth = 6; c.beginPath(); c.arc(z.x, z.y, z.r - 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * z.prog / PH_CFG.zoneNeed); c.stroke();
-    c.fillStyle = '#5a6f9a'; c.fillRect(z.x - 9, z.y - 16, 18, 26); c.strokeStyle = '#cfe0ff'; c.lineWidth = 2; c.strokeRect(z.x - 9, z.y - 16, 18, 26);
+    drawSprite(c, 'sealst', f2(2), z.x, z.y + 14, { mul: 2 });                                    // 0.30 봉인석 도트
   }
   for (const k of ph.cracks) {
     const a = Math.min(1, k.t / PH_CFG.crackWarn);
     if (!k.done) { c.fillStyle = `rgba(200,80,50,${0.12 + 0.25 * a})`; c.beginPath(); c.arc(k.x, k.y, k.r * a, 0, 7); c.fill(); c.strokeStyle = 'rgba(255,140,90,0.85)'; c.lineWidth = 2; c.beginPath(); c.arc(k.x, k.y, k.r, 0, 7); c.stroke(); }
-    else { c.fillStyle = 'rgba(40,28,20,0.6)'; c.beginPath(); c.arc(k.x, k.y, k.r, 0, 7); c.fill(); }
+    else { c.fillStyle = 'rgba(40,28,20,0.45)'; c.beginPath(); c.arc(k.x, k.y, k.r, 0, 7); c.fill(); drawSpriteC(c, 'crack', 0, k.x, k.y, { mul: 2 }); }   // 0.30 붕괴 흔적 도트
   }
   if (ph.rits) for (const e of ph.rits) {
     if (e.dead) continue;
@@ -340,13 +340,12 @@ function drawPhaseGround(c) {
   }
   if (ph.camp && !ph.camp.used) {
     const m = ph.camp; c.fillStyle = 'rgba(255,190,90,0.18)'; c.beginPath(); c.arc(m.x, m.y, m.r + 10, 0, 7); c.fill();
-    c.fillStyle = '#8a5a30'; c.beginPath(); c.moveTo(m.x - 18, m.y + 10); c.lineTo(m.x, m.y - 16); c.lineTo(m.x + 18, m.y + 10); c.closePath(); c.fill();
-    c.fillStyle = '#ffb040'; c.beginPath(); c.arc(m.x + 16, m.y + 14, 4 + Math.sin(G.time * 9), 0, 7); c.fill();
+    drawSprite(c, 'tent', 0, m.x, m.y + 14, { mul: 2 }); drawSprite(c, 'fire2', f2(6), m.x + 30, m.y + 22, { mul: 2 });   // 0.30 천막·모닥불 도트
   }
   if (ph.cart) {
     const k = ph.cart;
     c.strokeStyle = 'rgba(255,230,150,0.35)'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.moveTo(k.x, k.y); c.lineTo(k.tx, k.ty); c.stroke(); c.setLineDash([]);
-    c.fillStyle = '#e8d070'; c.fillRect(k.tx - 1.5, k.ty - 28, 3, 28); c.fillRect(k.tx + 1.5, k.ty - 28, 14, 9);
+    drawSprite(c, 'flag', f2(3), k.tx + 8, k.ty, { mul: 2 });                                       // 0.30 목적지 깃발 도트
     if (k.block) { c.fillStyle = '#ff8a6a'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.fillText(k.sp > 0 ? '감속' : '정지', k.x, k.y - 26); }
     drawSpriteC(c, 'cart', 0, k.x, k.y, { mode: k.hit > 0 ? 'white' : 'n' });   // 0.20 도트
     c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);
@@ -354,7 +353,7 @@ function drawPhaseGround(c) {
   if (ph.spring && !ph.spring.used) {
     const s = ph.spring;
     c.fillStyle = 'rgba(120,240,170,0.35)'; c.beginPath(); c.arc(s.x, s.y, s.r + 6 + Math.sin(G.time * 5) * 3, 0, 7); c.fill();
-    c.fillStyle = '#6fe0a0'; c.beginPath(); c.arc(s.x, s.y, s.r * 0.6, 0, 7); c.fill();
+    drawSpriteC(c, 'well', f2(2), s.x, s.y, { mul: 2 });                               // 0.30 회복 샘 도트
   }
 }
 /* 안개 평원 시야 축소 (화면 좌표, 플레이어 중심) */
