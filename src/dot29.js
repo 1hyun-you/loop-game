@@ -94,3 +94,28 @@ function drawEnemyShotsDot(c, inView) {
   }
   c.globalAlpha = 1;
 }
+
+/* ============================================================
+   0.29 아군 신규 무기·전용 무기 도트 — 0.27 추가 무기(사슬 철퇴·폭탄·창 찌르기)·해골 손·직업 전용 투사체
+   아군 공격은 붉은 외곽선 없음(적 탄환과 구분)
+   ============================================================ */
+Object.assign(SPR, {
+  pj_xbow: { px: 2, frames: [['.kk..kkk.', 'kMMnnnMWk', '.kk..kkk.']] },
+  pj_longbow: { px: 2, frames: [['kyk........kk.', 'kYyYYYYYYYYwyk', 'kyk........kk.']] },
+  pj_dagger: { px: 2, frames: [['kk.kkkk.', 'UUkuuuwk', 'kk.kkkk.']] },
+  pj_thorn: { px: 2, frames: [['kk.....', 'GGggvvk', 'kk.....']] },
+  pj_wind: { px: 2, frames: [['.cc.....kk..', 'cwwccccccWwk', '.cc.....kk..']] },
+  pj_gear: { px: 2, frames: [['..kkk..', '.kyyyk.', 'kyykyyk', 'kykkyyk', 'kyyyyyk', '.kyyyk.', '..kkk..']] },
+  pj_arcane: { px: 2, frames: [['..kkk..', '.kccbk.', 'kcwccbk', 'kcccbbk', '.kbbbk.', '..kkk..'], ['..kkk..', '.kcccb.', 'kwwccbk', 'kccbbbk', '.kbbbk.', '..kk...']] },
+  pj_soul: { px: 2, frames: [['.kkkk.', 'kuwwuk', 'kwkkwk', 'kuwwuk', '.kuUk.', '..kk..'], ['.kkkk.', 'kuwwuk', 'kwkkwk', 'kuwwuk', '.kUuk.', '...kk.']] },
+  flail: { px: 2, frames: [['...k...', '.kkkkk.', '.kMWMk.', 'kkWMMkk', '.kMMmk.', '.kkkkk.', '...k...']] },
+  bomb: { px: 2, frames: [['.....yk.', '....kk..', '..kkkk..', '.kKKKKk.', 'kKmKKKKk', 'kKKKKKKk', '.kKKKKk.', '..kkkk..'], ['.....ok.', '....kk..', '..kkkk..', '.kKKKKk.', 'kKmKKKKk', 'kKKKKKKk', '.kKKKKk.', '..kkkk..']] },
+  spear: { px: 2, frames: [['......k..', 'kkkk.kWk.', 'nnnnkWWWk', 'kkkk.kWk.', '......k..']] },
+  bhand: { px: 2, frames: [['kk.kk.kk.', 'ke.ke.ke.', 'ke.ke.kek', 'keekeekek', 'keeeeeeek', '.keeeeek.', '..kEEEk..', '..kkkkk..']] },
+});
+/* 투사체 출처 → 도트 (없으면 기존 그림) */
+const PJ_SPR = { xbow: 'pj_xbow', longbow: 'pj_longbow', dagger: 'pj_dagger', thornshot: 'pj_thorn', wind: 'pj_wind', shard: 'pj_gear', flameorb: 'pj_arcane' };
+function pjSprite(pr) {
+  if (pr._s !== undefined) return pr._s;
+  return (pr._s = PJ_SPR[pr.src] || (pr.kind === 'orb' && pr.color === '#c8a8ff' ? 'pj_soul' : null));
+}

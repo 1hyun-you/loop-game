@@ -244,8 +244,7 @@ function drawArsenal(c, inView) {
         const a = s.a + i * Math.PI, bx = p.x + Math.cos(a) * s.R, by = p.y + Math.sin(a) * s.R;
         c.globalAlpha = 0.35; c.strokeStyle = col; c.lineWidth = s.bs * 1.2; c.beginPath(); c.arc(p.x, p.y, s.R, a - 0.9, a); c.stroke();
         c.globalAlpha = 0.9; c.strokeStyle = '#8a8a9a'; c.lineWidth = 2; c.setLineDash([4, 3]); c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(bx, by); c.stroke(); c.setLineDash([]);
-        c.globalAlpha = 1; c.fillStyle = '#3a3a48'; c.beginPath(); c.arc(bx, by, s.bs * 0.75, 0, 7); c.fill(); c.fillStyle = '#c8c8d8'; c.beginPath(); c.arc(bx - 2, by - 2, s.bs * 0.5, 0, 7); c.fill();
-        c.fillStyle = '#ffffff'; for (let q = 0; q < 6; q++) { const qa = q * 1.047 + a; c.fillRect(bx + Math.cos(qa) * s.bs * 0.78 - 1.5, by + Math.sin(qa) * s.bs * 0.78 - 1.5, 3, 3); }
+        c.globalAlpha = 1; drawSpriteRot(c, 'flail', 0, bx, by, a + G.time * 6, { mul: s.bs > 11 ? 2 : 1 });   // 0.29 도트 철퇴
       }
     }
     if (w.bm) {                                                     // 빛줄기: 외곽 발광 + 백색 중심선
@@ -264,8 +263,7 @@ function drawArsenal(c, inView) {
     const k = b.t / b.fly, x = lerp(b.x0, b.x, k), y = lerp(b.y0, b.y, k), h = Math.sin(Math.PI * k) * 60;
     c.strokeStyle = 'rgba(255,214,120,0.7)'; c.lineWidth = 1.5; c.setLineDash([5, 4]); c.beginPath(); c.arc(b.x, b.y, b.R * (0.5 + 0.5 * k), 0, 7); c.stroke(); c.setLineDash([]);
     c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(x, y + 4, 6, 3, 0, 0, 7); c.fill();
-    c.fillStyle = '#2a2a34'; c.beginPath(); c.arc(x, y - h, 6, 0, 7); c.fill(); c.fillStyle = '#5a5a6a'; c.beginPath(); c.arc(x - 2, y - h - 2, 2.5, 0, 7); c.fill();
-    c.fillStyle = (G.time * 12 & 1) ? '#ffd24a' : '#ff6a3a'; c.fillRect(x + 3, y - h - 9, 3, 3);
+    drawSpriteRot(c, 'bomb', (G.time * 12) & 1, x, y - h, k * 6);   // 0.29 도트 폭탄 (회전 비행, 심지 깜빡임)
   }
   if (G.afx) for (const f of G.afx) {
     const k = f.t / f.dur;
@@ -273,12 +271,12 @@ function drawArsenal(c, inView) {
       const ext = Math.min(1, k * 4), L = f.L * ext, ux = Math.cos(f.a), uy = Math.sin(f.a), nx = -uy, ny = ux, x = p.x, y = p.y, fade = 1 - Math.max(0, (k - 0.3) / 0.7);
       c.globalAlpha = 0.3 * fade; c.fillStyle = f.col; c.beginPath(); c.moveTo(x + nx * f.wd, y + ny * f.wd); c.lineTo(x + ux * L, y + uy * L); c.lineTo(x - nx * f.wd, y - ny * f.wd); c.closePath(); c.fill();
       c.globalAlpha = 0.95 * fade; c.strokeStyle = '#ffffff'; c.lineWidth = 3; c.beginPath(); c.moveTo(x + ux * L * 0.2, y + uy * L * 0.2); c.lineTo(x + ux * L, y + uy * L); c.stroke();
-      c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(x + ux * (L + 8), y + uy * (L + 8)); c.lineTo(x + ux * L + nx * 5, y + uy * L + ny * 5); c.lineTo(x + ux * L - nx * 5, y + uy * L - ny * 5); c.closePath(); c.fill();
+      drawSpriteRot(c, 'spear', 0, x + ux * (L - 2), y + uy * (L - 2), f.a);   // 0.29 도트 창날
     }
     if (f.k === 'hand') {                                           // 해골 손: 솟았다 가라앉는 뼈 손가락
       const up = Math.sin(Math.PI * Math.min(1, k)) * 16; c.globalAlpha = 1 - k * 0.5;
       c.fillStyle = 'rgba(40,20,60,0.45)'; c.beginPath(); c.ellipse(f.x, f.y + 3, 14, 5, 0, 0, 7); c.fill();
-      c.fillStyle = '#e8e0cc'; for (let i = -2; i <= 2; i++) c.fillRect(f.x + i * 4 - 1.5, f.y - up * (1 - Math.abs(i) * 0.18), 3, up * (1 - Math.abs(i) * 0.18) + 2);
+      c.save(); c.beginPath(); c.rect(f.x - 14, f.y - 30, 28, 32); c.clip(); drawSprite(c, 'bhand', 0, f.x, f.y + 16 - up, {}); c.restore();   // 0.29 도트 해골 손 (땅에서 솟음)
     }
     c.globalAlpha = 1;
   }

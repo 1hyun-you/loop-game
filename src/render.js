@@ -250,6 +250,8 @@ function drawWeapons(c, inView) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
     if (pr.jt) { c.globalAlpha = 0.35; c.fillStyle = pr.jt; c.beginPath(); c.arc(pr.x, pr.y, pr.r + 5, 0, 7); c.fill(); c.globalAlpha = 1; }   // 직업 변환 발광 (0.26)
+    const ps = pjSprite(pr);                                  // 0.29 전용 무기·신규 투사체 도트
+    if (ps) { const fr = SPR[ps].frames.length > 1 ? Math.floor(G.time * 10 + pr.id) & 1 : 0; if (ps === 'pj_gear') drawSpriteRot(c, ps, 0, pr.x, pr.y, pr.t * 6); else if (ps === 'pj_soul') drawSpriteC(c, ps, fr, pr.x, pr.y, { flip: pr.vx < 0 }); else drawSpriteRot(c, ps, fr, pr.x, pr.y, a); continue; }
     if (pr.kind === 'star') drawSpriteRot(c, 'star', 0, pr.x, pr.y, pr.t * 16);
     else if (pr.kind === 'arrow') drawSpriteRot(c, pr.src === 'knife' ? 'knife' : 'arrow', 0, pr.x, pr.y, a);
     else if (pr.kind === 'boom') drawSpriteRot(c, 'axe', 0, pr.x, pr.y, pr.spin, { mul: pr.r > 15 ? 2 : 1 });
