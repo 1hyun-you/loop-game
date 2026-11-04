@@ -59,6 +59,8 @@ button.pri{background:#463c8c;border-color:var(--accent)}
 .sel-actions button.on{background:#7a2e3a;border-color:#c25060}
 button:disabled{opacity:.4}
 .build{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
+.rsum{width:100%;max-width:380px;display:flex;flex-direction:column;gap:5px;align-items:stretch}.rsum h3{margin:6px 0 2px;font-size:13px;color:var(--muted);text-align:center;font-weight:normal}.rsum .build{align-self:center}
+.dbar{display:grid;grid-template-columns:7.5em 1fr 3em;gap:8px;align-items:center;font-size:13px}.dbar .dn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}.dbar .dt{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}.dbar .dt i{display:block;height:100%;background:#ffd24a}.dbar .dk{font-variant-numeric:tabular-nums;color:var(--muted)}
 .chip{font-size:13px;padding:3px 9px;border-radius:20px;border:1.5px solid var(--line);background:var(--panel)}
 .devbtn{position:fixed;left:8px;bottom:calc(var(--sab) + 10px);z-index:6;pointer-events:auto;
   padding:6px 9px;font-size:12px;font-family:var(--f-mono);border-radius:7px;background:rgba(34,31,46,.8)}
@@ -99,6 +101,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
 .layer.ending h2{font-size:32px;letter-spacing:2px}
 #ui>.layer.scroll{justify-content:flex-start;overflow-y:auto;touch-action:pan-y;background:rgba(14,12,22,.94)}
 .layer.scroll>h2{margin-top:6vh}
+#ui>.layer.fit{overflow-y:auto;touch-action:pan-y;justify-content:safe center}
 .layer h3{margin:6px 0 0;font-size:16px;color:var(--muted);align-self:center}
 .menu.row2{flex-direction:row;flex-wrap:wrap;justify-content:center;width:min(340px,90vw)}.menu.row2 button{flex:1;min-width:30%;white-space:nowrap;word-break:keep-all;padding:12px 8px}
 .rows{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}

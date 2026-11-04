@@ -6,11 +6,12 @@
    2페이즈(60~25%) 암흑 결계: 수축하는 결계 밖 지속 피해, 회전 광선 3갈래, 낫 휘두르기
    3페이즈(25% 이하) 종언: 운석 연속 낙하(이동 경로 추적), 광선 4갈래 가속, 추적탄 증가, 패턴 간격 단축
    전환: 1.6초 무적·탄환 소거·포효 연출 / 시간 정지·빙결 면역(둔화 0.3배), 넉백 면역
+   0.31 무적 교체: 체력 고정(최소 지속 시간 하한)·전환 무적 폐지 → 전환 시 공격 정지 연출(피해는 받음), 체력 0 즉시 처치
    명칭 '마왕'은 가칭 (서사·명칭은 4단계)
    ============================================================ */
 const DEMON = { name: '마왕', gate: '마왕성', ds: '그림자 군주', color: '#7a4ad0', r: 34, speed: 70, shape: 'hex' };
 const DM_CFG = {
-  hpMul: 360, retryHp: 0.65, dmgMul: 1.2,   // 0.12 1차(무적 12·일반 12): 재도전 판 처치 191~320초·퇴각 2, 일반 판 마왕전 사망 8/10 → 재도전 체력·패턴 피해 하향 / 2차: 무적 처치 평균 235초·마지막 판 19분 → 체력 420→360
+  hpMul: 470, retryHp: 0.65, dmgMul: 1.2,   // 0.12 1차(무적 12·일반 12): 재도전 판 처치 191~320초·퇴각 2, 일반 판 마왕전 사망 8/10 → 재도전 체력·패턴 피해 하향 / 2차: 무적 처치 평균 235초·마지막 판 19분 → 체력 420→360
   spawn: [240, 280], fail: 420, stages: [0.6, 0.25], trans: 1.6, spawnMul: 0.3,
   every: [2.6, 2.3, 1.7],                                   // 패턴 간격 (페이즈별)
   scR: 150, scArc: 2.1, scWarn: [0.85, 0.75, 0.6], scDmg: 18,  // 낫 휘두르기
@@ -20,8 +21,9 @@ const DM_CFG = {
   bmN: [0, 3, 4], bmLen: 340, bmW: 18, bmWarn: 1.1, bmDur: [0, 3.2, 3.6], bmRot: [0, 0.55, 0.8], bmDmg: 8,   // 회전 광선
   mtN: 7, mtGap: 0.32, mtR: 58, mtWarn: 0.9, mtDmg: 17,      // 운석 낙하
   // 0.16 처치 시간 편차 억제 (5단계 결정 안건 1-3): 페이즈별 최소 지속 시간(이전 하한 체력 고정) + 목표 초과 시 받는 피해 점증
-  stMin: [60, 55, 40], stTgt: [70, 60, 45], catchUp: 0.04, catchMax: 3, finalHp: 0.75, preDmg: 0.6,
-  erode: 20, seg: [0.4, 0.35, 0.25],   // 0.18: 목표 시간 초과 시 페이즈 남은 구간을 20초에 걸쳐 잠식 → 처치 시간 상한 약 235초 (최소 지속 합 155초)   // preDmg: 진엔딩 전 패턴 피해 배율 (진엔딩 경로 안정화)
+  stTgt: [70, 60, 45], catchUp: 0.04, catchMax: 3, finalHp: 0.75, preDmg: 0.6,
+  erode: 20, seg: [0.4, 0.35, 0.25], stun: 1.8, rate: 0.0062, burst: 0.04,   // 0.31 stun: 전환 공격 정지 시간 (피해 받음) / rate·burst: 초당 체력 감소 상한(최대 체력 비율)·누적 한도 → 강한 빌드 처치 시간 하한 약 150초 (체력 고정 대체)
+    // 0.18: 목표 시간 초과 시 페이즈 남은 구간을 20초에 걸쳐 잠식 → 처치 시간 상한 약 235초 (최소 지속 합 155초)   // preDmg: 진엔딩 전 패턴 피해 배율 (진엔딩 경로 안정화)
 };
 const bossDef = (k) => k === 'demon' ? DEMON : GATEKEEPERS[k];
 
@@ -38,7 +40,7 @@ function dmSpawn() {
   sfx('boss'); jBoss(DEMON.name || '마왕', '마왕성 · 최후의 결전');
   const q = ringAt(DM_CFG.spawn[0], DM_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : DM_CFG.finalHp); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
-  e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0; e.stT0 = G.time;
+  e.cmd = true; e.boss = true; e.gk = 'demon'; e.ai = { cd: 2.0, n: 0 }; e.st = 0; e.inv = 0; e.stun = 0; e.stT0 = G.time;
   G.gkMob = e; G.eb = []; G.hz = []; G.arena = null;
   G.stats.demon = { t0: G.time, st: [null, null], type: G.runType, n: ((G.stats.demon && G.stats.demon.n) || 0) + 1 };   // n: 생성 횟수 (0.18 계측)
   toast('마왕 강림', DEMON.color); toast('그림자 군주', '#fff');
@@ -55,12 +57,12 @@ function dmUpdate(e, dt, d, dx, dy) {
   const nx = e.st < 2 && e.hp <= e.maxHp * DM_CFG.stages[e.st];
   if (nx) {
     (G.stats.demon.tr || (G.stats.demon.tr = [])).push([e.id, e.st, Math.round(G.time - e.stT0), Math.round(e.hp / e.maxHp * 100), G.gkMob === e ? 1 : 0]);   // 전환 추적 (0.18 조기 전환 원인 확인)
-    e.st++; e.stT0 = G.time; e.inv = DM_CFG.trans; ai.cd = DM_CFG.trans + 0.6; G.eb = []; G.hz = G.hz.filter(h => h.k === 'arena');
+    e.st++; e.stT0 = G.time; e.stun = DM_CFG.stun; ai.cd = DM_CFG.stun + 0.5; ai.blink = null; G.eb = []; G.hz = G.hz.filter(h => h.k === 'arena');
     G.stats.demon.st[e.st - 1] = Math.round(G.time - G.stats.demon.t0);
     toast(e.st === 1 ? '암흑 결계' : '종언', '#c9a8ff'); fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: 280, dur: 1.0, color: '#c9a8ff' });
     if (e.st === 1) G.arena = { x: p.x, y: p.y, R: DM_CFG.arR0, t: 0, tick: 0 };
   }
-  if (e.inv > 0) e.inv -= dt;
+  if (e.stun > 0) { e.stun -= dt; if (Math.random() < dt * 10) fx({ kind: 'ring', x: e.x + rand(-14, 14), y: e.y + rand(-14, 14), r0: 4, r1: 22, dur: 0.35, color: '#c9a8ff' }); }   // 0.31 전환 공격 정지 연출
   else if (G.time - e.stT0 > DM_CFG.stTgt[e.st]) {               // 잠식 (0.18): 목표 시간 초과 시 체력 자연 감소, 페이즈 경계에서 정지
     const loss = e.maxHp * DM_CFG.seg[e.st] / DM_CFG.erode * dt, floor = e.st < 2 ? e.maxHp * DM_CFG.stages[e.st] : 0;
     e.hp = Math.max(floor, e.hp - loss); if (e.st === 2 && e.hp <= 0) { killEnemy(e); return; }
@@ -69,11 +71,12 @@ function dmUpdate(e, dt, d, dx, dy) {
   if (ai.blink) {                                                // 그림자 도약: 예고 후 착지
     ai.blink.t -= dt; mv = 0;
     if (ai.blink.t <= 0) { e.x = ai.blink.x; e.y = ai.blink.y; ai.blink = null; fx({ kind: 'ring', x: e.x, y: e.y, r0: 10, r1: DM_CFG.blR, dur: 0.4, color: '#b080ff' }); }
-  } else if (e.inv <= 0) {
+  } else if (!(e.stun > 0)) {
     ai.cd -= dt;
     if (ai.cd <= 0) { ai.cd = DM_CFG.every[e.st]; ai.n++; mv = dmPattern(e, ai); }
   }
   // 이동: 1페이즈 중거리 압박, 2·3페이즈 원거리 유지 (결계 안 제한)
+  if (e.stun > 0) mv = 0;
   if (mv && !ai.blink) {
     const lo = e.st ? 170 : 110, hi = e.st ? 250 : 180;
     gkKeep(e, d, 0, lo, hi);
@@ -181,13 +184,14 @@ function dmOnBeam(h, x, y, pad) {
 }
 function dmHzAlive(h) { return h.k === 'sect' ? h.t < h.warn + 0.3 : h.t < h.warn + h.dur; }
 
-/* 받는 피해 보정 (damageEnemy에서 호출, 0.16): 최소 지속 시간 전에는 해당 페이즈 하한 체력 아래로 내려가지 않음, 목표 시간 초과 시 피해 점증 */
+/* 받는 피해 보정 (damageEnemy에서 호출, 0.16 → 0.31): 체력 하한 고정 폐지(체력 0 즉시 처치), 목표 시간 초과 시 피해 점증, 초당 감소 상한 */
 function dmAdjust(e, dmg) {
   if (e.stT0 == null) e.stT0 = G.time;
-  const el = G.time - e.stT0, floor = e.st < 2 ? e.maxHp * DM_CFG.stages[e.st] : 0;
+  const el = G.time - e.stT0;
   if (el > DM_CFG.stTgt[e.st]) dmg *= Math.min(DM_CFG.catchMax, 1 + (el - DM_CFG.stTgt[e.st]) * DM_CFG.catchUp);
-  if (el < DM_CFG.stMin[e.st]) dmg = Math.min(dmg, Math.max(0, e.hp - floor - 1));
-  else if (e.st < 2) dmg = Math.min(dmg, Math.max(0, e.hp - floor));   // 한 번의 피해로 다음 페이즈를 건너뛰지 않도록 페이즈 경계에서 정지
+  const t = G.time, bud = e.bud == null ? e.maxHp * DM_CFG.burst : e.bud;   // 초당 감소 상한: 예산은 시간에 따라 충전, 정지 없이 체력 막대가 꾸준히 감소
+  e.bud = Math.min(e.maxHp * DM_CFG.burst, bud + (t - (e.budT == null ? t : e.budT)) * e.maxHp * DM_CFG.rate); e.budT = t;
+  dmg = Math.min(dmg, e.bud); e.bud -= dmg;
   return dmg;
 }
 function dmKilled(e) {

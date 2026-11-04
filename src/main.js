@@ -11,6 +11,26 @@ const buildChips = () => (G.p.job ? `<span class="chip" style="border-color:#d9a
   + G.p.passives.map(x => `<span class="chip" style="border-color:${CFG.colors.passive}">${PASSIVES[x.id].name} ${x.lvl}${brName(x.id, x.br)}</span>`).join('')
   + G.p.relics.map(r => `<span class="chip" style="border-color:#ffd24a">유물 ${RELICS[r].name}</span>`).join('');
 
+/* 결과 화면 빌드 요약 (0.31): 피해 비중 상위 5개 막대 + 보유 능력 칩 */
+const SRC_NM = { ult: '궁극기', pet: '야수 동료', maul: '곰 강타', howl: '늑대 울부짖음', minion: '소환수', turret: '포탑', react: '반응 폭발', bleed: '출혈', trail: '불길 자국', mark: '사냥 표식',
+  dance: '칼춤', banner: '정복의 깃발', holy: '정화 폭발', wx: '직업 변환', fireball_pool: '화염구 불바다', bomb_pool: '폭탄 화염', fissure: '균열', split: '분열 화살', mbolt: '비전 탄', wind: '질풍 창', thunder: '뇌광',
+  waraxe: '전투 도끼', shade: '그림자 칼날', gshield: '금빛 방패', xbow: '연발 석궁', coil: '전기 코일', shard: '시간 파편', flameorb: '불꽃 구슬', bonehand: '해골 손', bless: '축복 고리', thornshot: '가시 사출',
+  quake: '지진 망치', dagger: '독 단검', longbow: '관통 장궁', mine: '지뢰', frost: '서리', pendulum: '시간 진자', orb: '영혼 구체', radiance: '광휘', thorn: '가시 덤불', shatter: '얼음 파쇄' };
+function srcName(k) {
+  if (WEAPONS[k]) return WEAPONS[k].name;
+  if (SRC_NM[k]) return SRC_NM[k];
+  if (RELICS[k]) return '유물 ' + RELICS[k].name;
+  return '기타 효과';
+}
+function buildSummary() {
+  const agg = {};
+  for (const [k, v] of Object.entries(G.stats.dmg)) { const n = srcName(k); agg[n] = (agg[n] || 0) + v; }
+  const tot = Object.values(agg).reduce((a, b) => a + b, 0);
+  const top = Object.entries(agg).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const bars = tot > 0 ? top.map(([n, v]) => { const k = Math.round(v / tot * 100); return `<div class="dbar"><span class="dn">${esc(n)}</span><span class="dt"><i style="width:${Math.max(2, k)}%"></i></span><span class="dk">${k}%</span></div>`; }).join('') : '';
+  return `<div class="rsum">${bars ? `<h3>피해 비중</h3>${bars}` : ''}<h3>빌드</h3><div class="build">${buildChips()}</div></div>`;
+}
+
 /* 설정·도감·도전 준비 화면은 meta.js (0.14·0.15) */
 const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
 
@@ -87,7 +107,7 @@ function showResult() {
   const R = G.report, done = G.ph.log.filter(x => x[2] === 'ok').length;
   const D = GATEKEEPERS[G.gk], dm = R.demon, gk = R.gate && R.gate[1] === 'kill';
   const head = dm ? (dm[0] === 'kill' ? '마왕 처치' : R.result === 'retreat' ? '마왕성 소멸' : '쓰러졌다') : R.result === 'clear' ? '들판 돌파' : R.result === 'retreat' ? '수문장 퇴각' : '쓰러졌다';
-  UI.innerHTML = `<div class="layer"><h2>${head}</h2>
+  UI.innerHTML = `<div class="layer fit"><h2>${head}</h2>
     ${gk && D ? `<p class="best">${D.name} 처치 · ${D.gate} 개방 (열린 문 ${R.gates || 0}/4)</p>` : ''}
     ${dm ? `<p class="best">${dm[0] === 'kill' ? `마왕 처치 (누적 ${R.demonKills}회)` : `마왕 ${dm[3]}/3 페이즈 · 남은 체력 ${dm[2]}%`}</p>` : ''}
     ${R.newBest ? '<p class="best">최고 생존 기록 갱신</p>' : ''}
@@ -95,7 +115,7 @@ function showResult() {
     ${(R.newTitles || []).map(t => `<p class="best">칭호 해금 · ${esc(t)}</p>`).join('')}
     <p class="score">점수 ${R.score || 0}${R.mul > 1 ? ` <small>×${R.mul}</small>` : ''}${R.newBestScore ? ' <small>최고 기록</small>' : ''}</p>
     <div class="stats"><span>생존 시간</span><span>${fmtTime(R.time)}</span><span>돌파 페이즈</span><span>${done}/${G.ph.order.length}</span><span>레벨</span><span>${R.level}</span><span>처치</span><span>${R.kills}</span><span>마지막 피격</span><span>${R.result === 'clear' ? '-' : (R.lastHit || '-')}</span></div>
-    <div class="build">${buildChips()}</div>
+    ${buildSummary()}
     <div class="menu"><button class="pri" id="again">다시 시작</button><button id="home">처음 화면</button></div></div>`;
   on('again', newRun); on('home', showTitle);
 }

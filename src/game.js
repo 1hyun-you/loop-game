@@ -59,6 +59,7 @@ function step(dt) {
   G.time += dt;
   if (G.time >= (G.stats.dmgMin.length + 1) * 60) G.stats.dmgMin.push(Object.assign({}, G.stats.dmg));   // 분 단위 피해 누적 스냅숏
   updatePlayer(dt);
+  guideUpdate(dt);                                           // 첫 판 안내 (0.31)
   if (!G.result) { updatePhase(dt); if (!G.result) updateEvent(dt); updateEliteSpawn(dt); }
   if (!G.result) updateSpawn(dt);
   gridBuild(G.enemies);
@@ -174,7 +175,7 @@ function updateEnemies(dt) {
 
 /* 피해·처치 */
 function damageEnemy(e, dmg, o = {}) {
-  if (e.dead || e.inv > 0) return;                         // 마왕 페이즈 전환 중 무적 (0.12)
+  if (e.dead) return;                                       // 0.31 마왕 전환 무적 폐지
   dmg *= jobDmgMul(e, o) * traitDmgMul(e) * (e.mb ? mobDmgMul(e, o) : 1);   // 숙련 특성·방패병 (0.23)
   if (G.tm.storm > 0 && o.src === 'spin') dmg *= 1.3;
   if (e.gk === 'demon') { dmg = dmAdjust(e, dmg); if (dmg <= 0) return; }   // 마왕 처치 시간 편차 억제 (0.16) — 모든 피해 배율 적용 후 보정 (0.18: 칼날 폭풍 배율이 보정 뒤에 곱해져 페이즈 조기 전환되던 결함 수정)

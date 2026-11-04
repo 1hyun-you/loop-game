@@ -294,6 +294,7 @@ function drawHUD(c) {
   let ty = VIEW.ch * 0.3;
   for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px Galmuri11, system-ui'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
   c.globalAlpha = 1;
+  drawGuide(c);                                             // 첫 판 안내 (0.31)
 }
 
 /* 상단 아래 아이콘 줄: 무기 5칸 · 보조 효과 5칸 */

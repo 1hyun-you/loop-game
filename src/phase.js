@@ -57,7 +57,8 @@ const PH_CFG = { gap: 6, warnAt: 3, zoneR: 70, zoneNeed: 5, zoneN: 4, zoneDist: 
   strongAt: 0.82, weakAt: 0.55, ambushMul: 1.35, ambushElites: 2,
   pickW: { strong: [0.4, 1, 2.6], mid: [1, 1.2, 1.4], weak: [2.4, 1.4, 1] },   // 다음 페이즈 가중치 [휴식형, 기본형, 전투·기믹형]
   accPerKill: 0.025, accMax: 0.2,                                     // 시간형 페이즈: 처치 1회당 시계 추가 진행(초), 단축 상한 20% (0.24 시험: 30% 상한 시 무적 판 길이 11.7분)
-  cartAggro: 0.45, cartBlock: 0.2,                                    // 수레 표적 적 비율, 붙은 적 1체당 감속 20% (5체 정지)
+  cartAggro: 0.45, cartBlock: 0.2, cartWarn: 0.3, cartFailElites: 2,   // 0.31 수레 체력 경고 기준·실패 시 정예 수
+                                     // 수레 표적 적 비율, 붙은 적 1체당 감속 20% (5체 정지)
 };
 
 /* 판당 투입 페이즈 구성 — 유형별 perType종 이상 보장 후 나머지 무작위 */
@@ -271,6 +272,7 @@ function updatePhaseGimmick(P, dt) {
     c.block = n; c.sp = paused ? 0 : PH_CFG.cartSpeed * Math.max(0, 1 - n * PH_CFG.cartBlock); c.moving = c.sp > 0;
     if (c.moving) { const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy); if (d < 8) { c.done = true; } else { c.x += dx / d * c.sp * dt; c.y += dy / d * c.sp * dt; } }
     if (hurt) { c.hp -= hurt * PH_CFG.cartHurt * dt; c.hit = 0.15; }
+    if (!c.warned && c.hp <= c.maxHp * PH_CFG.cartWarn) { c.warned = true; toast('수레 위험 · 체력 30% 이하', '#ff6a4a'); sfx('preview'); }   // 0.31 수레 위험 경고
     c.hit -= dt;
   }
   // 의식 저지: 남은 마법진마다 주기 소환
@@ -301,7 +303,11 @@ function phaseCleanup(outcome) {
     if (left.length) { spawnElite(); toast('의식 완성 · 정예 소환', '#c8a0ff'); }
   }
   if (id === 'hunt') for (const e of G.enemies) if (e.hunt && !e.dead) e.hunt = false;
-  if (id === 'escort' && outcome !== 'ok') toast('수레 파손', '#ff9a7a');
+  if (id === 'escort' && outcome !== 'ok') {                // 0.31 수레 실패: 정예 2체 습격, 보물 상자 없음
+    toast('수레 파손 · 정예 습격', '#ff9a7a');
+    for (let i = 0; i < PH_CFG.cartFailElites; i++) { const e = spawnElite(); e.noChest = true; e.cartRaid = true; }
+    G.stats.cartFail = (G.stats.cartFail || 0) + 1;
+  }
   ph.cart = null; ph.rits = null; ph.cracks = []; ph.camp = null; ph.huntQ = null;
 }
 
@@ -348,7 +354,7 @@ function drawPhaseGround(c) {
     drawSprite(c, 'flag', f2(3), k.tx + 8, k.ty, { mul: 2 });                                       // 0.30 목적지 깃발 도트
     if (k.block) { c.fillStyle = '#ff8a6a'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.fillText(k.sp > 0 ? '감속' : '정지', k.x, k.y - 26); }
     drawSpriteC(c, 'cart', 0, k.x, k.y, { mode: k.hit > 0 ? 'white' : 'n' });   // 0.20 도트
-    c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);
+    c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = k.hp <= k.maxHp * PH_CFG.cartWarn ? (Math.floor(G.time * 6) % 2 ? '#ff6a4a' : '#ffd0c0') : '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);   // 0.31 30% 이하 깜빡임
   }
   if (ph.spring && !ph.spring.used) {
     const s = ph.spring;
