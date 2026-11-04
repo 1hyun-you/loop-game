@@ -261,7 +261,7 @@ function getSprite(name, frame, opt) {
   let s = SPR_CACHE.get(key);
   if (!s) {
     const pal = tint ? Object.assign({}, DOT_PAL, { P: tint, p: shadeHex(tint, 0.68) }) : DOT_PAL;
-    s = bakeGrid(D.frames[frame % D.frames.length], pal, t, flip, mode === 'white' ? 'white' : 'n', mode === 'gold' ? '#ffd24a' : mode === 'rage' ? '#ff5a3a' : null);
+    s = bakeGrid(D.frames[frame % D.frames.length], pal, t, flip, mode === 'white' ? 'white' : 'n', mode === 'gold' ? '#ffd24a' : mode === 'rage' ? '#ff5a3a' : mode === 'danger' ? '#ff2a55' : null);
     s.t = t; SPR_CACHE.set(key, s);
     if (SPR_CACHE.size > 600) SPR_CACHE.delete(SPR_CACHE.keys().next().value);
   }

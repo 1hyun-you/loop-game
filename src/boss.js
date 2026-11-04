@@ -300,9 +300,10 @@ function eShotImg(col, r) {
 }
 function drawEnemyShots(c, inView) {
   if (!G.eb.length) return;
-  const t = G.time;
-  for (const b of G.eb) {
-    if (!inView(b.x, b.y, b.r + 20)) continue;
+  drawEnemyShotsDot(c, inView);                              // 0.29 출처별 도트 + 공통 위험 표시 (dot29.js)
+}
+function drawEnemyShotOrb(c, b, t) {                         // 도트 없는 출처용 발광 구슬 (0.26a)
+  {
     const r = Math.round(b.r), I = eShotImg(b.col || '#ffb050', r), sp = Math.hypot(b.vx, b.vy) || 1, ux = b.vx / sp, uy = b.vy / sp;
     c.globalAlpha = 0.22; c.drawImage(I.cv, b.x - ux * r * 2.6 - I.R * 0.7, b.y - uy * r * 2.6 - I.R * 0.7, I.R * 1.4, I.R * 1.4);   // 잔광 2개
     c.globalAlpha = 0.4; c.drawImage(I.cv, b.x - ux * r * 1.4 - I.R * 0.85, b.y - uy * r * 1.4 - I.R * 0.85, I.R * 1.7, I.R * 1.7);
