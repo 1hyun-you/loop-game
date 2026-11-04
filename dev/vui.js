@@ -18,7 +18,7 @@ const SERVER = http.createServer((q, s) => { s.setHeader('content-type', 'text/h
   for (const t of ['w', 'e', 'u']) { await click(`[data-tab="${t}"]`); chk('codex tab ' + t, await ev(() => document.querySelectorAll('.cx, .stats').length > 0)); }
   await click('cx_back'); chk('back to title', await ev(() => STATE.mode === 'title'));
   // 설정 8종
-  await click('settings'); chk('settings rows 10', await ev(() => document.querySelectorAll('.row').length === 10));
+  await click('settings'); chk('settings rows 9', await ev(() => document.querySelectorAll('.row').length === 9));
   for (const k of ['confirm2', 'dlgAuto', 'vibe', 'shake']) { const a = await ev(k => SETTINGS[k], k); await click(`[data-k="${k}"]`); chk('toggle ' + k, (await ev(k => SETTINGS[k], k)) === !a); }
   await click('s_joy'); chk('joy fixed', await ev(() => SETTINGS.joy === 'fixed'));
   await ev(() => { const i = document.querySelector('input[data-v="sfx"]'); i.value = 30; i.dispatchEvent(new Event('input')); }); chk('sfx 30', await ev(() => SETTINGS.sfx === 30));

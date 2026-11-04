@@ -37,9 +37,7 @@ function showTitle() {
 const BACK = { armT: 0 };
 function backInit() { try { history.pushState({ g: 1 }, ''); } catch (e) { } window.addEventListener('popstate', onBack); }
 function backHint(t) { let d = document.getElementById('backhint'); if (!d) { d = document.createElement('div'); d.id = 'backhint'; document.body.appendChild(d); } d.textContent = t; d.style.display = 'block'; clearTimeout(BACK.h); BACK.h = setTimeout(() => { d.style.display = 'none'; }, 2000); }
-/* 0.27e 전체 화면 중 뒤로가기: 시스템이 전체 화면 해제로 먼저 소비 → 해제 순간을 뒤로가기 1회로 처리 (다음 터치 시 전체 화면 재적용) */
 function onBack() {
-  if (performance.now() - (BACK.fsT || 0) < 400) { try { history.pushState({ g: 1 }, ''); } catch (e) { } return; }   // 같은 동작 중복 방지
   backAct();
   try { history.pushState({ g: 1 }, ''); } catch (e) { }
 }
