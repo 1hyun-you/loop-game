@@ -32,3 +32,6 @@ function nearestEnemy(x, y, maxR = 600) {
   for (const e of G.enemies) { if (e.dead) continue; const d = dist2(x, y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
   return best;
 }
+
+/* 0.31 같은 화면 다시 그릴 때 스크롤 위치 유지 (설정·도전 준비·도감·선택 화면 토글 시 맨 위로 튀는 문제) */
+function keepScroll(fn) { const a = UI && UI.querySelector('.layer'), y = a ? a.scrollTop : 0; fn(); const b = UI && UI.querySelector('.layer'); if (b && y) b.scrollTop = y; }

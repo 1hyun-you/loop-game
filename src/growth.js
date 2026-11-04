@@ -47,7 +47,7 @@ const owns = id => hasW(id) || hasP(id);
 function wBr(id) { const w = G.p.weapons.find(x => x.id === id); return w && w.br; }
 function pBr(id) { const x = G.p.passives.find(q => q.id === id); return x && x.br; }
 function hasRelic(id) { return G.p.relics.includes(id); }
-function relicReady(id) { const R = RELICS[id]; return !hasRelic(id) && owns(R.a) && owns(R.b); }
+function relicReady(id) { const R = RELICS[id]; return !hasRelic(id) && !G.banished.has('r:' + id) && owns(R.a) && owns(R.b); }   // 0.31 제외한 유물 재등장 방지
 function itemName(id) { return (WEAPONS[id] || PASSIVES[id]).name; }
 
 /* 강화 3단계 도달 → 분기 대기열 적재 */

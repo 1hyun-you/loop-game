@@ -97,9 +97,9 @@ function showSettings(back) {
     ${T('dmgNum', '피해 숫자', '적에게 준 피해를 숫자로 표시')}
     ${V('sfx', '효과음 음량')}${V('bgm', '배경음 음량')}
     </div><div class="menu"><button id="s_back">돌아가기</button></div></div>`;
-  UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); showSettings(back); }));
+  UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); keepScroll(() => showSettings(back)); }));
   UI.querySelectorAll('input[data-v]').forEach(i => i.addEventListener('input', () => { SETTINGS[i.dataset.v] = +i.value; i.nextElementSibling.textContent = i.value; saveSettings(); auVol(); if (i.dataset.v === 'sfx') sfx('ui'); }));
-  on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); showSettings(back); });
+  on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_back', back);
 }
 
@@ -130,7 +130,7 @@ function showCodex(tab, back) {
     <div class="tabs">${CODEX_TABS.map(([k, nm]) => `<button class="${tab === k ? 'pri' : ''}" data-tab="${k}">${nm}</button>`).join('')}</div>
     <div class="cxl">${body}</div><div class="menu"><button id="cx_back">돌아가기</button></div></div>`;
   UI.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => showCodex(b.dataset.tab, back)));
-  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; showCodex('u', back); };
+  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; keepScroll(() => showCodex('u', back)); };
   UI.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => setS('title', b.dataset.t || null)));
   UI.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => setS('color', b.dataset.c)));
   on('cx_back', back);
@@ -146,11 +146,11 @@ function showPrep(back) {
     <p class="hint">${META.tier ? `적 체력·피해 +${Math.round(TIERS[META.tier].k * 100)}% · 배율 ×${TIERS[META.tier].mul}` : '기본 난이도'} · 단계별 마왕 처치 시 다음 단계 개방</p>
     <h3>도전 조건</h3><div class="rows">${COND_ORDER.map(k => { const C = CONDS[k], v = META.conds.includes(k); return `<div class="row"><div class="rt"><b>${C.nm}</b><span>${C.ds} · ×${C.mul}${(s.titles || []).includes('c_' + k) ? ' · 돌파' : ''}</span></div><button class="tg ${v ? 'pri' : ''}" data-cond="${k}">${v ? '켜짐' : '꺼짐'}</button></div>`; }).join('')}</div>
     <div class="menu"><button class="pri" id="pr_go">이대로 시작</button><button id="pr_back">돌아가기</button></div></div>`;
-  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); showPrep(back); }));
+  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); keepScroll(() => showPrep(back)); }));
   UI.querySelectorAll('[data-cond]').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.cond, i = META.conds.indexOf(k);
     if (i >= 0) META.conds.splice(i, 1); else { META.conds.push(k); const ex = CONDS[k].ex; if (ex) META.conds = META.conds.filter(x => x !== ex); }
-    saveMeta(); showPrep(back);
+    saveMeta(); keepScroll(() => showPrep(back));
   }));
   on('pr_go', startRun);
   on('pr_back', back);

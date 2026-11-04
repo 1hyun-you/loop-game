@@ -126,7 +126,7 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
 .cx b{font-size:15px;margin-right:6px}.cx .tag{font-size:12px;color:var(--muted)}.cx p{margin:3px 0 0;font-size:13.5px;line-height:1.5;color:var(--muted);word-break:keep-all}
 .cx.lock b{color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px}
-.chipb{padding:7px 11px;font-size:13px;border-radius:20px;display:inline-flex;gap:6px;align-items:center}.chipb i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.chipb{padding:7px 11px;min-height:40px;font-size:13px;border-radius:20px;display:inline-flex;gap:6px;align-items:center}.chipb i{width:12px;height:12px;border-radius:50%;display:inline-block}
 .card.armed{outline:3px solid #fff;outline-offset:1px}
 @media (orientation:landscape) and (pointer:coarse){.rot{display:flex}}
 @media (prefers-reduced-motion:reduce){button:active{transform:none}}
@@ -270,6 +270,9 @@ function nearestEnemy(x, y, maxR = 600) {
   for (const e of G.enemies) { if (e.dead) continue; const d = dist2(x, y, e.x, e.y); if (d < bd) { bd = d; best = e; } }
   return best;
 }
+
+/* 0.31 같은 화면 다시 그릴 때 스크롤 위치 유지 (설정·도전 준비·도감·선택 화면 토글 시 맨 위로 튀는 문제) */
+function keepScroll(fn) { const a = UI && UI.querySelector('.layer'), y = a ? a.scrollTop : 0; fn(); const b = UI && UI.querySelector('.layer'); if (b && y) b.scrollTop = y; }
 /* ============================================================
    화면 크기 · 입력 (유동형 조이스틱: 중심은 첫 터치 위치 고정)
    ============================================================ */
@@ -2029,9 +2032,9 @@ function showSettings(back) {
     ${T('dmgNum', '피해 숫자', '적에게 준 피해를 숫자로 표시')}
     ${V('sfx', '효과음 음량')}${V('bgm', '배경음 음량')}
     </div><div class="menu"><button id="s_back">돌아가기</button></div></div>`;
-  UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); showSettings(back); }));
+  UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); keepScroll(() => showSettings(back)); }));
   UI.querySelectorAll('input[data-v]').forEach(i => i.addEventListener('input', () => { SETTINGS[i.dataset.v] = +i.value; i.nextElementSibling.textContent = i.value; saveSettings(); auVol(); if (i.dataset.v === 'sfx') sfx('ui'); }));
-  on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); showSettings(back); });
+  on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_back', back);
 }
 
@@ -2062,7 +2065,7 @@ function showCodex(tab, back) {
     <div class="tabs">${CODEX_TABS.map(([k, nm]) => `<button class="${tab === k ? 'pri' : ''}" data-tab="${k}">${nm}</button>`).join('')}</div>
     <div class="cxl">${body}</div><div class="menu"><button id="cx_back">돌아가기</button></div></div>`;
   UI.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => showCodex(b.dataset.tab, back)));
-  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; showCodex('u', back); };
+  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; keepScroll(() => showCodex('u', back)); };
   UI.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => setS('title', b.dataset.t || null)));
   UI.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => setS('color', b.dataset.c)));
   on('cx_back', back);
@@ -2078,11 +2081,11 @@ function showPrep(back) {
     <p class="hint">${META.tier ? `적 체력·피해 +${Math.round(TIERS[META.tier].k * 100)}% · 배율 ×${TIERS[META.tier].mul}` : '기본 난이도'} · 단계별 마왕 처치 시 다음 단계 개방</p>
     <h3>도전 조건</h3><div class="rows">${COND_ORDER.map(k => { const C = CONDS[k], v = META.conds.includes(k); return `<div class="row"><div class="rt"><b>${C.nm}</b><span>${C.ds} · ×${C.mul}${(s.titles || []).includes('c_' + k) ? ' · 돌파' : ''}</span></div><button class="tg ${v ? 'pri' : ''}" data-cond="${k}">${v ? '켜짐' : '꺼짐'}</button></div>`; }).join('')}</div>
     <div class="menu"><button class="pri" id="pr_go">이대로 시작</button><button id="pr_back">돌아가기</button></div></div>`;
-  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); showPrep(back); }));
+  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); keepScroll(() => showPrep(back)); }));
   UI.querySelectorAll('[data-cond]').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.cond, i = META.conds.indexOf(k);
     if (i >= 0) META.conds.splice(i, 1); else { META.conds.push(k); const ex = CONDS[k].ex; if (ex) META.conds = META.conds.filter(x => x !== ex); }
-    saveMeta(); showPrep(back);
+    saveMeta(); keepScroll(() => showPrep(back));
   }));
   on('pr_go', startRun);
   on('pr_back', back);
@@ -2538,7 +2541,7 @@ const owns = id => hasW(id) || hasP(id);
 function wBr(id) { const w = G.p.weapons.find(x => x.id === id); return w && w.br; }
 function pBr(id) { const x = G.p.passives.find(q => q.id === id); return x && x.br; }
 function hasRelic(id) { return G.p.relics.includes(id); }
-function relicReady(id) { const R = RELICS[id]; return !hasRelic(id) && owns(R.a) && owns(R.b); }
+function relicReady(id) { const R = RELICS[id]; return !hasRelic(id) && !G.banished.has('r:' + id) && owns(R.a) && owns(R.b); }   // 0.31 제외한 유물 재등장 방지
 function itemName(id) { return (WEAPONS[id] || PASSIVES[id]).name; }
 
 /* 강화 3단계 도달 → 분기 대기열 적재 */
@@ -3127,7 +3130,8 @@ const SEL_HEAD = {
   bond: s => ['유대 성장', `${PET[s.q.id || s.q.kind].name} 유대 Lv ${BOND_CFG.tiers[s.q.ti]} · 전용 능력 선택`],
   job2: () => ['2차 전직', `${JOBS[G.p.job].name} · 필수 선택 · 전용 무기 ${EXW[G.p.job].name} 지급`],
 };
-function renderSelect() {
+function renderSelect() { const s0 = G.sel; if (s0 && s0._drawn && !s0._top) return keepScroll(renderSelect0); if (s0) { s0._drawn = true; s0._top = false; } renderSelect0(); }
+function renderSelect0() {
   const s = G.sel, kind = s.kind || 'level';
   let cards;
   if (kind === 'job' && s.offer) cards = G.p.weapons.map((w, i) => { const d = WEAPONS[w.id]; return `<button class="card k-${d.cat} banish" data-w="${w.id}"><span class="ic" style="background:${CFG.colors[d.cat]}">${esc(d.ic)}</span><span class="tx"><span class="nm">${esc(d.name)} <span class="tag">Lv ${w.lvl}</span></span><span class="ds">봉헌 시 무기 삭제</span></span></button>`; }).join('');
@@ -3176,7 +3180,7 @@ function pickCard(i) {
   if (s.kind === 'start') { addWeapon(c.id); G.stats.start = c.id; recalc(); return closeSel(); }
   if (s.banish) {
     if (isFill(c) || !G.banishes) return;
-    G.banished.add(c.id); G.banishes--; s.banish = false;
+    G.banished.add(c.t === 'relic' ? 'r:' + c.id : c.id); G.banishes--; s.banish = false;
     s.cards[i] = drawCards(1, s.cards)[0] || FILL_CARDS[1];
     renderSelect(); return;
   }

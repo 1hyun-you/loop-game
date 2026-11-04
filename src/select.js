@@ -97,7 +97,8 @@ const SEL_HEAD = {
   bond: s => ['유대 성장', `${PET[s.q.id || s.q.kind].name} 유대 Lv ${BOND_CFG.tiers[s.q.ti]} · 전용 능력 선택`],
   job2: () => ['2차 전직', `${JOBS[G.p.job].name} · 필수 선택 · 전용 무기 ${EXW[G.p.job].name} 지급`],
 };
-function renderSelect() {
+function renderSelect() { const s0 = G.sel; if (s0 && s0._drawn && !s0._top) return keepScroll(renderSelect0); if (s0) { s0._drawn = true; s0._top = false; } renderSelect0(); }
+function renderSelect0() {
   const s = G.sel, kind = s.kind || 'level';
   let cards;
   if (kind === 'job' && s.offer) cards = G.p.weapons.map((w, i) => { const d = WEAPONS[w.id]; return `<button class="card k-${d.cat} banish" data-w="${w.id}"><span class="ic" style="background:${CFG.colors[d.cat]}">${esc(d.ic)}</span><span class="tx"><span class="nm">${esc(d.name)} <span class="tag">Lv ${w.lvl}</span></span><span class="ds">봉헌 시 무기 삭제</span></span></button>`; }).join('');
@@ -146,7 +147,7 @@ function pickCard(i) {
   if (s.kind === 'start') { addWeapon(c.id); G.stats.start = c.id; recalc(); return closeSel(); }
   if (s.banish) {
     if (isFill(c) || !G.banishes) return;
-    G.banished.add(c.id); G.banishes--; s.banish = false;
+    G.banished.add(c.t === 'relic' ? 'r:' + c.id : c.id); G.banishes--; s.banish = false;
     s.cards[i] = drawCards(1, s.cards)[0] || FILL_CARDS[1];
     renderSelect(); return;
   }
