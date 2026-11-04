@@ -1,10 +1,10 @@
 {
-  "id": "/loop-game/?app=loop-field",
+  "id": "/loop-game/?app=loop-field-s",
   "name": "회귀의 들판",
   "short_name": "회귀의 들판",
   "description": "몰려오는 무리를 버티고 다섯 페이즈를 돌파하는 세로형 액션 게임",
   "lang": "ko",
-  "start_url": "/loop-game/?source=app",
+  "start_url": "/loop-game/?source=app-s",
   "scope": "/loop-game/",
   "display": "standalone",
   "orientation": "portrait",
