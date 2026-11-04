@@ -245,13 +245,13 @@ function levelUp() {
   G.pendingLv++;
   G.stats.levelAt.push(Math.round(G.time));
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 70, dur: 0.4, color: '#7fe0ff', follow: true });
-  jLevel();                                                  // 레벨업 연출 (0.22)
+  jLevel(); rcLevel();                                       // 레벨업 연출 (0.22), 게이지 빛 흐름 (0.28)
 }
 
 function updateMisc(dt) {
   for (const f of G.fx) f.t += dt; G.fx = G.fx.filter(f => f.t < f.dur);
   for (const t of G.toasts) t.t += dt; G.toasts = G.toasts.filter(t => t.t < t.dur);
-  updateJuice(dt); updateTraits(dt);
+  updateJuice(dt); updateTraits(dt); updateReact(dt);
 }
 
 /* 판 종료 */
@@ -262,6 +262,7 @@ function buildReport() {
     dmgShare: Object.entries(G.stats.dmg).map(([k, v]) => [k, Math.round(v / tot * 100)]).sort((a, b) => b[1] - a[1]),
     hurt: G.stats.hurt, maxEnemies: G.stats.maxEnemies, levelAt: G.stats.levelAt,
     build: { w: G.p.weapons.map(w => w.id + ':' + w.lvl), p: G.p.passives.map(x => x.id + ':' + x.lvl) },
+    meat: G.rc ? [G.rc.meatN, G.rc.meatEat, G.rc.meatTimes] : [0, 0, []],
     xp: [G.stats.xpGot, G.stats.xpDrop], selOpen: G.stats.selOpen, pendingLv: G.pendingLv, lastMinShare: lastMinShare(), picks: G.stats.picks, wFullAt: G.stats.wFullAt, pFullAt: G.stats.pFullAt,
     phases: G.ph.log, phaseReached: G.ph.i + 1, phaseAt: G.ph.id || 'gap',
     rerollsUsed: CFG.select.rerolls - G.rerolls, banishUsed: CFG.select.banishes - G.banishes,

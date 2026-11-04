@@ -58,6 +58,8 @@ const out = {
     return { reached: D.length, byType: cnt(D.map(r => r.demon[6])), result: cnt(D.map(r => r.demon[0])), killSec: { avg: avg(kill.map(r => r.demon[1])), min: q(kill.map(r => r.demon[1]), 0), max: q(kill.map(r => r.demon[1]), 1) }, in150to240: kill.filter(r => r.demon[1] >= 150 && r.demon[1] <= 240).length,
       stage: cnt(D.map(r => r.demon[3])), st2At: avg(D.filter(r => r.demon[4] != null).map(r => r.demon[4])), st3At: avg(D.filter(r => r.demon[5] != null).map(r => r.demon[5])), hpLeftDead: avg(D.filter(r => r.demon[0] !== 'kill').map(r => r.demon[2])), hurt: hd,
       runTime: { final: avg(ok.filter(r => r.runType === 'final').map(r => r.time)), retry: avg(ok.filter(r => r.runType === 'retry').map(r => r.time)) } }; })(),
+  meat: (() => { const M = ok.filter(r => r.meat); const t5 = M.filter(r => r.time >= 300).map(r => r.meat[2].filter(t => t <= 300).length);   // 회복 고기 (0.28): [드롭 수, 먹은 수, 드롭 시각]
+    return { runs: M.length, dropAvg: avg(M.map(r => r.meat[0])), eatAvg: avg(M.map(r => r.meat[1])), first5min: { avg: avg(t5), min: q(t5, 0), max: q(t5, 1), in1_5to2_5: t5.filter(x => x >= 1.5 && x <= 2.5).length, n: t5.length } }; })(),
   errors: errs, pageErr: ok.reduce((s, r) => s + (r.pageErr || []).length, 0), errShownRuns: ok.filter(r => r.errShown).length,
   flow: flows, saveBad: ok.filter(r => !r.saveOk).length,
   perf: { maxEnP90: q(ok.map(r => r.maxEn || 0), .9), stepMsAvg: avg(ok.map(r => r.cost.stepMs)), stepMsMax: q(ok.map(r => r.cost.stepMs), 1), renMsAvg: avg(ok.map(r => r.cost.renMs)), renMsMax: q(ok.map(r => r.cost.renMs), 1) },

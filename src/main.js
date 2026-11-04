@@ -165,8 +165,8 @@ function frame(now) {
   if (raw > 0 && STATE.mode === 'play' && !document.hidden) perfAdd(raw);
   try {
     if (STATE.mode === 'play' && G) {
-      const sp = STATE.dev.speed, n = Math.ceil(sp);
-      for (let i = 0; i < n; i++) { step(raw * sp / n); if (STATE.mode !== 'play') break; }
+      const sp = STATE.dev.speed, n = Math.ceil(sp), rs = rcScale(raw);   // 정지·슬로모션 (0.28)
+      for (let i = 0; i < n; i++) { step(raw * sp / n * rs); if (STATE.mode !== 'play') break; }
     }
     if (G) render();
     auWatch();

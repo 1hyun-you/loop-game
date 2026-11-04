@@ -235,7 +235,7 @@ function ultReady() { return G.p.job && G.p.ult >= JOB_CFG.ultNeed; }
 function useUlt() {
   const p = G.p, j = p.job, D = (90 + p.level * 7) * p.mod.dmg;   // 0.26a 위력 상향 (60+4L → 90+7L)
   p.ult = 0; p.ultRef = 0; G.ultB && (G.ultB.ref = 0); G.tm.ultWin = JOB_CFG.ultWin; G.stats.ults++; G.tm.stopT = 0; sfx('ult');
-  toast(JOBS[j].ult.split(':')[0], '#ffe08a');
+  toast(JOBS[j].ult.split(':')[0], '#ffe08a'); rcBig(JOB_COL[j] || '#ffe08a', 0.3);   // 3등급 반응 (0.28)
   if (j === 'warrior') { G.tm.inv = 3; ultBlast(p.x, p.y, 200, D * 1.5, 460, '#ffb070'); G.ultLater = [{ t: G.time + 0.6, x: p.x, y: p.y, r: 230, d: D, kb: 260, col: '#ffd0a0' }]; }   // 0.26a 범위·피해 상향 + 여진
   if (j === 'rogue') { G.tm.inv = 2.5; G.tm.dance = 2.5; ultSlashes(12, D * 1.4); }   // 0.26a 즉시 그림자 베기 추가
   if (j === 'archer') { G.tm.rain = 4.5; ultBlast(p.x, p.y, 120, D * 0.8, 300, '#bfe8ff'); }   // 0.26a 지속 4.5초 + 발동 충격

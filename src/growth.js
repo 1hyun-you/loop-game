@@ -132,7 +132,7 @@ function eliteKilled(e) {
 }
 function updateChests() {
   const p = G.p;
-  for (const c of G.chests) if (!c.dead && dist2(c.x, c.y, p.x, p.y) < (c.r + p.r + 4) ** 2) { c.dead = true; G.pendingChest++; fx({ kind: 'ring', x: c.x, y: c.y, r0: 6, r1: 50, dur: 0.4, color: '#ffd24a' }); }
+  for (const c of G.chests) if (!c.dead && dist2(c.x, c.y, p.x, p.y) < (c.r + p.r + 4) ** 2) { c.dead = true; G.pendingChest++; rcChest(c); fx({ kind: 'ring', x: c.x, y: c.y, r0: 6, r1: 50, dur: 0.4, color: '#ffd24a' }); }
   G.chests = G.chests.filter(c => !c.dead);
 }
 

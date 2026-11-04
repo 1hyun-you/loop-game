@@ -42,6 +42,7 @@ function jKill(e) {
   burst(e.x, e.y, n, e.color || '#ddd', e.gk ? 200 : 120, e.gk ? 0.8 : 0.45, e.gk ? 4 : 3);
   if (e.elite) burst(e.x, e.y, 4, '#ffd24a', 150, 0.5, 3);
   if (e.gk && !e.clone) { shake(6, 0.6); vibe(60); fx({ kind: 'ring', x: e.x, y: e.y, r0: e.r, r1: e.r + 140, dur: 0.7, color: '#fff2c8' }); }
+  rcKill(e);                                                 // 2~4등급 반응·회복 고기 (0.28)
 }
 
 /* 피해 숫자 — 같은 적 연속 피해는 짧은 시간 합산, 상한 초과 시 치명타 외 생략 */

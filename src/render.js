@@ -28,6 +28,7 @@ function render() {
   drawEventGround(c); drawCrisisGround(c);
   drawGrowthGround(c, inView);
   drawGems(c, inView);
+  drawReactGround(c, inView);
   drawEnemies(c, inView);
   drawBossTop(c, inView);
   drawJobUnits(c, inView);
@@ -35,10 +36,11 @@ function render() {
   drawWeapons(c, inView);
   drawFx(c);
   drawJuice(c);
+  drawReactTop(c);
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   drawPhaseFog(c);
   drawPhaseTint(c);
-  if (p.flash > 0) { c.fillStyle = 'rgba(255,40,40,' + (p.flash * 1.2) + ')'; c.fillRect(0, 0, VIEW.cw, VIEW.ch); }
+  drawReactScreen(c);                                       // 피격 가장자리·색 섬광 (0.28)
   drawJoy(c);
   if (STATE.mode === 'title') return;          // 시작 화면에서는 상단 정보 숨김
   drawHUD(c);
@@ -176,7 +178,7 @@ function drawPlayer(c) {
   drawJobAura(c);                                           // 0.26 직업 문양
   const mv = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.05; p._lx = p.x; p._ly = p.y;   // 이동 중 걷기 동작 (0.19)
   if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;
-  drawSprite(c, 'hero', mv ? Math.floor(G.time * 8) & 1 : 0, p.x, p.y + p.r * 1.1, { flip: !!p._fl, tint: heroTint() });   // 0.26 직업 색 옷   // 색상 변형 (0.15)
+  drawHeroReact(c, mv ? Math.floor(G.time * 8) & 1 : 0, !!p._fl, heroTint());   // 0.26 직업 색 옷   // 색상 변형 (0.15)
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
   c.fillStyle = p.hp / p.maxHp > 0.3 ? '#5fe07a' : '#ff5a5a'; c.fillRect(x, y, w * Math.max(0, p.hp / p.maxHp), h);
@@ -270,11 +272,9 @@ function drawJoy(c) {
 /* 상단 집중형 정보 배치 */
 function drawHUD(c) {
   const p = G.p, W = VIEW.cw, top = VIEW.sat + 6;
-  c.fillStyle = 'rgba(0,0,0,0.55)'; c.fillRect(0, top - 6, W, 10);
-  c.fillStyle = '#59c7f0'; c.fillRect(0, top - 6, W * Math.min(1, p.xp / p.need), 10);
+  drawXpGauge(c, top);                                      // 도트 틀 경험치 게이지·레벨 배지 (0.28)
   c.font = 'bold 14px Galmuri11, system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
   const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
-  txt('Lv ' + p.level, 12, top + 20, 'left');
   if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
   c.font = 'bold 18px Galmuri11, system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
   const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)

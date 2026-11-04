@@ -198,7 +198,8 @@ function updateWeapons(dt) {
     if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
     w.t -= dt * (G.tm.roar > 0 ? 2 : 1);                                      // 군주 궁극기: 재사용 2배 속도
     if (w.t <= 0) {
-      const r = WEAPON_FIRE[w.id](w, S); w.t = r === false ? 0.25 : S.cd;
+      const r = WEAPON_FIRE[w.id](w, S); w.t = r === false ? 0.25 : S.cd; if (r !== false) rcFire(w);   // 공격 반응 (0.28)
+     
       if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;   // 연속 발동 분기
     }
   }
