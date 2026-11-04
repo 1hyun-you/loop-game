@@ -7,16 +7,22 @@
 const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false, fullscr: false };
 const SETTINGS = (() => { try { return Object.assign({}, SET_DEF, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return Object.assign({}, SET_DEF); } })();
 function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
+let FS_SELF = 0;
 /* 0.27d 전체 화면 옵션 (기본 꺼짐): 켜면 화면을 누를 때 상태 표시줄 숨김, 끄면 표시 (브라우저 정책상 터치 시점에만 요청 가능) */
 function applyFull() {
   const d = document, fe = d.fullscreenElement || d.webkitFullscreenElement;
   try {
     if (SETTINGS.fullscr && !fe) { const el = d.documentElement, rq = el.requestFullscreen || el.webkitRequestFullscreen; if (rq) { const r = rq.call(el, { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => { }); } }
-    else if (!SETTINGS.fullscr && fe) { const ex = d.exitFullscreen || d.webkitExitFullscreen; if (ex) { const r = ex.call(d); if (r && r.catch) r.catch(() => { }); } }
+    else if (!SETTINGS.fullscr && fe) { FS_SELF = performance.now(); const ex = d.exitFullscreen || d.webkitExitFullscreen; if (ex) { const r = ex.call(d); if (r && r.catch) r.catch(() => { }); } }
   } catch (e) { }
 }
 document.addEventListener('pointerup', () => { if (SETTINGS.fullscr) applyFull(); }, true);
-['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { if (typeof resize === 'function') setTimeout(resize, 60); }));
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => {
+  if (typeof resize === 'function') setTimeout(resize, 60);
+  const fe = document.fullscreenElement || document.webkitFullscreenElement;
+  // 0.27e 옵션 켜짐 상태에서 화면이 보이는 중 해제됨 = 뒤로가기 동작으로 처리 (직접 끈 경우 제외)
+  if (!fe && SETTINGS.fullscr && document.visibilityState === 'visible' && performance.now() - FS_SELF > 500 && typeof backAct === 'function') { BACK.fsT = performance.now(); backAct(); }
+}));
 let vibeAt = 0;
 function vibe(ms) {
   if (!SETTINGS.vibe || STATE.dev.auto || !navigator.vibrate) return;

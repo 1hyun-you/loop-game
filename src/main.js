@@ -37,7 +37,13 @@ function showTitle() {
 const BACK = { armT: 0 };
 function backInit() { try { history.pushState({ g: 1 }, ''); } catch (e) { } window.addEventListener('popstate', onBack); }
 function backHint(t) { let d = document.getElementById('backhint'); if (!d) { d = document.createElement('div'); d.id = 'backhint'; document.body.appendChild(d); } d.textContent = t; d.style.display = 'block'; clearTimeout(BACK.h); BACK.h = setTimeout(() => { d.style.display = 'none'; }, 2000); }
+/* 0.27e 전체 화면 중 뒤로가기: 시스템이 전체 화면 해제로 먼저 소비 → 해제 순간을 뒤로가기 1회로 처리 (다음 터치 시 전체 화면 재적용) */
 function onBack() {
+  if (performance.now() - (BACK.fsT || 0) < 400) { try { history.pushState({ g: 1 }, ''); } catch (e) { } return; }   // 같은 동작 중복 방지
+  backAct();
+  try { history.pushState({ g: 1 }, ''); } catch (e) { }
+}
+function backAct() {
   const sub = ['s_back', 'cx_back', 'pr_back'].map(id => document.getElementById(id)).find(Boolean);
   if (STATE.mode === 'title' && !sub) {
     if (performance.now() - BACK.armT < 2000) { window.removeEventListener('popstate', onBack); history.back(); return; }   // 앱 종료(이전 기록으로 이동)
@@ -47,7 +53,6 @@ function onBack() {
   else if (STATE.mode === 'pause') { if (PAUSE_ABIL.on) { PAUSE_ABIL.on = false; STATE.mode = 'play'; pauseGame(); } else resumeGame(); }
   else if (STATE.mode === 'select' && G.sel && G.sel.abil) toggleAbil();
   else if (STATE.mode === 'result') { const h = document.getElementById('home'); if (h) h.click(); }
-  try { history.pushState({ g: 1 }, ''); } catch (e) { }
 }
 function startRun() { newRun(); STATE.mode = 'play'; hideUI(); }     // 도전 옵션 반영 위해 항상 새 판 (0.15)
 
