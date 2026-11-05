@@ -70,7 +70,7 @@ const TRAITS = {
   dodge: { nm: '회피 본능', ic: '피', ds: '6% 확률로 피해 무시' },
   calm: { nm: '냉정', ic: '냉', ds: '보스전 중 받는 피해 -10%' },
   guard: { nm: '버티기', ic: '버', ds: '피격 후 무적 시간 +0.2초' },
-  leech: { nm: '피의 갈증', ic: '갈', ds: '처치 시 5% 확률로 체력 2 회복' },
+  leech: { nm: '피의 갈증', ic: '갈', ds: '처치 시 5% 확률로 체력 2 회복 (처치 회복 합계 초당 최대 체력 0.12% 상한)' },
   hunter: { nm: '사냥꾼의 보상', ic: '사', ds: '엘리트 처치 시 체력 15 회복' },
   breath: { nm: '응급 호흡', ic: '호', ds: '10초마다 체력 3 회복' },
   magnet: { nm: '자석 손', ic: '자', ds: '경험치 흡수 범위 +25%' },
@@ -107,7 +107,7 @@ function traitHurtMul() { const p = G.p; if (!p.tr) return 1; return (p.tr.armor
 function traitAvoid() { return tr('dodge') && Math.random() < 0.06; }
 function traitKill(e) {
   const p = G.p; if (!p.tr) return;
-  if (p.tr.leech && Math.random() < 0.05) heal(2, '피의 갈증');
+  if (p.tr.leech && Math.random() < 0.05) killHeal(2, '피의 갈증');
   if (p.tr.hunter && e.elite) heal(15, '사냥꾼의 보상');
   if (p.tr.chain && Math.random() < 0.08) { const x = e.x, y = e.y; G.later.push({ t: 0, f: () => explode(x, y, 40, 10 * p.mod.dmg * (1 + G.time / 600), 'trait', '#c8b0ff') }); }
 }

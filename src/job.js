@@ -17,7 +17,7 @@ const JOBS = {
   /* 3단계 추가 4종 (0.9) — 초안 직업 목록 기준, 드루이드는 혼합 계열(근접+마법) */
   sovereign: { name: '군주', cat: 'melee', ic: '군', rule: '10초마다 발밑에 군기 설치, 군기 반경 안에서 피해 +25%·받는 피해 -15%', ult: '왕의 호령: 5초간 모든 적 둔화 50%, 무기 재사용 2배 속도' },
   chrono: { name: '시간술사', cat: 'ranged', ic: '시', rule: '원거리 명중 시 적 시간 지연(둔화) 누적, 5중첩 시 1.5초 정지', ult: '과거의 나: 1.5초 시간 정지, 5초 전 자신의 잔상이 지나온 길을 되감아 달리며 닿은 적 피해·둔화, 끝나면 5초 전 체력으로 되돌림(낮아진 경우)' },
-  priest: { name: '프리스트', cat: 'magic', ic: '프', rule: '처치 20회마다 정화: 체력 10% 회복 + 주변 신성 폭발', ult: '성역: 6초간 성역 안 적 지속 피해, 플레이어 초당 체력 5% 회복' },
+  priest: { name: '프리스트', cat: 'magic', ic: '프', rule: '처치 40회마다 정화: 체력 6% 회복 + 주변 신성 폭발', ult: '성역: 6초간 성역 안 적 지속 피해, 플레이어 초당 체력 5% 회복' },
   druid: { name: '드루이드', cat: 'hybrid', cats: ['melee', 'magic'], ic: '드', rule: '야수 동료 늑대·곰 동행, 늑대 8초마다 울부짖음(주변 둔화), 곰 10초마다 강타(충격파), 피해·범위·이동 속도·재사용 보조 효과가 동료에게도 적용', ult: '대자연의 분노: 8초간 동료 피해 2배·공격 속도 1.5배, 주변 덩굴 장판' },
 };
 const JOB_ORDER = ['warrior', 'rogue', 'sovereign', 'archer', 'engineer', 'chrono', 'mage', 'summoner', 'priest', 'druid'];
@@ -34,7 +34,7 @@ const JOB2 = {
   summoner: [{ k: 'necro', nm: '사령술사', ds: '소환 확률 2배, 망령 최대 10' }, { k: 'lord', nm: '망령 군주', ds: '망령 피해 2배, 크기 증가' }],
   sovereign: [{ k: 'conqueror', nm: '정복왕', ds: '군기 반경 +50%, 군기 안 적 지속 피해' }, { k: 'benevolent', nm: '성군', ds: '군기 안에서 초당 체력 2% 회복' }],
   chrono: [{ k: 'accel', nm: '가속자', ds: '이동 속도 +15%, 무기 재사용 -12%' }, { k: 'rewind', nm: '역행자', ds: '정지된 적이 받는 피해 +50%' }],
-  priest: [{ k: 'judge', nm: '심판관', ds: '정화 폭발 피해 2배·범위 +35%' }, { k: 'saint', nm: '성자', ds: '정화 필요 처치 12회, 회복량 20%' }],
+  priest: [{ k: 'judge', nm: '심판관', ds: '정화 폭발 피해 2배·범위 +35%' }, { k: 'saint', nm: '성자', ds: '정화 필요 처치 24회, 회복량 12%' }],
   druid: [{ k: 'ursa', nm: '수호 곰', ds: '곰 크기 증가·피해 1.5배, 강타 범위 +40%, 강타 시 체력 1 회복' }, { k: 'pack', nm: '무리의 우두머리', ds: '늑대 +2 (총 3), 늑대가 처치할 때마다 울부짖음 1초 단축' }],
 };
 const JOB2_STAT = { k: 'veteran', nm: '숙련', ds: '최대 체력 +30, 모든 피해 +15%, 이동 속도 +8%' };
@@ -156,7 +156,7 @@ function onEnemyHit(e, o) {
 function onEnemyKill(e) {
   const p = G.p; if (!p.job) return;
   ultKillGain(e);
-  if (p.job === 'priest' && ++p.holy >= (p.job2 === 'saint' ? 12 : 20)) { p.holy = 0; purify(); }
+  if (p.job === 'priest' && ++p.holy >= (p.job2 === 'saint' ? 24 : 40)) { p.holy = 0; purify(); }
   jobWeaponKill(e); if (p.job === 'druid') petKilled(e);
   if (p.job === 'summoner' && !e.minionOf) {
     const cap = p.job2 === 'necro' ? 10 : 6, ch = p.job2 === 'necro' ? 0.24 : 0.12;
@@ -212,8 +212,8 @@ function reaction(e) {
 /* 0.9 직업 보조 함수 */
 function inBanner() { const b = G.banner, p = G.p, r = b ? b.r * ultBannerR() : 0; return !!(b && dist2(b.x, b.y, p.x, p.y) < r * r) || ultInBanner(); }   // 0.32 호령 반경 2배·정복왕 추가 군기
 function purify() {
-  const p = G.p, j = p.job2 === 'judge', R = 110 * (j ? 1.35 : 1), d = (20 + p.level * 2) * p.mod.dmg * (j ? 2 : 1);
-  heal(p.maxHp * (p.job2 === 'saint' ? 0.2 : 0.1), '정화');
+  const p = G.p, j = p.job2 === 'judge', R = 110 * (j ? 1.35 : 1), d = (20 + p.level * 2) * p.mod.dmg * (j ? 2 : 1) * 1.5;   // 0.35 빈도 절반 보상 피해 1.5배
+  heal(p.maxHp * (p.job2 === 'saint' ? 0.12 : 0.06), '정화');   // 0.35 회복 하향(필요 처치 2배·회복량 60%)
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: R, dur: 0.4, color: '#fff2a8', fill: true });
   gridQuery(p.x, p.y, R, e => damageEnemy(e, d, { src: 'holy', kb: 160, fx: p.x, fy: p.y }));
 }

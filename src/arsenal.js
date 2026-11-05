@@ -46,7 +46,7 @@ Object.assign(RELICS, {
   chainstar: { name: '연환 수리검', ic: '연', a: 'shuriken', b: 'multi', ds: '수리검 튕김 +2' },
   thunderbeam: { name: '뇌광', ic: '광', a: 'beam', b: 'lightning', ds: '광선 종료 시 가장 먼 적에게 낙뢰 (번개 피해 80%)' },
   eyestorm: { name: '폭풍의 눈', ic: '눈', a: 'vortex', b: 'magnet', ds: '회오리 범위 안 경험치를 플레이어에게 끌어옴' },
-  bloodspin: { name: '피의 칼날', ic: '혈', a: 'spin', b: 'regen', ds: '회전검 처치 시 체력 0.6 회복' },
+  bloodspin: { name: '피의 칼날', ic: '혈', a: 'spin', b: 'regen', ds: '회전검 처치 시 체력 0.6 회복 (처치 회복 합계 초당 최대 체력 0.12% 상한)' },
   clockwork: { name: '태엽 장치', ic: '태', a: 'boomerang', b: 'haste', ds: '도끼가 손에 돌아올 때 다른 무기 재사용 0.3초 단축' },
   bigorb: { name: '거대 구체', ic: '거', a: 'orb', b: 'area', ds: '마력 구체 크기 2배, 명중 시 작은 폭발 (피해 40%)' },
 });
@@ -182,7 +182,7 @@ function arsenalHit(e, o) {
   if (o.src === 'shard' && !e.dead) e.slowT = Math.max(e.slowT || 0, 1);
 }
 function relicKill(e) {
-  if (e.ls === 'spin' && hasRelic('bloodspin')) heal(0.6, '피의 칼날');
+  if (e.ls === 'spin' && hasRelic('bloodspin')) killHeal(0.6, '피의 칼날');
 }
 function clockTick() { for (const w of G.p.weapons) if (w.id !== 'boomerang' && w.t > 0) w.t = Math.max(0.02, w.t - 0.3); }
 

@@ -26,7 +26,7 @@ const BRANCHES = {
   area: [{ k: 'giant', nm: '거대화', ds: '범위 추가 +15%, 모든 무기 피해 +8%' }, { k: 'dense', nm: '응축', ds: '범위 증가 대신 단계당 피해 +12%' }],
   multi: [{ k: 'barrage', nm: '일제 사격', ds: '개수 추가 +1, 해당 무기 재사용 +20%' }, { k: 'velocity', nm: '고속탄', ds: '개수형 무기 피해 +20%' }],
   magnet: [{ k: 'vacuum', nm: '자석 파동', ds: '30초마다 주변 경험치 전부 흡수' }, { k: 'greed', nm: '성장 가속', ds: '경험치 획득 +15%' }],
-  regen: [{ k: 'vamp', nm: '흡혈', ds: '처치 시 체력 0.4 회복' }, { k: 'second', nm: '불굴', ds: '판당 1회 치명 피해 시 체력 40%로 버팀' }],
+  regen: [{ k: 'vamp', nm: '흡혈', ds: '처치 시 체력 0.4 회복 (처치 회복 합계 초당 최대 체력 0.12% 상한)' }, { k: 'second', nm: '불굴', ds: '판당 1회 치명 피해 시 체력 40%로 버팀' }],
 };
 const RELICS = {
   bladestorm: { name: '칼날 폭풍', ic: '폭', a: 'cleave', b: 'spin', ds: '베기 시 1.5초간 회전검 속도 2배·피해 +30%' },
@@ -36,7 +36,7 @@ const RELICS = {
   /* 3단계 추가 4종 (0.8) */
   frostrift: { name: '서리 균열', ic: '서', a: 'slam', b: 'icering', ds: '대지 강타 충격파가 적을 1.2초 빙결' },
   firetrap: { name: '화염 덫', ic: '덫', a: 'trap', b: 'fireball', ds: '덫 폭발 자리에 2초 화염 장판' },
-  bulwark: { name: '수호 방패', ic: '수', a: 'shield', b: 'vit', ds: '방패 충격마다 최대 체력 3% 회복' },
+  bulwark: { name: '수호 방패', ic: '수', a: 'shield', b: 'vit', ds: '방패 충격마다 최대 체력 1% 회복' },
   arcknife: { name: '마력 단검', ic: '마', a: 'knife', b: 'orb', ds: '단검 명중 시 20% 확률 마력 구체 1발 (구체 피해 60%)' },
 };
 const RELIC_ORDER = ['bladestorm', 'thunderarrow', 'flameaxe', 'firefield', 'frostrift', 'firetrap', 'bulwark', 'arcknife'];

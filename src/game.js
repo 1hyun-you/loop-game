@@ -48,6 +48,9 @@ function recalc() {
   if (p.maxHp > prevMax && !hasCond('noheal')) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복 (도전 조건 회복 없음 제외)
   p.hp = Math.min(p.hp, p.maxHp);
 }
+/* 0.35 처치 연동 회복 공통 상한: 흡혈·피의 칼날·피의 갈증 합계 초당 최대 체력 0.12% (최대 5초분 적립) */
+const KILL_HEAL = { rate: 0.0012, keep: 5 };
+function killHeal(v, src) { const p = G.p, K = G.kh || (G.kh = { b: p.maxHp * KILL_HEAL.rate * KILL_HEAL.keep, t: G.time }); K.b = Math.min(p.maxHp * KILL_HEAL.rate * KILL_HEAL.keep, K.b + (G.time - K.t) * p.maxHp * KILL_HEAL.rate); K.t = G.time; const g = Math.min(v, K.b); if (g <= 0) return; K.b -= g; heal(g, src); }
 function heal(v, src = '기타') { const p = G.p; if (hasCond('noheal')) return; if (hasCurse('blight')) v *= 0.6; const b = p.hp; p.hp = Math.min(p.maxHp, p.hp + v); const H = G.stats.healBy || (G.stats.healBy = {}); H[src] = (H[src] || 0) + (p.hp - b) / p.maxHp; }   // 0.35 회복원별 실회복량(최대 체력 비율) 기록
 function clearInput() { INPUT.active = false; INPUT.id = null; INPUT.mag = 0; }
 function toast(text, color = '#fff') { G.toasts.push({ text, color, t: 0, dur: 2 }); if (G.toasts.length > 3) G.toasts.shift(); }
@@ -200,7 +203,7 @@ function killEnemy(e) {
   if (e.gk) gkKilled(e);
   ultOnKill(e);                                              // 0.32 사령술사·정복왕
   if (e.slowT > 0 && wBr('icering') === 'shatter') { const x = e.x, y = e.y, d = wStats(G.p.weapons.find(w => w.id === 'icering')).dmg * 2.5; G.later.push({ t: 0, f: () => explode(x, y, 46, d, 'shatter', '#bfe8ff') }); }
-  if (pBr('regen') === 'vamp') heal(0.4, '흡혈');
+  if (pBr('regen') === 'vamp') killHeal(0.4, '흡혈');
   relicKill(e);                                              // 0.27 유물 처치 연계
   onEnemyKill(e);
   if (e.mb) mobKilled(e); traitKill(e);                     // 분열·숙련 특성 (0.23)
