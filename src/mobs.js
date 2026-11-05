@@ -107,11 +107,11 @@ function traitHurtMul() { const p = G.p; if (!p.tr) return 1; return (p.tr.armor
 function traitAvoid() { return tr('dodge') && Math.random() < 0.06; }
 function traitKill(e) {
   const p = G.p; if (!p.tr) return;
-  if (p.tr.leech && Math.random() < 0.05) heal(2);
-  if (p.tr.hunter && e.elite) heal(15);
+  if (p.tr.leech && Math.random() < 0.05) heal(2, '피의 갈증');
+  if (p.tr.hunter && e.elite) heal(15, '사냥꾼의 보상');
   if (p.tr.chain && Math.random() < 0.08) { const x = e.x, y = e.y; G.later.push({ t: 0, f: () => explode(x, y, 40, 10 * p.mod.dmg * (1 + G.time / 600), 'trait', '#c8b0ff') }); }
 }
-function updateTraits(dt) { const p = G.p; if (!p.tr || !p.tr.breath) return; p.brT = (p.brT || 0) + dt; if (p.brT >= 10) { p.brT = 0; heal(3); } }
+function updateTraits(dt) { const p = G.p; if (!p.tr || !p.tr.breath) return; p.brT = (p.brT || 0) + dt; if (p.brT >= 10) { p.brT = 0; heal(3, '응급 호흡'); } }
 
 /* 잡몹 6종 도트 (밝은 판타지 레트로, 2프레임) */
 Object.assign(SPR, {

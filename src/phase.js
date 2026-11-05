@@ -210,7 +210,7 @@ function updatePhase(dt) {
   if (P.goal === 'time' && ph.t >= P.dur) return phaseEnd('ok');
   if (P.fail && ph.t >= P.fail) return phaseEnd('timeout');
   if (ph.spring && !ph.spring.used && dist2(p.x, p.y, ph.spring.x, ph.spring.y) < (ph.spring.r + p.r) ** 2) {
-    ph.spring.used = true; heal(p.maxHp * PH_CFG.springHeal); toast('회복의 샘', '#8ff0b0');
+    ph.spring.used = true; heal(p.maxHp * PH_CFG.springHeal, '회복의 샘'); toast('회복의 샘', '#8ff0b0');
     fx({ kind: 'ring', x: ph.spring.x, y: ph.spring.y, r0: 8, r1: 60, dur: 0.5, color: '#8ff0b0' });
   }
   if (P.goal === 'kill' && ph.cmd && ph.cmd.dead && ph.t >= (P.min || 0)) return phaseEnd('ok');

@@ -1,6 +1,7 @@
 // 사용성 점검 (0.31): 토글 시 스크롤 유지, 제외한 유물 재등장, 화면별 가로 넘침·버튼 줄바꿈·작은 터치 영역
 // 사용: node dev/vux.js
 // 0.34 도감 7탭·게임 중 도감 점검 추가
+// 0.35 선택 화면 도감 버튼·복귀 점검 추가
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
 const ROOT = path.resolve(__dirname, '..'), PORT = 48291;
@@ -59,6 +60,14 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     if (await ev(() => STATE.mode === 'select')) {
       await audit('레벨업 선택'); await scrollKeep('제외 버튼', '#banish');
       await ev(() => { if (G.sel.banish) G.sel.banish = false; toggleAbil(); }); await wait(60); await audit('내 능력'); await ev(() => toggleAbil());
+      // 0.35 선택 화면 도감 버튼 → 복귀 (레벨 업·보물 상자 각각)
+      for (const kd of ['level', 'chest']) {
+        await ev(k => { G.sel = { kind: k, cards: drawCards(3), banish: false }; STATE.mode = 'select'; renderSelect(); }, kd); await wait(60);
+        chk(`[${W}x${H}] ${kd} 선택 화면 내 능력·도감 버튼`, await ev(() => !!document.getElementById('cbtn') && !!document.getElementById('abtn')));
+        await click('cbtn'); await wait(60); if (kd === 'level') await audit('선택 중 도감');
+        chk(`[${W}x${H}] ${kd} 선택 중 도감 진입`, await ev(() => !!document.getElementById('cx_back') && STATE.mode === 'select'));
+        await click('cx_back'); await wait(60); chk(`[${W}x${H}] ${kd} 도감 → 선택 화면 복귀`, await ev(() => STATE.mode === 'select' && !!document.querySelector('.card[data-i]') && !!document.getElementById('cbtn')));
+      }
       await ev(() => pickCard(0));
     } else chk(`[${W}x${H}] 레벨업 선택 진입`, false, 'mode ' + await ev(() => STATE.mode));
     // 제외한 유물 재등장

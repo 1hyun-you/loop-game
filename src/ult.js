@@ -72,7 +72,7 @@ function uLine(x, y, ang, len, wid, d, kb, hitF) {
 function useUlt() {
   const p = G.p, j = p.job, U = UU(), vet = ult2('veteran');
   const D = (90 + p.level * 7) * p.mod.dmg * (vet ? 1.25 : 1);
-  p.ult = 0; p.ultRef = 0; G.ultB && (G.ultB.ref = 0); G.stats.ults++; G.tm.stopT = 0; sfx('ult');
+  p.ult = 0; p.ultRef = 0; G.ultB && (G.ultB.ref = 0); G.stats.ults++; (G.ultAt || (G.ultAt = [])).push(Math.round(G.time)); G.tm.stopT = 0; sfx('ult');
   rcSlow(0.05, UC.stop); rcBig(JOB_COL[j] || '#ffe08a', 0.42); shake(5, 0.35);
   const nm2 = p.job2 && p.job2 !== 'veteran' ? JOB2[j].find(o => o.k === p.job2).nm : vet ? '숙련' : '';
   banner(ULT_TXT[j][0], nm2 || null, JOB_COL[j] || '#ffe08a', 1.1);
@@ -246,7 +246,7 @@ function ultRelease(U) {
   for (const e of U.held) { if (e.dead || !e.held) continue; const h = e.held; e.held = 0; fx({ kind: 'pop', x: e.x, y: e.y, r: 12, color: '#c8c0ff', dur: 0.25 }); damageEnemy(e, h * 1.5, { src: 'ult', kb: 160, fx: p.x, fy: p.y }); }
   U.held = null;
   for (const e of onScreen()) damageEnemy(e, U.hx * (ult2('rewind') ? 2.2 : 1.6), { src: 'ult', kb: 120, fx: p.x, fy: p.y });
-  if (ult2('rewind')) { if (U.hpAt > p.hp) { const g = U.hpAt - p.hp; heal(g); toast(`시간 역행 · 체력 +${Math.round(g)}`, '#c8c0ff'); } uLater(0.7, () => { G.p.ult = Math.max(G.p.ult, JOB_CFG.ultNeed * 0.3); }); }
+  if (ult2('rewind')) { if (U.hpAt > p.hp) { const g = U.hpAt - p.hp; heal(g, '시간 역행'); toast(`시간 역행 · 체력 +${Math.round(g)}`, '#c8c0ff'); } uLater(0.7, () => { G.p.ult = Math.max(G.p.ult, JOB_CFG.ultNeed * 0.3); }); }
 }
 
 /* ---------- 다른 체계 연계 훅 ---------- */
@@ -279,7 +279,7 @@ function ultOnKill(e) {
 }
 function ultBannerR() { const U = G.U; return U && U.rally > 0 && G.p.job === 'sovereign' ? 2 : 1; }
 function ultInBanner() { const U = G.U, p = G.p; return !!(U && U.rally > 0 && U.banners.some(b => dist2(b.x, b.y, p.x, p.y) < b.r * b.r)); }
-function benevolentHeal(dt) { const U = G.U; if (U && U.rally > 0 && ult2('benevolent') && inBanner()) heal(G.p.maxHp * 0.03 * dt); }
+function benevolentHeal(dt) { const U = G.U; if (U && U.rally > 0 && ult2('benevolent') && inBanner()) heal(G.p.maxHp * 0.03 * dt, '성군 호령'); }
 
 /* ---------- 그리기 (월드 좌표) ---------- */
 function drawUlt(c) {

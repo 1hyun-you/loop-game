@@ -51,7 +51,7 @@ const EXW = {
   priest: { name: '성광', ic: '광', ds: '1.6초마다 체력 높은 적에게 빛 기둥', cd: 1.6, dmg: 32, R: 50 },
   druid: { name: '가시 덩굴', ic: '덩', ds: '2초마다 주변 3곳 가시 장판', cd: 2.0, dmg: 9, R: 36 },
 };
-const JOB_CFG = { altarAfter: 2, altarDist: [170, 240], altarR: 26, altarStay: 0.6, ultNeed: 100, ultKill: 0.12, ultSec: 0.65, ultKillCap: 2, ultBossHit: 0.35, ultBossCap: 1.2, ultWin: 4, ultRefK: 0.5, ultRefMax: 25, job2Min: 60, ultStop: 0.6, ultAutoN: 10, jobCatW: 1.4 };
+const JOB_CFG = { altarAfter: 2, altarDist: [170, 240], altarR: 26, altarStay: 0.6, ultNeed: 100, ultKill: 0.08, ultSec: 0.4, ultKillCap: 3, ultElite: 5, ultHurtK: 1, ultBossHit: 0.35, ultBossCap: 1.8, ultWin: 4, ultRefK: 0.5, ultRefMax: 12, job2Min: 60, ultStop: 0.6, ultAutoN: 10, jobCatW: 1.4 };
 
 /* ---------- 주력 계열 ---------- */
 function catLevels() { const s = { melee: 0, ranged: 0, magic: 0 }; for (const w of G.p.weapons) s[WEAPONS[w.id].cat] += w.lvl; return s; }
@@ -213,24 +213,27 @@ function reaction(e) {
 function inBanner() { const b = G.banner, p = G.p, r = b ? b.r * ultBannerR() : 0; return !!(b && dist2(b.x, b.y, p.x, p.y) < r * r) || ultInBanner(); }   // 0.32 호령 반경 2배·정복왕 추가 군기
 function purify() {
   const p = G.p, j = p.job2 === 'judge', R = 110 * (j ? 1.35 : 1), d = (20 + p.level * 2) * p.mod.dmg * (j ? 2 : 1);
-  heal(p.maxHp * (p.job2 === 'saint' ? 0.2 : 0.1));
+  heal(p.maxHp * (p.job2 === 'saint' ? 0.2 : 0.1), '정화');
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: R, dur: 0.4, color: '#fff2a8', fill: true });
   gridQuery(p.x, p.y, R, e => damageEnemy(e, d, { src: 'holy', kb: 160, fx: p.x, fy: p.y }));
 }
 function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0, G.minions.length + 1); G.minions.push({ id: ++G.pid, x, y, r: G.p.job2 === 'lord' ? 9 : 7, life: 20, hitT: 0 }); }
 
 /* ---------- 궁극기 ---------- */
-function ultGain(v) { const p = G.p; if (tr('focus')) v *= 1.15; if (!p.job || p.ult >= JOB_CFG.ultNeed) return; p.ult = Math.min(JOB_CFG.ultNeed, p.ult + v); if (p.ult >= JOB_CFG.ultNeed) { G.tm.readyAt = G.time; toast('궁극기 준비 · 손 떼고 정지', '#ffe08a'); } }
+function ultGain(v, src = 'etc') { const p = G.p; if (tr('focus')) v *= 1.15; if (!p.job || p.ult >= JOB_CFG.ultNeed) return; const U0 = p.ult; p.ult = Math.min(JOB_CFG.ultNeed, p.ult + v); const UB = G.stats.ultBy || (G.stats.ultBy = {}); UB[src] = (UB[src] || 0) + p.ult - U0; if (p.ult >= JOB_CFG.ultNeed) { G.tm.readyAt = G.time; toast('궁극기 준비 · 손 떼고 정지', '#ffe08a'); } }
 /* 0.26a 궁극기 충전 혼합 보강: 처치 충전은 초당 상한, 엘리트·수문장·마왕 타격 충전(초당 상한), 시전 중 처치분은 환급(1회 상한) */
 function ultBucket() { const B = G.ultB || (G.ultB = { s: -1, k: 0, b: 0, ref: 0 }); const s = Math.floor(G.time); if (s !== B.s) { B.s = s; B.k = 0; B.b = 0; } return B; }
 function ultKillGain(e) {
   const C = JOB_CFG, B = ultBucket(), p = G.p;
   if (G.tm.ultWin > 0) { if (B.ref < C.ultRefMax) { const v = Math.min(C.ultRefK, C.ultRefMax - B.ref); B.ref += v; p.ultRef = Math.min(C.ultNeed, (p.ultRef || 0) + v); } return; }
-  const v = Math.min(C.ultKill * (e && e.elite ? 10 : 1), C.ultKillCap - B.k); if (v <= 0) return; B.k += v; ultGain(v);
+  if (e && e.elite && !e.clone) { ultGain(C.ultElite, 'elite'); return; }   // 0.35 정예 처치 별도 충전 (상한 미적용)
+  const v = Math.min(C.ultKill, C.ultKillCap - B.k); if (v <= 0) return; B.k += v; ultGain(v, 'kill');   // 0.35 처치당 고정 충전, 초당 안전 상한 3%
 }
+/* 0.35 피격 충전: 잃은 체력 비율 1:1, 궁극기 시전 중 미충전 */
+function ultHurtGain(dmg) { const p = G.p; if (!p.job || G.tm.ultWin > 0 || dmg <= 0) return; ultGain(dmg / p.maxHp * 100 * JOB_CFG.ultHurtK, 'hurt'); }
 function ultHitGain(e) {
   if (!G.p.job || !(e.elite || e.gk || e.boss)) return;
-  const C = JOB_CFG, B = ultBucket(), v = Math.min(C.ultBossHit, C.ultBossCap - B.b); if (v <= 0) return; B.b += v; ultGain(v);
+  const C = JOB_CFG, B = ultBucket(), v = Math.min(C.ultBossHit, C.ultBossCap - B.b); if (v <= 0) return; B.b += v; ultGain(v, 'boss');
 }
 function ultReady() { return G.p.job && G.p.ult >= JOB_CFG.ultNeed; }
 /* useUlt: 0.32 재설계로 src/ult.js 이관 */
@@ -244,8 +247,8 @@ function ultSlashes(n, d) {
 function updateUlt(dt) {
   const p = G.p; if (!p.job) return;
   if (G.ultLater && G.ultLater.length) G.ultLater = G.ultLater.filter(u => { if (G.time < u.t) return true; ultBlast(u.x, u.y, u.r, u.d, u.kb, u.col); return false; });
-  if (p.ultRef > 0 && !(G.tm.ultWin > 0)) { const v = p.ultRef; p.ultRef = 0; ultGain(v); }   // 시전 종료 후 환급
-  ultGain(JOB_CFG.ultSec * dt);
+  if (p.ultRef > 0 && !(G.tm.ultWin > 0)) { const v = p.ultRef; p.ultRef = 0; ultGain(v, 'refund'); }   // 시전 종료 후 환급
+  ultGain(JOB_CFG.ultSec * dt, 'time');
   if (!ultReady()) { G.tm.stopT = 0; return; }
   if (autoUltSetting()) { let n = 0; gridQuery(p.x, p.y, 200, () => { n++; }); if (n >= JOB_CFG.ultAutoN || G.time - G.tm.readyAt > 12) useUlt(); return; }
   // 정지 입력: 조이스틱에서 손을 뗀 채(이동 입력 없음) 일정 시간 정지 시 발동
@@ -330,7 +333,7 @@ function updateJob(dt) {
     if (T.banner <= 0) { T.banner = 10; G.banner = { x: p.x, y: p.y, r: 110 * (p.job2 === 'conqueror' ? 1.5 : 1) }; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: G.banner.r, dur: 0.4, color: '#ffd24a' }); }
     const b = G.banner;
     if (b && p.job2 === 'conqueror') { T.bt = (T.bt || 0) - dt; if (T.bt <= 0) { T.bt = 0.5; const d = (6 + p.level * 0.6) * p.mod.dmg; gridQuery(b.x, b.y, b.r, e => damageEnemy(e, d, { src: 'banner' })); } }
-    if (p.job2 === 'benevolent' && inBanner()) heal(p.maxHp * 0.02 * dt);
+    if (p.job2 === 'benevolent' && inBanner()) heal(p.maxHp * 0.02 * dt, '성군 군기');
     benevolentHeal(dt);
   }
   if (p.job === 'druid') {
@@ -341,7 +344,7 @@ function updateJob(dt) {
   if (G.sanct && T.sanct > 0) {
     const S = G.sanct; T.st = (T.st || 0) - dt;
     if (T.st <= 0) { T.st = 0.4; const d = (14 + p.level * 1.2) * p.mod.dmg; gridQuery(S.x, S.y, S.r, e => damageEnemy(e, d, { src: 'ult' })); }
-    if (dist2(S.x, S.y, p.x, p.y) < S.r * S.r) heal(p.maxHp * 0.05 * dt);
+    if (dist2(S.x, S.y, p.x, p.y) < S.r * S.r) heal(p.maxHp * 0.05 * dt, '성역');
   } else if (G.sanct) G.sanct = null;
   if (p.job === 'warrior') { if (T.furyHold > 0) T.furyHold -= dt; else p.fury = Math.max(0, p.fury - 4 * dt); }
   if (p.job === 'rogue') {

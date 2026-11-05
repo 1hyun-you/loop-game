@@ -113,7 +113,7 @@ Object.assign(WEAPON_FIRE, {
     shieldBash(p.x, p.y, R, S.dmg, D.kb);
     if (w.br === 'wall') G.tm.wall = 1.5;
     if (w.br === 'twin') G.later.push({ t: 0.4, f: () => shieldBash(G.p.x, G.p.y, R * 1.4, S.dmg * 0.5, D.kb * 0.6) });
-    if (hasRelic('bulwark')) heal(p.maxHp * 0.03);
+    if (hasRelic('bulwark')) heal(p.maxHp * 0.03, '수호 방패');
   },
   /* 대지 강타: 원형 충격파 · 여진 분기: 1초 뒤 같은 자리 재충격 · 균열 분기: 네 방향 균열 장판 */
   slam(w, S) {

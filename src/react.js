@@ -11,7 +11,7 @@ const RC_CFG = {
   slow: { k: 0.25, t: 1.1 },            // 보스 처치 슬로모션
   dust: 0.15,                           // 이동 먼지 간격 (초)
   dustMax: 28, mfMax: 8,
-  meat: { perSec: 0.004, lowMul: 4, gap: 15, maxOn: 2, heal: 0.2, life: 20, blink: 5, elite: 1, sureBelow: 0.8, sureGap: 8, eatBelow: 0.95, r: 14 },   // 엘리트·상자 확정 드롭은 체력 80% 미만·6초 간격 조건부 (0.28 시험: 무조건 확정 시 첫 5분 11개)
+  meat: { perSec: 0.004, lowMul: 4, gap: 15, maxOn: 2, heal: 0.2, life: 20, blink: 5, elite: 1, sureBelow: 0.8, sureGap: 8, eatBelow: 0.95, r: 14, far: 900 },   // 엘리트·상자 확정 드롭은 체력 80% 미만·6초 간격 조건부 (0.28 시험: 무조건 확정 시 첫 5분 11개)
 };
 function RC() {
   return G.rc || (G.rc = { slow: 0, slowK: 1, flash: 0, flashT: 0.4, flashCol: '#ffffff', flashA: 0.5, sq: 0, dustT: 0, dust: [], mf: [], mfT: 0, meat: [], meatAt: -99, meatN: 0, meatEat: 0, meatTimes: [], lvT: 0, xpShow: 0, kr: 0 });
@@ -91,10 +91,16 @@ function updateReact(dt) {
   const M = RC_CFG.meat;
   for (const m of r.meat) {
     m.t += dt;
-    if (m.t >= M.life) { m.dead = true; burst(m.x, m.y, 4, '#c8b8a0', 50, 0.4, 2); continue; }
-    if (!G.result && p.hp < p.maxHp * M.eatBelow && dist2(m.x, m.y, p.x, p.y) < (p.r + M.r) ** 2) {
+    const d2 = dist2(m.x, m.y, p.x, p.y);
+    if (m.t >= M.life || d2 > M.far * M.far) { m.dead = true; if (d2 <= M.far * M.far) burst(m.x, m.y, 4, '#c8b8a0', 50, 0.4, 2); else r.meatFar = (r.meatFar || 0) + 1; continue; }   // 0.35 플레이어와 900 이상 멀어지면 소멸
+    const want = !G.result && p.hp < p.maxHp * M.eatBelow;
+    if (want && (m.mag || d2 < pickR() ** 2)) {   // 0.35 경험치와 같은 흡수 범위로 끌려옴 (체력 95% 이상이면 정지)
+      m.mag = true; const d = Math.sqrt(d2) || 1; m.sp = (m.sp || 120) + 900 * dt;
+      m.x += (p.x - m.x) / d * m.sp * dt; m.y += (p.y - m.y) / d * m.sp * dt;
+    } else { m.mag = false; m.sp = 0; }
+    if (want && dist2(m.x, m.y, p.x, p.y) < (p.r + M.r) ** 2) {
       m.dead = true; r.meatEat++;
-      const before = p.hp; heal(p.maxHp * M.heal); const got = Math.round(p.hp - before);
+      const before = p.hp; heal(p.maxHp * M.heal, '고기'); const got = Math.round(p.hp - before);
       sparkUp(p.x, p.y, 8, ['#8cff9a', '#fff6c8', '#b8ffc0']); fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 34, dur: 0.3, color: '#8cff9a', follow: true });
       sfx('pick'); toast(`고기 +${got}`, '#8cff9a');
     }

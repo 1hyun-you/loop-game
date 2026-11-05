@@ -161,7 +161,7 @@ function updatePets(dt) {
       if (m.kind === 'wolf') { let n = 0; gridQuery(m.x, m.y, S.skR, t => { n++; t.slowT = Math.max(t.slowT || 0, 2); t.lpk = 'wolf'; damageEnemy(t, S.dmg * (bondHas('wolf', 'howl2') ? 0.3 : 0.45), { src: 'howl' }); }); if (n && bondHas('wolf', 'alpha')) G.tm.alpha = 4; fx({ kind: 'ring', x: m.x, y: m.y, r0: 8, r1: S.skR, dur: 0.4, color: '#c8d4e0' }); if (!n) m.sk = 1; }
       else {
         const x = m.x, y = m.y, R = S.skR, dm = S.dmg; gridQuery(x, y, R, t => { t.lpk = 'bear'; damageEnemy(t, dm * 2.5, { src: 'maul', kb: 260, fx: x, fy: y }); }); fx({ kind: 'ring', x, y, r0: 10, r1: R, dur: 0.35, color: '#c89060', fill: true });
-        if (p.job2 === 'ursa') heal(1); if (bondHas('bear', 'guard')) heal(2);
+        if (p.job2 === 'ursa') heal(1, '수호 곰'); if (bondHas('bear', 'guard')) heal(2, '보호 본능');
         if (bondHas('bear', 'after')) (G.petLater = G.petLater || []).push({ t: G.time + 0.5, x, y, R, d: dm * 1.5 });
       }
     }
@@ -229,7 +229,7 @@ function updateRewind(dt) {
   R.x = q.x; R.y = q.y;
   if (R.tick <= 0) { R.tick = 0.15; const d = (22 + p.level * 1.6) * p.mod.dmg; gridQuery(q.x, q.y, RW.R, e => { if ((e.ht.rw || 0) > G.time) return; e.ht.rw = G.time + 0.5; e.slowT = Math.max(e.slowT || 0, 2.5); damageEnemy(e, d, { src: 'ult', kb: 90, fx: q.x, fy: q.y }); }); }
   if (R.t >= RW.dur) {
-    if (R.hp > p.hp) { const g = R.hp - p.hp; heal(g); toast(`시간 역행 · 체력 +${Math.round(g)}`, '#c8c0ff'); }
+    if (R.hp > p.hp) { const g = R.hp - p.hp; heal(g, '시간 역행'); toast(`시간 역행 · 체력 +${Math.round(g)}`, '#c8c0ff'); }
     fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 60, dur: 0.4, color: '#c8c0ff', follow: true });
     G.rw = null;
   }

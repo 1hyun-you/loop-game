@@ -182,7 +182,7 @@ function arsenalHit(e, o) {
   if (o.src === 'shard' && !e.dead) e.slowT = Math.max(e.slowT || 0, 1);
 }
 function relicKill(e) {
-  if (e.ls === 'spin' && hasRelic('bloodspin')) heal(0.6);
+  if (e.ls === 'spin' && hasRelic('bloodspin')) heal(0.6, '피의 칼날');
 }
 function clockTick() { for (const w of G.p.weapons) if (w.id !== 'boomerang' && w.t > 0) w.t = Math.max(0.02, w.t - 0.3); }
 
@@ -219,7 +219,7 @@ function updateExw1(dt) {
     case 'mage': { const a0 = aimAng(420); for (let i = 0; i < 2; i++) shoot({ kind: 'fire', x: p.x, y: p.y, ang: a0 + (i ? 0.3 : -0.3), sp: 300, r: 6, dmg: dm, R: D.R, life: 1.0, color: '#ff8a3a', src: 'flameorb' }); break; }
     case 'summoner': { const ts = shuffle(enemiesInRange(p.x, p.y, 300)).slice(0, 2); if (!ts.length) { x.t = 0.3; break; }
       for (const e of ts) { const ex = e.x, ey = e.y; afx({ k: 'hand', x: ex, y: ey, dur: 0.45 }); gridQuery(ex, ey, D.R, t => { if (!t.cmd && !t.boss && !t.gk) t.frz = Math.max(t.frz || 0, 0.4); damageEnemy(t, dm, { src: 'bonehand' }); }); } break; }
-    case 'priest': heal(p.maxHp * 0.02); gridQuery(p.x, p.y, D.R, e => damageEnemy(e, dm, { src: 'bless' }));
+    case 'priest': heal(p.maxHp * 0.02, '축복 고리'); gridQuery(p.x, p.y, D.R, e => damageEnemy(e, dm, { src: 'bless' }));
       fx({ kind: 'ring', x: p.x, y: p.y, r0: 20, r1: D.R, dur: 0.4, color: col, fill: true, follow: true }); break;
     case 'druid': for (let i = 0; i < 8; i++) shoot({ kind: 'arrow', x: p.x, y: p.y, ang: i * Math.PI / 4 + (x.t2 = !x.t2) * 0.2, sp: 420, r: 4, dmg: dm, pierce: 1, life: 0.5, color: '#9fe08a', src: 'thornshot' }); break;
   }

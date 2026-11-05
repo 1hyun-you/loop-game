@@ -128,7 +128,7 @@ function eliteKilled(e) {
   if (!e.noChest) G.chests.push({ x: e.x, y: e.y, r: 14 });
   phaseEliteKilled(e);
   if (e.elite === 'split') for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; makeEnemy(e.type, e.x + Math.cos(a) * 20, e.y + Math.sin(a) * 20); }
-  if (G.p.job) ultGain(8);
+  if (G.p.job) ultGain(8, 'level');
 }
 function updateChests() {
   const p = G.p;
@@ -149,10 +149,10 @@ function updatePools(dt) {
 /* 보조 효과 분기 갱신 */
 function updatePassiveBranches(dt) {
   const p = G.p, T = G.tm;
-  if (passLv('regen')) heal(PASSIVES.regen.per * passLv('regen') * dt);
+  if (passLv('regen')) heal(PASSIVES.regen.per * passLv('regen') * dt, '체력 회복');
   if (T.wall > 0) T.wall -= dt;
   if (pBr('magnet') === 'vacuum') { T.vac = (T.vac == null ? 30 : T.vac) - dt; if (T.vac <= 0) { T.vac = 30; for (const g of G.gems) if (dist2(g.x, g.y, p.x, p.y) < 700 * 700) g.mag = true; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 160, dur: 0.4, color: '#7fe0ff', follow: true }); } }
-  if (pBr('vit') === 'regen') heal(p.maxHp * 0.006 * dt);
+  if (pBr('vit') === 'regen') heal(p.maxHp * 0.006 * dt, '재생');
   if (pBr('vit') === 'shield' && !p.shield) { T.shield -= dt; if (T.shield <= 0) { p.shield = true; T.shield = 12; } }
   if (pBr('swift') === 'trail' && p.moving) { T.trail -= dt; if (T.trail <= 0) { T.trail = 0.3; addPool({ x: p.x, y: p.y, r: 18, dur: 1.2, every: 0.35, dmg: (8 + passLv('swift') * 2) * p.mod.dmg, src: 'trail', kind: 'trail' }); } }
   if (pBr('haste') === 'charge') { T.charge -= dt; if (T.charge <= 0) { T.charge = 8; for (const w of p.weapons) if (w.id !== 'spin') w.t = Math.min(w.t, 0.05); fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 40, dur: 0.3, color: '#d6b45a', follow: true }); } }

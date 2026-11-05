@@ -48,7 +48,7 @@ function recalc() {
   if (p.maxHp > prevMax && !hasCond('noheal')) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복 (도전 조건 회복 없음 제외)
   p.hp = Math.min(p.hp, p.maxHp);
 }
-function heal(v) { const p = G.p; if (hasCond('noheal')) return; if (hasCurse('blight')) v *= 0.6; p.hp = Math.min(p.maxHp, p.hp + v); }
+function heal(v, src = '기타') { const p = G.p; if (hasCond('noheal')) return; if (hasCurse('blight')) v *= 0.6; const b = p.hp; p.hp = Math.min(p.maxHp, p.hp + v); const H = G.stats.healBy || (G.stats.healBy = {}); H[src] = (H[src] || 0) + (p.hp - b) / p.maxHp; }   // 0.35 회복원별 실회복량(최대 체력 비율) 기록
 function clearInput() { INPUT.active = false; INPUT.id = null; INPUT.mag = 0; }
 function toast(text, color = '#fff') { G.toasts.push({ text, color, t: 0, dur: 2 }); if (G.toasts.length > 3) G.toasts.shift(); }
 function fx(o) { if (G.fx.length < 220) G.fx.push(Object.assign({ t: 0 }, o)); }
@@ -200,7 +200,7 @@ function killEnemy(e) {
   if (e.gk) gkKilled(e);
   ultOnKill(e);                                              // 0.32 사령술사·정복왕
   if (e.slowT > 0 && wBr('icering') === 'shatter') { const x = e.x, y = e.y, d = wStats(G.p.weapons.find(w => w.id === 'icering')).dmg * 2.5; G.later.push({ t: 0, f: () => explode(x, y, 46, d, 'shatter', '#bfe8ff') }); }
-  if (pBr('regen') === 'vamp') heal(0.4);
+  if (pBr('regen') === 'vamp') heal(0.4, '흡혈');
   relicKill(e);                                              // 0.27 유물 처치 연계
   onEnemyKill(e);
   if (e.mb) mobKilled(e); traitKill(e);                     // 분열·숙련 특성 (0.23)
@@ -216,15 +216,18 @@ function hurtPlayer(dmg, src) {
   vibe(25); sfx('hurt');
   onPlayerHurt();
   G.ph.hurtEma += dmg / 40;                                  // 강함 판정용 최근 피해 (0.24)
+  ultHurtGain(Math.min(dmg, Math.max(0, p.hp)));                // 0.35 피격 충전
   p.hp -= dmg; p.invT = CFG.player.invuln + (tr('guard') ? 0.2 : 0); p.flash = 0.2; G.lastHit = src;
   G.stats.hurt[src] = (G.stats.hurt[src] || 0) + dmg; ultOnHurt();   // 0.32 성자 반격 섬광
   if (p.hp <= 0 && pBr('regen') === 'second' && !p.revived) { p.revived = true; p.hp = p.maxHp * 0.4; p.invT = 2; toast('불굴', '#ffb070'); return; }
   if (p.hp <= 0) { p.hp = 0; sfx('dead'); G.result = 'dead'; G.endT = 1.4; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 200, dur: 1, color: '#ff6a6a' }); }
 }
 
+/* 흡수 범위 (경험치·고기 공용, 0.35) */
+function pickR() { return CFG.player.pickup * (1 + PASSIVES.magnet.per * passLv('magnet')) * (tr('magnet') ? 1.25 : 1); }
 /* 경험치·레벨업 (레벨업마다 3지선다 대기열 적재) */
 function updateGems(dt) {
-  const p = G.p, R = CFG.player.pickup * (1 + PASSIVES.magnet.per * passLv('magnet')) * (tr('magnet') ? 1.25 : 1), R2 = R * R;
+  const p = G.p, R = pickR(), R2 = R * R;
   for (const g of G.gems) {
     const d2 = dist2(g.x, g.y, p.x, p.y);
     if (!g.mag && d2 < R2) g.mag = true;
@@ -267,7 +270,7 @@ function buildReport() {
     dmgShare: Object.entries(G.stats.dmg).map(([k, v]) => [k, Math.round(v / tot * 100)]).sort((a, b) => b[1] - a[1]),
     hurt: G.stats.hurt, maxEnemies: G.stats.maxEnemies, levelAt: G.stats.levelAt,
     build: { w: G.p.weapons.map(w => w.id + ':' + w.lvl), p: G.p.passives.map(x => x.id + ':' + x.lvl) },
-    meat: G.rc ? [G.rc.meatN, G.rc.meatEat, G.rc.meatTimes] : [0, 0, []],
+    meat: G.rc ? [G.rc.meatN, G.rc.meatEat, G.rc.meatTimes, G.rc.meatFar || 0] : [0, 0, [], 0], healBy: G.stats.healBy || {}, ultBy: G.stats.ultBy || {}, ultAt: G.ultAt || [],
     xp: [G.stats.xpGot, G.stats.xpDrop], selOpen: G.stats.selOpen, pendingLv: G.pendingLv, lastMinShare: lastMinShare(), picks: G.stats.picks, wFullAt: G.stats.wFullAt, pFullAt: G.stats.pFullAt,
     phases: G.ph.log, phaseReached: G.ph.i + 1, phaseAt: G.ph.id || 'gap',
     rerollsUsed: CFG.select.rerolls - G.rerolls, banishUsed: CFG.select.banishes - G.banishes,

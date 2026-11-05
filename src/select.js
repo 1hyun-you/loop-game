@@ -113,7 +113,7 @@ function renderSelect0() {
   if (kind === 'level') acts = `<button id="reroll" ${G.rerolls ? '' : 'disabled'}>다시 뽑기 (${G.rerolls})</button><button id="banish" class="${s.banish ? 'on' : ''}" ${G.banishes ? '' : 'disabled'}>${s.banish ? '제외 취소' : `제외 (${G.banishes})`}</button>`;
   if (kind === 'job') acts = `<button id="offer" class="${s.offer ? 'on' : ''}" ${G.p.weapons.length >= 2 ? '' : 'disabled'}>${s.offer ? '봉헌 취소' : '무기 봉헌'}</button><button id="leave">떠나기</button>`;
   UI.innerHTML = `<div class="layer sel sel-${kind}">
-    <div class="sel-head"><h2>${h}</h2><p class="sub">${sub}</p>${kind === 'start' ? '' : `<button id="abtn">${s.abil ? '닫기' : '내 능력'}</button>`}</div>
+    <div class="sel-head"><h2>${h}</h2><p class="sub">${sub}</p>${kind === 'start' ? '' : `<div class="sel-tools"><button id="abtn" class="${s.abil ? 'on' : ''}">${s.abil ? '능력 닫기' : '내 능력'}</button><button id="cbtn">도감</button></div>`}</div>
     ${s.abil ? abilityHTML() : `<div class="cards">${cards}</div>`}
     ${acts ? `<div class="sel-actions">${acts}</div>` : ''}</div>`;
   s.armed = null;
@@ -130,6 +130,7 @@ function renderSelect0() {
   on('offer', () => { if (G.p.weapons.length < 2) return; s.offer = !s.offer; renderSelect(); });
   on('leave', leaveAltar);
   on('abtn', toggleAbil);
+  on('cbtn', () => showCodex('w', () => { if (G && G.sel) { STATE.mode = 'select'; renderSelect(); } }));   // 0.35 선택 화면 도감
 }
 function reroll() {
   if (!G.rerolls || !G.sel) return;
@@ -167,7 +168,7 @@ function applyCard(c) {
     case 'relic': p.relics.push(c.id); G.stats.relics.push(c.id); toast(`유물 ${RELICS[c.id].name}`, '#ffd24a'); break;
     case 'power': p.bonusDmg += CFG.fill.power; break;
     case 'trait': applyTrait(c.id); break;
-    default: heal(CFG.fill.heal);
+    default: heal(CFG.fill.heal, '응급 처치');
   }
   recalc();
 }
