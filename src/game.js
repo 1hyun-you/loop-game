@@ -48,8 +48,8 @@ function recalc() {
   if (p.maxHp > prevMax && !hasCond('noheal')) p.hp += p.maxHp - prevMax;     // 늘어난 최대 체력만큼 회복 (도전 조건 회복 없음 제외)
   p.hp = Math.min(p.hp, p.maxHp);
 }
-/* 0.35 처치 연동 회복 공통 상한: 흡혈·피의 칼날·피의 갈증 합계 초당 최대 체력 0.12% (최대 5초분 적립) */
-const KILL_HEAL = { rate: 0.0012, keep: 5 };
+/* 0.35 처치 연동 회복 공통 상한: 흡혈·피의 칼날·피의 갈증 합계 초당 최대 체력 0.18% (최대 5초분 적립) */
+const KILL_HEAL = { rate: 0.0018, keep: 5 };
 function killHeal(v, src) { const p = G.p, K = G.kh || (G.kh = { b: p.maxHp * KILL_HEAL.rate * KILL_HEAL.keep, t: G.time }); K.b = Math.min(p.maxHp * KILL_HEAL.rate * KILL_HEAL.keep, K.b + (G.time - K.t) * p.maxHp * KILL_HEAL.rate); K.t = G.time; const g = Math.min(v, K.b); if (g <= 0) return; K.b -= g; heal(g, src); }
 function heal(v, src = '기타') { const p = G.p; if (hasCond('noheal')) return; if (hasCurse('blight')) v *= 0.6; const b = p.hp; p.hp = Math.min(p.maxHp, p.hp + v); const H = G.stats.healBy || (G.stats.healBy = {}); H[src] = (H[src] || 0) + (p.hp - b) / p.maxHp; }   // 0.35 회복원별 실회복량(최대 체력 비율) 기록
 function clearInput() { INPUT.active = false; INPUT.id = null; INPUT.mag = 0; }

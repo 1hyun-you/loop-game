@@ -303,10 +303,12 @@ function drawSlots(c, y) {
   const row = (list, n, x0, colorOf, icOf) => {
     for (let i = 0; i < n; i++) {
       const x = x0 + i * (S + gap), it = list[i];
-      c.fillStyle = it ? colorOf(it) : 'rgba(0,0,0,0.35)'; c.fillRect(x, y, S, S);
-      c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 1.5; c.strokeRect(x + 0.5, y + 0.5, S - 1, S - 1);
+      const icv = it && iconCanvas(it.id, Math.max(1, Math.round(1.4 * VIEW.dpr)));   // 0.36 도트 아이콘
+      c.fillStyle = it ? (icv ? shadeHex(colorOf(it), 0.42) : colorOf(it)) : 'rgba(0,0,0,0.35)'; c.fillRect(x, y, S, S);
+      c.strokeStyle = it && icv ? colorOf(it) : 'rgba(0,0,0,0.55)'; c.lineWidth = 1.5; c.strokeRect(x + 0.75, y + 0.75, S - 1.5, S - 1.5);
       if (!it) continue;
-      c.fillStyle = '#14121c'; c.font = 'bold 13px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1);
+      if (icv) { const iw = icv.width / VIEW.dpr, ih = icv.height / VIEW.dpr; c.imageSmoothingEnabled = false; c.drawImage(icv, Math.round(x + (S - iw) / 2), Math.round(y + (S - ih) / 2), iw, ih); }
+      else { c.fillStyle = '#14121c'; c.font = 'bold 13px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1); }
       c.font = 'bold 9px Galmuri11, system-ui'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
       const lv = String(it.lvl); c.strokeText(lv, x + S - 1, y + S - 1); c.fillStyle = '#fff'; c.fillText(lv, x + S - 1, y + S - 1);
     }

@@ -37,32 +37,51 @@ function cxSeen() {
 /* 카드: dim = 미획득 흐림(내용 공개), lock = 잠금(내용 비공개) */
 function cxCard(o) {
   const st = o.lock ? 'lock' : o.dim ? 'dim' : '';
-  const lines = o.lock ? `<p>${esc(o.hint || '')}</p>` : (o.lines || []).filter(Boolean).map(l => `<p>${l}</p>`).join('');
-  return `<div class="cx ${st}"><span class="ic" style="background:${o.lock ? 'var(--panel2)' : o.col}">${esc(o.lock ? '?' : o.ic)}</span><div class="cxb"><div class="cxh"><b>${esc(o.lock ? '???' : o.nm)}</b>${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}${o.dim ? '<span class="tag nw">미획득</span>' : ''}</div>${lines}</div></div>`;
+  const L = o.lock ? [esc(o.hint || '')] : (o.lines || []).filter(Boolean), wrap = l => l.startsWith('<div') ? l : `<p>${l}</p>`;
+  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : icBox(o.col, o.ic, o.id);
+  return `<div class="cx ${st}"><div class="cxt">${ic}<div class="cxb"><div class="cxh"><b>${esc(o.lock ? '???' : o.nm)}</b>${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}${o.dim ? '<span class="tag nw">미획득</span>' : ''}</div>${L.length ? wrap(L[0]) : ''}</div></div>${L.slice(1).map(wrap).join('')}</div>`;
 }
 const cxL = (k, v) => `<i>${esc(k)}</i> ${esc(v)}`;
+/* 0.36 압축 표기: 수치 칩(1레벨→6레벨) · 분기 2칸 상자 */
+const cxChips = a => `<div class="cxs">${a.filter(Boolean).map(([k, v]) => `<span><i>${esc(k)}</i>${v}</span>`).join('')}</div>`;
+const cxArrow = (a, b, u = '') => a === b ? `${a}${u}` : `${a}<em>→${b}${u}</em>`;
+const cxBr = (list, head) => list && list.length ? `<div class="cxg">${list.map(o => `<div><b>${esc(o.nm)}</b><span>${esc(o.ds).replace(' · 궁극기: ', '</span><span class="u">궁극기 · ')}</span></div>`).join('')}</div>` : '';
+const cxRound = v => Math.round(v * 100) / 100;
 
 function cxWeapon(id, seen) {
-  const D = WEAPONS[id], B = D.base, tot = { dmg: 0, area: 0, cd: 0, n: 0, pierce: 0 };
-  for (const u of D.ups) for (const k in u) if (k in tot) tot[k] += u[k];
-  const base = CX_STAT.filter(([k]) => B[k] != null).map(([k, nm, f]) => `${id === 'boomerang' && k === 'pierce' ? '구간 타격 수' : nm} ${f(B[k])}`).join(' · ');
-  const six = [`피해 ${Math.round(B.dmg * (1 + tot.dmg))}`, B.cd ? `재사용 ${(B.cd * (1 - tot.cd)).toFixed(2)}초` : '', tot.n ? `개수 ${(B.n || 1) + tot.n}` : '', tot.area ? `범위 +${Math.round(tot.area * 100)}%` : '', tot.pierce ? `관통 ${(B.pierce || 0) + tot.pierce}` : ''].filter(Boolean).join(' · ');
-  const br = (BRANCHES[id] || []).map(b => `${b.nm}(${b.ds})`).join(' / ');
-  return cxCard({ dim: !seen, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxL('1레벨', base), cxL('강화', D.ups.map((u, i) => `${i + 2}렙 ${upText(id, u)}`).join(' · ')), cxL('6레벨', six + ' (보조 효과 제외)'), br ? cxL(BRANCH_AT + '렙 분기', br) : ''] });
+  const D = WEAPONS[id], B = D.base, tot = { dmg: 0, area: 0, cd: 0, n: 0, pierce: 0 }, etc = {};
+  for (const u of D.ups) for (const k in u) { if (k in tot) tot[k] += u[k]; else etc[k] = (etc[k] || 0) + u[k]; }
+  const rk = ['R', 'range', 'len'].find(k => B[k] != null);
+  const chips = [
+    ['피해', cxArrow(Math.round(B.dmg), Math.round(B.dmg * (1 + tot.dmg)))],
+    B.cd ? ['재사용', cxArrow(cxRound(B.cd), cxRound(B.cd * (1 - tot.cd)), '초')] : null,
+    (B.n || tot.n) ? [W_UNIT[id] || '개수', cxArrow(B.n || 1, (B.n || 1) + tot.n)] : null,
+    (B.pierce || tot.pierce) ? [id === 'boomerang' ? '타격 수' : '관통', cxArrow(B.pierce || 0, (B.pierce || 0) + tot.pierce)] : null,
+    rk ? [{ R: '범위', range: '사거리', len: '길이' }[rk], `${B[rk]}${tot.area ? `<em>+${Math.round(tot.area * 100)}%</em>` : ''}`] : null,
+    B.dur ? ['지속', B.dur + '초'] : null,
+    ...Object.keys(etc).map(k => { const t = upText(id, { [k]: etc[k] }); const m = t.match(/^(.*?) ([+-].*)$/); return m ? [m[1], `<em>${esc(m[2])}</em>`] : null; }),
+  ];
+  return cxCard({ dim: !seen, id, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxChips(chips), cxBr(BRANCHES[id])] });
+}
+/* 보조 효과: 1단계·5단계 문구의 수치만 화살표로 병합 */
+function cxRange(a, b) {
+  const re = /([+-]?\d+(?:\.\d+)?%?)/, A = a.split(re), Bs = b.split(re);
+  if (A.length !== Bs.length) return esc(a) + ' <em>→ ' + esc(b) + '</em>';
+  return A.map((t, i) => i % 2 && t !== Bs[i] ? `${esc(t)}<em>→${esc(Bs[i])}</em>` : esc(t)).join('');
 }
 function cxPassive(id, seen) {
-  const D = PASSIVES[id], br = (BRANCHES[id] || []).map(b => `${b.nm}(${b.ds})`).join(' / ');
-  return cxCard({ dim: !seen, col: '#8fd0ff', ic: D.ic, nm: D.name, tag: '보조 효과', lines: [cxL('단계별', [1, 2, 3, 4, 5].map(L => `${L}단계 ${D.desc(L)}`).join(' · ')), br ? cxL(BRANCH_AT + '단계 분기', br) : ''] });
+  const D = PASSIVES[id];
+  return cxCard({ dim: !seen, id, col: CFG.colors.passive, ic: D.ic, nm: D.name, tag: '1→5단계', lines: [cxRange(D.desc(1), D.desc(5)), cxBr(BRANCHES[id])] });
 }
+const cxMat = id => `<span class="cxm">${icBox(WEAPONS[id] ? CFG.colors[WEAPONS[id].cat] : CFG.colors.passive, (WEAPONS[id] || PASSIVES[id]).ic, id, 'sm')}${esc(itemName(id))}</span>`;
 function cxRelic(id, seen) {
   const R = RELICS[id];
-  return cxCard({ dim: !seen, col: '#ffd27a', ic: R.ic, nm: R.name, tag: '유물', lines: [cxL('재료', `${itemName(R.a)} + ${itemName(R.b)} 보유 시 후보 등장`), cxL('효과', R.ds)] });
+  return cxCard({ dim: !seen, col: '#ffd27a', ic: R.ic, nm: R.name, tag: '유물', lines: [`<div class="cxr">${cxMat(R.a)}<b>+</b>${cxMat(R.b)}</div>`, esc(R.ds)] });
 }
 function cxJob(id, seen) {
   const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id], E1 = EXW1[id], E2 = EXW[id];
   const cats = jobCats(id).map(c => CAT_NAME[c]).join('·');
-  const j2 = JOB2[id].map(o => cxL('2차 ' + o.nm, o.ds));
-  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: cats + ' 계열', lines: [cxL('고유 규칙', J.rule), cxL('궁극기', `${U[0]}: ${U[1]}`), cxL('계열 무기 변환', `'${X.pre}' 접두어 · ${X.ds} · 계열 무기 피해 +10%`), cxL('전용 무기', `1차 ${E1.name}(${E1.ds}, 피해 ${E1.dmg}) · 2차 ${E2.name}(${E2.ds}, 피해 ${E2.dmg})`), ...j2, cxL('2차 ' + JOB2_STAT.nm, JOB2_STAT.ds)] });
+  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: cats + ' 계열', lines: [esc(J.rule), cxL('궁극기 ' + U[0], U[1]), cxL('계열 변환', `'${X.pre}' · ${X.ds} · 피해 +10%`), cxL('전용 무기', `${E1.name} → ${E2.name}`), cxBr(JOB2[id])] });
 }
 function cxEnemies(S) {
   const mob = ENEMY_ORDER.map(k => { const E = ENEMIES[k], v = S.seenE.has(k); return cxCard({ lock: !v, hint: '조우 시 기록', col: E.color, ic: E.name.slice(0, 1), nm: E.name, tag: '잡몹', lines: [cxL('능력치', `체력 ${E.hp} · 이동 ${E.speed} · 접촉 피해 ${E.dmg} · 경험치 ${E.xp}`), cxL('등장', `${E.from}분 이후`) + (E.mb ? ' · ' + esc(CX_MB[E.mb] || '') : '')] }); });
@@ -88,10 +107,10 @@ function cxUnlock(S) {
 
 function showCodex(tab, back) {
   const S = cxSeen(); let body = '';
-  if (tab === 'w') body = WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
-  if (tab === 'p') body = PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
+  if (tab === 'w') body = '<p class="hint">수치: 1레벨 → 6레벨 (보조 효과 미포함) · 아래 2칸: 3렙 분기</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
+  if (tab === 'p') body = '<p class="hint">수치: 1단계 → 5단계 · 아래 2칸: 3단계 분기</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
   if (tab === 'r') body = RELIC_ORDER.map(id => cxRelic(id, S.seenR.has(id))).join('');
-  if (tab === 'j') body = JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
+  if (tab === 'j') body = `<p class="hint">아래 2칸: 2차 전직 · 공통 선택지 ${esc(JOB2_STAT.nm)}(${esc(JOB2_STAT.ds)})</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
   if (tab === 'e') body = cxEnemies(S);
   if (tab === 'f') body = FRAGS.map((f, i) => { const v = (S.s.frags || []).includes(f.id); return cxCard({ lock: !v, hint: '해금 조건 · ' + f.cond, col: '#e8d8ff', ic: String(i + 1), nm: f.nm, lines: [esc(f.tx)] }); }).join('');
   if (tab === 'u') body = cxUnlock(S);
