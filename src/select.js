@@ -119,9 +119,13 @@ function renderSelect0() {
   s.armed = null;
   UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => { sfx('pick');
     const i = +b.dataset.i;
-    if (SETTINGS.confirm2 && !s.banish && s.armed !== i) {          // 두 번 눌러 확정 (0.14)
-      s.armed = i; UI.querySelectorAll('.card.armed').forEach(x => x.classList.remove('armed')); b.classList.add('armed'); return;
+    const two = SETTINGS.confirm2 || kind === 'job' || kind === 'job2';   // 두 번 눌러 확정 (0.14) · 0.37 전직은 항상 2회
+    if (two && !s.banish && s.armed !== i) {
+      s.armed = i; UI.querySelectorAll('.card.armed').forEach(x => x.classList.remove('armed')); b.classList.remove('armed'); void b.offsetWidth; b.classList.add('armed');
+      const sb = UI.querySelector('.sel-head .sub'); if (sb) { sb.textContent = '한 번 더 누르면 ' + (kind === 'job' || kind === 'job2' ? '전직' : '선택') + ' 확정'; sb.classList.add('armtip'); }
+      vibe(12); return;
     }
+    uiSpark(b, b.style.borderColor || '#ffe08a');
     pickCard(i);
   }));
   UI.querySelectorAll('.card[data-w]').forEach(b => b.addEventListener('click', () => offerWeapon(b.dataset.w)));

@@ -85,9 +85,9 @@ function metaSave(s) {
 
 /* ---------- 설정 화면 ---------- */
 function showSettings(back) {
-  const T = (k, nm, ds) => `<div class="row"><div class="rt"><b>${nm}</b><span>${ds}</span></div><button class="tg ${SETTINGS[k] ? 'pri' : ''}" data-k="${k}">${SETTINGS[k] ? '켜짐' : '꺼짐'}</button></div>`;
+  const T = (k, nm, ds) => `<div class="row"><div class="rt"><b>${nm}</b><span>${ds}</span></div><button class="tg sw ${SETTINGS[k] ? 'on' : ''}" data-k="${k}" role="switch" aria-checked="${!!SETTINGS[k]}" aria-label="${nm}"><i></i></button></div>`;
   const V = (k, nm) => `<div class="row"><div class="rt"><b>${nm}</b><span>0~100</span></div><input type="range" min="0" max="100" step="10" value="${SETTINGS[k]}" data-v="${k}" aria-label="${nm}"><output>${SETTINGS[k]}</output></div>`;
-  UI.innerHTML = `<div class="layer scroll"><h2>설정</h2><div class="rows">
+  UI.innerHTML = `<div class="layer scroll pg">${pgHead('설정', 's_back')}<div class="rows">
     <div class="row"><div class="rt"><b>조이스틱</b><span>${SETTINGS.joy === 'fixed' ? '고정형: 화면 아래 중앙 기준' : '유동형: 처음 누른 위치 기준'}</span></div><button class="tg" id="s_joy">${SETTINGS.joy === 'fixed' ? '고정형' : '유동형'}</button></div>
     ${T('autoUlt', '궁극기 자동 발동', '꺼짐: 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동')}
     ${T('confirm2', '두 번 눌러 확정', '선택 카드를 한 번 더 눌러야 선택')}
@@ -97,9 +97,9 @@ function showSettings(back) {
     ${T('dmgNum', '피해 숫자', '적에게 준 피해를 숫자로 표시')}
     ${V('sfx', '효과음 음량')}${V('bgm', '배경음 음량')}
     <div class="row"><div class="rt"><b>첫 판 안내</b><span>조작·목표 안내를 처음부터 다시 표시</span></div><button class="tg" id="s_guide">다시 보기</button></div>
-    </div><div class="menu"><button id="s_back">돌아가기</button></div></div>`;
+    </div></div>`;
   on('s_guide', () => { guideReset(); const b = document.getElementById('s_guide'); if (b) { b.textContent = '초기화됨'; b.classList.add('pri'); } });
-  UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); keepScroll(() => showSettings(back)); }));
+  UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); b.classList.toggle('on', SETTINGS[k]); b.setAttribute('aria-checked', SETTINGS[k]); sfx('ui'); }));   // 0.37 제자리 전환 (손잡이 이동)
   UI.querySelectorAll('input[data-v]').forEach(i => i.addEventListener('input', () => { SETTINGS[i.dataset.v] = +i.value; i.nextElementSibling.textContent = i.value; saveSettings(); auVol(); if (i.dataset.v === 'sfx') sfx('ui'); }));
   on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_back', back);
@@ -108,21 +108,28 @@ function showSettings(back) {
 /* ---------- 도감: codex.js (0.34 7탭·세부 수치·게임 중 열람) ---------- */
 
 /* ---------- 도전 준비 (진엔딩 후) ---------- */
-function showPrep(back) {
+const PREP_TABS = [['t', '난이도'], ['c', '도전 조건']];
+function showPrep(back, tab = 't', dir) {
   const s = loadSave(), mx = Math.min(3, s.tierMax || 1);
   if (META.tier > mx) META.tier = mx;
   const o = { tier: META.tier, conds: META.conds };
-  UI.innerHTML = `<div class="layer scroll"><h2>도전 준비</h2><p class="sub">점수 배율 ×${optMul(o).toFixed(2)} · 보상은 성능에 영향 없음</p>
-    <h3>고난도 단계</h3><div class="tabs">${TIERS.map((T, i) => `<button class="${META.tier === i ? 'pri' : ''}" data-tier="${i}" ${i > mx ? 'disabled' : ''}>${i > mx ? '잠김' : T.nm}</button>`).join('')}</div>
-    <p class="hint">${META.tier ? `적 체력·피해 +${Math.round(TIERS[META.tier].k * 100)}% · 배율 ×${TIERS[META.tier].mul}` : '기본 난이도'} · 단계별 마왕 처치 시 다음 단계 개방</p>
-    <h3>도전 조건</h3><div class="rows">${COND_ORDER.map(k => { const C = CONDS[k], v = META.conds.includes(k); return `<div class="row"><div class="rt"><b>${C.nm}</b><span>${C.ds} · ×${C.mul}${(s.titles || []).includes('c_' + k) ? ' · 돌파' : ''}</span></div><button class="tg ${v ? 'pri' : ''}" data-cond="${k}">${v ? '켜짐' : '꺼짐'}</button></div>`; }).join('')}</div>
-    <div class="menu"><button class="pri" id="pr_go">이대로 시작</button><button id="pr_back">돌아가기</button></div></div>`;
-  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); keepScroll(() => showPrep(back)); }));
+  const body = tab === 't'
+    ? `<div class="rows">${TIERS.map((T, i) => `<button class="row pick ${META.tier === i ? 'on' : ''}" data-tier="${i}" ${i > mx ? 'disabled' : ''}><span class="rt"><b>${i > mx ? '잠김' : T.nm}</b><span>${i ? `적 체력·피해 +${Math.round(T.k * 100)}% · 배율 ×${T.mul}` : '기본 난이도 · 배율 ×1'}</span></span></button>`).join('')}</div><p class="hint">단계별 마왕 처치 시 다음 단계 개방</p>`
+    : `<div class="rows">${COND_ORDER.map(k => { const C = CONDS[k], v = META.conds.includes(k); return `<div class="row"><div class="rt"><b>${C.nm}</b><span>${C.ds} · ×${C.mul}${(s.titles || []).includes('c_' + k) ? ' · 돌파' : ''}</span></div><button class="tg sw ${v ? 'on' : ''}" data-cond="${k}" role="switch" aria-checked="${v}" aria-label="${C.nm}"><i></i></button></div>`; }).join('')}</div>`;
+  UI.innerHTML = `<div class="layer scroll pg">${pgHead('도전 준비', 'pr_back', PREP_TABS, tab, 'data-ptab', `<p class="sub" id="pr_mul">점수 배율 ×${optMul(o).toFixed(2)} · 보상은 성능에 영향 없음</p>`)}
+    <div class="pgb">${body}</div><div class="pgf"><button class="pri" id="pr_go">이대로 시작</button></div></div>`;
+  const go = (k, d) => showPrep(back, k, d);
+  UI.querySelectorAll('[data-ptab]').forEach(b => b.addEventListener('click', () => { const K = PREP_TABS.map(t => t[0]); go(b.dataset.ptab, K.indexOf(b.dataset.ptab) - K.indexOf(tab)); }));
+  uiSwipe(UI.querySelector('.layer'), PREP_TABS.map(t => t[0]), tab, go);
+  uiSlide('.pgb', dir);
+  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); sfx('ui'); keepScroll(() => showPrep(back, tab)); }));
   UI.querySelectorAll('[data-cond]').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.cond, i = META.conds.indexOf(k);
     if (i >= 0) META.conds.splice(i, 1); else { META.conds.push(k); const ex = CONDS[k].ex; if (ex) META.conds = META.conds.filter(x => x !== ex); }
-    saveMeta(); keepScroll(() => showPrep(back));
+    saveMeta(); sfx('ui');
+    UI.querySelectorAll('[data-cond]').forEach(x => { const v = META.conds.includes(x.dataset.cond); x.classList.toggle('on', v); x.setAttribute('aria-checked', v); });   // 0.37 제자리 전환
+    const m = document.getElementById('pr_mul'); if (m) m.textContent = `점수 배율 ×${optMul({ tier: META.tier, conds: META.conds }).toFixed(2)} · 보상은 성능에 영향 없음`;
   }));
-  on('pr_go', startRun);
+  on('pr_go', e => { uiSpark(e.currentTarget); startRun(); });
   on('pr_back', back);
 }

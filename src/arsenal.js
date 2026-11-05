@@ -23,7 +23,7 @@ Object.assign(WEAPONS, {
   beam: { name: '빛줄기', cat: 'magic', ic: '광', desc: '가까운 적 방향으로 0.6초간 꿰뚫는 광선',
     base: { dmg: 7, cd: 2.0, len: 250, wid: 9, dur: 0.6, tick: 0.1 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { cd: 0.15 }, { dmg: 0.3 }, { dmg: 0.2, area: 0.1 }] },
-  vortex: { name: '회오리', cat: 'magic', ic: '풍', desc: '천천히 나아가는 회오리, 주변 적을 끌어당기며 지속 피해',
+  vortex: { name: '회오리', cat: 'magic', ic: '풍', desc: '전방 적 무리 한가운데 회오리 생성, 주변 적을 끌어당기며 지속 피해',
     base: { dmg: 5, cd: 3.2, n: 1, R: 46, dur: 3, sp: 60, tick: 0.3, pull: 70 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { n: 1 }, { cd: 0.15 }, { dmg: 0.3 }] },
 });
@@ -101,13 +101,22 @@ Object.assign(WEAPON_FIRE, {
     if (!nearestEnemy(p.x, p.y, L)) return false;
     w.bm = { t: 0, tk: 0, a: aimAng(L), dur: D.dur + (w.br === 'track' ? 0.3 : 0), S, L, wd: D.wid * S.area, far: null };
   },
-  /* 회오리: 진행 방향 무작위 (가까운 적 쪽 편향) */
+  /* 회오리 (0.37): 전방 적 무리 지점(플레이어와 140 이상)에 생성, 바깥쪽으로 천천히 이동 */
   vortex(w, S) {
     const D = WEAPONS.vortex.base, p = G.p; if (!G.vortex) G.vortex = [];
+    const fa = Math.atan2(p.face.y, p.face.x), far = enemiesInRange(p.x, p.y, 440).filter(e => dist2(e.x, e.y, p.x, p.y) >= 140 * 140);
+    if (!far.length && !nearestEnemy(p.x, p.y, 440)) return false;
+    const front = far.filter(e => Math.cos(Math.atan2(e.y - p.y, e.x - p.x) - fa) > 0), pool = shuffle(front.length ? front : far).slice(0, 12);
+    const scored = pool.map(e => { let n = 0; gridQuery(e.x, e.y, 70, () => { n++; }); return [n, e]; }).sort((a, b) => b[0] - a[0]);
     for (let i = 0; i < S.n; i++) {
       if (G.vortex.length >= 8) G.vortex.shift();
-      const a = aimAng(300) + rand(-0.9, 0.9) + i * 2.1;
-      G.vortex.push({ x: p.x + Math.cos(a) * 30, y: p.y + Math.sin(a) * 30, vx: Math.cos(a) * D.sp, vy: Math.sin(a) * D.sp, t: 0, tk: 0, dur: D.dur + (w.br === 'storm' ? 1.5 : 0), R: D.R * S.area * (w.br === 'storm' ? 1.2 : 1), dmg: S.dmg, burst: w.br === 'burst', spin: rand(7) });
+      let x, y;
+      if (scored.length) { const e = (scored[i] || scored[0])[1], j = i && !scored[i] ? 40 : 0; x = e.x + rand(-j, j); y = e.y + rand(-j, j); }
+      else { const a = fa + i * 2.1; x = p.x + Math.cos(a) * 180; y = p.y + Math.sin(a) * 180; }
+      const dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy) || 1;
+      if (d < 140) { x = p.x + dx / d * 140; y = p.y + dy / d * 140; }
+      const a = Math.atan2(y - p.y, x - p.x) + rand(-0.5, 0.5), sp = D.sp * 0.5;
+      G.vortex.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: 0, tk: 0, dur: D.dur + (w.br === 'storm' ? 1.5 : 0), R: D.R * S.area * (w.br === 'storm' ? 1.2 : 1), dmg: S.dmg, burst: w.br === 'burst', spin: rand(7) });
     }
   },
 });
@@ -157,7 +166,7 @@ function updateArsenal(dt) {
     const D = WEAPONS.vortex.base;
     for (const v of G.vortex) {
       v.t += dt; v.tk -= dt; v.spin += dt * 9; v.x += v.vx * dt; v.y += v.vy * dt;
-      gridQuery(v.x, v.y, v.R * 1.6, e => { if (e.cmd || e.boss || e.gk) return; const dx = v.x - e.x, dy = v.y - e.y, d = Math.hypot(dx, dy) || 1; if (d > 8) { e.x += dx / d * D.pull * dt; e.y += dy / d * D.pull * dt; } });
+      gridQuery(v.x, v.y, v.R * 1.6, e => { if (e.cmd || e.boss || e.gk) return; if (dist2(e.x, e.y, G.p.x, G.p.y) < 90 * 90) return; const dx = v.x - e.x, dy = v.y - e.y, d = Math.hypot(dx, dy) || 1; if (d > 8) { e.x += dx / d * D.pull * dt; e.y += dy / d * D.pull * dt; } });
       if (v.tk <= 0) { v.tk = D.tick; gridQuery(v.x, v.y, v.R, e => damageEnemy(e, v.dmg, { src: 'vortex' })); }
       if (hasRelic('eyestorm')) for (const g of G.gems) if (!g.mag && dist2(g.x, g.y, v.x, v.y) < v.R * v.R * 2.2) g.mag = true;
       if (v.t >= v.dur) { v.dead = true; if (v.burst) explode(v.x, v.y, v.R * 1.3, v.dmg * 5, 'vortex_x', jobTint('magic') || '#c8f0ff'); }

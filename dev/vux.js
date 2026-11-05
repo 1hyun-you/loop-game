@@ -2,6 +2,7 @@
 // 사용: node dev/vux.js
 // 0.34 도감 7탭·게임 중 도감 점검 추가
 // 0.35 선택 화면 도감 버튼·복귀 점검 추가
+// 0.37 첫 화면 히어로형·고정 헤더·밀기 탭·분기 접기·설정 스위치·전직 2회 확정·회오리 생성 위치 점검 추가
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
 const ROOT = path.resolve(__dirname, '..'), PORT = 48291;
@@ -24,7 +25,7 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
         document.querySelectorAll('#ui button').forEach(e => {
           const q = e.getBoundingClientRect(); if (!q.width) return;
           const t = e.textContent.trim(), lh = parseFloat(getComputedStyle(e).lineHeight) || 20;
-          if (t.length <= 12 && !e.classList.contains('card') && e.scrollHeight > lh * 1.9 + parseFloat(getComputedStyle(e).paddingTop) * 2) bad.push('줄바꿈:' + t);
+          if (t.length && t.length <= 12 && !e.classList.contains('card') && e.scrollHeight > lh * 1.9 + parseFloat(getComputedStyle(e).paddingTop) * 2) bad.push('줄바꿈:' + t);
           if (q.height < 36 || q.width < 36) bad.push('작음:' + t + ' ' + Math.round(q.width) + 'x' + Math.round(q.height));
         });
         return bad;
@@ -39,17 +40,26 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
       chk(`[${W}x${H}] ${name} 스크롤 유지`, Math.abs(y1 - y0) < 2, `${y0}→${y1}`);
     };
     await audit('시작 화면');
+    chk(`[${W}x${H}] 첫 화면 일러스트·아이콘·기록 제거`, await ev(() => { const c = document.getElementById('herocv'), a = document.getElementById('codex'), b = document.getElementById('settings'); const qa = a.getBoundingClientRect(), qb = b.getBoundingClientRect(); return !!c && c.width === 144 && !document.querySelector('.layer.title .stats') && qa.left < innerWidth / 2 && qa.top < 90 && qb.left > innerWidth / 2 && qb.top < 90; }));
     await click('settings'); await wait(60); await audit('설정');
     await scrollKeep('설정 토글', 'button.tg[data-k]'); await scrollKeep('설정 조이스틱', '#s_joy');
+    chk(`[${W}x${H}] 설정 스위치 제자리 전환`, await ev(() => { const b = document.querySelector('button.tg[data-k="dmgNum"]'), v0 = SETTINGS.dmgNum; b.click(); const ok = SETTINGS.dmgNum !== v0 && b.isConnected && b.classList.contains('on') === SETTINGS.dmgNum; b.click(); return ok && SETTINGS.dmgNum === v0; }));
     await click('s_back');
     await click('codex'); await wait(60); await audit('도감');
     for (const t of ['w', 'p', 'r', 'j', 'e', 'f', 'u']) { await click(`[data-tab="${t}"]`); await wait(40); await audit('도감 ' + t); }
+    await click('[data-tab="w"]'); await wait(40);
+    chk(`[${W}x${H}] 도감 분기 접힘 기본·펼침`, await ev(() => { const d = [...document.querySelectorAll('details.acc')]; if (!d.length || d.some(x => x.open)) return false; d[0].querySelector('summary').click(); return d[0].open; }));
+    chk(`[${W}x${H}] 도감 고정 헤더`, await ev(() => { const L = document.querySelector('#ui>.layer'); L.scrollTop = 1500; const q = document.querySelector('.pgh').getBoundingClientRect(); return L.scrollTop > 0 && Math.abs(q.top) < 2; }));
+    const swipe = dx => ev(dx => { const L = document.querySelector('#ui>.layer'), t = (x) => new Touch({ identifier: 1, target: L, clientX: x, clientY: 400 }); L.dispatchEvent(new TouchEvent('touchstart', { touches: [t(200)], changedTouches: [t(200)], bubbles: true })); L.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [t(200 + dx)], bubbles: true })); return document.querySelector('[data-tab].on').dataset.tab; }, dx);
+    chk(`[${W}x${H}] 도감 밀기 탭 전환`, (await swipe(-120)) === 'p' && (await swipe(120)) === 'w' && (await swipe(20)) === 'w');
     await click('cx_back');
     await ev(() => { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify({ runs: 5, trueEnd: 1, tierMax: 3, titles: ['end', 't1'], frags: FRAGS.map(f => f.id), gates: GK_ORDER })); saveCache = null; showTitle(); });
     await audit('시작 화면(진엔딩 후)');
     await click('codex'); await click('[data-tab="u"]'); await wait(40); await audit('해금 현황'); await scrollKeep('해금 현황 칭호', '[data-t]'); await click('cx_back');
     await click('prep'); await wait(60); await audit('도전 준비');
-    await scrollKeep('도전 조건 토글', '[data-cond]'); await scrollKeep('고난도 단계', '[data-tier]:not([disabled])');
+    await scrollKeep('고난도 단계', '[data-tier]:not([disabled])');
+    await click('[data-ptab="c"]'); await wait(40); await audit('도전 준비 조건');
+    chk(`[${W}x${H}] 도전 조건 스위치 제자리 전환·배율 갱신`, await ev(() => { const b = document.querySelector('[data-cond]'), m = document.getElementById('pr_mul').textContent; b.click(); const ok = b.isConnected && b.classList.contains('on') && document.getElementById('pr_mul').textContent !== m; b.click(); return ok; }));
     await ev(() => { META.conds = []; META.tier = 0; saveMeta(); });
     await click('pr_back');
     // 판 진입 → 선택 화면
@@ -69,6 +79,9 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
         await click('cx_back'); await wait(60); chk(`[${W}x${H}] ${kd} 도감 → 선택 화면 복귀`, await ev(() => STATE.mode === 'select' && !!document.querySelector('.card[data-i]') && !!document.getElementById('cbtn')));
       }
       await ev(() => pickCard(0));
+      // 0.37 전직 2회 터치 확정
+      const jt = await ev(() => { G.sel = { kind: 'job', cards: jobCands(), offer: false }; STATE.mode = 'select'; renderSelect(); const c = () => document.querySelector('.card[data-i="0"]'); c().click(); const a = STATE.mode === 'select' && !G.p.job && c().classList.contains('armed') && /한 번 더/.test(document.querySelector('.sel-head .sub').textContent); c().click(); return { a, b: STATE.mode === 'play' && !!G.p.job }; });
+      chk(`[${W}x${H}] 전직 1회 강조·2회 확정`, jt.a && jt.b, JSON.stringify(jt));
     } else chk(`[${W}x${H}] 레벨업 선택 진입`, false, 'mode ' + await ev(() => STATE.mode));
     // 제외한 유물 재등장
     const rel = await ev(() => {
@@ -83,6 +96,19 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
       return { before, after, chest };
     });
     chk(`[${W}x${H}] 유물 제외 전 후보`, rel.before); chk(`[${W}x${H}] 유물 제외 후 미등장`, !rel.after && !rel.chest, JSON.stringify(rel));
+    // 0.37 회오리: 플레이어와 140 이상 떨어진 적 무리 지점 생성, 플레이어 근처 적 미흡인
+    const vx = await ev(() => {
+      G.enemies.length = 0; const p = G.p; p.face = { x: 1, y: 0 };
+      const mk = (x, y) => { const e = makeEnemy('slime', x, y); if (!G.enemies.includes(e)) G.enemies.push(e); return e; };
+      const near = mk(p.x + 40, p.y); for (let i = 0; i < 8; i++) mk(p.x + 230 + (i % 3) * 12, p.y + (i % 4) * 10);
+      gridBuild(G.enemies);
+      const w = G.p.weapons.find(x => x.id === 'vortex') || { id: 'vortex', lvl: 1 }; G.vortex = [];
+      WEAPON_FIRE.vortex(w, { dmg: 5, area: 1, n: 1 });
+      const v = G.vortex[0], d = v ? Math.hypot(v.x - p.x, v.y - p.y) : 0, nx = near.x;
+      for (let i = 0; i < 20; i++) updateArsenal(0.05);
+      return { d: Math.round(d), moved: Math.round(Math.abs(near.x - nx)) };
+    });
+    chk(`[${W}x${H}] 회오리 전방 무리 생성·근접 적 미흡인`, vx.d >= 140 && vx.moved === 0, JSON.stringify(vx));
     // 일시정지 화면
     await ev(() => { STATE.mode = 'play'; hideUI(); pauseGame(); }); await wait(60); await audit('일시정지');
     // 0.34 게임 중 도감: 진행 중 획득분 반영·탭 전환·복귀

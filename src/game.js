@@ -215,7 +215,7 @@ function hurtPlayer(dmg, src) {
   if (p.invT > 0 || STATE.dev.god || G.result) return;
   if (playerAvoid() || traitAvoid()) return;
   if (ultBlockHit()) return;                                 // 0.32 성군 보호막
-  dmg *= playerHurtMul() * traitHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK());   // 고난도 피해: 모든 피해원 공통 (0.15)
+  dmg *= playerHurtMul() * traitHurtMul() * (hasCurse('frail') ? 1.15 : 1) * (1 + tierK()) * (G.ph && G.ph.id === 'demon' ? DM_CFG.hurtMul : 1);   // 고난도 피해: 모든 피해원 공통 (0.15) · 0.37 마왕전 받는 피해 감소
   vibe(25); sfx('hurt');
   onPlayerHurt();
   G.ph.hurtEma += dmg / 40;                                  // 강함 판정용 최근 피해 (0.24)

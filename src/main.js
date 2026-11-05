@@ -34,23 +34,21 @@ function buildSummary() {
 /* 설정·도감·도전 준비 화면은 meta.js (0.14·0.15) */
 const on = (id, fn) => { const b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
 
-/* 시작 화면 — 배경은 새 판 들판(정지 상태), 기록 요약 표시 */
+/* 시작 화면 (0.37 히어로형): 도트 일러스트 배경, 하단 글씨 메뉴, 좌상단 도감·우상단 설정 아이콘, 기록류는 도감 해금 현황으로 이관 */
 function showTitle() {
   newRun(); STATE.mode = 'title';
   const s = loadSave(), ro = runOpt();
-  UI.innerHTML = `<div class="layer title">
-    <div class="ttl"><h1>회귀의 들판</h1><p class="sub">${s.trueEnd ? '고리가 끊긴 들판, 기억 속의 그림자와 겨루기' : '들판의 페이즈를 돌파하고 사문의 수문장을 쓰러뜨려 문을 열어라'}</p>${s.title && TITLES[s.title] ? `<p class="best">${TITLES[s.title]}</p>` : ''}</div>
-    <button class="pri big" id="start">시작</button>
-    ${s.trueEnd ? `<p class="hint">${optText(ro) || '기본 난이도'} · 점수 배율 ×${optMul(ro).toFixed(2)}</p>` : ''}
-    <div class="menu row2">${s.trueEnd ? '<button id="prep">도전 준비</button>' : ''}<button id="codex">도감</button><button id="settings">설정</button></div>
-    <div class="stats"><span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${(s.gates || []).length}/4</span><span>기록 조각</span><span>${(s.frags || []).length}/${FRAG_N}</span>${s.bestScore ? `<span>최고 점수</span><span>${s.bestScore}</span>` : ''}</div>
-    ${(s.gates || []).length ? `<p class="hint">${GK_ORDER.map(k => (s.gates.includes(k) ? '■ ' : '□ ') + GATEKEEPERS[k].gate).join(' · ')}</p>` : ''}
-    ${(s.gates || []).length >= 4 ? `<p class="best">마왕성 출현 · 도전 ${s.demonTries || 0}회 · 처치 ${s.demonKills || 0}회</p>` : ''}
-    <p class="hint">화면을 누른 채 끌어 이동 · 공격은 자동</p>
+  UI.innerHTML = `<div class="layer title hero">
+    <canvas class="herobg" id="herocv" aria-hidden="true"></canvas><div class="heroshade"></div>
+    ${icBtn('codex', 'book', '도감', 'tl')}${icBtn('settings', 'gear', '설정', 'tr')}
+    <div class="hlogo"><h1>회귀의 들판</h1>${s.title && TITLES[s.title] ? `<p class="best">${TITLES[s.title]}</p>` : ''}</div>
+    <div class="hmenu"><button class="txb main" id="start">시작</button>
+    ${s.trueEnd ? `<button class="txb" id="prep">도전 준비</button><p class="hint">${optText(ro) || '기본 난이도'} · 점수 배율 ×${optMul(ro).toFixed(2)}</p>` : ''}</div>
     <p class="ver">v${CFG.VERSION}</p></div>`;
-  on('start', startRun);
+  heroMount(document.getElementById('herocv'));
+  on('start', e => { uiSpark(e.currentTarget); startRun(); });
   on('settings', () => showSettings(showTitle));
-  on('codex', () => showCodex('f', showTitle));
+  on('codex', () => showCodex('w', showTitle));
   on('prep', () => showPrep(showTitle));
 }
 /* 0.25 휴대폰 뒤로가기: 플레이 중 일시정지, 일시정지·하위 화면은 이전 화면, 처음 화면은 2초 내 두 번 눌러 종료 */

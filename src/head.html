@@ -133,6 +133,79 @@ button.warn{background:#6a2a34;border-color:#c25060;font-size:14px}
 .card.armed{outline:3px solid #fff;outline-offset:1px}
 @media (orientation:landscape) and (pointer:coarse){.rot{display:flex}}
 @media (prefers-reduced-motion:reduce){button:active{transform:none}}
+
+/* ===== 0.37 화면 다듬기 ===== */
+button,.card,.chipb,.acc summary,.row.pick{transition:transform .2s,filter .2s,background-color .2s,border-color .2s,color .2s,opacity .2s}
+button:active{transform:none}
+button:not(:disabled):active,.acc summary:active{transform:scale(.95);filter:brightness(1.2)}
+.card:not(:disabled):active,.row.pick:not(:disabled):active{transform:scale(.98);filter:brightness(1.15)}
+@media (hover:hover){button:not(:disabled):hover,.acc summary:hover{filter:brightness(1.1)}}
+/* 화면 진입: 0.2초 흐림·이동 */
+#ui>.layer.enter{animation:lyIn .2s ease-out}
+@keyframes lyIn{from{opacity:0;filter:blur(3px);transform:translateY(8px)}}
+/* 선택 카드 순차 올라옴 · 등급 칩 튀어오름 */
+.layer.enter .cards>.card{animation:cdUp .26s ease-out both;animation-delay:calc(var(--i,0) * 55ms + 60ms)}
+.layer.enter .cards>.card .tag{animation:chipPop .3s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 55ms + 220ms)}
+@keyframes cdUp{from{opacity:0;transform:translateY(16px)}}
+@keyframes chipPop{from{opacity:0;transform:scale(.4)}}
+.card.armed{box-shadow:0 0 0 3px rgba(255,255,255,.18),0 0 18px rgba(255,224,138,.35);animation:armP .22s ease-out}
+@keyframes armP{40%{transform:scale(1.025)}}
+.sub.armtip{color:#ffe08a;animation:chipPop .22s ease-out}
+/* 확정 반짝임 */
+.spark{position:fixed;width:0;height:0;z-index:40;pointer-events:none}
+.spark i{position:absolute;left:-2px;top:-2px;width:5px;height:5px;background:var(--c);animation:spk .45s ease-out forwards}
+.spark i:nth-child(1){--a:0deg}.spark i:nth-child(2){--a:60deg}.spark i:nth-child(3){--a:120deg}.spark i:nth-child(4){--a:180deg}.spark i:nth-child(5){--a:240deg}.spark i:nth-child(6){--a:300deg}
+@keyframes spk{from{transform:rotate(var(--a)) translateX(6px);opacity:1}to{transform:rotate(var(--a)) translateX(38px) scale(.4);opacity:0}}
+/* 첫 화면 히어로형 */
+#ui>.layer.title.hero{padding:0;background:#15122e;overflow:hidden}
+.herobg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated;image-rendering:crisp-edges}
+.heroshade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,12,30,.35) 0%,rgba(14,12,30,0) 30%,rgba(14,12,30,0) 55%,rgba(14,12,22,.78) 100%);pointer-events:none}
+.hlogo{position:absolute;left:0;right:0;top:calc(var(--sat) + 15vh);text-align:center;padding:0 16px}
+.hlogo h1{margin:0;font-size:42px;letter-spacing:3px;color:#fff3d0;text-shadow:3px 3px 0 #3a2050,-1px -1px 0 #1b1626,1px -1px 0 #1b1626,-1px 1px 0 #1b1626,1px 1px 0 #1b1626}
+.hlogo .best{margin-top:8px;text-shadow:2px 2px 0 #1b1626}
+.hmenu{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 6vh);display:flex;flex-direction:column;align-items:center;gap:2px}
+button.txb{background:none;border:none;border-radius:8px;padding:10px 30px;font-size:21px;line-height:1.25;color:#e8e0f4;text-shadow:2px 2px 0 #1b1626;letter-spacing:1px;white-space:nowrap}
+button.txb.main{font-size:30px;color:#fff3d0;letter-spacing:4px;animation:breathe 2.4s ease-in-out infinite}
+button.txb::before{content:'';display:inline-block;width:0;margin-right:0;transition:width .2s,margin .2s}
+button.txb:active::before{width:.6em;margin-right:.2em;content:'▸'}
+@keyframes breathe{50%{opacity:.72}}
+.hmenu .hint{color:#d8d0ea;text-shadow:1px 1px 0 #1b1626;font-size:13px;margin-top:4px}
+.layer.hero .ver{color:#c8c0dc;text-shadow:1px 1px 0 #1b1626}
+.icb{width:44px;height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(20,18,32,.55);border:1px solid rgba(255,255,255,.16)}
+.icb img{width:24px;height:24px;image-rendering:pixelated;display:block}
+.icb.tl,.icb.tr{position:absolute;top:calc(var(--sat) + 12px)}.icb.tl{left:12px}.icb.tr{right:12px}
+/* 고정 헤더 + 밀기 탭 */
+#ui>.layer.pg{padding-top:0;gap:10px}
+.pgh{position:sticky;top:0;z-index:3;align-self:stretch;margin:0 -16px;padding:calc(var(--sat) + 8px) 12px 0;background:rgba(16,14,24,.97);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.pgt{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding-bottom:4px}
+.pgt h2{text-align:center;font-size:20px;margin:0}
+.pgt .icb{background:transparent;border-color:transparent}
+.pgh>.sub{margin:0 0 4px;font-size:13px}
+.ptabs{position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr)}
+.ptabs button{background:none;border:none;border-radius:0;padding:9px 0 12px;font-size:14px;color:var(--muted);white-space:nowrap;min-width:0}
+.ptabs button.on{color:var(--fg);font-weight:700}
+.ptabs .bar{position:absolute;bottom:0;height:3px;border-radius:2px 2px 0 0;background:var(--accent);width:calc(100% / var(--n));left:calc(100% / var(--n) * var(--i));transition:left .2s ease-out}
+.sl-l{animation:slL .2s ease-out}.sl-r{animation:slR .2s ease-out}
+@keyframes slL{from{opacity:0;transform:translateX(14px)}}@keyframes slR{from{opacity:0;transform:translateX(-14px)}}
+.pgb{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.pgf{position:sticky;bottom:0;width:100%;max-width:420px;margin-top:auto;padding:12px 0 4px;background:linear-gradient(180deg,rgba(14,12,22,0),rgba(14,12,22,.96) 35%)}
+.pgf button{width:100%}
+button.row.pick{width:100%;text-align:left;border-radius:10px;font-size:15px}
+button.row.pick.on{border-color:var(--accent);background:#2e2858}
+/* 설정 스위치: 손잡이 이동 */
+.row button.tg.sw{flex:0 0 56px;min-width:0;width:56px;height:38px;padding:0;border:none;background:none;position:relative}
+.tg.sw::before{content:'';position:absolute;left:2px;right:2px;top:8px;bottom:8px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);transition:background-color .2s,border-color .2s}
+.tg.sw i{position:absolute;top:12px;left:7px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:transform .2s ease-out,background-color .2s}
+.tg.sw.on::before{background:#463c8c;border-color:var(--accent)}.tg.sw.on i{transform:translateX(28px);background:#fff}
+/* 분기 접기 */
+.acc{margin-top:6px}
+.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:36px;padding:6px 10px;border-radius:6px;background:var(--panel2);font-size:12.5px;color:#c8b8ff}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::after{content:'▾';transition:transform .2s;color:var(--muted)}
+.acc[open] summary::after{transform:rotate(180deg)}
+.acc[open] .cxg{animation:accIn .2s ease-out}
+@keyframes accIn{from{opacity:0;transform:translateY(-4px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 <canvas id="c"></canvas>
 <div id="ui"></div>
