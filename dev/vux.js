@@ -1,5 +1,6 @@
 // 사용성 점검 (0.31): 토글 시 스크롤 유지, 제외한 유물 재등장, 화면별 가로 넘침·버튼 줄바꿈·작은 터치 영역
 // 사용: node dev/vux.js
+// 0.34 도감 7탭·게임 중 도감 점검 추가
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
 const ROOT = path.resolve(__dirname, '..'), PORT = 48291;
@@ -41,7 +42,7 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     await scrollKeep('설정 토글', 'button.tg[data-k]'); await scrollKeep('설정 조이스틱', '#s_joy');
     await click('s_back');
     await click('codex'); await wait(60); await audit('도감');
-    for (const t of ['w', 'e', 'u']) { await click(`[data-tab="${t}"]`); await wait(40); await audit('도감 ' + t); }
+    for (const t of ['w', 'p', 'r', 'j', 'e', 'f', 'u']) { await click(`[data-tab="${t}"]`); await wait(40); await audit('도감 ' + t); }
     await click('cx_back');
     await ev(() => { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify({ runs: 5, trueEnd: 1, tierMax: 3, titles: ['end', 't1'], frags: FRAGS.map(f => f.id), gates: GK_ORDER })); saveCache = null; showTitle(); });
     await audit('시작 화면(진엔딩 후)');
@@ -75,6 +76,12 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     chk(`[${W}x${H}] 유물 제외 전 후보`, rel.before); chk(`[${W}x${H}] 유물 제외 후 미등장`, !rel.after && !rel.chest, JSON.stringify(rel));
     // 일시정지 화면
     await ev(() => { STATE.mode = 'play'; hideUI(); pauseGame(); }); await wait(60); await audit('일시정지');
+    // 0.34 게임 중 도감: 진행 중 획득분 반영·탭 전환·복귀
+    await click('pcodex'); await wait(60); await audit('게임 중 도감');
+    const cw = await ev(() => { const id = G.p.weapons[0].id, nm = WEAPONS[id].name; const c = [...document.querySelectorAll('.cx')].find(x => x.querySelector('b').textContent === nm); return !!c && !c.classList.contains('dim'); });
+    chk(`[${W}x${H}] 게임 중 도감 획득분 반영`, cw);
+    for (const t of ['p', 'r', 'j', 'e']) { await click(`[data-tab="${t}"]`); await wait(40); await audit('게임 중 도감 ' + t); }
+    await click('cx_back'); await wait(60); chk(`[${W}x${H}] 도감 → 일시정지 복귀`, await ev(() => STATE.mode === 'pause' && !!document.getElementById('pcodex')));
     await click('psettings'); await wait(60); await audit('일시정지 설정'); await scrollKeep('일시정지 설정 토글', 'button.tg[data-k]');
     chk(`[${W}x${H}] 페이지 오류 0`, !errs.length, errs.slice(0, 2).join(' / '));
     await p.context().close();

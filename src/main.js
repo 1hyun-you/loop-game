@@ -85,9 +85,10 @@ function pauseGame() {
     <h2>일시정지</h2>
     <div class="stats" ${PAUSE_ABIL.on ? 'style="display:none"' : ''}><span>경과 시간</span><span>${fmtTime(G.time)}</span><span>페이즈</span><span>${P ? `${ph.i + 1}/${ph.order.length} ${curPhaseName()}` : '이동 중'}</span><span>레벨</span><span>${G.p.level}</span><span>체력</span><span>${Math.ceil(G.p.hp)}/${G.p.maxHp}</span></div>
     ${PAUSE_ABIL.on ? abilityHTML() : `<div class="build">${buildChips()}</div>`}
-    <div class="menu"><button class="pri" id="resume">계속</button><button id="pabil">${PAUSE_ABIL.on ? '능력 닫기' : '내 능력'}</button><button id="psettings">설정</button><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div>`;
+    <div class="menu"><button class="pri" id="resume">계속</button><button id="pabil">${PAUSE_ABIL.on ? '능력 닫기' : '내 능력'}</button><button id="pcodex">도감</button><button id="psettings">설정</button><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div>`;
   on('resume', resumeGame);
   on('pabil', () => { PAUSE_ABIL.on = !PAUSE_ABIL.on; STATE.mode = 'play'; pauseGame(); });
+  on('pcodex', () => showCodex('w', () => { STATE.mode = 'play'; pauseGame(); }));   // 0.34 게임 중 도감
   on('psettings', () => showSettings(() => { STATE.mode = 'play'; pauseGame(); }));
   on('restart', () => { if (confirmStep('restart')) newRun(); });
   on('home', () => { if (confirmStep('home')) showTitle(); });

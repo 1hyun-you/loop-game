@@ -70,7 +70,7 @@ function unlockTitle(s, id, R) { s.titles = s.titles || []; if (s.titles.include
 /* 판 종료 저장 — 도감 기록·점수·칭호 (finishRun에서 호출) */
 function metaSave(s) {
   const R = G.report, o = optOf(), add = (k, arr) => { s[k] = s[k] || []; for (const x of arr) if (x && !s[k].includes(x)) s[k].push(x); };
-  add('seenW', G.p.weapons.map(w => w.id)); add('seenE', Object.keys(G.stats.kt)); add('seenJ', [G.p.job]);
+  add('seenW', G.p.weapons.map(w => w.id)); add('seenE', Object.keys(G.stats.kt)); add('seenJ', [G.p.job]); add('seenP', G.p.passives.map(x => x.id)); add('seenR', G.p.relics);
   const ok = G.ph.log.filter(x => x[2] === 'ok' && x[0] !== 'gate' && x[0] !== 'demon').length, dm = R.demon, dk = dm && dm[0] === 'kill', gk = R.gate && R.gate[1] === 'kill';
   const base = Math.round(G.kills * 0.2) + ok * 150 + (gk ? 2000 : 0) + (dk ? 6000 : 0), mul = optMul(o);   // 점수 초기식 (5단계 조정)
   R.score = Math.round(base * mul); R.mul = +mul.toFixed(2); R.opt = [o.tier, o.conds.join(',')];
@@ -105,38 +105,7 @@ function showSettings(back) {
   on('s_back', back);
 }
 
-/* ---------- 도감 (무기·적·기록 조각·해금 현황) ---------- */
-const CODEX_TABS = [['w', '무기'], ['e', '적'], ['f', '기록 조각'], ['u', '해금 현황']];
-function codexEnemies() {
-  return ENEMY_ORDER.map(k => ({ id: k, nm: ENEMIES[k].name, ds: `체력 ${ENEMIES[k].hp} · 속도 ${ENEMIES[k].speed}`, col: ENEMIES[k].color, seen: s => (s.seenE || []).includes(k) }))
-    .concat(GK_ORDER.map(k => ({ id: k, nm: GATEKEEPERS[k].name, ds: `사문의 수문장 · ${GATEKEEPERS[k].gate} · ${GATEKEEPERS[k].ds}`, col: GATEKEEPERS[k].color, seen: s => (s.metGk || []).includes(k) || (s.gates || []).includes(k) })))
-    .concat([{ id: 'demon', nm: DEMON.name, ds: '마왕성의 주인 · 그림자 군주 → 암흑 결계 → 종언', col: DEMON.color, seen: s => !!(s.metDemon || s.demonTries) }]);
-}
-function showCodex(tab, back) {
-  const s = loadSave(); let body = '';
-  const item = (seen, col, ic, nm, tag, ds) => `<div class="cx ${seen ? '' : 'lock'}"><span class="ic" style="background:${seen ? col : 'var(--panel2)'}">${esc(seen ? ic : '?')}</span><div><b>${esc(seen ? nm : '???')}</b>${tag ? `<span class="tag">${esc(tag)}</span>` : ''}<p>${esc(ds)}</p></div></div>`;
-  if (tab === 'w') body = WEAPON_ORDER.map(id => { const d = WEAPONS[id], v = (s.seenW || []).includes(id); return item(v, CFG.colors[d.cat], d.ic, d.name, CAT_NAME[d.cat], v ? d.desc : '획득 시 기록'); }).join('');
-  if (tab === 'e') body = codexEnemies().map(x => { const v = x.seen(s); return item(v, x.col, x.nm.slice(0, 1), x.nm, '', v ? x.ds : '조우 시 기록'); }).join('');
-  if (tab === 'f') body = FRAGS.map((f, i) => { const v = (s.frags || []).includes(f.id); return item(v, '#e8d8ff', String(i + 1), f.nm, '', v ? f.tx : '해금 조건 · ' + f.cond); }).join('');
-  if (tab === 'u') {
-    const n = (a) => (s[a] || []).length, ce = codexEnemies(), titles = s.titles || [];
-    body = `<div class="stats">
-      <span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>열린 문</span><span>${n('gates')}/4</span>
-      <span>마왕 처치</span><span>${s.demonKills || 0}회</span><span>기록 조각</span><span>${n('frags')}/${FRAG_N}</span><span>무기 도감</span><span>${WEAPON_ORDER.filter(id => (s.seenW || []).includes(id)).length}/${WEAPON_ORDER.length}</span>
-      <span>적 도감</span><span>${ce.filter(x => x.seen(s)).length}/${ce.length}</span><span>경험한 직업</span><span>${n('seenJ')}/${JOB_ORDER.length}</span>
-      <span>진엔딩</span><span>${s.trueEnd ? '달성' : '-'}</span><span>최고 점수</span><span>${s.bestScore || 0}</span><span>최고 단계</span><span>${s.trueEnd ? TIERS[Math.min(3, s.tierMax || 1)].nm + ' 개방' : '-'}</span></div>
-      <h3>칭호</h3><div class="chips">${titles.length ? `<button class="chipb ${!s.title ? 'pri' : ''}" data-t="">없음</button>` + titles.map(t => `<button class="chipb ${s.title === t ? 'pri' : ''}" data-t="${t}">${esc(TITLES[t])}</button>`).join('') : '<p class="hint">진엔딩·고난도·도전 조건 첫 돌파 시 해금</p>'}</div>
-      <h3>주인공 색상</h3><div class="chips">${COLORS.map(C => { const v = colorOpen(s, C); return `<button class="chipb ${(s.color || 'base') === C.id ? 'pri' : ''}" data-c="${C.id}" ${v ? '' : 'disabled'}><i style="background:${C.c}"></i>${v ? C.nm : '잠김'}</button>`; }).join('')}</div>`;
-  }
-  UI.innerHTML = `<div class="layer scroll"><h2>도감</h2>
-    <div class="tabs">${CODEX_TABS.map(([k, nm]) => `<button class="${tab === k ? 'pri' : ''}" data-tab="${k}">${nm}</button>`).join('')}</div>
-    <div class="cxl">${body}</div><div class="menu"><button id="cx_back">돌아가기</button></div></div>`;
-  UI.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => showCodex(b.dataset.tab, back)));
-  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; keepScroll(() => showCodex('u', back)); };
-  UI.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => setS('title', b.dataset.t || null)));
-  UI.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => setS('color', b.dataset.c)));
-  on('cx_back', back);
-}
+/* ---------- 도감: codex.js (0.34 7탭·세부 수치·게임 중 열람) ---------- */
 
 /* ---------- 도전 준비 (진엔딩 후) ---------- */
 function showPrep(back) {
