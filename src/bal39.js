@@ -4,7 +4,7 @@
    — 판정: 적 탄환 대상 플레이어 판정 축소, 연속 피격 무적 연장, 수리검 튕김 감쇠, 회오리 중첩 제외, 폭탄 대상 근거리 밀집
    — 구조: 혼령 추적탄 격추, 대검 3타 강타, 얼음 고리 냉기 파쇄, 방패 중심 피해·이중 충격 재설계, 빛줄기 관통 연장, 초반 밀쳐냄
    ============================================================ */
-const BAL = { bulletHit: 0.55, chainWin: 1, chainInv: 1.0, cleave3: { area: 1.4, dmg: 2 }, chill: { need: 3, mul: 4, R: 36 }, shieldCore: 0.6, beamExt: 0.1, beamExtMax: 5, starDecay: 0.9, earlyPush: 120 };
+const BAL = { bulletHit: 0.55, chainWin: 1, chainInv: 1.0, cleave3: { area: 1.4, dmg: 2 }, chill: { need: 4, mul: 1.2, R: 36 }, shieldCore: 0.6, beamExt: 0.1, beamExtMax: 5, starDecay: 0.9, earlyPush: 120 };
 
 /* 판정: 적 탄환 대상 플레이어 판정 반지름 (p.r × 0.7 → 0.55) — 탄환 판정 함수는 boss.js updateBossFx 안 계수 교체 */
 /* 판정: 1초 안 두 번째 피격 시 무적 1.0초 · 초반 2분 접촉 적 밀쳐냄 */
@@ -77,7 +77,7 @@ damageEnemy = function (e, dmg, o = {}) {
   }
 };
 Object.assign(SRC_CAT, { icering_x: 'magic' }); Object.assign(ELEM, { icering_x: 'ice' });
-WEAPONS.icering.desc = '주변 냉기 고리, 적 둔화·지속 피해, 3회 누적 시 냉기 파쇄';
+WEAPONS.icering.desc = '주변 냉기 고리, 적 둔화·지속 피해, 4회 누적 시 냉기 파쇄';
 WEAPONS.shield.desc = '주변 적을 크게 밀쳐내는 충격, 가까운 적일수록 피해 증가';
 WEAPONS.cleave.desc = '가까운 적 방향 부채꼴 베기, 3타째 강타 (범위 1.4배·피해 2배)';
 WEAPONS.beam.desc = '가까운 적 방향으로 0.6초간 꿰뚫는 광선, 관통한 적 1체당 지속 +0.1초 (최대 +0.5초)';

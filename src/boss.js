@@ -228,7 +228,7 @@ function updateBossFx(dt) {
   dmFx(dt);                                                        // 마왕 결계·광선·부채꼴·추적탄 (0.12)
   for (const b of G.eb) {
     b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
-    if (!G.result && dist2(b.x, b.y, p.x, p.y) < (b.r + p.r * 0.7) ** 2) { b.life = 0; hurtPlayer(b.dmg, b.src); }
+    if (!G.result && dist2(b.x, b.y, p.x, p.y) < (b.r + p.r * 0.55) ** 2) { b.life = 0; hurtPlayer(b.dmg, b.src); }
   }
   G.eb = G.eb.filter(b => b.life > 0);
   for (const h of G.hz) {

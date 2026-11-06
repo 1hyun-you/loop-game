@@ -89,7 +89,7 @@ Object.assign(WEAPON_FIRE, {
     const D = WEAPONS.bomb.base, p = G.p, cand = shuffle(enemiesInRange(p.x, p.y, 320)).slice(0, 10);
     if (!cand.length) return false;
     if (!G.bombs) G.bombs = [];
-    const scored = cand.map(e => { let n = 0; gridQuery(e.x, e.y, 60, () => { n++; }); return [n, e]; }).sort((a, b) => b[0] - a[0]);
+    const scored = cand.map(e => { let n = 0; gridQuery(e.x, e.y, 60, () => { n++; }); return [n - Math.sqrt(dist2(e.x, e.y, p.x, p.y)) / 60, e]; }).sort((a, b) => b[0] - a[0]);   // 0.39 가까운 밀집 지점 우선
     for (let i = 0; i < S.n; i++) {
       const e = (scored[i] || scored[0])[1], j = i ? 30 : 0;
       G.bombs.push({ x0: p.x, y0: p.y, x: e.x + rand(-j, j), y: e.y + rand(-j, j), t: 0, fly: D.fly + i * 0.08, R: D.R * S.area, dmg: S.dmg, br: w.br });
@@ -167,7 +167,7 @@ function updateArsenal(dt) {
     for (const v of G.vortex) {
       v.t += dt; v.tk -= dt; v.spin += dt * 9; v.x += v.vx * dt; v.y += v.vy * dt;
       gridQuery(v.x, v.y, v.R * 1.6, e => { if (e.cmd || e.boss || e.gk) return; if (dist2(e.x, e.y, G.p.x, G.p.y) < 90 * 90) return; const dx = v.x - e.x, dy = v.y - e.y, d = Math.hypot(dx, dy) || 1; if (d > 8) { e.x += dx / d * D.pull * dt; e.y += dy / d * D.pull * dt; } });
-      if (v.tk <= 0) { v.tk = D.tick; gridQuery(v.x, v.y, v.R, e => damageEnemy(e, v.dmg, { src: 'vortex' })); }
+      if (v.tk <= 0) { v.tk = D.tick; gridQuery(v.x, v.y, v.R, e => { if ((e.vxT || 0) > G.time) return; e.vxT = G.time + D.tick * 0.9; damageEnemy(e, v.dmg, { src: 'vortex' }); }); }   // 0.39 회오리 중첩 지속 피해 중복 제외
       if (hasRelic('eyestorm')) for (const g of G.gems) if (!g.mag && dist2(g.x, g.y, v.x, v.y) < v.R * v.R * 2.2) g.mag = true;
       if (v.t >= v.dur) { v.dead = true; if (v.burst) explode(v.x, v.y, v.R * 1.3, v.dmg * 5, 'vortex_x', jobTint('magic') || '#c8f0ff'); }
     }
