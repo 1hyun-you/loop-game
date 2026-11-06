@@ -61,7 +61,7 @@ function cxWeapon(id, seen) {
     B.dur ? ['지속', B.dur + '초'] : null,
     ...Object.keys(etc).map(k => { const t = upText(id, { [k]: etc[k] }); const m = t.match(/^(.*?) ([+-].*)$/); return m ? [m[1], `<em>${esc(m[2])}</em>`] : null; }),
   ];
-  return cxCard({ dim: !seen, id, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxChips(chips), cxBr(BRANCHES[id], '3렙 분기')] });
+  return cxCard({ dim: !seen, id, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxChips(chips), cxBr(BRANCHES[id], '3렙 분기'), cxBr(AWAKEN[id], '6렙 각성')] });
 }
 /* 보조 효과: 1단계·5단계 문구의 수치만 화살표로 병합 */
 function cxRange(a, b) {
@@ -79,9 +79,9 @@ function cxRelic(id, seen) {
   return cxCard({ dim: !seen, col: '#ffd27a', ic: R.ic, nm: R.name, tag: '유물', lines: [`<div class="cxr">${cxMat(R.a)}<b>+</b>${cxMat(R.b)}</div>`, esc(R.ds)] });
 }
 function cxJob(id, seen) {
-  const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id], E1 = EXW1[id], E2 = EXW[id];
+  const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id];
   const cats = jobCats(id).map(c => CAT_NAME[c]).join('·');
-  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: cats + ' 계열', lines: [esc(J.rule), cxL('궁극기 ' + U[0], U[1]), cxL('계열 변환', `'${X.pre}' · ${X.ds} · 피해 +10%`), cxL('전용 무기', `${E1.name} → ${E2.name}`), cxBr(JOB2[id], '2차 전직')] });
+  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: cats + ' 계열', lines: [esc(J.rule), cxL('궁극기 ' + U[0], U[1]), cxL('계열 변환', `'${X.pre}' · ${X.ds} · 피해 +10%`), cxBr(JOB2[id], '2차 전직')] });
 }
 function cxEnemies(S) {
   const mob = ENEMY_ORDER.map(k => { const E = ENEMIES[k], v = S.seenE.has(k); return cxCard({ lock: !v, hint: '조우 시 기록', col: E.color, ic: E.name.slice(0, 1), nm: E.name, tag: '잡몹', lines: [cxL('능력치', `체력 ${E.hp} · 이동 ${E.speed} · 접촉 피해 ${E.dmg} · 경험치 ${E.xp}`), cxL('등장', `${E.from}분 이후`) + (E.mb ? ' · ' + esc(CX_MB[E.mb] || '') : '')] }); });

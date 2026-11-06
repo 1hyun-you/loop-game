@@ -16,6 +16,12 @@ const flows = {}; for (const r of ok) for (const x of r.flow || []) flows[x] = (
 // 피해 쏠림: 판별 최대 단일 피해원 비중
 const topShare = ok.map(r => (r.dmg && r.dmg[0]) ? r.dmg[0][1] : 0);
 const dmgAll = {}; for (const r of ok) for (const [k, v] of r.dmg || []) (dmgAll[k] = dmgAll[k] || []).push(v);
+// 0.38 피해원 → 무기 단위 통합 (분기·각성·유물 파생 피해원 합산)
+const SRC_W = { split: 'arrow', chain: 'lightning', mbolt: 'orb', mbolt_aw: 'orb', mbolt_x: 'orb', nova: 'orb', fireball_pool: 'fireball', fissure: 'slam', shatter: 'icering', icering_x: 'icering', bleed: 'knife', lance_x: 'lance', flail_q: 'flail', bomb_c: 'bomb', bomb_pool: 'bomb', vortex_x: 'vortex' };
+const wOf = k => SRC_W[k] || (k.endsWith('_aw') ? k.slice(0, -3) : k);
+const wShare = ok.map(r => { const m = {}; for (const [k, v] of r.dmg || []) { const w = wOf(k); m[w] = (m[w] || 0) + v; } return m; });
+const wOwnShare = {}; ok.forEach((r, i) => { for (const x of (r.build && r.build.w) || []) { const id = x.split(':')[0]; (wOwnShare[id] = wOwnShare[id] || []).push(wShare[i][id] || 0); } });
+const wTop = wShare.map(m => Math.max(0, ...Object.entries(m).filter(([k]) => k !== 'ult').map(([, v]) => v)));
 const pickMix = cnt(ok.flatMap(r => (r.picks || []).map(p => p.split(':')[1])));
 const wPick = cnt(ok.flatMap(r => (r.picks || []).filter(p => p.includes(':wnew:')).map(p => p.split(':')[2])));
 const out = {
@@ -32,6 +38,9 @@ const out = {
   topShareW4: (() => { const t = ok.filter(r => r.build && r.build.w.length >= 4).map(r => r.dmg && r.dmg[0] ? r.dmg[0][1] : 0); return { runs: t.length, avg: avg(t), over35: t.filter(x => x > 35).length }; })(),   // 0.17 판독 대상: 무기 4개 이상 보유 판 한정
   progress: (() => { const te = ok.findIndex(r => r.trueEnd), e1 = ok.findIndex(r => r.ending1); return { ending1Run: e1 < 0 ? null : e1 + 1, trueEndRun: te < 0 ? null : te + 1, fragsByRun: ok.slice(0, 8).map(r => r.frags) }; })(),   // 0.16 진엔딩 도달 판
   wBalance: (() => { const v = Object.values(dmgAll).map(avg); return { spreadPt: v.length ? +(Math.max(...v) - Math.min(...v)).toFixed(1) : null, target: 20 }; })(),   // 대체 지표: 무기별 보유 시 평균 비중 최대·최소 차(%p)
+  weaponOwnShare: Object.fromEntries(Object.entries(wOwnShare).map(([k, v]) => [k, [avg(v), v.length]]).sort((x, y) => y[1][0] - x[1][0])),   // 0.38 보유 시 무기 단위 평균 비중 [%, 보유 판]
+  weaponTop: { avg: avg(wTop), over35: wTop.filter(x => x > 35).length },   // 0.38 궁극기 제외 무기 단위 최대 비중
+  awaken: cnt(ok.flatMap(r => (r.branches || []).filter(b => b.includes(':aw:')))),
   dmgShareAvg: Object.fromEntries(Object.entries(dmgAll).map(([k, v]) => [k, avg(v)]).sort((x, y) => y[1] - x[1])),
   pickMix, newWeaponPicks: wPick, rerollsAvg: avg(ok.map(r => r.rerolls || 0)), banishAvg: avg(ok.map(r => r.banish || 0)),
   lastHit: cnt(ok.map(r => r.lastHit)),

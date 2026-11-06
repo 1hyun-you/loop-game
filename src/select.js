@@ -54,7 +54,7 @@ function abilityHTML() {
     h += '<h3>직업</h3>' + row(jobColor(p.job), J.ic, J.name, J2 ? '2차 · ' + J2.nm : '1차', J.rule + '\n궁극기 · ' + J.ult + (J2 ? '\n' + J2.nm + ' · ' + J2.ds : ''));
     if (p.exw1 || p.exw) { h += '<h3>전용 무기</h3>'; if (p.exw1) { const X = EXW1[p.exw1.id]; h += row('#ffd24a', X.ic, X.name, JOBS[p.job].name + ' 1차', X.ds, 'exw'); } if (p.exw) { const X = EXW[p.exw.id]; h += row('#ffd24a', X.ic, X.name, JOBS[p.job].name + ' 2차', X.ds, 'exw'); } }
     if (p.job === 'druid' && G.pets.length) h += '<h3>야수 동료</h3>' + ['wolf', 'bear'].map(k => { const n = G.pets.filter(m => m.kind === k).length; if (!n) return ''; const S = petStat(k), D = PET[k]; const B = bondOf(k); return row('#7fd07a', D.ic, D.name + (n > 1 ? ' ×' + n : '') + ` · 유대 Lv ${B.lv}`, B.lv < BOND_CFG.maxLv ? `다음 ${B.xp}/${bondNeed(B.lv)}` : '최대', `${B.perks.length ? '전용 능력: ' + B.perks.map(x => bondPerk(x).nm).join(', ') + '\n' : ''}피해 ${Math.round(S.dmg)} · 공격 간격 ${S.atk.toFixed(2)}초 · 이동 속도 ${Math.round(S.sp)}\n${k === 'wolf' ? '울부짖음' : '강타'} ${S.sk.toFixed(1)}초마다 · 범위 ${Math.round(S.skR)}`); }).join(''); }
-  if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; const wx = wxOn(d.cat) ? `\n${JOBS[p.job].name} 변환 · ${JOB_WX[p.job].ds}` : ''; return row(CFG.colors[d.cat], d.ic, wName(w.id), 'Lv ' + w.lvl, d.desc + wx + brNm(w.id, w.br), '', w.id); }).join('');
+  if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; const wx = wxOn(d.cat) ? `\n${JOBS[p.job].name} 변환 · ${JOB_WX[p.job].ds}` : ''; const ak = w.aw && AWAKEN[w.id].find(x => x.k === w.aw); return row(CFG.colors[d.cat], d.ic, wName(w.id), 'Lv ' + w.lvl, d.desc + wx + brNm(w.id, w.br) + (ak ? `\n각성 · ${ak.nm}: ${ak.ds}` : ''), '', w.id); }).join('');
   if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br), '', x.id); }).join('');
   if (p.relics.length) h += '<h3>유물</h3>' + p.relics.map(id => row('#ffd24a', RELICS[id].ic, RELICS[id].name, '', RELICS[id].ds)).join('');
   const tk = Object.keys(p.tr || {}); if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => row('#c8b0ff', TRAITS[k].ic, TRAITS[k].nm, '', TRAITS[k].ds)).join('');
@@ -72,8 +72,8 @@ function cardInfo(c) {
     case 'pnew': { const d = PASSIVES[c.id]; return { id: c.id, k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: '신규 · 보조 효과', ds: d.desc(1) }; }
     case 'pup': { const d = PASSIVES[c.id], L = passLv(c.id); return { id: c.id, k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: `Lv ${L} → ${L + 1}`, ds: d.desc(L + 1) }; }
     case 'relic': { const d = RELICS[c.id]; return { k: 'k-relic', col: '#ffd24a', ic: d.ic, nm: d.name, tag: `유물 · ${itemName(d.a)} + ${itemName(d.b)}`, ds: d.ds }; }
-    case 'branch': { const o = BRANCHES[c.id].find(x => x.k === c.k); return { id: c.id, k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + ' 분기', ds: o.ds }; }
-    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult + '\n전용 무기 · ' + EXW1[c.id].name + ' (' + EXW1[c.id].ds + ')' + '\n무기 변환 · ' + jobCats(c.id).map(x => CAT_NAME[x]).join('·') + ' 무기 → ' + JOB_WX[c.id].pre + ' 무기 (' + JOB_WX[c.id].ds + ')' }; }
+    case 'branch': { const o = (c.aw ? AWAKEN : BRANCHES)[c.id].find(x => x.k === c.k); return { id: c.id, k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + (c.aw ? ' 각성' : ' 분기'), ds: o.ds }; }
+    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult + '\n무기 변환 · ' + jobCats(c.id).map(x => CAT_NAME[x]).join('·') + ' 무기 → ' + JOB_WX[c.id].pre + ' 무기 (' + JOB_WX[c.id].ds + ')' }; }
     case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : jobColor(c.id), ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
     case 'campRest': return { k: 'k-fill', col: '#8ff0b0', ic: '휴', nm: '휴식', tag: '야영지', ds: '체력 전부 회복' };
     case 'campTrain': return { k: 'k-fill', col: '#7fe0ff', ic: '련', nm: '수련', tag: '야영지', ds: '즉시 레벨 업 2회' };
@@ -88,14 +88,14 @@ function cardInfo(c) {
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 const SEL_HEAD = {
   level: s => ['레벨 업', s.banish ? '제외할 카드 선택 · 이번 판에서 다시 등장하지 않음' : `Lv ${G.p.level - G.pendingLv} · 하나를 선택`],
-  branch: s => ['분기 선택', `${itemName(s.q.id)} 강화 ${BRANCH_AT}단계 · 플레이 방식 선택`],
+  branch: s => s.q.aw ? ['무기 각성', `${itemName(s.q.id)} ${AWAKEN_AT}레벨 · 각성 1종 선택`] : ['분기 선택', `${itemName(s.q.id)} 강화 ${BRANCH_AT}단계 · 플레이 방식 선택`],
   chest: () => ['보물 상자', '정예 처치 보상 · 하나를 선택'],
   job: s => ['전직 제단', s.offer ? '봉헌할 무기 선택 · 무기가 사라지고 다른 직업 3종 호출' : '직업 선택 · 무기 봉헌 시 다시 호출'],
   camp: () => ['떠돌이 야영지', '휴식·보상 중 하나를 선택'],
   door: () => ['봉인된 문', '저주를 받아들이면 문이 열림'],
   start: () => ['출발 무기', '이번 판의 첫 무기 선택'],
   bond: s => ['유대 성장', `${PET[s.q.id || s.q.kind].name} 유대 Lv ${BOND_CFG.tiers[s.q.ti]} · 전용 능력 선택`],
-  job2: () => ['2차 전직', `${JOBS[G.p.job].name} · 필수 선택 · 전용 무기 ${EXW[G.p.job].name} 지급`],
+  job2: () => ['2차 전직', `${JOBS[G.p.job].name} · 필수 선택`],
 };
 function renderSelect() { const s0 = G.sel; if (s0 && s0._drawn && !s0._top) return keepScroll(renderSelect0); if (s0) { s0._drawn = true; s0._top = false; } renderSelect0(); }
 function renderSelect0() {

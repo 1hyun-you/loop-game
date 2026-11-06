@@ -162,7 +162,7 @@ function updateEnemies(dt) {
     if (ct) { const cx = ct.x - e.x, cy = ct.y - e.y, cd = Math.hypot(cx, cy) || 1; if (cd > e.r + ct.r) { e.x += cx / cd * sp * dt; e.y += cy / cd * sp * dt; } }
     else { e.x += dx / d * sp * dt; e.y += dy / d * sp * dt; }
     if (d > farR && !e.fixed && !e.sleep) { const q = e.cmd ? ringAt(VIEW.w * 0.6, VIEW.w * 0.7) : ringPos(10); e.x = q.x; e.y = q.y; e.kbx = e.kby = 0; }   // 시야 밖 재배치
-    if (d < e.r + p.r - 3 && !e.fixed && !e.sleep) hurtPlayer(e.dmg, ENEMIES[e.type].name);
+    if (d < e.r + p.r - 3 && !e.fixed && !e.sleep) hurtPlayer(e.dmg, ENEMIES[e.type].name, e);
   }
   // 적끼리 겹침 완화(가벼운 분리)
   for (const e of G.enemies) {

@@ -98,7 +98,7 @@ function offerWeapon(id) {
 }
 function leaveAltar() { G.altar = null; G.sel = null; hideUI(); STATE.mode = 'play'; G.stats.altarLeave++; toast('제단을 떠남 · 다음 페이즈 뒤 재등장', '#bfb6d6'); }
 function applyJob(id) {
-  const p = G.p; p.job = id; p.jobAt = G.ph.i; p.ult = 50; G.altar = null; p.exw1 = { id, t: 1 };   // 0.27 1차 전용 무기
+  const p = G.p; p.job = id; p.jobAt = G.ph.i; p.ult = 50; G.altar = null;   // 0.38 전용 무기 폐지
   G.stats.job = id; G.stats.jobAt = Math.round(G.time);
   if (id === 'druid') petsInit();
   recalc(); jobCeremony(id, false);                         // 0.26 전직 연출·무기 변환 안내
@@ -109,7 +109,8 @@ function openJob2() {
   renderSelect(); autoLater();
 }
 function applyJob2(k) {
-  const p = G.p; p.job2 = k; p.exw = { id: p.job, t: 0.5 }; G.stats.job2 = k; G.stats.job2At = Math.round(G.time);
+  const p = G.p; p.job2 = k;   // 0.38 전용 무기 폐지
+  G.stats.job2 = k; G.stats.job2At = Math.round(G.time);
   if (k === 'veteran') { p.vet = true; }
   if (k === 'pack') { addPet('wolf'); addPet('wolf'); }
   recalc(); jobCeremony(p.job, true);
