@@ -1,0 +1,497 @@
+{
+ "v": "0.38",
+ "errs": [],
+ "res": {
+  "aw": [
+   {
+    "id": "cleave",
+    "k": "wave",
+    "nm": "검기 사출",
+    "base": 5584,
+    "dmg": 7488,
+    "ratio": 1.34,
+    "aws": [
+     "cleave_aw"
+    ]
+   },
+   {
+    "id": "cleave",
+    "k": "exec",
+    "nm": "처형",
+    "base": 5584,
+    "dmg": 5440,
+    "ratio": 0.97,
+    "aws": []
+   },
+   {
+    "id": "spin",
+    "k": "burst",
+    "nm": "검무 확산",
+    "base": 14027,
+    "dmg": 12266,
+    "ratio": 0.87,
+    "aws": []
+   },
+   {
+    "id": "spin",
+    "k": "wall",
+    "nm": "칼날 방벽",
+    "base": 14027,
+    "dmg": 18227,
+    "ratio": 1.3,
+    "aws": []
+   },
+   {
+    "id": "shield",
+    "k": "chain",
+    "nm": "충돌 연쇄",
+    "base": 9932,
+    "dmg": 19720,
+    "ratio": 1.99,
+    "aws": [
+     "shield_aw"
+    ]
+   },
+   {
+    "id": "shield",
+    "k": "counter",
+    "nm": "반격 태세",
+    "base": 9932,
+    "dmg": 10803,
+    "ratio": 1.09,
+    "aws": []
+   },
+   {
+    "id": "slam",
+    "k": "ripple",
+    "nm": "3겹 확산",
+    "base": 12714,
+    "dmg": 26044,
+    "ratio": 2.05,
+    "aws": []
+   },
+   {
+    "id": "slam",
+    "k": "grav",
+    "nm": "중력장",
+    "base": 12714,
+    "dmg": 15628,
+    "ratio": 1.23,
+    "aws": []
+   },
+   {
+    "id": "lance",
+    "k": "charge",
+    "nm": "돌격 창",
+    "base": 6523,
+    "dmg": 6730,
+    "ratio": 1.03,
+    "aws": []
+   },
+   {
+    "id": "lance",
+    "k": "rapid",
+    "nm": "연속 찌르기",
+    "base": 6523,
+    "dmg": 12700,
+    "ratio": 1.95,
+    "aws": []
+   },
+   {
+    "id": "flail",
+    "k": "cent",
+    "nm": "원심력",
+    "base": 839,
+    "dmg": 637,
+    "ratio": 0.76,
+    "aws": []
+   },
+   {
+    "id": "flail",
+    "k": "bind",
+    "nm": "사슬 포박",
+    "base": 839,
+    "dmg": 890,
+    "ratio": 1.06,
+    "aws": []
+   },
+   {
+    "id": "arrow",
+    "k": "rain",
+    "nm": "화살비",
+    "base": 4860,
+    "dmg": 7249,
+    "ratio": 1.49,
+    "aws": [
+     "arrow_aw"
+    ]
+   },
+   {
+    "id": "arrow",
+    "k": "snipe",
+    "nm": "저격",
+    "base": 4860,
+    "dmg": 5089,
+    "ratio": 1.05,
+    "aws": []
+   },
+   {
+    "id": "boomerang",
+    "k": "heavy",
+    "nm": "분쇄 도끼",
+    "base": 4052,
+    "dmg": 5507,
+    "ratio": 1.36,
+    "aws": []
+   },
+   {
+    "id": "boomerang",
+    "k": "orbit",
+    "nm": "궤도 도끼",
+    "base": 4052,
+    "dmg": 4243,
+    "ratio": 1.05,
+    "aws": []
+   },
+   {
+    "id": "knife",
+    "k": "storm",
+    "nm": "단검 폭풍",
+    "base": 4218,
+    "dmg": 5806,
+    "ratio": 1.38,
+    "aws": []
+   },
+   {
+    "id": "knife",
+    "k": "venom",
+    "nm": "맹독",
+    "base": 4218,
+    "dmg": 24295,
+    "ratio": 5.76,
+    "aws": [
+     "knife_aw"
+    ]
+   },
+   {
+    "id": "trap",
+    "k": "chain",
+    "nm": "연쇄 기폭",
+    "base": 33134,
+    "dmg": 44200,
+    "ratio": 1.33,
+    "aws": []
+   },
+   {
+    "id": "trap",
+    "k": "lure",
+    "nm": "미끼 덫",
+    "base": 33134,
+    "dmg": 38766,
+    "ratio": 1.17,
+    "aws": []
+   },
+   {
+    "id": "shuriken",
+    "k": "ret",
+    "nm": "귀환 수리검",
+    "base": 3558,
+    "dmg": 5633,
+    "ratio": 1.58,
+    "aws": [
+     "shuriken_aw"
+    ]
+   },
+   {
+    "id": "shuriken",
+    "k": "big",
+    "nm": "대형 수리검",
+    "base": 3558,
+    "dmg": 10115,
+    "ratio": 2.84,
+    "aws": []
+   },
+   {
+    "id": "bomb",
+    "k": "chain",
+    "nm": "연쇄 폭발",
+    "base": 20510,
+    "dmg": 29665,
+    "ratio": 1.45,
+    "aws": [
+     "bomb_aw"
+    ]
+   },
+   {
+    "id": "bomb",
+    "k": "stick",
+    "nm": "부착 폭탄",
+    "base": 20510,
+    "dmg": 27148,
+    "ratio": 1.32,
+    "aws": []
+   },
+   {
+    "id": "fireball",
+    "k": "meteor",
+    "nm": "유성",
+    "base": 15060,
+    "dmg": 19239,
+    "ratio": 1.28,
+    "aws": [
+     "fireball_aw"
+    ]
+   },
+   {
+    "id": "fireball",
+    "k": "shard",
+    "nm": "화염 파편",
+    "base": 15060,
+    "dmg": 14810,
+    "ratio": 0.98,
+    "aws": [
+     "fireball_aw"
+    ]
+   },
+   {
+    "id": "lightning",
+    "k": "cloud",
+    "nm": "뇌운",
+    "base": 1637,
+    "dmg": 2111,
+    "ratio": 1.29,
+    "aws": [
+     "lightning_aw"
+    ]
+   },
+   {
+    "id": "lightning",
+    "k": "over",
+    "nm": "과충전",
+    "base": 1637,
+    "dmg": 1755,
+    "ratio": 1.07,
+    "aws": []
+   },
+   {
+    "id": "icering",
+    "k": "zero",
+    "nm": "절대 영도",
+    "base": 17516,
+    "dmg": 18808,
+    "ratio": 1.07,
+    "aws": []
+   },
+   {
+    "id": "icering",
+    "k": "armor",
+    "nm": "서리 갑옷",
+    "base": 17516,
+    "dmg": 16175,
+    "ratio": 0.92,
+    "aws": []
+   },
+   {
+    "id": "orb",
+    "k": "sat",
+    "nm": "위성 구체",
+    "base": 1444,
+    "dmg": 1829,
+    "ratio": 1.27,
+    "aws": []
+   },
+   {
+    "id": "orb",
+    "k": "split",
+    "nm": "분열 구체",
+    "base": 1444,
+    "dmg": 2638,
+    "ratio": 1.83,
+    "aws": [
+     "mbolt_aw"
+    ]
+   },
+   {
+    "id": "beam",
+    "k": "focus",
+    "nm": "집광",
+    "base": 7398,
+    "dmg": 9827,
+    "ratio": 1.33,
+    "aws": []
+   },
+   {
+    "id": "beam",
+    "k": "refract",
+    "nm": "굴절",
+    "base": 7398,
+    "dmg": 8149,
+    "ratio": 1.1,
+    "aws": [
+     "beam_aw"
+    ]
+   },
+   {
+    "id": "vortex",
+    "k": "merge",
+    "nm": "대회오리",
+    "base": 3431,
+    "dmg": 4512,
+    "ratio": 1.31,
+    "aws": []
+   },
+   {
+    "id": "vortex",
+    "k": "blade",
+    "nm": "진공 칼날",
+    "base": 3431,
+    "dmg": 5580,
+    "ratio": 1.63,
+    "aws": [
+     "vortex_aw"
+    ]
+   }
+  ],
+  "job": [
+   {
+    "j": "warrior",
+    "ws": [
+     "cleave",
+     "spin",
+     "shield"
+    ],
+    "base": 22474,
+    "conv": 36717,
+    "ratio": 1.63,
+    "allRatio": 1.63
+   },
+   {
+    "j": "rogue",
+    "ws": [
+     "cleave",
+     "spin",
+     "shield"
+    ],
+    "base": 22105,
+    "conv": 24849,
+    "ratio": 1.12,
+    "allRatio": 1.12
+   },
+   {
+    "j": "sovereign",
+    "ws": [
+     "cleave",
+     "spin",
+     "shield"
+    ],
+    "base": 22806,
+    "conv": 31226,
+    "ratio": 1.37,
+    "allRatio": 1.37
+   },
+   {
+    "j": "archer",
+    "ws": [
+     "arrow",
+     "boomerang",
+     "knife"
+    ],
+    "base": 13061,
+    "conv": 17257,
+    "ratio": 1.32,
+    "allRatio": 5.45
+   },
+   {
+    "j": "engineer",
+    "ws": [
+     "arrow",
+     "boomerang",
+     "knife"
+    ],
+    "base": 13074,
+    "conv": 18077,
+    "ratio": 1.38,
+    "allRatio": 1.41
+   },
+   {
+    "j": "chrono",
+    "ws": [
+     "arrow",
+     "boomerang",
+     "knife"
+    ],
+    "base": 13017,
+    "conv": 16099,
+    "ratio": 1.24,
+    "allRatio": 1.24
+   },
+   {
+    "j": "mage",
+    "ws": [
+     "fireball",
+     "lightning",
+     "icering"
+    ],
+    "base": 29443,
+    "conv": 25583,
+    "ratio": 0.87,
+    "allRatio": 2.68
+   },
+   {
+    "j": "summoner",
+    "ws": [
+     "fireball",
+     "lightning",
+     "icering"
+    ],
+    "base": 28871,
+    "conv": 35810,
+    "ratio": 1.24,
+    "allRatio": 1.27
+   },
+   {
+    "j": "priest",
+    "ws": [
+     "fireball",
+     "lightning",
+     "icering"
+    ],
+    "base": 29494,
+    "conv": 29868,
+    "ratio": 1.01,
+    "allRatio": 1.16
+   },
+   {
+    "j": "druid",
+    "ws": [
+     "cleave",
+     "spin",
+     "shield"
+    ],
+    "base": 23232,
+    "conv": 22107,
+    "ratio": 0.95,
+    "allRatio": 1.09
+   }
+  ],
+  "flow": {
+   "queued": [
+    {
+     "kind": "w",
+     "id": "arrow",
+     "aw": true
+    }
+   ],
+   "kind": "branch",
+   "cards": [
+    "rain",
+    "snipe"
+   ],
+   "head": "무기 각성",
+   "aw": "rain",
+   "branches": [
+    "arrow:aw:rain"
+   ]
+  }
+ }
+}
