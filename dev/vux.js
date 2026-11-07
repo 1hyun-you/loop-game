@@ -2,6 +2,7 @@
 // 사용: node dev/vux.js
 // 0.34 도감 7탭·게임 중 도감 점검 추가
 // 0.35 선택 화면 도감 버튼·복귀 점검 추가
+// 0.40 좌우 끌기 탭(탭별 스크롤)·화면 진입 시 배경 불투명 유지 점검 추가
 // 0.37 첫 화면 히어로형·고정 헤더·밀기 탭·분기 접기·설정 스위치·전직 2회 확정·회오리 생성 위치 점검 추가
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
@@ -21,8 +22,9 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     const audit = async (name) => {
       const r = await ev(() => {
         const vw = innerWidth, bad = [];
-        document.querySelectorAll('#ui *').forEach(e => { const q = e.getBoundingClientRect(); if (q.width && (q.right > vw + 1 || q.left < -1)) bad.push('넘침:' + (e.id || e.className || e.tagName) + ' ' + Math.round(q.left) + '~' + Math.round(q.right)); });
+        document.querySelectorAll('#ui *').forEach(e => { if (e.closest('.pgp:not(.on)') || e.classList.contains('pgtr')) return; const q = e.getBoundingClientRect(); if (q.width && (q.right > vw + 1 || q.left < -1)) bad.push('넘침:' + (e.id || e.className || e.tagName) + ' ' + Math.round(q.left) + '~' + Math.round(q.right)); });
         document.querySelectorAll('#ui button').forEach(e => {
+          if (e.closest('.pgp:not(.on)')) return;
           const q = e.getBoundingClientRect(); if (!q.width) return;
           const t = e.textContent.trim(), lh = parseFloat(getComputedStyle(e).lineHeight) || 20;
           if (t.length && t.length <= 12 && !e.classList.contains('card') && e.scrollHeight > lh * 1.9 + parseFloat(getComputedStyle(e).paddingTop) * 2) bad.push('줄바꿈:' + t);
@@ -33,10 +35,10 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
       chk(`[${W}x${H}] ${name} 배치`, !r.length, r.slice(0, 4).join(' / '));
     };
     const scrollKeep = async (name, sel) => {
-      const y0 = await ev(() => { const a = document.querySelector('#ui>.layer'); a.scrollTop = a.scrollHeight; return a.scrollTop; });
+      const y0 = await ev(() => { const a = document.querySelector('#ui .pgp.on') || document.querySelector('#ui>.layer'); a.scrollTop = a.scrollHeight; return a.scrollTop; });
       if (!y0) { chk(`[${W}x${H}] ${name} 스크롤 유지`, true, '스크롤 없음'); return; }
       await ev(s => { const all = document.querySelectorAll(s); all[all.length - 1].click(); }, sel); await wait(60);
-      const y1 = await ev(() => document.querySelector('#ui>.layer').scrollTop);
+      const y1 = await ev(() => (document.querySelector('#ui .pgp.on') || document.querySelector('#ui>.layer')).scrollTop);
       chk(`[${W}x${H}] ${name} 스크롤 유지`, Math.abs(y1 - y0) < 2, `${y0}→${y1}`);
     };
     await audit('시작 화면');
@@ -46,19 +48,32 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     chk(`[${W}x${H}] 설정 스위치 제자리 전환`, await ev(() => { const b = document.querySelector('button.tg[data-k="dmgNum"]'), v0 = SETTINGS.dmgNum; b.click(); const ok = SETTINGS.dmgNum !== v0 && b.isConnected && b.classList.contains('on') === SETTINGS.dmgNum; b.click(); return ok && SETTINGS.dmgNum === v0; }));
     await click('s_back');
     await click('codex'); await wait(60); await audit('도감');
-    for (const t of ['w', 'p', 'r', 'j', 'e', 'f', 'u']) { await click(`[data-tab="${t}"]`); await wait(40); await audit('도감 ' + t); }
-    await click('[data-tab="w"]'); await wait(40);
+    for (const t of ['w', 'p', 'r', 'j', 'e', 'f', 'u']) { await click(`[data-tab="${t}"]`); await wait(320); await audit('도감 ' + t); }
+    await click('[data-tab="w"]'); await wait(320);
     chk(`[${W}x${H}] 도감 분기 접힘 기본·펼침`, await ev(() => { const d = [...document.querySelectorAll('details.acc')]; if (!d.length || d.some(x => x.open)) return false; d[0].querySelector('summary').click(); return d[0].open; }));
-    chk(`[${W}x${H}] 도감 고정 헤더`, await ev(() => { const L = document.querySelector('#ui>.layer'); L.scrollTop = 1500; const q = document.querySelector('.pgh').getBoundingClientRect(); return L.scrollTop > 0 && Math.abs(q.top) < 2; }));
-    const swipe = dx => ev(dx => { const L = document.querySelector('#ui>.layer'), t = (x) => new Touch({ identifier: 1, target: L, clientX: x, clientY: 400 }); L.dispatchEvent(new TouchEvent('touchstart', { touches: [t(200)], changedTouches: [t(200)], bubbles: true })); L.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [t(200 + dx)], bubbles: true })); return document.querySelector('[data-tab].on').dataset.tab; }, dx);
-    chk(`[${W}x${H}] 도감 밀기 탭 전환`, (await swipe(-120)) === 'p' && (await swipe(120)) === 'w' && (await swipe(20)) === 'w');
+    chk(`[${W}x${H}] 도감 고정 헤더`, await ev(() => { const L = document.querySelector('#ui .pgp.on'); L.scrollTop = 1500; const q = document.querySelector('.pgh').getBoundingClientRect(); return L.scrollTop > 0 && Math.abs(q.top) < 2; }));
+    const swipe = async (dx, mv = true) => { await ev(([dx, mv]) => { const V = document.querySelector('.pgv'), t = (x) => new Touch({ identifier: 1, target: V, clientX: x, clientY: 400 });
+      V.dispatchEvent(new TouchEvent('touchstart', { touches: [t(200)], changedTouches: [t(200)], bubbles: true }));
+      if (mv) for (const k of [0.25, 0.6, 1]) V.dispatchEvent(new TouchEvent('touchmove', { touches: [t(200 + dx * k)], changedTouches: [t(200 + dx * k)], bubbles: true, cancelable: true }));
+      V.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [t(200 + dx)], bubbles: true })); }, [dx, mv]); await wait(320);
+      return ev(() => document.querySelector('.ptabs button.on').dataset.tab + '|' + document.querySelector('.pgp.on').dataset.pk); };
+    chk(`[${W}x${H}] 도감 좌우 끌기 탭 전환`, (await swipe(-120)) === 'p|p' && (await swipe(120)) === 'w|w' && (await swipe(20)) === 'w|w' && (await swipe(120)) === 'w|w');
+    chk(`[${W}x${H}] 끌기 중 화면 따라 이동·탭별 스크롤`, await ev(() => { const V = document.querySelector('.pgv'), T = V.querySelector('.pgtr'), t = (x) => new Touch({ identifier: 1, target: V, clientX: x, clientY: 400 });
+      V.dispatchEvent(new TouchEvent('touchstart', { touches: [t(250)], changedTouches: [t(250)], bubbles: true }));
+      V.dispatchEvent(new TouchEvent('touchmove', { touches: [t(170)], changedTouches: [t(170)], bubbles: true, cancelable: true }));
+      const m = new DOMMatrix(getComputedStyle(T).transform).m41, nb = document.querySelector('.pgp[data-pk="p"]').getBoundingClientRect().left;
+      V.dispatchEvent(new TouchEvent('touchcancel', { touches: [], changedTouches: [t(170)], bubbles: true }));
+      const a = document.querySelector('.pgp[data-pk="w"]'), b = document.querySelector('.pgp[data-pk="p"]'); b.scrollTop = 0;
+      return Math.abs(m + 80) < 2 && nb < innerWidth && nb > 0 && a.scrollTop > 0 && b.scrollTop === 0; }));
+    chk(`[${W}x${H}] 탭 누름 시 끌기 탭 이동`, await (async () => { await click('[data-tab="j"]'); await wait(320); return ev(() => { const q = document.querySelector('.pgp[data-pk="j"]').getBoundingClientRect(); return document.querySelector('.pgp.on').dataset.pk === 'j' && Math.abs(q.left) < 2; }); })());
+    chk(`[${W}x${H}] 화면 진입 시 배경 불투명 유지`, await ev(async () => { showTitle(); await new Promise(r => setTimeout(r, 0)); const a = getComputedStyle(document.querySelector('#ui>.layer')).animationName; showCodex('w', showTitle); await new Promise(r => setTimeout(r, 0)); const L = document.querySelector('#ui>.layer'), c = getComputedStyle(L.querySelector('.pgv')).animationName; return a === 'none' && getComputedStyle(L).animationName === 'none' && getComputedStyle(L).opacity === '1' && L.classList.contains('enter') && c === 'lyIn'; }));
     await click('cx_back');
     await ev(() => { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify({ runs: 5, trueEnd: 1, tierMax: 3, titles: ['end', 't1'], frags: FRAGS.map(f => f.id), gates: GK_ORDER })); saveCache = null; showTitle(); });
     await audit('시작 화면(진엔딩 후)');
-    await click('codex'); await click('[data-tab="u"]'); await wait(40); await audit('해금 현황'); await scrollKeep('해금 현황 칭호', '[data-t]'); await click('cx_back');
+    await click('codex'); await click('[data-tab="u"]'); await wait(320); await audit('해금 현황'); await scrollKeep('해금 현황 칭호', '[data-t]'); await click('cx_back');
     await click('prep'); await wait(60); await audit('도전 준비');
     await scrollKeep('고난도 단계', '[data-tier]:not([disabled])');
-    await click('[data-ptab="c"]'); await wait(40); await audit('도전 준비 조건');
+    await click('[data-ptab="c"]'); await wait(320); await audit('도전 준비 조건');
     chk(`[${W}x${H}] 도전 조건 스위치 제자리 전환·배율 갱신`, await ev(() => { const b = document.querySelector('[data-cond]'), m = document.getElementById('pr_mul').textContent; b.click(); const ok = b.isConnected && b.classList.contains('on') && document.getElementById('pr_mul').textContent !== m; b.click(); return ok; }));
     await ev(() => { META.conds = []; META.tier = 0; saveMeta(); });
     await click('pr_back');
@@ -115,7 +130,7 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     await click('pcodex'); await wait(60); await audit('게임 중 도감');
     const cw = await ev(() => { const id = G.p.weapons[0].id, nm = WEAPONS[id].name; const c = [...document.querySelectorAll('.cx')].find(x => x.querySelector('b').textContent === nm); return !!c && !c.classList.contains('dim'); });
     chk(`[${W}x${H}] 게임 중 도감 획득분 반영`, cw);
-    for (const t of ['p', 'r', 'j', 'e']) { await click(`[data-tab="${t}"]`); await wait(40); await audit('게임 중 도감 ' + t); }
+    for (const t of ['p', 'r', 'j', 'e']) { await click(`[data-tab="${t}"]`); await wait(320); await audit('게임 중 도감 ' + t); }
     await click('cx_back'); await wait(60); chk(`[${W}x${H}] 도감 → 일시정지 복귀`, await ev(() => STATE.mode === 'pause' && !!document.getElementById('pcodex')));
     await click('psettings'); await wait(60); await audit('일시정지 설정'); await scrollKeep('일시정지 설정 토글', 'button.tg[data-k]');
     chk(`[${W}x${H}] 페이지 오류 0`, !errs.length, errs.slice(0, 2).join(' / '));

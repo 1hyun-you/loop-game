@@ -173,8 +173,8 @@ function awPost(id, w, S, aw, nw, la, v0) {
     case 'shuriken:ret': for (const pr of nw) if (pr.kind === 'star') pr.awRet = true; break;
     case 'shuriken:big': for (const pr of nw) if (pr.kind === 'star') { pr.r *= 2; pr.bounce = false; pr.pierce = 99; pr.scat = false; } break;
     case 'fireball:meteor': w.mc = (w.mc || 0) + 1; if (w.mc % 4 === 0) { const e = densest(p.x, p.y, 400); if (e) { const x = e.x, y = e.y, R = 90 * S.area; fx({ kind: 'ring', x, y, r0: R, r1: R * 0.2, dur: 0.6, color: '#ff6a3a' }); G.later.push({ t: 0.6, f: () => { explode(x, y, R, S.dmg * 2.5, 'fireball_aw', '#ff7a3a'); shake(2.5, 0.2); } }); } } break;
-    case 'icering:zero': { const R = WEAPONS.icering.base.R * S.area; gridQuery(p.x, p.y, R, e => { if (awOk(e) && !e.elite && Math.random() < (w.br === 'freeze' ? 0.14 : 0.2)) e.frz = Math.max(e.frz || 0, 1); }); break; }
-    case 'icering:armor': { const R = WEAPONS.icering.base.R * S.area; gridQuery(p.x, p.y, R, e => { e.chill = G.time + 0.7; }); break; }
+    case 'icering:zero': { const R = WEAPONS.icering.base.R * S.area; gridQuery(p.x, p.y, R, e => { if (awOk(e) && !e.elite && Math.random() < (w.br === 'freeze' ? 0.3 : 0.4)) e.frz = Math.max(e.frz || 0, 1); }); break; }
+    case 'icering:armor': { const R = WEAPONS.icering.base.R * S.area; gridQuery(p.x, p.y, R, e => { e.chill = G.time + 1.3; }); break; }
     case 'orb:sat': nw.forEach((pr, i) => { if (pr.kind === 'orb') { pr.sat = { a: i * Math.PI * 2 / Math.max(1, nw.length), t: 0 }; pr.home = false; pr.life += 0.8; pr.vx = pr.vy = 0; } }); break;
     case 'vortex:merge': {
       const nv = (G.vortex || []).filter(v => !v0.has(v)); if (!nv.length) break;

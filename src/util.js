@@ -34,4 +34,5 @@ function nearestEnemy(x, y, maxR = 600) {
 }
 
 /* 0.31 같은 화면 다시 그릴 때 스크롤 위치 유지 (설정·도전 준비·도감·선택 화면 토글 시 맨 위로 튀는 문제) */
-function keepScroll(fn) { const a = UI && UI.querySelector('.layer'), y = a ? a.scrollTop : 0; fn(); const b = UI && UI.querySelector('.layer'); if (b && y) b.scrollTop = y; }
+const scrEl = () => UI && (UI.querySelector('.pgp.on') || UI.querySelector('.layer'));   // 0.40 탭 화면은 탭별 스크롤
+function keepScroll(fn) { const a = scrEl(), y = a ? a.scrollTop : 0; fn(); const b = scrEl(); if (b && y) b.scrollTop = y; }

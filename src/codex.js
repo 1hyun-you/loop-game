@@ -105,22 +105,21 @@ function cxUnlock(S) {
     <h3>주인공 색상</h3><div class="chips">${COLORS.map(C => { const v = colorOpen(s, C); return `<button class="chipb ${(s.color || 'base') === C.id ? 'pri' : ''}" data-c="${C.id}" ${v ? '' : 'disabled'}><i style="background:${C.c}"></i>${v ? C.nm : '잠김'}</button>`; }).join('')}</div>`;
 }
 
-function showCodex(tab, back, dir) {
-  const S = cxSeen(); let body = '';
-  if (tab === 'w') body = '<p class="hint">수치: 1레벨 → 6레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
-  if (tab === 'p') body = '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
-  if (tab === 'r') body = RELIC_ORDER.map(id => cxRelic(id, S.seenR.has(id))).join('');
-  if (tab === 'j') body = `<p class="hint">2차 전직은 눌러서 펼침 · 공통 선택지 ${esc(JOB2_STAT.nm)}(${esc(JOB2_STAT.ds)})</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
-  if (tab === 'e') body = cxEnemies(S);
-  if (tab === 'f') body = FRAGS.map((f, i) => { const v = (S.s.frags || []).includes(f.id); return cxCard({ lock: !v, hint: '해금 조건 · ' + f.cond, col: '#e8d8ff', ic: String(i + 1), nm: f.nm, lines: [esc(f.tx)] }); }).join('');
-  if (tab === 'u') body = cxUnlock(S);
-  UI.innerHTML = `<div class="layer scroll pg">${pgHead('도감', 'cx_back', CODEX_TABS, tab)}
-    <div class="cxl">${body}</div></div>`;
-  const go = (k, dir) => { showCodex(k, back, dir); const L = UI.querySelector('.layer'); if (L) L.scrollTop = 0; };
-  UI.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { const K = CODEX_TABS.map(t => t[0]); go(b.dataset.tab, K.indexOf(b.dataset.tab) - K.indexOf(tab)); }));
-  uiSwipe(UI.querySelector('.layer'), CODEX_TABS.map(t => t[0]), tab, go);
-  uiSlide('.cxl', dir);
-  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; if (k === 'color') heroReset(); keepScroll(() => showCodex('u', back)); };
+function showCodex(tab, back) {
+  const S = cxSeen(), K = CODEX_TABS.map(t => t[0]);
+  const bodyOf = t => {
+    if (t === 'w') return '<p class="hint">수치: 1레벨 → 6레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
+    if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
+    if (t === 'r') return RELIC_ORDER.map(id => cxRelic(id, S.seenR.has(id))).join('');
+    if (t === 'j') return `<p class="hint">2차 전직은 눌러서 펼침 · 공통 선택지 ${esc(JOB2_STAT.nm)}(${esc(JOB2_STAT.ds)})</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
+    if (t === 'e') return cxEnemies(S);
+    if (t === 'f') return FRAGS.map((f, i) => { const v = (S.s.frags || []).includes(f.id); return cxCard({ lock: !v, hint: '해금 조건 · ' + f.cond, col: '#e8d8ff', ic: String(i + 1), nm: f.nm, lines: [esc(f.tx)] }); }).join('');
+    if (t === 'u') return cxUnlock(S);
+    return '';
+  };
+  UI.innerHTML = `<div class="layer pg pager">${pgHead('도감', 'cx_back', CODEX_TABS, tab)}${pgPanes(K.map(k => [k, bodyOf(k)]), tab, 'cxl')}</div>`;
+  let cur = tab; uiPager(UI.querySelector('.layer'), K, tab, k => { cur = k; });
+  const setS = (k, v) => { const x = loadSave(); x[k] = v; try { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(x)); } catch (e) { } saveCache = null; if (k === 'color') heroReset(); keepScroll(() => showCodex(cur, back)); };
   UI.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => setS('title', b.dataset.t || null)));
   UI.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => setS('color', b.dataset.c)));
   on('cx_back', back);

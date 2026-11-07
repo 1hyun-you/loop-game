@@ -126,17 +126,44 @@ function pgHead(title, backId, tabs, cur, attr = 'data-tab', extra = '') {
   return `<div class="pgh"><div class="pgt">${icBtn(backId, 'back', '돌아가기')}<h2>${title}</h2><span class="pgs"></span></div>${extra}
     ${tabs ? `<div class="ptabs" style="--n:${tabs.length};--i:${i}">${tabs.map(([k, nm]) => `<button class="${k === cur ? 'on' : ''}" ${attr}="${k}">${nm}</button>`).join('')}<i class="bar"></i></div>` : ''}</div>`;
 }
-/* 좌우 밀기: 수평 이동 60 이상·수직의 1.5배 이상일 때 탭 전환 */
-function uiSwipe(el, keys, cur, go) {
-  if (!el) return; let x0 = 0, y0 = 0, on = false;
-  el.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; on = e.touches.length === 1; }, { passive: true });
-  el.addEventListener('touchend', e => {
-    if (!on) return; on = false; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    const i = keys.indexOf(cur), j = i + (dx < 0 ? 1 : -1);
-    if (j >= 0 && j < keys.length) go(keys[j], j - i);
+/* 좌우 밀기 (0.37, 0.40부터 미사용·호환용) */
+function uiSwipe() { }
+/* 0.40 좌우 끌기 탭: 탭 화면을 가로로 이어 붙이고 손가락을 따라 이동, 놓으면 가까운 탭에 맞춰 정지
+   구조: .layer.pager > .pgh(.ptabs) + .pgv > .pgtr > .pgp[data-pk] (탭마다 개별 세로 스크롤) */
+function uiPager(L, keys, cur, onCh) {
+  const V = L && L.querySelector('.pgv'), T = V && V.querySelector('.pgtr'), P = L && L.querySelector('.ptabs'), n = keys.length;
+  if (!T) return { go() { } };
+  let i = Math.max(0, keys.indexOf(cur));
+  const drag = on => { T.classList.toggle('drag', on); if (P) P.classList.toggle('drag', on); };
+  const set = j => {
+    j = Math.max(0, Math.min(n - 1, j)); const ch = j !== i; i = j; drag(false);
+    T.style.setProperty('--x', '0px'); T.style.setProperty('--i', i);
+    if (P) { P.style.setProperty('--i', i); P.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i)); }
+    T.querySelectorAll('.pgp').forEach((d, k) => d.classList.toggle('on', k === i));
+    if (ch) { if (typeof sfx === 'function') sfx('ui'); onCh && onCh(keys[i], i); }
+  };
+  let x0 = 0, y0 = 0, t0 = 0, mode = 0, dx = 0;
+  V.addEventListener('touchstart', e => { if (e.touches.length !== 1) { mode = 3; return; } const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; t0 = performance.now(); mode = 0; dx = 0; }, { passive: true });
+  V.addEventListener('touchmove', e => {
+    if (mode >= 2) return; const t = e.touches[0]; dx = t.clientX - x0; const dy = t.clientY - y0;
+    if (!mode) { if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.2) { mode = 1; drag(true); } else if (Math.abs(dy) > 8) { mode = 2; return; } else return; }
+    if (e.cancelable) e.preventDefault();
+    const d = (i === 0 && dx > 0) || (i === n - 1 && dx < 0) ? dx / 3 : dx;     // 양 끝 저항
+    T.style.setProperty('--x', d + 'px'); if (P) P.style.setProperty('--i', i - d / (V.clientWidth || 360));
+  }, { passive: false });
+  V.addEventListener('touchend', e => {
+    const t = e.changedTouches[0], ddx = t.clientX - x0, ddy = t.clientY - y0, W = V.clientWidth || 360, dt = Math.max(1, performance.now() - t0);
+    const h = mode === 1 || (mode === 0 && Math.abs(ddx) >= 60 && Math.abs(ddx) > Math.abs(ddy) * 1.5);
+    if (mode === 1) { const kill = ev => { ev.stopPropagation(); ev.preventDefault(); }; V.addEventListener('click', kill, { capture: true, once: true }); setTimeout(() => V.removeEventListener('click', kill, { capture: true }), 60); }
+    mode = 3; if (!h) return;
+    if (Math.abs(ddx) > W * 0.22 || (Math.abs(ddx) > 30 && Math.abs(ddx) / dt > 0.45)) set(i + (ddx < 0 ? 1 : -1)); else set(i);
   }, { passive: true });
+  V.addEventListener('touchcancel', () => { if (mode === 1) set(i); mode = 3; }, { passive: true });
+  if (P) P.querySelectorAll('button').forEach((b, k) => b.addEventListener('click', () => set(k)));
+  return { go: k => set(keys.indexOf(k)), get cur() { return keys[i]; } };
 }
+/* 탭 화면 HTML: panes = [[키, 내용 HTML]] */
+const pgPanes = (panes, cur, wrap) => { const i = Math.max(0, panes.findIndex(p => p[0] === cur)); return `<div class="pgv"><div class="pgtr" style="--i:${i}">${panes.map(([k, h]) => `<div class="pgp${k === cur ? ' on' : ''}" data-pk="${k}"><div class="${wrap}">${h}</div></div>`).join('')}</div></div>`; };
 /* 탭 전환 후 내용 미끄러짐 (dir: 1 = 오른쪽 탭으로) */
 function uiSlide(sel, dir) {
   if (!dir) return;

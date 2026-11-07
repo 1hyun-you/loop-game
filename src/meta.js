@@ -109,20 +109,16 @@ function showSettings(back) {
 
 /* ---------- 도전 준비 (진엔딩 후) ---------- */
 const PREP_TABS = [['t', '난이도'], ['c', '도전 조건']];
-function showPrep(back, tab = 't', dir) {
+function showPrep(back, tab = 't') {
   const s = loadSave(), mx = Math.min(3, s.tierMax || 1);
   if (META.tier > mx) META.tier = mx;
   const o = { tier: META.tier, conds: META.conds };
-  const body = tab === 't'
-    ? `<div class="rows">${TIERS.map((T, i) => `<button class="row pick ${META.tier === i ? 'on' : ''}" data-tier="${i}" ${i > mx ? 'disabled' : ''}><span class="rt"><b>${i > mx ? '잠김' : T.nm}</b><span>${i ? `적 체력·피해 +${Math.round(T.k * 100)}% · 배율 ×${T.mul}` : '기본 난이도 · 배율 ×1'}</span></span></button>`).join('')}</div><p class="hint">단계별 마왕 처치 시 다음 단계 개방</p>`
-    : `<div class="rows">${COND_ORDER.map(k => { const C = CONDS[k], v = META.conds.includes(k); return `<div class="row"><div class="rt"><b>${C.nm}</b><span>${C.ds} · ×${C.mul}${(s.titles || []).includes('c_' + k) ? ' · 돌파' : ''}</span></div><button class="tg sw ${v ? 'on' : ''}" data-cond="${k}" role="switch" aria-checked="${v}" aria-label="${C.nm}"><i></i></button></div>`; }).join('')}</div>`;
-  UI.innerHTML = `<div class="layer scroll pg">${pgHead('도전 준비', 'pr_back', PREP_TABS, tab, 'data-ptab', `<p class="sub" id="pr_mul">점수 배율 ×${optMul(o).toFixed(2)} · 보상은 성능에 영향 없음</p>`)}
-    <div class="pgb">${body}</div><div class="pgf"><button class="pri" id="pr_go">이대로 시작</button></div></div>`;
-  const go = (k, d) => showPrep(back, k, d);
-  UI.querySelectorAll('[data-ptab]').forEach(b => b.addEventListener('click', () => { const K = PREP_TABS.map(t => t[0]); go(b.dataset.ptab, K.indexOf(b.dataset.ptab) - K.indexOf(tab)); }));
-  uiSwipe(UI.querySelector('.layer'), PREP_TABS.map(t => t[0]), tab, go);
-  uiSlide('.pgb', dir);
-  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); sfx('ui'); keepScroll(() => showPrep(back, tab)); }));
+  const bT = `<div class="rows">${TIERS.map((T, i) => `<button class="row pick ${META.tier === i ? 'on' : ''}" data-tier="${i}" ${i > mx ? 'disabled' : ''}><span class="rt"><b>${i > mx ? '잠김' : T.nm}</b><span>${i ? `적 체력·피해 +${Math.round(T.k * 100)}% · 배율 ×${T.mul}` : '기본 난이도 · 배율 ×1'}</span></span></button>`).join('')}</div><p class="hint">단계별 마왕 처치 시 다음 단계 개방</p>`;
+  const bC = `<div class="rows">${COND_ORDER.map(k => { const C = CONDS[k], v = META.conds.includes(k); return `<div class="row"><div class="rt"><b>${C.nm}</b><span>${C.ds} · ×${C.mul}${(s.titles || []).includes('c_' + k) ? ' · 돌파' : ''}</span></div><button class="tg sw ${v ? 'on' : ''}" data-cond="${k}" role="switch" aria-checked="${v}" aria-label="${C.nm}"><i></i></button></div>`; }).join('')}</div>`;
+  UI.innerHTML = `<div class="layer pg pager">${pgHead('도전 준비', 'pr_back', PREP_TABS, tab, 'data-ptab', `<p class="sub" id="pr_mul">점수 배율 ×${optMul(o).toFixed(2)} · 보상은 성능에 영향 없음</p>`)}
+    ${pgPanes([['t', bT], ['c', bC]], tab, 'pgb')}<div class="pgf"><button class="pri" id="pr_go">이대로 시작</button></div></div>`;
+  let cur = tab; uiPager(UI.querySelector('.layer'), PREP_TABS.map(t => t[0]), tab, k => { cur = k; });
+  UI.querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { META.tier = +b.dataset.tier; saveMeta(); sfx('ui'); keepScroll(() => showPrep(back, cur)); }));
   UI.querySelectorAll('[data-cond]').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.cond, i = META.conds.indexOf(k);
     if (i >= 0) META.conds.splice(i, 1); else { META.conds.push(k); const ex = CONDS[k].ex; if (ex) META.conds = META.conds.filter(x => x !== ex); }

@@ -141,8 +141,9 @@ button:not(:disabled):active,.acc summary:active{transform:scale(.95);filter:bri
 .card:not(:disabled):active,.row.pick:not(:disabled):active{transform:scale(.98);filter:brightness(1.15)}
 @media (hover:hover){button:not(:disabled):hover,.acc summary:hover{filter:brightness(1.1)}}
 /* 화면 진입: 0.2초 흐림·이동 */
-#ui>.layer.enter{animation:lyIn .2s ease-out}
-@keyframes lyIn{from{opacity:0;filter:blur(3px);transform:translateY(8px)}}
+/* 0.40: 화면 자체는 불투명도 유지(뒤 게임 화면 비침 방지), 내용만 0.2초 떠오름 */
+#ui>.layer.enter>*:not(.pgh):not(.herobg):not(.heroshade){animation:lyIn .2s ease-out}
+@keyframes lyIn{from{opacity:0;transform:translateY(6px)}}
 /* 선택 카드 순차 올라옴 · 등급 칩 튀어오름 */
 .layer.enter .cards>.card{animation:cdUp .26s ease-out both;animation-delay:calc(var(--i,0) * 55ms + 60ms)}
 .layer.enter .cards>.card .tag{animation:chipPop .3s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 55ms + 220ms)}
@@ -190,6 +191,13 @@ button.txb:active::before{width:.6em;margin-right:.2em;content:'▸'}
 .pgb{width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px;align-items:stretch}
 .pgf{position:sticky;bottom:0;width:100%;max-width:420px;margin-top:auto;padding:12px 0 4px;background:linear-gradient(180deg,rgba(14,12,22,0),rgba(14,12,22,.96) 35%)}
 .pgf button{width:100%}
+/* 0.40 좌우 끌기 탭 */
+#ui>.layer.pager{overflow:hidden;justify-content:flex-start;padding-bottom:0;background:rgba(14,12,22,.97)}
+.pager .pgv{flex:1 1 auto;min-height:0;align-self:stretch;margin:0 -16px;overflow:hidden;touch-action:pan-y}
+.pgtr{display:flex;height:100%;transform:translateX(calc(var(--i,0) * -100% + var(--x,0px)));transition:transform .26s cubic-bezier(.2,.7,.3,1);will-change:transform}
+.pgtr.drag,.ptabs.drag .bar{transition:none}
+.pgp{flex:0 0 100%;min-width:0;height:100%;overflow-y:auto;overscroll-behavior:contain;padding:2px 16px calc(var(--sab) + 16px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center}
+.pager .pgf{position:static;margin-top:0;padding:8px 0 calc(var(--sab) + 10px);background:none}
 button.row.pick{width:100%;text-align:left;border-radius:10px;font-size:15px}
 button.row.pick.on{border-color:var(--accent);background:#2e2858}
 /* 설정 스위치: 손잡이 이동 */
