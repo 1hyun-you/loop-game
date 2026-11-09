@@ -50,7 +50,7 @@ function render() {
 }
 /* 지형: 16×16 타일 묶음(월드 512 단위)을 사전 저장해 반복 무늬로 1회 채움 (0.20 부하 절감) */
 const GROUND_PAT = new Map();
-function groundPattern(c, tid) {
+function pixelGroundPattern(c, tid) {
   const t = texelPx(2), key = tid + '|' + t;
   let P = GROUND_PAT.get(key);
   if (!P) {

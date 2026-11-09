@@ -1,0 +1,35 @@
+{
+  "checks": [
+    "version",
+    "all sprite frames, tint, hit flash, outlines, flip, icons, terrain, fallback",
+    "three starter choices",
+    "390px cards fit horizontally",
+    "choice icons loaded",
+    "320px choices fit",
+    "actual gameplay ticks and rendering",
+    "pause screen",
+    "codex artwork",
+    "no horizontal overflow",
+    "no JavaScript runtime errors"
+  ],
+  "errors": [],
+  "screens": [
+    "art2-title-390.png",
+    "art2-choice-390.png",
+    "art2-choice-320.png",
+    "art2-field-390.png"
+  ],
+  "render": {
+    "count": 320,
+    "errors": [],
+    "spriteCache": 128,
+    "terrainCache": 14
+  },
+  "play": {
+    "time": 4.5331,
+    "mode": "play",
+    "enemies": 4,
+    "canvasError": false,
+    "cache": 128
+  }
+}

@@ -98,7 +98,7 @@ function heroFrame() {
     c.fillStyle = `rgba(255,250,200,${a})`; c.fillRect(Math.round(x), Math.round(y), 1, 1);
   }
 }
-function heroMount(cv) {
+function pixelHeroMount(cv) {
   if (!HERO.base) {
     HERO.base = heroBase(); const R = heroRng(5);
     HERO.flies = Array.from({ length: 9 }, () => ({ x: R() * HERO_W, y: 165 + R() * 50, p: R() * 7 }));

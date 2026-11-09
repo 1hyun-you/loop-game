@@ -1,0 +1,248 @@
+{
+  "enemiesA": {
+    "file": "exec-4b7478a4-7b80-4aeb-8ec5-e9918ea87496.png",
+    "rowCuts": [
+      0,
+      307,
+      614,
+      922,
+      1229,
+      1536
+    ],
+    "sprites": {
+      "bat": [
+        {
+          "left": 125,
+          "top": 51,
+          "width": 328,
+          "height": 210
+        },
+        {
+          "left": 559,
+          "top": 83,
+          "width": 345,
+          "height": 198
+        }
+      ],
+      "skel": [
+        {
+          "left": 152,
+          "top": 330,
+          "width": 257,
+          "height": 250
+        },
+        {
+          "left": 589,
+          "top": 329,
+          "width": 258,
+          "height": 263
+        }
+      ],
+      "brute": [
+        {
+          "left": 128,
+          "top": 614,
+          "width": 308,
+          "height": 307
+        },
+        {
+          "left": 569,
+          "top": 615,
+          "width": 333,
+          "height": 299
+        }
+      ],
+      "gob": [
+        {
+          "left": 173,
+          "top": 945,
+          "width": 237,
+          "height": 278
+        },
+        {
+          "left": 606,
+          "top": 943,
+          "width": 238,
+          "height": 285
+        }
+      ],
+      "jelly": [
+        {
+          "left": 165,
+          "top": 1274,
+          "width": 240,
+          "height": 211
+        },
+        {
+          "left": 577,
+          "top": 1335,
+          "width": 283,
+          "height": 149
+        }
+      ]
+    }
+  },
+  "enemiesB": {
+    "file": "exec-e794dd71-1073-4392-8859-3df7dd9e274e.png",
+    "rowCuts": [
+      0,
+      384,
+      752,
+      1152,
+      1536
+    ],
+    "sprites": {
+      "mush": [
+        {
+          "left": 108,
+          "top": 34,
+          "width": 317,
+          "height": 324
+        },
+        {
+          "left": 599,
+          "top": 78,
+          "width": 317,
+          "height": 281
+        }
+      ],
+      "boar": [
+        {
+          "left": 84,
+          "top": 409,
+          "width": 366,
+          "height": 315
+        },
+        {
+          "left": 574,
+          "top": 412,
+          "width": 380,
+          "height": 312
+        }
+      ],
+      "knight": [
+        {
+          "left": 104,
+          "top": 753,
+          "width": 330,
+          "height": 382
+        },
+        {
+          "left": 571,
+          "top": 756,
+          "width": 354,
+          "height": 386
+        }
+      ],
+      "wisp": [
+        {
+          "left": 132,
+          "top": 1171,
+          "width": 281,
+          "height": 338
+        },
+        {
+          "left": 577,
+          "top": 1199,
+          "width": 362,
+          "height": 296
+        }
+      ]
+    }
+  },
+  "bosses": {
+    "file": "exec-2698f043-e047-449e-9f43-59c5cf0f868e.png",
+    "rowCuts": [
+      0,
+      307,
+      591,
+      877,
+      1172,
+      1536
+    ],
+    "sprites": {
+      "bargan": [
+        {
+          "left": 107,
+          "top": 7,
+          "width": 324,
+          "height": 295
+        },
+        {
+          "left": 578,
+          "top": 5,
+          "width": 370,
+          "height": 300
+        }
+      ],
+      "igna": [
+        {
+          "left": 123,
+          "top": 307,
+          "width": 280,
+          "height": 284
+        },
+        {
+          "left": 530,
+          "top": 321,
+          "width": 415,
+          "height": 270
+        }
+      ],
+      "morden": [
+        {
+          "left": 105,
+          "top": 591,
+          "width": 407,
+          "height": 286
+        },
+        {
+          "left": 512,
+          "top": 603,
+          "width": 440,
+          "height": 274
+        }
+      ],
+      "seren": [
+        {
+          "left": 115,
+          "top": 877,
+          "width": 350,
+          "height": 291
+        },
+        {
+          "left": 530,
+          "top": 877,
+          "width": 431,
+          "height": 294
+        }
+      ],
+      "demon": [
+        {
+          "left": 58,
+          "top": 1172,
+          "width": 454,
+          "height": 360
+        },
+        {
+          "left": 512,
+          "top": 1188,
+          "width": 491,
+          "height": 338
+        }
+      ]
+    }
+  },
+  "icons": {
+    "file": "exec-d2579548-5727-47af-8e16-a0452bd573b3.png",
+    "rowCuts": [
+      0,
+      222,
+      438,
+      653,
+      848,
+      1049,
+      1247
+    ]
+  }
+}

@@ -85,7 +85,7 @@ const ICON12 = {
 };
 const ICON_URL = new Map();
 /* 아이콘 이미지 주소 (1텍셀 = 4픽셀 고정 생성, 화면에서 정수 비율 축소·확대) */
-function iconURL(id) {
+function pixelIconURL(id) {
   if (!ICON12[id]) return null;
   let u = ICON_URL.get(id);
   if (!u) { const g = bakeGrid(ICON12[id].map(r => r.padEnd(12, '.')), DOT_PAL, 4, false, 'n', '#1b1626'); u = g.cv.toDataURL(); ICON_URL.set(id, u); }
@@ -93,7 +93,7 @@ function iconURL(id) {
 }
 /* 캔버스용 아이콘 (보유 칸) */
 const ICON_CV = new Map();
-function iconCanvas(id, t) {
+function pixelIconCanvas(id, t) {
   if (!ICON12[id]) return null;
   const key = id + '|' + t; let s = ICON_CV.get(key);
   if (!s) { s = bakeGrid(ICON12[id].map(r => r.padEnd(12, '.')), DOT_PAL, t, false, 'n', '#1b1626').cv; ICON_CV.set(key, s); }
@@ -103,5 +103,5 @@ function iconCanvas(id, t) {
 function icBox(col, ic, id, cls = '') {
   const u = id && iconURL(id);
   if (!u) return `<span class="ic ${cls}" style="background:${col}">${esc(ic)}</span>`;
-  return `<span class="ic px ${cls}" style="background:${shadeHex(col, 0.42)};border-color:${col}"><img src="${u}" alt="${esc(ic)}"></span>`;
+  return `<span class="ic px ${cls}" style="background:${shadeHex(col, 0.42)};border-color:${col}"><img src="${u}" alt="${esc(ic)}" data-art-icon="${esc(id)}"></span>`;
 }

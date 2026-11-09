@@ -301,7 +301,7 @@ function getSprite(name, frame, opt) {
   const mode = o.mode || 'n', tint = o.tint || '', fr = ((frame % 2) + 2) % 2;
   const key = [name,fr,t,!!o.flip,mode,tint].join('|');
   if (FIELD_ART.cache.has(key)) return FIELD_ART.cache.get(key);
-  const w = name === 'hero' ? 16 : 12, h = name === 'hero' ? 16 : 9;
+  const w = Math.max(...D.frames[0].map(row => row.length)), h = D.frames[0].length;
   const glow = ['gold','rage','danger'].includes(mode), pad = glow ? 1 : 0;
   const cv = document.createElement('canvas'); cv.width = (w+2*pad)*t; cv.height = (h+2*pad)*t;
   const c = cv.getContext('2d'), f = art.frames[fr]; c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
