@@ -16,7 +16,7 @@ function render() {
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const tn = G.time; updateTerrain(Math.max(0, Math.min(0.1, tn - terLast))); terLast = tn;
   c.fillStyle = TERRAIN[TER.cur].a; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
-  const sh = SETTINGS.shake ? Math.max(p.flash > 0 ? 3 : 0, shakeAmt()) : 0;   // 화면 흔들림 설정 (0.14), 연출 흔들림 (0.22)
+  const sh = SETTINGS.shake && !VFX.reduced.matches ? Math.max(p.flash > 0 ? 3 : 0, shakeAmt()) : 0;   // 화면 흔들림 설정 (0.14), 연출 흔들림 (0.22)
   const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
   c.imageSmoothingEnabled = false;
@@ -33,6 +33,7 @@ function render() {
   drawBossTop(c, inView);
   drawJobUnits(c, inView);
   drawPlayer(c);
+  drawVfxTrails(c, inView);
   drawWeapons(c, inView);
   drawFx(c);
   drawJuice(c);
@@ -143,7 +144,7 @@ function drawGrowthGround(c, inView) {
   if (G.banner) { const b = G.banner; c.fillStyle = 'rgba(255,210,74,0.08)'; c.beginPath(); c.arc(b.x, b.y, b.r * ultBannerR(), 0, 7); c.fill(); c.strokeStyle = 'rgba(255,210,74,0.5)'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#8a6a2a'; c.fillRect(b.x - 1.5, b.y - 26, 3, 26); c.fillStyle = '#ffd24a'; c.fillRect(b.x + 1.5, b.y - 26, 14, 9); }
   if (G.sanct) { const S = G.sanct; c.fillStyle = 'rgba(255,242,168,0.12)'; c.beginPath(); c.arc(S.x, S.y, S.r, 0, 7); c.fill(); c.strokeStyle = 'rgba(255,242,168,0.6)'; c.lineWidth = 2; c.stroke(); }
   const ice = p.weapons.find(w => w.id === 'icering');
-  if (ice && ice.R) { c.fillStyle = 'rgba(170,220,255,0.04)'; c.beginPath(); c.arc(p.x, p.y, ice.R, 0, 7); c.fill(); c.strokeStyle = 'rgba(190,230,255,0.45)'; c.lineWidth = 2; c.stroke(); }
+  if (ice && ice.R) { c.fillStyle = 'rgba(170,220,255,0.04)'; c.beginPath(); c.arc(p.x, p.y, ice.R, 0, 7); c.fill(); c.strokeStyle = 'rgba(190,230,255,0.45)'; c.lineWidth = 1.5; c.stroke(); drawVfxIce(c, p.x, p.y, ice.R); }
   for (const t of G.traps) { if (!inView(t.x, t.y, 14)) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
   for (const m of G.mines) { c.fillStyle = m.arm > 0 ? '#8a7040' : '#ffcf70'; c.beginPath(); c.arc(m.x, m.y, 5, 0, 7); c.fill(); }
   for (const ch of G.chests) {
@@ -193,50 +194,6 @@ function drawPlayer(c) {
     if (p.job === 'warrior' && p.fury > 0) { c.fillStyle = '#ff7a5a'; c.fillRect(x, y - 4, w * p.fury / 100, 2); }
   }
 }
-function drawFx(c) {
-  for (const f of G.fx) {
-    const k = f.t / f.dur;
-    if (f.kind === 'ring') {
-      const x = f.follow ? G.p.x : f.x, y = f.follow ? G.p.y : f.y, r = Math.max(1, lerp(f.r0, f.r1, 1 - (1 - k) * (1 - k)));   // 0.25 감속 확산
-      if (f.fill) {                                                       // 폭발형: 백열 중심 → 색 확산 → 테두리 2겹
-        c.globalAlpha = 0.5 * (1 - k); c.fillStyle = f.color; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
-        if (k < 0.45) { c.globalAlpha = 1 - k / 0.45; c.fillStyle = '#fffbe8'; c.beginPath(); c.arc(x, y, r * 0.45 * (1 - k), 0, 7); c.fill(); }
-        c.globalAlpha = 0.6 * (1 - k); c.strokeStyle = '#fff6d8'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, r * 0.75, 0, 7); c.stroke();
-      }
-      c.globalAlpha = 1 - k; c.strokeStyle = f.color; c.lineWidth = f.fill ? 4 * (1 - k) + 1 : 3; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke();
-      if (!f.fx0 && f.fill && f.r1 >= 30) { f.fx0 = true; sparkBurst(x, y, f.r1, f.color); }
-    }
-    else if (f.kind === 'bolt') {                                         // 0.25 번개: 꺾임 8회 + 갈래 2개 + 발광 2겹 + 착지 섬광
-      const seed = Math.floor(f.x * 7 + f.y * 3), pts = [[f.x + (hash2(seed, 0) - 0.5) * 30, f.y - 170]];
-      for (let i = 1; i <= 8; i++) pts.push([f.x + (i < 8 ? (hash2(seed, i) - 0.5) * 34 * (1 - i / 10) : 0), f.y - 170 + i * 170 / 8]);
-      const line = (w, col, al) => { c.globalAlpha = al; c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const q of pts) c.lineTo(q[0], q[1]); c.stroke(); };
-      line(9, '#5f8fe8', 0.35 * (1 - k)); line(4, '#bfe4ff', 0.9 * (1 - k)); line(1.5, '#ffffff', 1 - k);
-      c.globalAlpha = 0.8 * (1 - k); c.strokeStyle = '#bfe4ff'; c.lineWidth = 1.5;
-      for (const b of [3, 5]) { const q = pts[b], dir = hash2(seed, b + 20) > 0.5 ? 1 : -1; c.beginPath(); c.moveTo(q[0], q[1]); c.lineTo(q[0] + dir * 16, q[1] + 10); c.lineTo(q[0] + dir * 22, q[1] + 26); c.stroke(); }
-      c.globalAlpha = 1 - k; c.fillStyle = '#ffffff'; c.beginPath(); c.arc(f.x, f.y, 6 * (1 - k) + 2, 0, 7); c.fill();
-      c.strokeStyle = '#9fd0ff'; c.lineWidth = 2; c.beginPath(); c.ellipse(f.x, f.y + 2, 8 + 22 * k, (8 + 22 * k) * 0.4, 0, 0, 7); c.stroke();
-    }
-    else if (f.kind === 'arc') {                                          // 0.25 베기: 휘두르는 궤적 초승달 + 칼끝 섬광
-      const sw = Math.min(1, k * 3), a0 = f.a - f.arc / 2, a1 = a0 + f.arc * sw, px = G.p.x, py = G.p.y, fade = 1 - Math.max(0, (k - 0.35) / 0.65);
-      c.globalAlpha = 0.28 * fade; c.fillStyle = f.color; c.beginPath(); c.arc(px, py, f.r, a0, a1); c.arc(px, py, f.r * 0.45, a1, a0, true); c.closePath(); c.fill();
-      c.globalAlpha = 0.85 * fade; c.strokeStyle = '#fff6e8'; c.lineWidth = 5 * fade + 1; c.beginPath(); c.arc(px, py, f.r * 0.92, Math.max(a0, a1 - 0.9), a1); c.stroke();
-      c.globalAlpha = 0.5 * fade; c.strokeStyle = '#ffd890'; c.lineWidth = 2; c.beginPath(); c.arc(px, py, f.r * 0.72, a0, a1); c.stroke();
-      if (sw < 1) { c.globalAlpha = 1; c.fillStyle = '#ffffff'; c.beginPath(); c.arc(px + Math.cos(a1) * f.r * 0.92, py + Math.sin(a1) * f.r * 0.92, 3.5, 0, 7); c.fill(); }
-    }
-    else if (f.kind === 'zap') {                                          // 0.25 연쇄 번개: 꺾임 4회 발광선
-      const s = Math.floor(f.x + f.y2), n = 5, nx = -(f.y2 - f.y), ny = f.x2 - f.x, L = Math.hypot(nx, ny) || 1;
-      const pt = i => { const t = i / n, o = i && i < n ? (hash2(s, i) - 0.5) * 22 : 0; return [f.x + (f.x2 - f.x) * t + nx / L * o, f.y + (f.y2 - f.y) * t + ny / L * o]; };
-      for (const [w, col, al] of [[6, '#5f8fe8', 0.35], [2, '#e6f4ff', 1]]) { c.globalAlpha = al * (1 - k); c.strokeStyle = col; c.lineWidth = w; c.beginPath(); for (let i = 0; i <= n; i++) { const q = pt(i); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); } c.stroke(); }
-    }
-    else if (f.kind === 'slash') {                                        // 0.26a 도적 궁극기 그림자 베기: 대상 위 교차 칼자국
-      const L = 26 * (0.6 + Math.min(1, k * 4) * 0.4); c.globalAlpha = 1 - k; c.lineCap = 'round';
-      for (const [da, w, col] of [[0.5, 6, f.color], [0.5, 2, '#ffffff'], [-0.5, 6, f.color], [-0.5, 2, '#ffffff']]) { const a = f.a + da; c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(f.x - Math.cos(a) * L, f.y - Math.sin(a) * L); c.lineTo(f.x + Math.cos(a) * L, f.y + Math.sin(a) * L); c.stroke(); }
-      c.lineCap = 'butt';
-    }
-    else if (f.kind === 'pop') { c.globalAlpha = 1 - k; c.fillStyle = f.color; c.beginPath(); c.arc(f.x, f.y, f.r * (1 + k), 0, 7); c.fill(); }
-    c.globalAlpha = 1;
-  }
-}
 /* 무기 표시: 회전검 칼날, 투사체 */
 function drawWeapons(c, inView) {
   const p = G.p;
@@ -259,7 +216,6 @@ function drawWeapons(c, inView) {
     else if (pr.kind === 'orb') drawSpriteC(c, 'orbp', 0, pr.x, pr.y, { mul: pr.r > 9 ? 2 : 1 });
     else if (pr.kind === 'shell') drawSpriteC(c, 'ball', 0, pr.x, pr.y, { tint: '#ffd890' });
     else if (pr.kind === 'fire') {
-      c.fillStyle = 'rgba(255,170,60,0.35)'; c.beginPath(); c.arc(pr.x - Math.cos(a) * 6, pr.y - Math.sin(a) * 6, pr.r * 1.2, 0, 7); c.fill();
       drawSpriteC(c, 'fire', Math.floor(G.time * 10) & 1, pr.x, pr.y, { mul: pr.r > 10 ? 2 : 1 });
     }
   }

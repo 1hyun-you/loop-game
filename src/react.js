@@ -123,15 +123,18 @@ function drawReactGround(c, inView) {
 /* 월드 상단: 이동 먼지·공격 섬광 */
 function drawReactTop(c) {
   const r = G.rc; if (!r) return;
-  if (r.dust.length) { for (const d of r.dust) { c.globalAlpha = 0.5 * (1 - d.t / d.dur); c.fillStyle = '#d8c8a0'; const s = d.s * (1 + d.t); c.fillRect(Math.round(d.x - s / 2), Math.round(d.y - s / 2), s, s); } c.globalAlpha = 1; }
-  for (const m of r.mf) {
-    const k = m.t / 0.08, L = 7 * (1 - k) + 3; c.globalAlpha = 1 - k; c.fillStyle = '#fffbe8';
-    c.fillRect(Math.round(m.x - 1.5), Math.round(m.y - 1.5), 3, 3);
-    c.fillRect(Math.round(m.x + Math.cos(m.a) * L - 1), Math.round(m.y + Math.sin(m.a) * L - 1), 2, 2);
-    c.fillRect(Math.round(m.x + Math.cos(m.a + 0.7) * L * 0.7 - 1), Math.round(m.y + Math.sin(m.a + 0.7) * L * 0.7 - 1), 2, 2);
-    c.fillRect(Math.round(m.x + Math.cos(m.a - 0.7) * L * 0.7 - 1), Math.round(m.y + Math.sin(m.a - 0.7) * L * 0.7 - 1), 2, 2);
+  c.save(); c.imageSmoothingEnabled = true;
+  for (const d of r.dust) {
+    const k = clamp(d.t / d.dur, 0, 1), s = d.s * (1 + k * 0.6);
+    c.globalAlpha = 0.25 * (1 - k) ** 2; c.fillStyle = '#c9bea1';
+    c.beginPath(); c.ellipse(d.x, d.y, s, s * 0.55, 0, 0, Math.PI * 2); c.fill();
   }
-  c.globalAlpha = 1;
+  if (!VFX.reduced.matches) for (const m of r.mf) {
+    const k = clamp(m.t / 0.08, 0, 1), L = 8 * (1 - k), ux = Math.cos(m.a), uy = Math.sin(m.a);
+    vfxGlow(c, m.x, m.y, 8, '#ebd5a2', 0.4 * (1 - k));
+    vfxLine(c, [[m.x, m.y], [m.x + ux * L, m.y + uy * L]], 1.8, '#f8ebce', 0.8 * (1 - k));
+  }
+  c.restore();
 }
 /* 주인공: 공격 순간 눌림·반동, 피격 시 흰색 */
 function drawHeroReact(c, fr, flip, tint) {
@@ -153,7 +156,7 @@ function drawReactScreen(c) {
     g.addColorStop(0, 'rgba(255,40,40,0)'); g.addColorStop(1, `rgba(255,40,40,${a})`);
     c.fillStyle = g; c.fillRect(0, 0, W, H);
   }
-  if (r && r.flash > 0) { c.globalAlpha = r.flashA * (r.flash / r.flashT); c.fillStyle = r.flashCol; c.fillRect(0, 0, W, H); c.globalAlpha = 1; }
+  if (r && r.flash > 0) { c.globalAlpha = Math.min(VFX.reduced.matches ? 0.06 : 0.18, r.flashA) * clamp(r.flash / r.flashT, 0, 1); c.fillStyle = r.flashCol; c.fillRect(0, 0, W, H); c.globalAlpha = 1; }
 }
 
 /* 경험치 게이지 — 도트 틀(진보라 외곽·칸 눈금·위 밝은 줄), 보간 차오름, 가득 차기 직전 맥동, 레벨업 빛 흐름, 레벨 배지 */

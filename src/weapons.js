@@ -155,7 +155,7 @@ function shieldBash(x, y, R, dmg, kb) {
 function slamWave(x, y, R, dmg, kb) {
   const frost = hasRelic('frostrift');
   gridQuery(x, y, R, e => { if (frost && !e.cmd && !e.boss) e.frz = 1.2; damageEnemy(e, dmg, { src: 'slam', kb, fx: x, fy: y }); });
-  fx({ kind: 'ring', x, y, r0: 12, r1: R, dur: 0.35, color: frost ? '#bfe8ff' : '#d8b080' });
+  fx({ kind: 'ring', x, y, r0: 12, r1: R, dur: 0.35, element: frost ? 'ice' : 'earth', color: frost ? '#bfe8ff' : '#d8b080' });
 }
 /* 덫 갱신 — 설치 후 0.4초 뒤 작동 */
 function updateTraps(dt) {

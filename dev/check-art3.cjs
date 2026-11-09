@@ -7,7 +7,7 @@ function ok(v,name){if(!v)throw Error(name);out.checks.push(name);}
  try{
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});page.on('pageerror',e=>out.errors.push(e.message));
   await page.goto('http://127.0.0.1:8789/');await page.waitForFunction(()=>typeof ART3!=='undefined'&&ART3.loaded===4&&ART2.icons&&FIELD_ART.ready.arrow);
-  ok(await page.locator('.ver').innerText()==='v0.40-art3','version');
+  ok(await page.locator('.ver').innerText()==='v'+await page.evaluate(()=>CFG.VERSION),'version');
   const results=await page.evaluate(async()=>{
    const names=Object.keys(ART3_DATA.meta.sprites).concat(Object.keys(ART3_DATA.meta.aliases)),errors=[];let count=0;
    const alpha=s=>{let n=0;const p=s.cv.getContext('2d').getImageData(0,0,s.cv.width,s.cv.height).data;for(let i=3;i<p.length;i+=4)if(p[i]>160)n++;return n;};

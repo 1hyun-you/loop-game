@@ -1,0 +1,86 @@
+{
+  "checks": [
+    "particle and effect caps under 800 bursts",
+    "visual particles do not consume gameplay Math.random",
+    "repainting paused effects leaves game state unchanged",
+    "canvas stroke/composite state restored",
+    "glow cache capped at 16",
+    "particles/effects expire through simulation updates",
+    "new run resets visual state",
+    "baseline parity: explosion/sector hits, knockback, damage, healing, ranges, durations and save key",
+    "live mixed melee/fire/lightning/ice gameplay",
+    "reduced-motion changes detected without reload",
+    "reduced-motion suppresses projectile accents",
+    "stress VFX render CPU mean below 16.7ms on QA Chromium",
+    "320px title version",
+    "no JavaScript runtime errors"
+  ],
+  "errors": [],
+  "lifecycle": {
+    "caps": {
+      "particles": 180,
+      "effects": 220,
+      "randomCalls": 0
+    },
+    "readOnly": true,
+    "stateOK": true,
+    "cache": 16,
+    "expired": true,
+    "reset": true,
+    "differentState": true
+  },
+  "mechanics": {
+    "snapshot": [
+      {
+        "hp": 965,
+        "kbx": 143,
+        "kby": 0
+      },
+      {
+        "hp": 1000,
+        "kbx": 0,
+        "kby": 0
+      },
+      {
+        "hp": 975,
+        "kbx": -104,
+        "kby": 0
+      }
+    ],
+    "healed": 85,
+    "damage": {
+      "bomb": 50,
+      "cleave": 10
+    },
+    "rings": [
+      {
+        "kind": "ring",
+        "r0": 13.5,
+        "r1": 45,
+        "dur": 0.28
+      },
+      {
+        "kind": "arc",
+        "r": 60,
+        "arc": 1.5707963267948966,
+        "dur": 0.16
+      }
+    ],
+    "saveKey": "hoegwi_main_v1"
+  },
+  "play": {
+    "time": 6.016300000000017,
+    "error": false,
+    "particles": 0
+  },
+  "renderBenchmark": {
+    "fixture": {
+      "projectiles": 400,
+      "effects": 120,
+      "particles": 180
+    },
+    "meanMs": 0.7508333333321692,
+    "p95Ms": 1.3000000000465661,
+    "samples": 120
+  }
+}

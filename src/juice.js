@@ -5,7 +5,7 @@
 const JUICE = {
   kbMul: 1.3,            // 밀림 강화 배율
   flash: 0.1,            // 피격 반짝임 시간 (기존 0.08)
-  ptMax: 260,            // 파편 동시 상한
+  ptMax: 180,            // 파편 동시 상한
   dnMax: 60,             // 피해 숫자 동시 상한
   dnMerge: 0.12,         // 같은 적 연속 피해 합산 시간
   shard: { n: 3, elite: 7, boss: 18 },
@@ -22,18 +22,19 @@ function sparkBurst(x, y, R, col) { burst(x, y, Math.min(10, 3 + Math.round(R / 
 function burst(x, y, n, col, sp = 120, life = 0.45, sz = 3) {
   const j = JC(); n = Math.min(n, JUICE.ptMax - j.pt.length); if (n <= 0) return;
   for (let i = 0; i < n; i++) {
-    const a = rand(Math.PI * 2), v = sp * rand(0.45, 1);
-    j.pt.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * 0.25, t: 0, dur: life * rand(0.7, 1.15), c: col, s: sz * rand(0.8, 1.3), g: 260 });
+    const a = vfxRand(Math.PI * 2), v = sp * vfxRand(0.45, 1);
+    j.pt.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * 0.25, t: 0, dur: life * vfxRand(0.7, 1.15), c: col, s: sz * vfxRand(0.8, 1.3), g: 260 });
   }
 }
 function sparkUp(x, y, n, cols, spread = 26) {
   const j = JC(); n = Math.min(n, JUICE.ptMax - j.pt.length);
-  for (let i = 0; i < n; i++) j.pt.push({ x: x + rand(-spread, spread), y: y + rand(-6, 10), vx: rand(-12, 12), vy: -rand(70, 150), t: 0, dur: rand(0.5, 0.9), c: cols[i % cols.length], s: rand(2, 3.5), g: -40 });
+  for (let i = 0; i < n; i++) j.pt.push({ x: x + vfxRand(-spread, spread), y: y + vfxRand(-6, 10), vx: vfxRand(-12, 12), vy: -vfxRand(70, 150), t: 0, dur: vfxRand(0.5, 0.9), c: cols[i % cols.length], s: vfxRand(2, 3.5), g: -40 });
 }
 
 /* 적 피격·처치 연계 (game.js damageEnemy·killEnemy에서 호출) */
 function jHit(e, dmg, o) {
   e.flash = o.crit ? 0.14 : JUICE.flash;
+  vfxHit(e, o.crit);
   if (o.crit) fx({ kind: 'ring', x: e.x, y: e.y, r0: e.r * 0.6, r1: e.r + 14, dur: 0.18, color: '#ffe08a' });
   if (SETTINGS.dmgNum) dmgNum(e, dmg, o.crit);
 }
@@ -50,7 +51,7 @@ function dmgNum(e, v, crit) {
   const j = JC(), m = e._dn;
   if (m && !m.done && m.t < JUICE.dnMerge && !crit && !m.crit) { m.v += v; m.x = e.x; return; }
   if (j.dn.length >= JUICE.dnMax) { if (!crit) return; j.dn.shift(); }
-  const d = { x: e.x + rand(-4, 4), y: e.y - e.r - 2, v, crit: !!crit, t: 0, dur: crit ? 0.8 : 0.6 };
+  const d = { x: e.x + vfxRand(-4, 4), y: e.y - e.r - 2, v, crit: !!crit, t: 0, dur: crit ? 0.8 : 0.6 };
   j.dn.push(d); e._dn = d;
 }
 
@@ -72,9 +73,19 @@ function updateJuice(dt) {
 /* 월드 좌표 그리기 (drawFx 다음) */
 function drawJuice(c) {
   const j = G.jc; if (!j) return;
-  for (const q of j.pt) { c.globalAlpha = Math.max(0, 1 - q.t / q.dur); c.fillStyle = q.c; const s = q.s; c.fillRect(Math.round(q.x - s / 2), Math.round(q.y - s / 2), s, s); }
+  c.save();
+  c.save(); c.imageSmoothingEnabled = true; c.lineCap = 'round';
+  const lite = vfxLite(); let pi = 0;
+  for (const q of j.pt) {
+    if (Math.abs(q.x - G.p.x) > VIEW.w / 2 + 40 || Math.abs(q.y - G.p.y) > VIEW.h / 2 + 40) continue;
+    const k = clamp(q.t / q.dur, 0, 1), a = (1 - k) ** 2, s = q.s * (1 - k * 0.45);
+    if (!lite && pi++ % 4 === 0) vfxGlow(c, q.x, q.y, s * 2.6, q.c, a * 0.32);
+    const sp = Math.hypot(q.vx, q.vy) || 1, len = Math.min(5, sp * 0.018);
+    vfxLine(c, [[q.x - q.vx / sp * len, q.y - q.vy / sp * len], [q.x, q.y]], Math.max(0.7, s * 0.7), q.c, a * 0.9);
+  }
+  c.restore();
   c.globalAlpha = 1;
-  if (!j.dn.length) return;
+  if (!j.dn.length) { c.restore(); return; }
   c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
   for (const d of j.dn) {
     const k = d.t / d.dur, pop = d.crit && d.t < 0.1 ? 1.35 : 1;
@@ -85,6 +96,7 @@ function drawJuice(c) {
     c.fillStyle = d.crit ? '#ffd24a' : '#ffffff'; c.fillText(s, d.x, d.y);
   }
   c.globalAlpha = 1;
+  c.restore();
 }
 /* 화면 좌표 그리기 (HUD 다음) */
 function drawBanner(c) {

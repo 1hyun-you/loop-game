@@ -1,6 +1,6 @@
 # 클로드 후속 작업 전달
 
-- ChatGPT에서 그래픽 개편 패치 `0.40-art3` 적용.
+- ChatGPT에서 그래픽 개편 패치 `0.40-vfx1` 적용. 기존 art1~art3 손그림 에셋 보존.
 - 작업 시작 전 두 저장소의 최신 main 및 최근 커밋 확인 필요.
 - 게임 원본: `1hyun-you/loop-game`.
 - 실제 서비스: `1hyun-you/1hyun-you.github.io`의 `field/index.html`.
@@ -22,7 +22,7 @@
 2. `src/sprite.js`, `src/icons.js`, `src/render.js`, `src/ui37.js`의 원본 대체 렌더러 이름과 새 테마 연결 유지.
 3. `src/art-data.js`, `src/art-theme.js`, `src/art3-data.js`, `src/art3-theme.js` 및 `assets/art2/`, `assets/art3/` 보존. 오래된 `index.html` 전체 덮어쓰기 금지.
 4. 이미지를 수정한 경우 묶음에 맞춰 `node dev/pack-art2.cjs`, `node dev/pack-art3.cjs` 실행 후 `sh build.sh`로 통합본 생성.
-5. 빌드 시 `src/art-data.js src/art-theme.js src/art3-data.js src/art3-theme.js`를 `src/main.js` 이전에 순서대로 결합할 것. `buildPixelPortraits`와 `art3LinkAliases` 연결 유지.
+5. 빌드 시 `src/art-data.js src/art-theme.js src/art3-data.js src/art3-theme.js src/vfx.js`를 `src/main.js` 이전에 순서대로 결합할 것. `buildPixelPortraits`와 `art3LinkAliases` 연결 유지.
 6. 실제 배포는 `deploy_field.sh` 방식으로 생성된 통합본을 사이트 저장소의 `field/`에 반영. 원본 저장소만 수정하면 실제 서비스에는 미반영.
 7. 동시 작업 금지. 사용자에게 담당 작업 시작·배포 완료 전달 후 다음 담당자가 최신 main을 기준으로 작업.
 
@@ -35,3 +35,18 @@
 - art3: 신규 820가지 프레임/효과/반전 조합, 투사체 색상 변형, 스프라이트 대체 처리, 공유 이미지 4개, 초상 재생성, 320px·390px 대사창, 실제 드루이드 소환수 시뮬레이션 검수.
 - 검사 명령: Playwright 설치 환경에서 `node dev/check-art3.cjs`, `node dev/check-art2.cjs`. 별도 Chromium 경로 사용 시 `ART2_CHROMIUM_PATH` 지정 가능.
 - 다음 작업 후보: 메뉴 탐색 아이콘·HUD 글꼴 통일, 직업별 별도 의상, 다방향·다프레임 애니메이션. 동시에 수정하지 말고 사용자 지시 후 순차 진행.
+
+
+## 최신 추가 사항 — 공통 VFX 개편
+
+- 베기·대상 위 칼자국·치명타·일반 타격, 화염 투사체 잔상·폭발, 낙뢰·연쇄 번개, 서리 영역·서리 강타, 처치·레벨업·회복 파편 및 이동 먼지·발사 섬광 개편.
+- 새 공통 렌더러 `src/vfx.js`. `src/render.js`의 이전 `drawFx` 제거, 새 함수 사용. `drawVfxTrails`는 `drawWeapons` 직전 호출. 새 이미지 추가 없음.
+- `game.js`의 `fx()`가 폭발 불티를 생성 시점에 한 번 발생시킴. 렌더 함수 내 파편 생성 복원 금지. 일시정지 화면 재그리기로 상태 변경되지 않도록 유지.
+- `juice.js`의 `burst`, `sparkUp`, 피해 숫자 장식에 VFX 전용 난수 적용. `G.vfx`의 seed·WeakMap·회복 장식 쿨다운은 판 단위 시각 상태. 게임 난수와 다시 합치지 말 것.
+- 파편 최대 180개·효과 최대 220개·빛 캐시 16색·투사체 잔상 최대 96개. 42 FPS 미만 48개 및 일부 장식 생략. 시스템 동작 줄이기 실시간 반영.
+- `react.js` 전체 화면 섬광 불투명도 제한, 화면 흔들림은 기존 설정과 시스템 동작 줄이기 적용. 실제 피격 정지·슬로모션 계산 유지.
+- 보스 경고 형태·범위·시간, 적 탄환 위험 표시, 피해·쿨다운·저장 키 유지. `weapons.js`에는 서리 강타 시각 구분용 `element` 필드만 추가.
+- 새 검사: `node dev/check-vfx.cjs`; 구버전 HTML 비교 시 `VFX_BASELINE_HTML` 지정. `ART2_CHROMIUM_PATH`로 Chromium 경로 지정 가능.
+- 검사 결과: 800회 생성 요청의 개수 상한, 일시정지 재그리기 상태 불변, 파편 소멸·새 판 초기화·캐시 상한·게임 난수 미소비, 폭발/부채꼴 판정·피해·밀림·회복·범위·시간·저장 키의 art3 기준 비교, 복합 무기 실시간 플레이, 동작 줄이기 및 320px/390px 검수 통과.
+- `dev/vfx-validation.json`의 렌더 시간은 QA Chromium에서 공통 VFX만 반복 그린 CPU 측정. 전체 게임 FPS나 실제 휴대폰 성능으로 해석 금지.
+- 후속 수정 전 이 문서와 `ART_DIRECTION.md` 확인 후 최신 main에서 시작. 두 저장소 배포 및 버전 확인 후 다음 담당자에게 인계.
