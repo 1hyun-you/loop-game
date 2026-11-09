@@ -10,7 +10,7 @@ function ok(v,name){if(!v)throw Error(name);report.checks.push(name);}
     page.on('pageerror',e=>report.errors.push(e.message));
     await page.goto('http://127.0.0.1:8788/');
     await page.waitForFunction(()=>typeof ART2!=='undefined'&&ART2.ground&&ART2.title&&ART2.icons&&['bat','skel','brute','gob','jelly','mush','boar','knight','wisp','bargan','igna','morden','seren','demon'].every(n=>FIELD_ART.ready[n]));
-    ok(await page.locator('.ver').innerText()==='v0.40-art2','version');
+    ok(await page.locator('.ver').innerText()==='v0.40-art3','version');
     // QA host lacks Korean system fonts. The existing bundled font supplies glyphs only for local snapshots.
     await page.addStyleTag({content:'body{font-family:Galmuri11,system-ui,sans-serif}.hlogo h1{font-family:Galmuri11,serif}'});
     await page.screenshot({path:root+'/dev/art2-title-390.png'});report.screens.push('art2-title-390.png');

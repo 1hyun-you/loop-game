@@ -1,0 +1,38 @@
+{
+  "checks": [
+    "version",
+    "820 frame/effect/flip combinations, tint and fallback",
+    "four shared image atlases",
+    "all registered game sprites covered",
+    "390px dialogue fits",
+    "320px dialogue fits",
+    "live druid pet simulation",
+    "no JavaScript runtime errors"
+  ],
+  "errors": [],
+  "render": {
+    "count": 820,
+    "errors": [],
+    "missingPaintedSprites": [],
+    "portraits": {
+      "hero": [
+        160,
+        160
+      ],
+      "aide": [
+        160,
+        160
+      ],
+      "demon": [
+        160,
+        160
+      ]
+    },
+    "atlasCount": 4
+  },
+  "play": {
+    "time": 4.499800000000004,
+    "pets": 2,
+    "error": false
+  }
+}

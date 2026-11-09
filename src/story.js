@@ -21,7 +21,7 @@ const PORTRAITS = {
     half: ['brbbbbbb', 'brrbbbbb', 'bbrrbkkk', 'bbrkkmmm', 'bbbkmmmm', 'bbbkmmmm', 'bbbkmymm', 'bbbkmmmm', 'bbbkmkkk', 'bbbbkmmm', 'bbkkkkoo', 'bkooopoo', 'koooopoo', 'kooooopo', 'kooooooo', 'kooooooo'] },
 };
 const PT_URL = {};
-function buildPortraits() {
+function buildPixelPortraits() {
   for (const k in PORTRAITS) {
     try {
       const P = PORTRAITS[k], cvs = document.createElement('canvas'); cvs.width = cvs.height = 16;

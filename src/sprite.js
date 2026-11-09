@@ -305,14 +305,15 @@ function getSprite(name, frame, opt) {
   const glow = ['gold','rage','danger'].includes(mode), pad = glow ? 1 : 0;
   const cv = document.createElement('canvas'); cv.width = (w+2*pad)*t; cv.height = (h+2*pad)*t;
   const c = cv.getContext('2d'), f = art.frames[fr]; c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-  const scale = Math.min((w-1)*t/art.maxW, (h-0.5)*t/art.maxH), dw = f.w*scale, dh = f.h*scale;
+  const stretch = name === 'pj_wind' || name === 'dbeam';
+  const scale = Math.min((w-1)*t/art.maxW, (h-0.5)*t/art.maxH), dw = stretch ? w*t : f.w*scale, dh = stretch ? h*t : f.h*scale;
   c.save(); if (o.flip) { c.translate(cv.width,0); c.scale(-1,1); }
   c.drawImage(art.img,f.x,f.y,f.w,f.h,(cv.width-dw)/2,(pad+h)*t-dh,dw,dh); c.restore();
-  if (name === 'hero' && tint && tint !== '#7fb4ff' && mode !== 'white') {
+  if ((name === 'hero' || name === 'ball') && tint && (name === 'ball' || tint !== '#7fb4ff') && mode !== 'white') {
     const pixels = c.getImageData(0,0,cv.width,cv.height), p = pixels.data;
     const rgb = [1,3,5].map(i=>parseInt(tint.slice(i,i+2),16));
     if (rgb.every(Number.isFinite)) for (let i=0;i<p.length;i+=4) {
-      if (p[i+3] && p[i+2]>p[i]*1.25 && p[i+2]>p[i+1]*1.12) {
+      if (p[i+3] && (name === 'ball' ? p[i+2]>65 && p[i+2]>p[i]*1.12 && p[i+2]>=p[i+1]*0.92 : p[i+2]>p[i]*1.25 && p[i+2]>p[i+1]*1.12)) {
         const light = Math.min(1.2, p[i+2]/190);
         for (let j=0;j<3;j++) p[i+j] = Math.min(255,rgb[j]*light);
       }

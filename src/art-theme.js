@@ -1,6 +1,6 @@
 /* 0.40-art2: shared painted art direction. Gameplay and save data remain in their original modules. */
 const ART2 = {
-  version: '0.40-art2', ground: null, title: null, groundCache: new Map(), icons: null,
+  version: '0.40-art3', ground: null, title: null, groundCache: new Map(), icons: null,
   iconCache: new Map(), iconCanvasCache: new Map(),
   iconOrder: ['cleave','spin','arrow','boomerang','fireball','lightning','shield','slam','knife','trap','icering','orb','lance','flail','shuriken','bomb','beam','vortex','vit','might','swift','haste','area','multi','magnet','regen']
 };
@@ -67,6 +67,7 @@ function art2Projectiles() {
     const rect={x:l,y:top,w:r-l+1,h:b-top+1};
     FIELD_ART.ready[name]={img:cv,frames:[rect,rect],maxW:rect.w,maxH:rect.h};
   }
+  if(typeof art3LinkAliases==='function')art3LinkAliases();
   FIELD_ART.cache.clear();
 }
 function groundPattern(c,tid) {
