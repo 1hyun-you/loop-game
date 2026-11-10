@@ -20,10 +20,10 @@ const JOB_WX = {
 };
 /* 피해원 → 무기 계열 (공용 무기 발생분만) */
 const SRC_CAT = { cleave: 'melee', spin: 'melee', shield: 'melee', slam: 'melee', fissure: 'melee', arrow: 'ranged', split: 'ranged', boomerang: 'ranged', knife: 'ranged', trap: 'ranged', fireball: 'magic', fireball_pool: 'magic', lightning: 'magic', chain: 'magic', icering: 'magic', mbolt: 'magic', nova: 'magic' };
-const wxOn = cat => !!G.p.job && jobCat(cat);
+const wxOn = cat => false;   // 0.41 계열 변환 규칙 폐지 (직업 핵심 규칙·연성으로 흡수)
 const wxSrc = src => { const c = SRC_CAT[src]; return c && wxOn(c); };
 function wName(id) { const d = WEAPONS[id]; return wxOn(d.cat) ? JOB_WX[G.p.job].pre + ' ' + d.name : d.name; }
-function jobTint(cat) { return wxOn(cat) ? JOB_COL[G.p.job] : null; }
+function jobTint(cat) { return G.p.job ? JOB_COL[G.p.job] : null; }   // 0.41 직업 색 발광은 유지
 
 function jobWeaponHit(e, o) {
   const p = G.p, j = p.job, src = o.src;
@@ -49,7 +49,7 @@ function jobWeaponKill(e) {
 function jobCeremony(id, second) {
   const p = G.p, col = JOB_COL[id];
   if (second) { const o = JOB2[id].concat(JOB2_STAT).find(x => x.k === p.job2); banner('2차 전직 · ' + o.nm, JOBS[id].name + ' 숙련', col, 2.2); }
-  else { banner(JOBS[id].name + ' 전직', JOB_WX[id].pre + ' 무기 변환', col, 2.2); toast(JOBS[id].rule.split(',')[0], col); }
+  else { banner(JOBS[id].name + ' 전직', JOB_WX[id].tag || '', col, 2.2); toast(JOBS[id].rule.split(',')[0], col); }
   sfx('ult'); shake(4, 0.3); rcBig(col, 0.4);               // 3등급 반응 (0.28)
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 150, dur: 0.7, color: col, fill: true, follow: true });
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 40, r1: 220, dur: 0.9, color: '#ffffff', follow: true });

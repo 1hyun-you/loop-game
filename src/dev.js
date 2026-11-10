@@ -154,6 +154,7 @@ function autoVec() {
   if (tg && tg.k === 'boss') pull = td > 60 ? 1 : 0;                       // 대장은 근접 사거리까지 접근
   if (tg && tg.k === 'gk') { const mel = p.weapons.filter(w => WEAPONS[w.id].cat === 'melee').length >= 2, lo = mel ? 55 : 110, hi = mel ? 95 : 170; pull = td > hi ? 1 : td < lo ? -0.6 : 0.1; }   // 수문장: 근접형은 붙고 원거리형은 거리 유지
   const here = autoDanger(p.x, p.y);
+  if (p.job === 'archer' && here < 2.5 && !(tg && (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 0.41 궁수 집중: 위험 낮을 때 정지 사격 (사람 플레이 재현)
   if (ultReady() && !autoUltSetting() && (here > 3 || G.time - G.tm.readyAt > 8)) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 궁극기: 손 떼고 정지 (0.6)
   let best = AUTO_DIRS[0], bs = -1e9;
   for (const dv of AUTO_DIRS) {

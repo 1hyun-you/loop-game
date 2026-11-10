@@ -167,7 +167,7 @@ function crisisPlan() {
   ph.crisis = { type: pick(Object.keys(CRISES)), at: rand(CR_CFG.at[0], CR_CFG.at[1]) };
 }
 function crisisSpawnMul() { return G.cr && G.cr.type === 'rift' ? CR_CFG.riftMul : 1; }
-const crisisXpMul = () => G.cr && G.cr.type === 'rift' ? CR_CFG.riftMul : 1;
+const crisisXpMul = () => (G.cr && G.cr.type === 'rift' ? CR_CFG.riftMul : 1) * (G._xk41 || 1);   // 0.41 드루이드 동료 처치 경험치
 function updateCrisis(dt) {
   const ph = G.ph;
   if (!G.cr) {

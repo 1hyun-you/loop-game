@@ -156,6 +156,7 @@ function updateEnemies(dt) {
     if (G.tm.stop > 0) sp *= e.boss ? 0.3 : 0;                                    // 시간술사 궁극기
     if (e.elite) sp *= eliteMove(e, dt);
     if (e.slowT > 0) { e.slowT -= dt; sp *= 0.55; }
+    sp *= chronoSlow(e);                                                          // 0.41 시간술사 감속 반경
     if (e.frz > 0) { e.frz -= dt; sp = 0; }
     if (e.mb && !e.frz) { sp = mobMove(e, dt, sp, d, dx, dy); if (e.dead) continue; }   // 사격·자폭·돌진·흔들림 (0.23)
     if (e.sleep || e.fixed) sp = 0;                                               // 잠든 거대 몹·마법진 (0.10)                                       // 빙결·속박 (0.8)

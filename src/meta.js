@@ -55,7 +55,7 @@ function runOpt() {
 const optOf = () => (G && G.opt) || { tier: 0, conds: [] };
 const hasCond = k => optOf().conds.includes(k);
 const tierK = () => TIERS[optOf().tier].k * Math.max(META_CAP.kMin, 1 - META_CAP.kPerCond * optOf().conds.length);   // 0.17 조건 수만큼 적 강화 완화
-const slotW = () => hasCond('slot3') ? 3 : CFG.slots.weapon;
+const slotW = () => hasCond('slot3') || (G && G.p && G.p.job === 'rogue') ? 3 : CFG.slots.weapon;   // 0.41 도적 무기 칸 3
 const selN = () => hasCond('two') ? 2 : CFG.select.cards;
 const catOk = cat => hasCond('melee') ? cat === 'melee' : hasCond('ranged') ? cat !== 'melee' : true;
 const startWeapon = () => hasCond('ranged') ? 'arrow' : START_WEAPON;

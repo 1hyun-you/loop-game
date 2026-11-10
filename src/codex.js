@@ -81,7 +81,7 @@ function cxRelic(id, seen) {
 function cxJob(id, seen) {
   const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id];
   const cats = jobCats(id).map(c => CAT_NAME[c]).join('·');
-  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: cats + ' 계열', lines: [esc(J.rule), cxL('궁극기 ' + U[0], U[1]), cxL('계열 변환', `'${X.pre}' · ${X.ds} · 피해 +10%`), cxBr(JOB2[id], '2차 전직')] });
+  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: cats + ' 계열', lines: [esc(J.rule), cxL('궁극기 ' + U[0], U[1]), cxL('연성 · ' + X.pre, X.ds + ' (0.42 구현 예정)'), cxBr(JOB2[id], '2차 전직')] });
 }
 function cxEnemies(S) {
   const mob = ENEMY_ORDER.map(k => { const E = ENEMIES[k], v = S.seenE.has(k); return cxCard({ lock: !v, hint: '조우 시 기록', col: E.color, ic: E.name.slice(0, 1), nm: E.name, tag: '잡몹', lines: [cxL('능력치', `체력 ${E.hp} · 이동 ${E.speed} · 접촉 피해 ${E.dmg} · 경험치 ${E.xp}`), cxL('등장', `${E.from}분 이후`) + (E.mb ? ' · ' + esc(CX_MB[E.mb] || '') : '')] }); });

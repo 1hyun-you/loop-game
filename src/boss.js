@@ -70,7 +70,7 @@ function gkUpdate(e, dt, d, dx, dy) {
   if (!ai.dash) {
     let sx = mx, sy = my;
     if (e.strafe) { const s = e.strafe; sx = mx * s.k - my * s.dir * (1 - Math.abs(s.k)); sy = my * s.k + mx * s.dir * (1 - Math.abs(s.k)); const m = Math.hypot(sx, sy) || 1; sx /= m; sy /= m; }
-    const sp = e.speed * (e.rage ? 1.2 : 1) * (e.slowT > 0 ? 0.75 : 1) * (G.tm.roar > 0 ? 0.6 : 1) * mv;
+    const sp = e.speed * (e.rage ? 1.2 : 1) * (e.slowT > 0 ? 0.75 : 1) * (G.tm.roar > 0 ? 0.6 : 1) * mv * chronoSlow(e);
     e.x += sx * sp * dt; e.y += sy * sp * dt;
   }
   if (e.slowT > 0) e.slowT -= dt;
@@ -227,7 +227,7 @@ function updateBossFx(dt) {
   const p = G.p;
   dmFx(dt);                                                        // 마왕 결계·광선·부채꼴·추적탄 (0.12)
   for (const b of G.eb) {
-    b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+    const bk = chronoBullet(b); b.x += b.vx * dt * bk; b.y += b.vy * dt * bk; b.life -= dt;   // 0.41 시간술사 탄환 감속
     if (!G.result && dist2(b.x, b.y, p.x, p.y) < (b.r + p.r * 0.55) ** 2) { b.life = 0; hurtPlayer(b.dmg, b.src); }
   }
   G.eb = G.eb.filter(b => b.life > 0);

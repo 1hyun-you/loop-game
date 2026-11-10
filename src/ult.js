@@ -192,7 +192,7 @@ const ULT_FN = {
 function updateUltFx(dt) {
   const U = G.U; if (!U) return; const p = G.p;
   for (const k of ['rage', 'rally', 'haste', 'raise', 'bigPets', 'saint']) if (U[k] > 0) U[k] -= dt;
-  if(U.wall){const W=U.wall,k=Math.min(1,W.t);paintedAura(c,'shield',W.x,W.y,W.r,.6*k);effectBoundary(c,W.x,W.y,W.r,'#ffd0a0',.4*k);}
+  if (U.wall) { U.wall.t -= dt; const W = U.wall; gridQuery(W.x, W.y, W.r + 8, e => { if (isBossE(e)) return; const dx = e.x - W.x, dy = e.y - W.y, d = Math.hypot(dx, dy) || 1; if (d < W.r) { e.kbx += dx / d * 260 * dt * 6; e.kby += dy / d * 260 * dt * 6; } }); if (W.t <= 0) U.wall = null; }   // 0.41 복구: 0.40-art 패치에서 갱신 함수의 방벽 밀어내기·시간 감소가 그리기 코드로 대체된 결함
   if (U.dance > 0) {
     U.dance -= dt; U.bladeT -= dt;
     U.clones.forEach((c, i) => { c.a += dt * 3; const tx = p.x + Math.cos(c.a) * 46, ty = p.y + Math.sin(c.a) * 46; c.x += (tx - c.x) * Math.min(1, dt * 8); c.y += (ty - c.y) * Math.min(1, dt * 8); });

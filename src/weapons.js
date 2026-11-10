@@ -57,7 +57,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 function shoot(o) {
   const pr = Object.assign({ id: ++G.pid, t: 0, life: 1, r: 4, pierce: 0, hits: new Set(), color: '#fff', kind: 'bolt', src: '' }, o);
   pr.vx = Math.cos(o.ang) * o.sp; pr.vy = Math.sin(o.ang) * o.sp;
-  if (SRC_CAT[pr.src] && wxOn(SRC_CAT[pr.src])) pr.jt = JOB_COL[G.p.job];   // 직업 변환 무기 발광 (0.26)
+  if (SRC_CAT[pr.src] && G.p.job) pr.jt = JOB_COL[G.p.job];   // 직업 변환 무기 발광 (0.26)
   if (G.proj.length < 400) G.proj.push(pr);
   return pr;
 }
