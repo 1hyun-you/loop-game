@@ -21,7 +21,7 @@
     "all ten crests in codex 690",
     "codex has no horizontal overflow 690",
     "image decoding failure restores the former letter icon",
-    "second-job crests remain explicitly deferred",
+    "second-job selection now uses its specialization crest",
     "no browser runtime errors"
   ],
   "errors": []

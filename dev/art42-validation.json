@@ -1,35 +1,73 @@
 {
-  "version": "0.42-art1",
-  "source": "abf8f8669ebef6af4b9b9b48cba5b0262570ce17",
-  "workflow_run": 42916068318,
-  "artifact": 13808808427,
+  "version": "0.42-art2",
+  "source": "396e1bca5c497dce423c7758b463a31a1996ce7a",
+  "gameBuild": "d046d63dbc52a13ccb0caf93b22f8047a17f9479",
+  "validationRun": 42921673612,
+  "validationBranch": "art/042-job2-crests",
+  "artifact": 13812047293,
+  "artifactExpiresAt": "2027-02-08T23:14:22Z",
   "checks": {
-    "crests": 23,
-    "choice": 78,
-    "ui": 12,
-    "art2": 11
+    "job2-crests": {
+      "checks": 113,
+      "errors": []
+    },
+    "crests": {
+      "checks": 23,
+      "errors": []
+    },
+    "choice": {
+      "checks": 78,
+      "errors": []
+    },
+    "ui": {
+      "checks": 12,
+      "errors": []
+    },
+    "art2": {
+      "checks": 11,
+      "errors": []
+    }
   },
-  "virtual_runs": [
+  "simulations": [
     {
-      "idx": 0,
-      "result": "cap",
-      "time": 120,
-      "errs": [],
-      "pageErr": [],
-      "errShown": false,
+      "fatal": null,
+      "errors": [],
+      "pageErrors": [],
+      "errorShown": false,
       "saveOk": true
     },
     {
-      "idx": 1,
-      "result": "cap",
-      "time": 120,
-      "errs": [],
-      "pageErr": [],
-      "errShown": false,
+      "fatal": null,
+      "errors": [],
+      "pageErrors": [],
+      "errorShown": false,
       "saveOk": true
     }
   ],
-  "live_sha256": "e14ab9de21fbaefcc8f84aa00e863166225c45ecf1e120ee33d4ef88f793118a",
-  "live_matches_tested_build": true,
-  "physical_device_tested": false
+  "service": {
+    "sourceRefCommit": "d1ac4574301c34f9c515f5d552f5c65c18730c56",
+    "build": "f2ab1b040f3bad670384a65be7ef824def97cb66",
+    "versionCommit": "be48788c1be8ffe3ccb90299a325ba626f47111d",
+    "buildRun": 42922039068,
+    "pagesRun": 42922135861,
+    "url": "https://1hyun-you.github.io/field/",
+    "htmlSha256": "edadbf1aeef4c1e028e703250408663355032ed350c6286437d128d12e22fb56",
+    "liveHtmlMatches": true,
+    "pagesConclusion": "success",
+    "liveVersion": {
+      "version": "0.42-art2",
+      "source": "396e1bca5c497dce423c7758b463a31a1996ce7a",
+      "build": "f2ab1b040f3bad670384a65be7ef824def97cb66"
+    }
+  },
+  "limits": [
+    "No physical Fold8 testing",
+    "No long-duration device FPS measurement",
+    "Local Chromium unavailable: socket() Operation not permitted; browser checks executed in GitHub Actions"
+  ],
+  "deferred": [
+    "trial crests (10)",
+    "fusion crests (3)",
+    "other ART42_PLAN batches"
+  ]
 }

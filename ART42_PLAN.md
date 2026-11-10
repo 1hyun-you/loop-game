@@ -47,3 +47,10 @@
 - GitHub Actions 42916068318 전체 통과. 상세 dev/crests-validation.json, choice-validation.json, ui-validation.json, art2-validation.json 및 art42-validation.json.
 - 실제 서비스 HTML과 검사한 소스 빌드의 바이트·SHA256 일치 확인. 실기기 검사는 미실시.
 - 다음 작업: 2번 중 2차 전직 20종 문장부터 별도 묶음 진행. 시련 10종·연성 결합 문양 등은 다음 묶음. 요청문 재전달 불필요.
+
+## art2 — 2차 전직 문장 20종
+
+- 이번 묶음은 2차 전직 문장 20종·2차 전직 선택창·도감 직업 상세만 적용. 1차 문장 형태를 계승하고 분기별 상징을 추가한 내장 SVG UI 아이콘.
+- 등록명 crest_berserk/guard/assassin/dancer/conqueror/benevolent/sniper/hunter/artillery/mechanic/accel/rewind/elemental/archmage/necro/lord/judge/saint/ursa/pack.
+- 공통 선택지 숙련은 기존 공통 문장 유지. 시련10종·결합3종·전투 발밑 문양 및 다른 묶음 미착수.
+- 검증·배포 최종 SHA와 결과는 CLAUDE_HANDOFF.md 마지막 art2 항목 참조. 다음 묶음은 사용자 지시에 따라 시련10종 또는 결합3종으로 분할 진행.
