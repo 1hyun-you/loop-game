@@ -15,7 +15,7 @@ function paintedEffect(c,key,x,y,r,alpha=.6,angle=0,sy=1){
  const im=EFFECT_ART.image,i=EFFECT_DATA.names.indexOf(key);
  if(!im||i<0||!Number.isFinite(x+y+r+alpha+angle+sy)||r<=0)return false;
  // Once budget is spent, skip decorative stamps (the caller still draws range outlines).
- if(Math.abs(x-G.p.x)>VIEW.w/2+r+60||Math.abs(y-G.p.y)>VIEW.h/2+r+60)return true;
+ if(Math.abs(x-G.p.x)>VIEW.cameraW/2+r+60||Math.abs(y-G.p.y)>VIEW.cameraH/2+r+60)return true;
  if(EFFECT_ART.count++>=(vfxLite()?48:96))return true;
  c.save();c.imageSmoothingEnabled=true;c.globalAlpha*=clamp(alpha,0,.78);
  c.translate(x,y);c.rotate(VFX.reduced.matches?0:angle);c.scale(1,sy);

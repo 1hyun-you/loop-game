@@ -1,7 +1,7 @@
 {
   "checks": [
     "version and embedded atlas loaded",
-    "compact layout, 8px pause separation and no slot collisions at 280–1366px",
+    "readable layout, 8px pause separation and no slot collisions at 280–1366px",
     "actual pause coordinates 320x568",
     "actual pause coordinates 390x844",
     "actual pause coordinates 412x915",
@@ -18,7 +18,8 @@
     {
       "width": 280,
       "sat": 0,
-      "height": 68,
+      "height": 95,
+      "size": 22,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -26,7 +27,8 @@
     {
       "width": 280,
       "sat": 28,
-      "height": 68,
+      "height": 95,
+      "size": 22,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -34,7 +36,8 @@
     {
       "width": 320,
       "sat": 0,
-      "height": 68,
+      "height": 97,
+      "size": 23,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -42,7 +45,8 @@
     {
       "width": 320,
       "sat": 28,
-      "height": 68,
+      "height": 97,
+      "size": 23,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -50,7 +54,8 @@
     {
       "width": 360,
       "sat": 0,
-      "height": 68,
+      "height": 99,
+      "size": 24,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -58,7 +63,8 @@
     {
       "width": 360,
       "sat": 28,
-      "height": 68,
+      "height": 99,
+      "size": 24,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -66,7 +72,8 @@
     {
       "width": 390,
       "sat": 0,
-      "height": 68,
+      "height": 101,
+      "size": 25,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -74,7 +81,8 @@
     {
       "width": 390,
       "sat": 28,
-      "height": 68,
+      "height": 101,
+      "size": 25,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -82,7 +90,8 @@
     {
       "width": 412,
       "sat": 0,
-      "height": 68,
+      "height": 103,
+      "size": 26,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -90,7 +99,8 @@
     {
       "width": 412,
       "sat": 28,
-      "height": 68,
+      "height": 103,
+      "size": 26,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -98,7 +108,8 @@
     {
       "width": 690,
       "sat": 0,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -106,7 +117,8 @@
     {
       "width": 690,
       "sat": 28,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -114,7 +126,8 @@
     {
       "width": 768,
       "sat": 0,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -122,7 +135,8 @@
     {
       "width": 768,
       "sat": 28,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -130,7 +144,8 @@
     {
       "width": 844,
       "sat": 0,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -138,7 +153,8 @@
     {
       "width": 844,
       "sat": 28,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -146,7 +162,8 @@
     {
       "width": 1366,
       "sat": 0,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false
@@ -154,7 +171,8 @@
     {
       "width": 1366,
       "sat": 28,
-      "height": 68,
+      "height": 111,
+      "size": 30,
       "gap": 8,
       "bounded": true,
       "overlap": false

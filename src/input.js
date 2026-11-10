@@ -3,7 +3,9 @@
    ============================================================ */
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d', { alpha: false });
-const VIEW = { w: 400, h: 800, dpr: 1, zoom: 1, sat: 0, sab: 0, cw: 400, ch: 800 };
+const VIEW = { w: 400, h: 800, dpr: 1, zoom: 1, cameraW: 400, cameraH: 800, sat: 0, sab: 0, cw: 400, ch: 800 };
+// Display scale is independent of the legacy simulation viewport (spawns/ultimates).
+function battleZoom(width, height) { return clamp(Math.min(width, height) / 390 * 1.4, 1.15, 2.05); }
 /* 0.26a 화면 고정: 캔버스·UI를 픽셀 고정 크기로 두어 창 크기가 순간 변해도 늘어남·재생성·재배치 없음
    (가장자리·상단 끌기 때 시스템 표시줄이 잠깐 나타나며 창 높이가 흔들리던 현상 대응)
    폭 변경(회전)·높이 확대는 즉시 반영, 높이 축소는 1.2초 이상 유지될 때만 반영 */
@@ -14,8 +16,10 @@ function resize() {
   cv.width = Math.round(VIEW.cw * VIEW.dpr); cv.height = Math.round(VIEW.ch * VIEW.dpr);
   cv.style.width = VIEW.cw + 'px'; cv.style.height = VIEW.ch + 'px';
   if (uiEl) { uiEl.style.width = VIEW.cw + 'px'; uiEl.style.height = VIEW.ch + 'px'; }
-  VIEW.zoom = clamp(VIEW.cw / CFG.viewWidth, 0.8, 1.6);
-  VIEW.w = VIEW.cw / VIEW.zoom; VIEW.h = VIEW.ch / VIEW.zoom;
+  const simulationZoom = clamp(VIEW.cw / CFG.viewWidth, 0.8, 1.6);
+  VIEW.w = VIEW.cw / simulationZoom; VIEW.h = VIEW.ch / simulationZoom;
+  VIEW.zoom = battleZoom(VIEW.cw, VIEW.ch);
+  VIEW.cameraW = VIEW.cw / VIEW.zoom; VIEW.cameraH = VIEW.ch / VIEW.zoom;
   VIEW.sat = document.getElementById('sa').getBoundingClientRect().height || 0;
   VIEW.sab = document.getElementById('sb').getBoundingClientRect().height || 0;
   /* 0.27 화면 고정 보강: 안전 영역 값을 확정 시점에만 고정 반영, 상단 끌기 때 시스템 표시줄이 잠깐 나타나며

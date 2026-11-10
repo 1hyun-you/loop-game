@@ -17,10 +17,10 @@ function render() {
   const tn = G.time; updateTerrain(Math.max(0, Math.min(0.1, tn - terLast))); terLast = tn;
   c.fillStyle = TERRAIN[TER.cur].a; c.fillRect(0, 0, VIEW.cw, VIEW.ch);
   const sh = SETTINGS.shake && !VFX.reduced.matches ? Math.max(p.flash > 0 ? 3 : 0, shakeAmt()) : 0;   // 화면 흔들림 설정 (0.14), 연출 흔들림 (0.22)
-  const camX = p.x - VIEW.w / 2 + rand(-sh, sh), camY = p.y - VIEW.h / 2 + rand(-sh, sh);
+  const camX = p.x - VIEW.cameraW / 2 + rand(-sh, sh), camY = p.y - VIEW.cameraH / 2 + rand(-sh, sh);
   c.setTransform(dpr * Z, 0, 0, dpr * Z, Math.round(-camX * dpr * Z), Math.round(-camY * dpr * Z));   // 화면 픽셀 정렬 (0.19)
   c.imageSmoothingEnabled = false;
-  const vx0 = camX - 40, vy0 = camY - 40, vx1 = camX + VIEW.w + 40, vy1 = camY + VIEW.h + 40;
+  const vx0 = camX - 40, vy0 = camY - 40, vx1 = camX + VIEW.cameraW + 40, vy1 = camY + VIEW.cameraH + 40;
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   EFFECT_ART.count=0;
   drawGround(c, camX, camY);
@@ -66,7 +66,7 @@ function pixelGroundPattern(c, tid) {
   return P.pat;
 }
 function drawGround(c, camX, camY) {
-  const x = camX - 64, y = camY - 64, w = VIEW.w + 128, h = VIEW.h + 128;
+  const x = camX - 64, y = camY - 64, w = VIEW.cameraW + 128, h = VIEW.cameraH + 128;
   if (TER.k < 1 && TER.prev) { c.fillStyle = groundPattern(c, TER.prev); c.fillRect(x, y, w, h); c.globalAlpha = TER.k; }
   c.fillStyle = groundPattern(c, TER.cur); c.fillRect(x, y, w, h); c.globalAlpha = 1;
 }

@@ -160,7 +160,7 @@ const PBTN = document.createElement('button');
 PBTN.id = 'pausebtn'; PBTN.className = 'pausebtn'; PBTN.setAttribute('aria-label', '일시정지'); PBTN.innerHTML = `<img src="${uiIcon('pause')}" alt="">`;
 PBTN.addEventListener('click', pauseGame); document.body.appendChild(PBTN);
 let pbShown = null;
-function syncPauseBtn() { const L=hudLayout();PBTN.style.left=L.pause.x+'px';PBTN.style.top=L.pause.y+'px'; const v = STATE.mode === 'play' && G && !G.result; if (v !== pbShown) { pbShown = v; PBTN.style.display = v ? '' : 'none'; } }
+function syncPauseBtn() { const L=hudLayout();PBTN.style.left=L.pause.x+'px';PBTN.style.top=L.pause.y+'px';PBTN.style.width=L.pause.w+'px';PBTN.style.height=L.pause.h+'px'; const v = STATE.mode === 'play' && G && !G.result; if (v !== pbShown) { pbShown = v; PBTN.style.display = v ? '' : 'none'; } }
 /* 화면 전환·앱 이탈 시 자동 일시정지 */
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
 window.addEventListener('blur', () => { if (!STATE.dev.auto) pauseGame(); });

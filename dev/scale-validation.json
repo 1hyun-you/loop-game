@@ -1,0 +1,337 @@
+{
+  "checks": [
+    "scale version and embedded art loaded",
+    "readable non-overlapping HUD 280x653",
+    "pause target and read-only HUD 280x653",
+    "camera stays centered 280x653",
+    "portrait play / existing landscape rotation notice 280x653",
+    "baseline spawn/ultimate viewport and save key 280x653",
+    "readable non-overlapping HUD 320x568",
+    "pause target and read-only HUD 320x568",
+    "camera stays centered 320x568",
+    "portrait play / existing landscape rotation notice 320x568",
+    "baseline spawn/ultimate viewport and save key 320x568",
+    "readable non-overlapping HUD 390x844",
+    "pause target and read-only HUD 390x844",
+    "camera stays centered 390x844",
+    "portrait play / existing landscape rotation notice 390x844",
+    "baseline spawn/ultimate viewport and save key 390x844",
+    "readable non-overlapping HUD 412x915",
+    "pause target and read-only HUD 412x915",
+    "camera stays centered 412x915",
+    "portrait play / existing landscape rotation notice 412x915",
+    "baseline spawn/ultimate viewport and save key 412x915",
+    "readable non-overlapping HUD 690x829",
+    "pause target and read-only HUD 690x829",
+    "camera stays centered 690x829",
+    "portrait play / existing landscape rotation notice 690x829",
+    "baseline spawn/ultimate viewport and save key 690x829",
+    "readable non-overlapping HUD 768x900",
+    "pause target and read-only HUD 768x900",
+    "camera stays centered 768x900",
+    "portrait play / existing landscape rotation notice 768x900",
+    "baseline spawn/ultimate viewport and save key 768x900",
+    "readable non-overlapping HUD 844x390",
+    "pause target and read-only HUD 844x390",
+    "camera stays centered 844x390",
+    "portrait play / existing landscape rotation notice 844x390",
+    "baseline spawn/ultimate viewport and save key 844x390",
+    "readable non-overlapping HUD 1366x768",
+    "pause target and read-only HUD 1366x768",
+    "camera stays centered 1366x768",
+    "portrait play / existing landscape rotation notice 1366x768",
+    "baseline spawn/ultimate viewport and save key 1366x768",
+    "readable non-overlapping HUD 1366x300",
+    "pause target and read-only HUD 1366x300",
+    "camera stays centered 1366x300",
+    "portrait play / existing landscape rotation notice 1366x300",
+    "baseline spawn/ultimate viewport and save key 1366x300",
+    "readable non-overlapping HUD 390x844",
+    "pause target and read-only HUD 390x844",
+    "camera stays centered 390x844",
+    "portrait play / existing landscape rotation notice 390x844",
+    "baseline spawn/ultimate viewport and save key 390x844",
+    "safe area offsets",
+    "larger readable cards without horizontal overflow 320",
+    "larger readable cards without horizontal overflow 390",
+    "larger readable cards without horizontal overflow 690",
+    "larger readable cards without horizontal overflow 844",
+    "live mixed weapon combat",
+    "pause opens",
+    "resume works",
+    "no runtime errors, including reduced motion"
+  ],
+  "errors": [],
+  "viewports": [
+    {
+      "width": 280,
+      "height": 653,
+      "rotationNotice": false,
+      "zoom": 1.15,
+      "w": 350,
+      "h": 816.25,
+      "cameraW": 243.47826086956525,
+      "cameraH": 567.8260869565217,
+      "S": 22,
+      "hudHeight": 95,
+      "pause": {
+        "x": 224,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 140,
+        "y": 326.5
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "rotationNotice": false,
+      "zoom": 1.15,
+      "w": 400,
+      "h": 710,
+      "cameraW": 278.26086956521743,
+      "cameraH": 493.91304347826093,
+      "S": 23,
+      "hudHeight": 97,
+      "pause": {
+        "x": 264,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 160,
+        "y": 284
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "rotationNotice": false,
+      "zoom": 1.4,
+      "w": 400,
+      "h": 865.6410256410256,
+      "cameraW": 278.5714285714286,
+      "cameraH": 602.8571428571429,
+      "S": 25,
+      "hudHeight": 101,
+      "pause": {
+        "x": 334,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 195.00000000000003,
+        "y": 422
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "rotationNotice": false,
+      "zoom": 1.478974358974359,
+      "w": 400,
+      "h": 888.3495145631068,
+      "cameraW": 278.57142857142856,
+      "cameraH": 618.6719833564493,
+      "S": 26,
+      "hudHeight": 103,
+      "pause": {
+        "x": 356,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 205.99999999999997,
+        "y": 457.49999999999994
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 690,
+      "height": 829,
+      "rotationNotice": false,
+      "zoom": 2.05,
+      "w": 431.25,
+      "h": 518.125,
+      "cameraW": 336.5853658536586,
+      "cameraH": 404.39024390243907,
+      "S": 30,
+      "hudHeight": 111,
+      "pause": {
+        "x": 597,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 345,
+        "y": 414.5
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 768,
+      "height": 900,
+      "rotationNotice": false,
+      "zoom": 2.05,
+      "w": 480,
+      "h": 562.5,
+      "cameraW": 374.63414634146346,
+      "cameraH": 439.0243902439025,
+      "S": 30,
+      "hudHeight": 111,
+      "pause": {
+        "x": 636,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 384,
+        "y": 450
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "rotationNotice": true,
+      "zoom": 1.4,
+      "w": 527.5,
+      "h": 243.75,
+      "cameraW": 602.8571428571429,
+      "cameraH": 278.5714285714286,
+      "S": 30,
+      "hudHeight": 111,
+      "pause": {
+        "x": 674,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 422,
+        "y": 195.00000000000003
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "rotationNotice": true,
+      "zoom": 2.05,
+      "w": 853.75,
+      "h": 480,
+      "cameraW": 666.3414634146342,
+      "cameraH": 374.63414634146346,
+      "S": 30,
+      "hudHeight": 111,
+      "pause": {
+        "x": 935,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 683,
+        "y": 384
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 1366,
+      "height": 300,
+      "rotationNotice": true,
+      "zoom": 1.15,
+      "w": 853.75,
+      "h": 187.5,
+      "cameraW": 1187.8260869565217,
+      "cameraH": 260.8695652173913,
+      "S": 30,
+      "hudHeight": 111,
+      "pause": {
+        "x": 935,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 683,
+        "y": 150
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "rotationNotice": false,
+      "zoom": 1.4,
+      "w": 400,
+      "h": 865.6410256410256,
+      "cameraW": 278.5714285714286,
+      "cameraH": 602.8571428571429,
+      "S": 25,
+      "hudHeight": 101,
+      "pause": {
+        "x": 334,
+        "y": 6,
+        "w": 48,
+        "h": 48
+      },
+      "gap": 8,
+      "bounded": true,
+      "overlap": false,
+      "center": {
+        "x": 195.00000000000003,
+        "y": 422
+      },
+      "readOnly": true,
+      "saveKey": "hoegwi_main_v1"
+    }
+  ]
+}

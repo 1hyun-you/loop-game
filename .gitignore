@@ -4,3 +4,5 @@ dev/sim_log/*.log
 dev/*.png
 dev/fx2/
 assets/effects/source.png
+
+dev/scale/

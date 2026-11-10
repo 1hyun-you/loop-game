@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..'),report={checks:[],errors:[]};function ok
  const browser=await chromium.launch({executablePath:process.env.ART2_CHROMIUM_PATH,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
  try{
  const p=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});p.on('pageerror',e=>report.errors.push(e.message));await p.goto('http://127.0.0.1:8791/');await p.waitForFunction(()=>typeof UI_ART!=='undefined'&&UI_ART.loaded===9&&ART3.loaded===4);
- ok(await p.locator('.ver').innerText()==='v0.40-fx2','new version');
+ ok(await p.locator('.ver').innerText()==='v0.40-scale1','new version');
  ok(await p.locator('.icb img').evaluateAll(es=>es.every(e=>e.complete&&e.naturalWidth===48)),'title vector icons loaded at native 48px');
  ok(await p.locator('#pausebtn').getAttribute('aria-label')==='일시정지','pause accessible name preserved');
  await p.screenshot({path:root+'/dev/ui-title-390.png'});

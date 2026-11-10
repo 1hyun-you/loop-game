@@ -77,7 +77,7 @@ function drawJuice(c) {
   c.save(); c.imageSmoothingEnabled = true; c.lineCap = 'round';
   const lite = vfxLite(); let pi = 0;
   for (const q of j.pt) {
-    if (Math.abs(q.x - G.p.x) > VIEW.w / 2 + 40 || Math.abs(q.y - G.p.y) > VIEW.h / 2 + 40) continue;
+    if (Math.abs(q.x - G.p.x) > VIEW.cameraW / 2 + 40 || Math.abs(q.y - G.p.y) > VIEW.cameraH / 2 + 40) continue;
     const k = clamp(q.t / q.dur, 0, 1), a = (1 - k) ** 2, s = q.s * (1 - k * 0.45);
     if (!lite && pi++ % 4 === 0) vfxGlow(c, q.x, q.y, s * 2.6, q.c, a * 0.32);
     const sp = Math.hypot(q.vx, q.vy) || 1, len = Math.min(5, sp * 0.018);

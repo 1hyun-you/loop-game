@@ -1,4 +1,4 @@
-/* 0.40-fx2 — compact parchment/bronze interface; presentation only.
+/* 0.40-scale1 — readable parchment/bronze interface; presentation only.
    Native vector icons keep menu symbols crisp at small sizes. No network assets.
    Canvas text uses the device UI font, with bundled Galmuri as glyph fallback. */
 const UI_ART = { images: {}, urls: {}, loaded: 0, font: 'system-ui, Galmuri11, sans-serif' };
@@ -35,9 +35,9 @@ function uiText(c,s,x,y,size=12,color='#efe8d9',align='left',max=Infinity,weight
 }
 function uiImage(c,key,x,y,s=16) { const im=UI_ART.images[key]; if(im)c.drawImage(im,x,y,s,s); }
 function hudLayout(width=VIEW.cw,sat=VIEW.sat) {
-  const w=Math.min(560,width-16),x=(width-w)/2,y=sat+6,S=16,gap=2,contentW=w-52;
-  const tile=(i,row,right=false,n=1)=>({x:right?x+contentW-n*S-(n-1)*gap+i*(S+gap):x+4+i*(S+gap),y:y+34+row*18,w:S,h:S});
-  return {x,y,w,h:68,S,gap,contentW,tile,pause:{x:x+w-44,y,w:44,h:44},kills:{x:x+contentW-64,y:y+4,w:64,h:16}};
+  const w=Math.min(600,width-16),x=(width-w)/2,y=sat+6,S=clamp(Math.floor((width-280)/28)+22,22,30),gap=3,contentW=w-56;
+  const tile=(i,row,right=false,n=1)=>({x:right?x+contentW-n*S-(n-1)*gap+i*(S+gap):x+4+i*(S+gap),y:y+48+row*(S+gap),w:S,h:S});
+  return {x,y,w,h:48+2*S+gap,S,gap,contentW,tile,pause:{x:x+w-48,y,w:48,h:48},kills:{x:x+contentW-76,y:y+4,w:76,h:18}};
 }
 function uiBar(c,x,y,w,h,k,col,bg='#111b27') {
   uiRound(c,x,y,w,h,h/2);c.fillStyle=bg;c.fill();
@@ -45,8 +45,8 @@ function uiBar(c,x,y,w,h,k,col,bg='#111b27') {
 }
 function drawXpGauge(c,top) {
  const L=hudLayout(),p=G.p,k=clamp(G.rc?G.rc.xpShow:p.xp/Math.max(1,p.need),0,1);
- uiBar(c,L.x+4,L.y,L.contentW-4,2,k,'#91bfcb');
- uiText(c,'Lv '+p.level,L.x+4,L.y+12,10,'#f0dfb4','left',46,650);
+ uiBar(c,L.x+4,L.y,L.contentW-4,3,k,'#91bfcb');
+ uiText(c,'Lv '+p.level,L.x+4,L.y+14,13,'#f0dfb4','left',58,650);
 }
 function uiTile(c,r,art,color,level,progress,mark) {
   uiPanel(c,r.x,r.y,r.w,r.h,'#182330',art?color:'#414c58',5);
@@ -56,7 +56,7 @@ function uiTile(c,r,art,color,level,progress,mark) {
   if(progress!==undefined&&progress<1){
     c.save();uiRound(c,r.x+1,r.y+1,r.w-2,r.h-2,4);c.clip();c.globalAlpha=.58;c.fillStyle='#0e1725';c.beginPath();c.moveTo(r.x+r.w/2,r.y+r.h/2);c.arc(r.x+r.w/2,r.y+r.h/2,r.w,-Math.PI/2+Math.PI*2*clamp(progress,0,1),Math.PI*1.5);c.closePath();c.fill();c.restore();
   }
-  if(level!=null){uiPanel(c,r.x+r.w-8,r.y+r.h-8,9,9,'#1a2330','#7f806d',2);uiText(c,level,r.x+r.w-3.5,r.y+r.h-3.5,7,'#fff4db','center',8,700);}
+  if(level!=null){uiPanel(c,r.x+r.w-11,r.y+r.h-11,12,12,'#1a2330','#7f806d',3);uiText(c,level,r.x+r.w-5,r.y+r.h-5,10,'#fff4db','center',11,700);}
 }
 const UI_EXW_ICON={
   first:{warrior:'boomerang',rogue:'knife',archer:'arrow',engineer:'lightning',mage:'fireball',summoner:'orb',sovereign:'shield',chrono:'hourglass',priest:'regen',druid:'trap'},
@@ -76,38 +76,38 @@ function drawSlots(c,unused) {
 function drawBossBar(c,y,unused) {
   const e=G.gkMob;if(!e||e.dead||!G.ph||!isBossPhase())return;
   const L=hudLayout(),D=bossDef(e.gk),bx=L.x+10,bw=L.w-20;
-  uiPanel(c,L.x,y-2,L.w,43,'rgba(31,25,36,.94)','#946d69',8);
+  uiPanel(c,L.x,y-2,L.w,43,'rgba(31,25,36,.88)','#946d69',8);
   const name=e.gk==='demon'?`${D.name} · ${['그림자 군주','암흑 결계','종언'][e.st]} (${e.st+1}/3)`:`${D.name} · ${D.gate}`;
-  uiText(c,name,L.x+L.w/2,y+10,11,'#eed6c4','center',bw-12,600);
-  uiBar(c,bx,y+23,bw,6,e.hp/e.maxHp,e.rage||e.st===2?'#d68c72':'#ba8188');
+  uiText(c,name,L.x+L.w/2,y+10,13,'#eed6c4','center',bw-12,600);
+  uiBar(c,bx,y+23,bw,8,e.hp/e.maxHp,e.rage||e.st===2?'#d68c72':'#ba8188');
   if(e.gk==='demon'){c.fillStyle='#f4debe';for(const k of DM_CFG.stages)c.fillRect(bx+bw*k,y+23,1,6);}
 }
 function drawHUD(c) {
  const L=hudLayout(),p=G.p,ph=G.ph,P=curPhase();c.save();c.imageSmoothingEnabled=true;
  // Text-sized backplates; no full-width opaque panel and no empty inventory tiles.
- uiPanel(c,L.x,L.y+3,L.contentW+2,29,'rgba(22,31,43,.60)','#6b6c6044',5);
+ uiPanel(c,L.x,L.y+3,L.contentW+2,40,'rgba(22,31,43,.60)','#6b6c6044',5);
  drawXpGauge(c,L.y);
- uiText(c,fmtTime(G.time),L.x+L.contentW*.51,L.y+12,12,'#f0e9d9','center',52,650);
+ uiText(c,fmtTime(G.time),L.x+L.contentW*.48,L.y+14,15,'#f0e9d9','center',58,650);
  const kills=G.kills>=10000?(G.kills/10000).toFixed(1)+'만':G.kills;
- uiText(c,'처치 '+kills,L.x+L.contentW-2,L.y+12,10,'#d9cbb3','right',64,600);
- const hp=clamp(p.hp/p.maxHp,0,1);uiBar(c,L.x+4,L.y+23,52,3,hp,hp>.3?'#9fc19d':'#d58c86');
- uiText(c,Math.ceil(p.hp),L.x+60,L.y+24,8,'#d7e1d8','left',24);
+ uiText(c,'처치 '+kills,L.x+L.contentW-2,L.y+14,12,'#d9cbb3','right',76,600);
+ const hp=clamp(p.hp/p.maxHp,0,1);uiBar(c,L.x+4,L.y+31,52,5,hp,hp>.3?'#9fc19d':'#d58c86');
+ uiText(c,Math.ceil(p.hp),L.x+61,L.y+33,12,'#d7e1d8','left',30);
  const status=p.job==='druid'?(G.tm.wrath>0?' 분노':' 동료'+G.pets.length):p.job==='priest'?' 정화'+p.holy:'';
  const phase=P?((ph.i+1)+'/'+ph.order.length+' '+curPhaseName()):G.result==='clear'?'돌파':'이동 중';
- uiText(c,(status?status.trim()+' · ':'')+phase,L.x+L.contentW-2,L.y+25,9,ph.ambush?'#e6a58d':'#dfcb98','right',L.contentW-86,600);
- if(P)uiBar(c,L.x+86,L.y+31,L.contentW-88,1,phaseProgress(),ph.accT>0?'#f1e6bc':'#cdb57c');
- drawSlots(c,L.y+34);drawBossBar(c,L.y+76);
- const hasBoss=!!(G.gkMob&&!G.gkMob.dead&&isBossPhase()),below=L.y+(hasBoss?124:72);
+ uiText(c,(status?status.trim()+' · ':'')+phase,L.x+L.contentW-2,L.y+32,12,ph.ambush?'#e6a58d':'#dfcb98','right',L.contentW-100,600);
+ if(P)uiBar(c,L.x+100,L.y+41,L.contentW-102,2,phaseProgress(),ph.accT>0?'#f1e6bc':'#cdb57c');
+ drawSlots(c,L.y+48);drawBossBar(c,L.y+L.h+6);
+ const hasBoss=!!(G.gkMob&&!G.gkMob.dead&&isBossPhase()),below=L.y+L.h+(hasBoss?54:4);
  if(STATE.dev.fps&&STATE.mode!=='result')uiText(c,Math.round(STATE.fps)+' FPS · 적 '+aliveCount(),L.x+L.w-2,below+10,10,'#d1d8d9','right',L.w-8);
  let ty=Math.max(VIEW.ch*.3,below+30);for(const t of G.toasts){c.globalAlpha=Math.min(1,(t.dur-t.t)*3);uiText(c,t.text,VIEW.cw/2,ty,14,t.color,'center',VIEW.cw-30,600);ty+=24;}c.globalAlpha=1;
  drawGuide(c);c.restore();
 }
 function drawGuide(c) {
   const g=GD.cur;if(!g||STATE.mode!=='play')return;const tx=typeof g.tx==='function'?g.tx():g.tx,W=VIEW.cw,w=Math.min(400,W-32);
-  c.save();c.globalAlpha=clamp(Math.min(GD.t*4,(GD.dur-GD.t)*3),0,1);c.font=`500 12px ${UI_ART.font}`;
+  c.save();c.globalAlpha=clamp(Math.min(GD.t*4,(GD.dur-GD.t)*3),0,1);c.font=`500 14px ${UI_ART.font}`;
   const lines=[];let line='';for(const ch of tx){if(c.measureText(line+ch).width>w-30&&line){lines.push(line);line=ch;}else line+=ch;}if(line)lines.push(line);
-  const h=lines.length*18+18,x=(W-w)/2,y=Math.min(VIEW.ch*.72,VIEW.ch-VIEW.sab-h-20);
-  uiPanel(c,x,y,w,h,'rgba(24,33,45,.95)','#a28b62',9);lines.forEach((s,i)=>uiText(c,s,W/2,y+18+i*18,12,'#eadfc3','center',w-26));c.restore();
+  const h=lines.length*21+18,x=(W-w)/2,y=Math.min(VIEW.ch*.72,VIEW.ch-VIEW.sab-h-20);
+  uiPanel(c,x,y,w,h,'rgba(24,33,45,.95)','#a28b62',9);lines.forEach((s,i)=>uiText(c,s,W/2,y+19+i*21,14,'#eadfc3','center',w-26));c.restore();
 }
 const uiArtStyle=document.createElement('style');uiArtStyle.textContent=`
 .hlogo h1{font-family:Georgia,"Noto Serif KR","Batang",Galmuri11,serif}
@@ -115,6 +115,14 @@ const uiArtStyle=document.createElement('style');uiArtStyle.textContent=`
 .icb,.pausebtn{border:1px solid #9b8c6b;border-radius:12px;background:linear-gradient(145deg,rgba(59,67,80,.95),rgba(29,39,54,.96));box-shadow:inset 0 1px 0 #ddd1a322,0 3px 10px #11182255}
 .icb img{image-rendering:auto;width:28px;height:28px}.pgt .icb{border:1px solid #706c5b;background:#293446}
 .pausebtn{width:44px;height:44px;min-height:44px;right:auto}.pausebtn img{width:25px;height:25px;vertical-align:middle}
+.pausebtn img{width:28px;height:28px}
+.cards,.sel-head,.sel-actions{max-width:520px}
+.card{padding:15px;gap:14px;flex-shrink:0}.card .ic{flex-basis:58px;height:58px}.card .ic.px img{width:52px;height:52px}
+.card .nm{font-size:18px}.card .ds{font-size:15px;line-height:1.55;overflow-wrap:anywhere}.card .tag{font-size:12px}
+.dlg{max-width:520px}.dlg .nm{font-size:16px}.dlg .tx{font-size:17px}.dlg .pt{flex-basis:72px;height:72px}
+.ab{grid-template-columns:32px minmax(0,1fr);padding:10px}.ab .ic{width:32px;height:32px}.ab .ic.px img{width:28px;height:28px}.ab b{font-size:16px}.ab p{font-size:14px}
+@media(max-width:359px){.card{padding:12px;gap:10px}.card .ic{flex-basis:50px;height:50px}.card .ic.px img{width:44px;height:44px}.card .nm{font-size:17px}.dlg{gap:10px}.dlg .pt{flex-basis:60px;height:60px}}
+@media(min-width:600px){.cards,.sel-head,.sel-actions{max-width:580px}.card .ic{flex-basis:68px;height:68px}.card .ic.px img{width:60px;height:60px}.card .nm{font-size:20px}.card .ds{font-size:16px}.card .tag{font-size:13px}.dlg .tx{font-size:18px}}
 .pgh{background:linear-gradient(135deg,#202c3e,#1c2534);border-bottom:1px solid #706c5b}.pgt h2{color:#e9d8af}.ptabs button{font-size:12px;min-height:44px}.ptabs button.on{color:#f0dfb4}.ptabs .bar{background:#c6af7c}
 button:focus-visible{outline:2px solid #e4c993;outline-offset:3px}.row,.cx,.ab{box-shadow:inset 0 1px 0 #e8d9b008}.stats{font-variant-numeric:tabular-nums}.ver{font-family:var(--f-body)}
 @media(prefers-reduced-motion:reduce){.icb,.pausebtn{transition:none}}
