@@ -1,5 +1,10 @@
 # 클로드 후속 작업 전달
 
+## 최신 재개 지점 — 0.42-art1 완료 (2026-11-11 한국시간)
+
+- 10직업 문장·1차 전직 선택창·도감 직업 탭만 적용·검사·배포 완료. 최신 기록은 문서 마지막 0.42-art1 최종 배포 항목 우선.
+- 다음 작업은 ART42_PLAN.md 2번 중 2차 전직 문장 20종. 전체 요청 재전달 불필요. 한 묶음씩 검사·반영·배포·인계 후 종료.
+
 ## 새 대화 재개 요약 — 2026-11-10
 
 - 최신 사용자 수정: 큰 choice1 선택 카드는 거부됨. choice2는 작은 카드로 바꾸고 폴드형 화면에서 전체 선택지·하단 버튼을 스크롤 없이 표시하도록 검사. 도감은 변경하지 않았음. 문서 마지막 choice2 항목 우선.
@@ -192,3 +197,12 @@
 - 미착수: 2차 문장 20종·시련·연성·기타 아이콘·설치물·소환물·상태·예고·외형 전체. 2차 선택은 공통 문장 유지. 현재 패치는 생성형 손그림 원화 제작이 아닌 기존 UI 전용 SVG 확장.
 - 로컬 build/check-build 통과. Chromium은 socket() Operation not permitted로 실행 불가. 검증용 art/042-crests 브랜치의 GitHub Actions에서 check-crests/choice/ui/art2와 vtest 2판 검증. 검사·배포 최종 결과는 아래 후속 기록 참조.
 - 다음 묶음: ART42_PLAN.md 2번을 우선 더 작은 범위로 분할(2차 문장과 시련·연성 문양을 각각 분리 가능). 작은 choice2 카드와 한 화면 비교 우선.
+
+## 0.42-art1 최종 배포·검사 기록
+
+- 실제 서비스 https://1hyun-you.github.io/field/ 버전 0.42-art1 확인. 검증 소스 abf8f8669ebef6af4b9b9b48cba5b0262570ce17, 게임 자동 HTML 빌드 1cd3af1a046fb30e32ce71254374797ecfd4d431, 서비스 source-ref 반영 98507c70aca4955896646339537960859f64b8af, 서비스 빌드 d4af9bb4c68076c725698d79503f68c7fb03fb69, 버전 기록 67c6454c99650a9048d40cf735cea8e82959bee8.
+- 서비스 build-field 실행 42916568256 성공, 해당 HTML Pages 실행 42916595910 성공. 실제 응답 HTML은 검사한 소스에서 생성한 빌드와 바이트 일치. SHA256 e14ab9de21fbaefcc8f84aa00e863166225c45ecf1e120ee33d4ef88f793118a.
+- 검증 브랜치 art/042-crests, 실행 https://github.com/1hyun-you/loop-game/actions/runs/42916068318 전체 성공. 문장 23항목·선택창 78항목·HUD 12항목·기존 원화 11항목, vtest 2판(각 최대120초) 오류0·페이지 오류0·저장 유지. 320/390/690px 문장·선택·도감 화면 검토. 실제 폴드8·장시간 FPS 미검증.
+- 검사 파일 보정: check-ui의 기존 아이콘9개 고정 대기를 실제 UI_PATH 개수로 변경. 0.42의 기본4배속·자동선택이 정지 화면 시험에 간섭하므로 HUD/원화 시험에서만 1배속·수동선택 지정, HUD 시험에서만 레벨업 억제. 실제 게임 규칙 변경 없음.
+- 결과 dev/crests-validation.json, choice-validation.json, ui-validation.json, art2-validation.json, art42-validation.json. 화면·가상시험 원본은 Actions artifact 13808808427 (2027-02-08 만료 예정). 로컬 /workspace/scratch/f16aa2f25838/art42-final/에도 보관. 이 기록 커밋은 문서·검사결과만 변경하며 배포 소스 SHA와 구분.
+- 남은 범위: 2차 문장20종·시련10종·결합3종·연성/HUD·기타 화면 아이콘·설치물·소환물·상태·예고·직업외형 전체. 다음 대화에서는 2차 문장20종만 먼저 진행. SVG UI 아이콘 외의 손그림 원화는 이미지 생성 기능 사용. 동시 작업 전 최신 main 확인.

@@ -1,0 +1,35 @@
+{
+  "version": "0.42-art1",
+  "source": "abf8f8669ebef6af4b9b9b48cba5b0262570ce17",
+  "workflow_run": 42916068318,
+  "artifact": 13808808427,
+  "checks": {
+    "crests": 23,
+    "choice": 78,
+    "ui": 12,
+    "art2": 11
+  },
+  "virtual_runs": [
+    {
+      "idx": 0,
+      "result": "cap",
+      "time": 120,
+      "errs": [],
+      "pageErr": [],
+      "errShown": false,
+      "saveOk": true
+    },
+    {
+      "idx": 1,
+      "result": "cap",
+      "time": 120,
+      "errs": [],
+      "pageErr": [],
+      "errShown": false,
+      "saveOk": true
+    }
+  ],
+  "live_sha256": "e14ab9de21fbaefcc8f84aa00e863166225c45ecf1e120ee33d4ef88f793118a",
+  "live_matches_tested_build": true,
+  "physical_device_tested": false
+}

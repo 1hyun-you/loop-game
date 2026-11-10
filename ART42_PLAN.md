@@ -40,3 +40,10 @@
 
 - 10종 문장, 1차 전직 선택창·도감 직업 연결, 로딩 실패 시 기존 직업 글자 복원. 다른 항목 미착수.
 - 로컬 build/check-build 통과. Chromium은 socket() Operation not permitted로 실행 불가. 검증용 GitHub 브랜치에서 check-crests/choice/ui/art2 및 vtest 2판 실행 후 통과 시 main·서비스 반영.
+
+## art1 최종 완료
+
+- 10직업 문장·1차 전직 선택창·도감 직업 탭 적용 및 배포 완료. 소스 abf8f8669ebef6af4b9b9b48cba5b0262570ce17, 버전 0.42-art1.
+- GitHub Actions 42916068318 전체 통과. 상세 dev/crests-validation.json, choice-validation.json, ui-validation.json, art2-validation.json 및 art42-validation.json.
+- 실제 서비스 HTML과 검사한 소스 빌드의 바이트·SHA256 일치 확인. 실기기 검사는 미실시.
+- 다음 작업: 2번 중 2차 전직 20종 문장부터 별도 묶음 진행. 시련 10종·연성 결합 문양 등은 다음 묶음. 요청문 재전달 불필요.

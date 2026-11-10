@@ -8,7 +8,7 @@
     "all ten jobs and both dedicated tiers render",
     "HUD render does not mutate game state",
     "live engineer/fireball simulation",
-    "44px pause target within screen",
+    "44px pause target within screen {\"w\":48,\"h\":48,\"x\":334,\"right\":382,\"mode\":\"play\"}",
     "new pause icon opens pause screen",
     "wrapped guide rendering at 320px",
     "no runtime errors"
@@ -219,7 +219,7 @@
     }
   },
   "play": {
-    "time": 4.4999,
+    "time": 4.533200000000002,
     "error": false
   }
 }

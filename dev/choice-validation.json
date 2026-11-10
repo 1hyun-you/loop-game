@@ -15,13 +15,13 @@
     "rendering preserves selection data, player stats and gameplay RNG",
     "readable cards, art and no overflow start 280 {\"width\":280,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow level 280 {\"width\":280,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
-    "readable cards, art and no overflow job 280 {\"width\":280,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":false,\"scroll\":true}",
+    "readable cards, art and no overflow job 280 {\"width\":280,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow job2 280 {\"width\":280,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow door 280 {\"width\":280,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow offer 280 {\"width\":280,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow start 320 {\"width\":320,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow level 320 {\"width\":320,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
-    "readable cards, art and no overflow job 320 {\"width\":320,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":false,\"scroll\":true}",
+    "readable cards, art and no overflow job 320 {\"width\":320,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow job2 320 {\"width\":320,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow door 320 {\"width\":320,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
     "readable cards, art and no overflow offer 320 {\"width\":320,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
@@ -75,7 +75,7 @@
     "ability list toggles",
     "return to cards",
     "codex remains accessible",
-    "rerender preserves scroll position {\"before\":112,\"after\":112}",
+    "rerender preserves scroll position {\"before\":0,\"after\":0}",
     "reduced motion suppresses card animation",
     "no browser runtime errors"
   ],
@@ -136,8 +136,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "allOnScreen": false,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job2",
@@ -202,8 +202,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "allOnScreen": false,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job2",
