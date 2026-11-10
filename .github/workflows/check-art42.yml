@@ -1,0 +1,44 @@
+name: Validate art batches
+on:
+  push:
+    branches: ['art/042-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test dependency
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Build and validate first crest batch
+        env:
+          CHOICE_BASELINE_HTML: ${{ github.workspace }}/baseline-042.html
+        run: |
+          git show 99eb4981acbb9b4548daccecbaa581d21e316d24:index.html > baseline-042.html
+          node dev/build.cjs
+          node dev/check-build.cjs
+          node dev/check-crests.cjs
+          node dev/check-choice.cjs
+          node dev/check-ui.cjs
+          node dev/check-art2.cjs
+          node dev/vtest.js 2 --speed 8 --cap 120 --render 30 --out dev/sim_log/art1.jsonl
+          node -e "const fs=require('fs');const rows=fs.readFileSync('dev/sim_log/art1.jsonl','utf8').trim().split('\n').map(JSON.parse);if(rows.length!==2||rows.some(r=>r.fatal||r.errs.length||r.pageErr.length||r.errShown||!r.saveOk))throw Error('Virtual test failed');"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: art42-validation
+          path: |
+            dev/*-validation.json
+            dev/art42/
+            dev/choice2/
+            dev/sim_log/art1.jsonl

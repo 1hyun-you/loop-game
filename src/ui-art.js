@@ -13,6 +13,26 @@ const UI_PATH = {
   crest: '<path d="M24 5 40 11v14Q37 37 24 43 11 37 8 25V11Z" fill="url(#bronze)"/><path d="m24 10 11 5v10q-3 9-11 13-8-4-11-13V15Z" fill="#40556d"/><path d="m24 15 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill="url(#page)"/>',
   spark: '<path d="m27 4-16 23h12l-2 17 17-25H25Z" fill="url(#bronze)"/><path d="m26 10-10 15h8" stroke="#fff0bf" fill="none" stroke-width="1.5"/>'
 };
+// 0.42-art1: UI-native crests. Distinct silhouettes, existing job palette,
+// upper-left highlights and the shared plum outline; no gameplay state writes.
+const UI_JOB_CREST = {
+  warrior: '<path d="m23 4 6 5-3 21h-7L18 9Z" fill="url(#steel)"/><path d="m16 27 16 0 1 6-7-1v10h-6V32l-6 1Z" fill="@"/><path d="m8 23-4-5m36 5 4-5M10 35l-5 3m33-3 5 3" fill="none" stroke="@" stroke-width="3"/><path d="m21 10 2 15" fill="none" stroke="#fff0d5"/>',
+  rogue: '<path d="M23 4 28 17 43 13 32 25 39 39 25 32 12 44 16 28 3 22 18 18Z" fill="@"/><path d="m23 12 2 9 10-3-7 8 4 8-8-5-7 7 2-10-8-3 10-2Z" fill="#30424a"/><circle cx="24" cy="25" r="4" fill="url(#steel)"/><path d="m23 9 3 10" stroke="#e3fff3" fill="none"/>',
+  sovereign: '<path d="m9 18-3-12 10 6 8-8 8 8 10-6-3 12Z" fill="@"/><path d="M10 22h28v10Q33 40 24 44 15 40 10 32Z" fill="@"/><path d="M15 25h18v6q-3 6-9 9-6-3-9-9Z" fill="#4d4352"/><path d="m24 25 5 6-5 7-5-7Z" fill="url(#page)"/><path d="M11 15h25" stroke="#fff2bf" fill="none"/>',
+  archer: '<path d="M12 5Q43 23 12 43l7-19Z" fill="@"/><path d="m13 8 6 16-6 16" fill="none" stroke="url(#page)" stroke-width="2"/><path d="M4 24h35" stroke="url(#steel)" stroke-width="3"/><path d="m34 17 10 7-10 7 2-7Z" fill="@"/><path d="m5 18 6 6-6 6" fill="none" stroke="@" stroke-width="3"/>',
+  engineer: '<path d="m19 4 10 0 1 6 5 2 5-2 5 9-5 4v5l4 4-5 9-6-2-5 4H18l-3-5-6 1-5-9 4-5v-5l-4-4 5-8 6 2 4-2Z" fill="@"/><circle cx="24" cy="25" r="13" fill="#4b424a"/><path d="m14 22 6 4 4-10 4 10 6-4-4 13H18Z" fill="url(#steel)"/><circle cx="24" cy="29" r="3" fill="@"/><path d="m19 8 9 0" stroke="#fff0d5" fill="none"/>',
+  chrono: '<circle cx="24" cy="24" r="19" fill="#494158" stroke="@" stroke-width="3"/><path d="M16 11h16v5l-6 8 6 8v5H16v-5l6-8-6-8Z" fill="url(#steel)"/><path d="m19 15 5 6 5-6m-5 12-6 7h12Z" fill="@"/><path d="M24 5v4m0 30v4M5 24h4m30 0h4" stroke="@" stroke-width="3"/><path d="M10 16q3-7 9-7" stroke="#f0eaff" fill="none"/>',
+  mage: '<path d="M25 3q8 10 4 17l9-9q8 14 4 23-4 10-18 10C8 44 2 34 7 23l7 5q-2-12 11-25Z" fill="@"/><path d="M24 16q5 9 2 13l7-6q5 12-9 17-13-3-10-13l4 3q0-7 6-14Z" fill="#864e8c"/><circle cx="24" cy="33" r="7" fill="url(#page)"/><path d="m35 5 2 3 4 1-4 2-2 3-1-4-3-1 3-1Z" fill="@"/>',
+  summoner: '<path d="M8 32V19Q8 4 23 5q15 1 15 16v10l-6-3-2 11-8-5-6 10-4-12Z" fill="@"/><path d="m14 18 7 2-2 5h-5Zm12 2 7-2-1 7h-5Z" fill="#352c46"/><path d="m20 29 4-2 4 2-4 3Z" fill="#352c46"/><path d="m34 20 9-2 1 7-4 3v14h-4V28l-4-3Z" fill="url(#steel)"/><path d="M13 14q2-5 8-5" stroke="#eee3ff" fill="none"/>',
+  priest: '<ellipse cx="24" cy="11" rx="15" ry="6" fill="#504957" stroke="@" stroke-width="3"/><path d="m4 25 9 3 5 12-11-5Zm40 0-9 3-5 12 11-5Z" fill="@"/><circle cx="24" cy="28" r="11" fill="@"/><path d="M24 19v18m-7-9h14" stroke="#fffdf0" stroke-width="3" fill="none"/><path d="M16 23q2-3 5-3" stroke="#fffdf0" fill="none"/>',
+  druid: '<path d="M24 28C7 29 3 17 6 5c13 0 21 7 18 23Z" fill="@"/><path d="M25 30C22 14 33 8 43 10c1 12-5 22-18 20Z" fill="@"/><path d="m11 11 13 18 13-13M24 29v11m0-4-11 6m11-2 10 4m-10-9 14 1" fill="none" stroke="#b8e6a1" stroke-width="3"/><path d="m21 38-3 6m9-5 2 6" stroke="@" stroke-width="3" fill="none"/>'
+};
+for (const id of Object.keys(UI_JOB_CREST)) UI_PATH['crest_'+id] = UI_JOB_CREST[id].replace(/@/g, JOB_COL[id]);
+function uiJobCrest(id, cls = '') {
+  if (!UI_JOB_CREST[id]) return icBox('#8a86a0', '?');
+  // Keep the former codex letter beneath the image for decoding failures.
+  return `<span class="ic px job-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><span hidden>${esc(JOBS[id].ic)}</span><img src="${uiIcon('crest_'+id)}" alt="" data-job-crest="${id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain" onerror="this.hidden=true;this.previousElementSibling.hidden=false"></span>`;
+}
 function uiIcon(k) {
   if (UI_ART.urls[k]) return UI_ART.urls[k];
   if (!UI_PATH[k]) return pixelUiIcon(k in UI_ICON ? k : 'book');

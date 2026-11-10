@@ -61,6 +61,7 @@ function choiceType(c,f) {
 }
 function choiceIcon(c,f) {
   if(f.id)return icBox(f.col,f.ic,f.id);
+  if(c.t==='job'&&UI_JOB_CREST[c.id])return uiJobCrest(c.id);
   // Category symbols rather than pretending a shared weapon is unique job art.
   const key=c.t==='job'||c.t==='job2'?'crest':c.t==='doorYes'?'skull':c.t==='doorNo'?'back':c.t==='heal'||c.t==='campRest'?'heart':c.t==='campSupply'?'book':c.t==='bond'?'crest':'spark';
   return `<span class="ic choice-symbol" aria-hidden="true"><img src="${uiIcon(key)}" alt=""></span>`;

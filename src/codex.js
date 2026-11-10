@@ -38,7 +38,7 @@ function cxSeen() {
 function cxCard(o) {
   const st = o.lock ? 'lock' : o.dim ? 'dim' : '';
   const L = o.lock ? [esc(o.hint || '')] : (o.lines || []).filter(Boolean), wrap = l => l.startsWith('<div') || l.startsWith('<details') ? l : `<p>${l}</p>`;
-  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : icBox(o.col, o.ic, o.id);
+  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : o.job ? uiJobCrest(o.job) : icBox(o.col, o.ic, o.id);
   return `<div class="cx ${st}"><div class="cxt">${ic}<div class="cxb"><div class="cxh"><b>${esc(o.lock ? '???' : o.nm)}</b>${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}${o.dim ? '<span class="tag nw">미획득</span>' : ''}</div>${L.length ? wrap(L[0]) : ''}</div></div>${L.slice(1).map(wrap).join('')}</div>`;
 }
 const cxL = (k, v) => `<i>${esc(k)}</i> ${esc(v)}`;
@@ -80,7 +80,7 @@ function cxRelic(id, seen) {
 }
 function cxJob(id, seen) {
   const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id];
-  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: X.tag, lines: [`<b>${esc(JOB_SHORT[id])}</b>`, cxChips([['궁극기', esc(U[0])], ['연성', esc(X.pre)]]),
+  return cxCard({ dim: !seen, job: id, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: X.tag, lines: [`<b>${esc(JOB_SHORT[id])}</b>`, cxChips([['궁극기', esc(U[0])], ['연성', esc(X.pre)]]),
     `<details class="acc"><summary>상세</summary><div class="cxg"><div><b>핵심 규칙</b><span>${esc(J.rule)}</span></div><div><b>궁극기 ${esc(U[0])}</b><span>${esc(U[1])}</span></div><div><b>연성 · ${esc(X.pre)}</b><span>${esc(X.ds)}</span></div></div></details>`, cxBr(JOB2[id], '2차 전직')] });
 }
 function cxFuse() {
