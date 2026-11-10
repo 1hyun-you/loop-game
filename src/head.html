@@ -62,15 +62,12 @@ button:disabled{opacity:.4}
 .rsum{width:100%;max-width:380px;display:flex;flex-direction:column;gap:5px;align-items:stretch}.rsum h3{margin:6px 0 2px;font-size:13px;color:var(--muted);text-align:center;font-weight:normal}.rsum .build{align-self:center}
 .dbar{display:grid;grid-template-columns:7.5em 1fr 3em;gap:8px;align-items:center;font-size:13px}.dbar .dn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}.dbar .dt{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}.dbar .dt i{display:block;height:100%;background:#ffd24a}.dbar .dk{font-variant-numeric:tabular-nums;color:var(--muted)}
 .chip{font-size:13px;padding:3px 9px;border-radius:20px;border:1.5px solid var(--line);background:var(--panel)}
-.devbtn{position:fixed;left:8px;bottom:calc(var(--sab) + 10px);z-index:6;pointer-events:auto;
-  padding:6px 9px;font-size:12px;font-family:var(--f-mono);border-radius:7px;background:rgba(34,31,46,.8)}
-.dev{position:fixed;left:8px;right:8px;bottom:calc(var(--sab) + 48px);
-  max-width:420px;margin:0 auto;z-index:7;pointer-events:auto;background:rgba(14,12,20,.95);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px}
-.dev .g{display:flex;flex-wrap:wrap;gap:6px}
-.dev button{padding:7px 10px;font-size:13px;border-radius:7px}
-.dev button.on{background:#2d6a3c;border-color:#4caf6a}
-.dev button.off{opacity:.4}
-.dev pre{margin:8px 0 0;white-space:pre-wrap;color:#bcd9c0;font:12px/1.5 var(--f-mono)}
+.devbtn{position:fixed;left:10px;bottom:34%;z-index:6;pointer-events:auto;min-width:54px;min-height:46px;
+  padding:8px 12px;font-size:13px;font-family:var(--f-mono);border-radius:12px;background:rgba(34,31,46,.72);opacity:.85}
+.dev{position:fixed;left:72px;bottom:calc(34% - 6px);max-width:min(268px,calc(100vw - 84px));z-index:7;pointer-events:none;background:none;border:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dev .r{display:flex;flex-wrap:wrap;gap:5px}
+.dev button{pointer-events:auto;min-height:34px;padding:4px 9px;font-size:12px;border-radius:8px;background:rgba(14,12,20,.6);border:1px solid rgba(255,255,255,.28)}
+.dev button.on{background:rgba(45,106,60,.85);border-color:#4caf6a}
 .rot{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:50;font-size:18px;text-align:center;padding:24px}
 /* 시작·일시정지·결과 화면 (0.4) */
 .layer.title{background:linear-gradient(180deg,rgba(12,10,18,.55),rgba(12,10,18,.88));gap:18px}

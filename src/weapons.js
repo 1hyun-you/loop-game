@@ -196,9 +196,10 @@ function updateWeapons(dt) {
   for (const w of G.p.weapons) {
     const S = wStats(w);
     if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
+    if (w.fz) continue;                                          // 0.42 연성 부품: 발동은 주체 무기가 담당
     w.t -= dt * ultCdMul();                                      // 군주 궁극기: 재사용 2배 속도
     if (w.t <= 0) {
-      const r = WEAPON_FIRE[w.id](w, S); w.t = r === false ? 0.25 : S.cd; if (r !== false) rcFire(w);   // 공격 반응 (0.28)
+      const r = WEAPON_FIRE[w.id](w, S); w.t = r === false ? 0.25 : (w.fx ? fuseCd(w, S) : S.cd); if (r !== false) { rcFire(w); if (w.fx) fuseFire(w, S); if (G.p.job && w.id === FZ_SYMBOL[G.p.job]) symbolFire(w, S); }   // 공격 반응 (0.28)
      
       if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;   // 연속 발동 분기
     }

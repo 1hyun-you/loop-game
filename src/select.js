@@ -56,13 +56,13 @@ function abilityHTML() {
     if (p.job === 'druid' && G.pets.length) h += '<h3>야수 동료</h3>' + ['wolf', 'bear'].map(k => { const n = G.pets.filter(m => m.kind === k).length; if (!n) return ''; const S = petStat(k), D = PET[k]; const B = bondOf(k); return row('#7fd07a', D.ic, D.name + (n > 1 ? ' ×' + n : '') + ` · 유대 Lv ${B.lv}`, B.lv < BOND_CFG.maxLv ? `다음 ${B.xp}/${bondNeed(B.lv)}` : '최대', `${B.perks.length ? '전용 능력: ' + B.perks.map(x => bondPerk(x).nm).join(', ') + '\n' : ''}피해 ${Math.round(S.dmg)} · 공격 간격 ${S.atk.toFixed(2)}초 · 이동 속도 ${Math.round(S.sp)}\n${k === 'wolf' ? '울부짖음' : '강타'} ${S.sk.toFixed(1)}초마다 · 범위 ${Math.round(S.skR)}`); }).join(''); }
   if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; const wx = wxOn(d.cat) ? `\n${JOBS[p.job].name} 변환 · ${JOB_WX[p.job].ds}` : ''; const ak = w.aw && AWAKEN[w.id].find(x => x.k === w.aw); return row(CFG.colors[d.cat], d.ic, wName(w.id), 'Lv ' + w.lvl, d.desc + wx + brNm(w.id, w.br) + (ak ? `\n각성 · ${ak.nm}: ${ak.ds}` : ''), '', w.id); }).join('');
   if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br), '', x.id); }).join('');
-  if (p.relics.length) h += '<h3>유물</h3>' + p.relics.map(id => row('#ffd24a', RELICS[id].ic, RELICS[id].name, '', RELICS[id].ds)).join('');
+  if (p.job && FZ_TRIAL[p.job]) { const T = FZ_TRIAL[p.job], f = F42(), fz = p.weapons.filter(w => w.fx); h += '<h3>연성</h3>' + row(JOB_COL[p.job], '시', T.nm, `${f.done}/2`, f.done >= 2 ? '시련 모두 완수' : `${T.ds} · 진행 ${Math.min(Math.round(fzProg() * (T.k === 'hurt' ? 100 : 1)) , Math.round(fzTarget() * (T.k === 'hurt' ? 100 : 1)))}/${Math.round(fzTarget() * (T.k === 'hurt' ? 100 : 1))}${T.k === 'hurt' ? '%' : ''}`) + fz.map(w => row(JOB_COL[p.job], '연', WEAPONS[w.id].name + ' + ' + WEAPONS[w.fx.f].name, w.fx.nm, FZ_JOB[p.job])).join(''); }
   const tk = Object.keys(p.tr || {}); if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => row('#c8b0ff', TRAITS[k].ic, TRAITS[k].nm, '', TRAITS[k].ds)).join('');
   if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => row('#8a6aa0', '저', CURSES[k].name, '', CURSES[k].ds)).join('');
   return `<div class="abil">${h || '<p class="sub">보유 능력 없음</p>'}</div>`;
 }
 function toggleAbil() { const s = G.sel; if (!s) return; s.abil = !s.abil; renderSelect(); }
-function autoLater() { if (STATE.dev.auto) { const s = G.sel; setTimeout(() => { if (G && G.sel === s) autoSelect(); }, rand(700, 1200) / Math.sqrt(STATE.dev.speed)); } }
+function autoLater() { if (STATE.dev.auto && !STATE.dev.semi) { const s = G.sel; setTimeout(() => { if (G && G.sel === s) autoSelect(); }, rand(700, 1200) / Math.sqrt(STATE.dev.speed)); } }
 function cardInfo(c) {
   const p = G.p;
   switch (c.t) {
@@ -71,9 +71,10 @@ function cardInfo(c) {
     case 'wup': { const d = WEAPONS[c.id], w = p.weapons.find(x => x.id === c.id); return { id: c.id, k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: wName(c.id), tag: `Lv ${w.lvl} → ${w.lvl + 1}`, ds: upText(c.id, d.ups[w.lvl - 1]) }; }
     case 'pnew': { const d = PASSIVES[c.id]; return { id: c.id, k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: '신규 · 보조 효과', ds: d.desc(1) }; }
     case 'pup': { const d = PASSIVES[c.id], L = passLv(c.id); return { id: c.id, k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: `Lv ${L} → ${L + 1}`, ds: d.desc(L + 1) }; }
+    case 'fz': { const d = WEAPONS[c.id], s = G.sel, A = s && s.first; const T = A ? FZ_TYPES[[fzKind(A), fzKind(c.id)].sort().join('+')] : null; return { id: c.id, k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: d.name, tag: T ? `${itemName(A)} + ${d.name} → ${T[0]}` : `${fzKind(c.id)}형 · Lv 6`, ds: T ? T[2] + '\n직업 · ' + FZ_JOB[G.p.job] : d.desc }; }
     case 'relic': { const d = RELICS[c.id]; return { k: 'k-relic', col: '#ffd24a', ic: d.ic, nm: d.name, tag: `유물 · ${itemName(d.a)} + ${itemName(d.b)}`, ds: d.ds }; }
     case 'branch': { const o = (c.aw ? AWAKEN : BRANCHES)[c.id].find(x => x.k === c.k); return { id: c.id, k: 'k-branch', col: c.kind === 'w' ? CFG.colors[WEAPONS[c.id].cat] : CFG.colors.passive, ic: (WEAPONS[c.id] || PASSIVES[c.id]).ic, nm: o.nm, tag: itemName(c.id) + (c.aw ? ' 각성' : ' 분기'), ds: o.ds }; }
-    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: d.cats ? '혼합 계열 · ' + d.cats.map(x => CAT_NAME[x]).join('+') : CAT_NAME[d.cat] + ' 계열', ds: d.rule + '\n궁극기 · ' + d.ult + '\n무기 변환 · ' + jobCats(c.id).map(x => CAT_NAME[x]).join('·') + ' 무기 → ' + JOB_WX[c.id].pre + ' 무기 (' + JOB_WX[c.id].ds + ')' }; }
+    case 'job': { const d = JOBS[c.id]; return { k: 'k-job', col: jobColor(c.id), ic: d.ic, nm: d.name, tag: JOB_WX[c.id].tag || '', ds: JOB_SHORT[c.id] + '\n궁극기 · ' + ultName(c.id), full: d.rule + '\n궁극기 · ' + d.ult + '\n연성 · ' + JOB_WX[c.id].pre + ' — ' + JOB_WX[c.id].ds }; }
     case 'job2': { const o = JOB2[c.id].concat(JOB2_STAT).find(x => x.k === c.k); return { k: 'k-job', col: c.k === 'veteran' ? '#8a86a0' : jobColor(c.id), ic: o.nm.slice(0, 1), nm: o.nm, tag: c.k === 'veteran' ? '능력치 강화형' : JOBS[c.id].name + ' 2차', ds: o.ds }; }
     case 'campRest': return { k: 'k-fill', col: '#8ff0b0', ic: '휴', nm: '휴식', tag: '야영지', ds: '체력 전부 회복' };
     case 'campTrain': return { k: 'k-fill', col: '#7fe0ff', ic: '련', nm: '수련', tag: '야영지', ds: '즉시 레벨 업 2회' };
@@ -89,7 +90,8 @@ const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;'
 const SEL_HEAD = {
   level: s => ['레벨 업', s.banish ? '제외할 카드 선택 · 이번 판에서 다시 등장하지 않음' : `Lv ${G.p.level - G.pendingLv} · 하나를 선택`],
   branch: s => s.q.aw ? ['무기 각성', `${itemName(s.q.id)} ${AWAKEN_AT}레벨 · 각성 1종 선택`] : ['분기 선택', `${itemName(s.q.id)} 강화 ${BRANCH_AT}단계 · 플레이 방식 선택`],
-  chest: () => ['보물 상자', '정예 처치 보상 · 하나를 선택'],
+  chest: () => ['레벨업 상자', '보물 상자 보상 · 레벨업 하나를 선택'],
+  fuse: s => ['연성', s.first ? `${itemName(s.first)} + 합칠 무기 선택 (2/2)` : '합칠 첫 무기 선택 (1/2) · Lv 6 무기'],
   job: s => ['전직 제단', s.offer ? '봉헌할 무기 선택 · 무기가 사라지고 다른 직업 3종 호출' : '직업 선택 · 무기 봉헌 시 다시 호출'],
   camp: () => ['떠돌이 야영지', '휴식·보상 중 하나를 선택'],
   door: () => ['봉인된 문', '저주를 받아들이면 문이 열림'],
@@ -110,6 +112,7 @@ function renderSelect0() {
   let acts = '';
   if (kind === 'level') acts = `<button id="reroll" ${G.rerolls ? '' : 'disabled'}>다시 뽑기 (${G.rerolls})</button><button id="banish" class="${s.banish ? 'on' : ''}" ${G.banishes ? '' : 'disabled'}>${s.banish ? '제외 취소' : `제외 (${G.banishes})`}</button>`;
   if (kind === 'job') acts = `<button id="offer" class="${s.offer ? 'on' : ''}" ${G.p.weapons.length >= 2 ? '' : 'disabled'}>${s.offer ? '봉헌 취소' : '무기 봉헌'}</button><button id="leave">떠나기</button>`;
+  if (kind === 'fuse') acts = '<button id="fzlater">나중에</button>';
   UI.innerHTML = `<div class="layer sel sel-${kind}">
     <div class="sel-head">${choiceHeading(kind)}<h2>${h}</h2><p class="sub" role="status" aria-live="polite">${sub}</p>${kind === 'start' ? '' : `<div class="sel-tools"><button id="abtn" class="${s.abil ? 'on' : ''}">${s.abil ? '능력 닫기' : '내 능력'}</button><button id="cbtn">도감</button></div>`}</div>
     ${s.abil ? abilityHTML() : `<div class="cards">${cards}</div>`}
@@ -121,6 +124,7 @@ function renderSelect0() {
     if (two && !s.banish && s.armed !== i) {
       s.armed = i; UI.querySelectorAll('.card.armed').forEach(x => x.classList.remove('armed')); b.classList.remove('armed'); void b.offsetWidth; b.classList.add('armed');
       const sb = UI.querySelector('.sel-head .sub'); if (sb) { sb.textContent = '한 번 더 누르면 ' + (kind === 'job' || kind === 'job2' ? '전직' : '선택') + ' 확정'; sb.classList.add('armtip'); }
+      { const dsEl = b.querySelector('.ds'); if (b.dataset.full && dsEl) dsEl.textContent = b.dataset.full; }
       vibe(12); return;
     }
     uiSpark(b, b.style.borderColor || '#ffe08a');
@@ -131,6 +135,7 @@ function renderSelect0() {
   on('banish', () => { if (!G.banishes) return; s.banish = !s.banish; renderSelect(); });
   on('offer', () => { if (G.p.weapons.length < 2) return; s.offer = !s.offer; renderSelect(); });
   on('leave', leaveAltar);
+  on('fzlater', () => { F42().cool = G.time + 20; closeSel(); });
   on('abtn', toggleAbil);
   on('cbtn', () => showCodex('w', () => { if (G && G.sel) { STATE.mode = 'select'; renderSelect(); } }));   // 0.35 선택 화면 도감
   fitChoices();
@@ -145,6 +150,7 @@ function pickCard(i) {
   if (s.kind === 'branch') { applyBranch(c); return closeSel(); }
   if (s.kind === 'job') { applyJob(c.id); return closeSel(); }
   if (s.kind === 'job2') { applyJob2(c.k); return closeSel(); }
+  if (s.kind === 'fuse') return fzPick(c);
   if (s.kind === 'bond') { applyBond(c); return closeSel(); }
   if (s.kind === 'camp') { applyCamp(c); return closeSel(); }
   if (s.kind === 'door') { applyDoor(c); return closeSel(); }
@@ -203,9 +209,9 @@ function cardScore(c) {
   return s + rand(0, 2.2);
 }
 function autoSelect() {
-  if (!STATE.dev.auto || STATE.mode !== 'select' || !G.sel) return;
+  if (!STATE.dev.auto || STATE.dev.semi || STATE.mode !== 'select' || !G.sel) return;
   const s = G.sel, ai = aiProfile(), later = f => setTimeout(f, rand(500, 900) / Math.sqrt(STATE.dev.speed));
-  if (s.kind === 'branch' || s.kind === 'job2' || s.kind === 'bond') return pickCard(Math.floor(Math.random() * s.cards.length));
+  if (s.kind === 'branch' || s.kind === 'job2' || s.kind === 'bond' || s.kind === 'fuse') return pickCard(Math.floor(Math.random() * s.cards.length));
   if (s.kind === 'job') {
     if (!s.tried && Math.random() < ai.leave) { s.tried = true; return leaveAltar(); }
     if (!s.tried && G.p.weapons.length >= 3 && Math.random() < ai.offer) {          // 무기 봉헌 재호출 (가장 낮은 레벨 무기)

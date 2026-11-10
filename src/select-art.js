@@ -68,7 +68,7 @@ function choiceIcon(c,f) {
 function choiceCard(c,f,i,{off=false,banish=false,offer=false}={}) {
   const action=off?'제외 불가':offer?'봉헌':banish?'제외':'선택';
   const detailed=f.k==='k-job'||f.k==='k-branch'||f.ds.length>90;
-  return `<button class="card ${f.k}${detailed?' choice-detailed':''}${banish?' banish':''}" ${offer?`data-w="${esc(c.id)}"`:`data-i="${i}"`} style="--choice-color:${esc(f.col)};--i:${i}" ${off?'disabled':''}>
+  return `<button class="card ${f.k}${detailed?' choice-detailed':''}${banish?' banish':''}" ${offer?`data-w="${esc(c.id)}"`:`data-i="${i}"`} style="--choice-color:${esc(f.col)};--i:${i}" ${f.full?`data-full="${esc(f.full)}"`:''} ${off?'disabled':''}>
     <span class="choice-art"><span class="choice-number" aria-hidden="true">${String(i+1).padStart(2,'0')}</span>${choiceIcon(c,f)}</span>
     <span class="tx"><span class="choice-copy-head"><span class="choice-type">${choiceType(c,f)}</span><span class="nm">${esc(f.nm)}</span><span class="tag">${esc(f.tag)}</span></span><span class="ds">${esc(f.ds)}</span><span class="choice-foot" aria-hidden="true"><span class="choice-cta" data-action="${action}"></span><span class="choice-arrow">↗</span></span></span>
   </button>`;

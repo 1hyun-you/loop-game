@@ -47,7 +47,7 @@ const owns = id => hasW(id) || hasP(id);
 function wBr(id) { const w = G.p.weapons.find(x => x.id === id); return w && w.br; }
 function pBr(id) { const x = G.p.passives.find(q => q.id === id); return x && x.br; }
 function hasRelic(id) { return G.p.relics.includes(id); }
-function relicReady(id) { const R = RELICS[id]; return !hasRelic(id) && !G.banished.has('r:' + id) && owns(R.a) && owns(R.b); }   // 0.31 제외한 유물 재등장 방지
+function relicReady(id) { return false; }   // 0.42 유물 폐지 (연성으로 대체)   // 0.31 제외한 유물 재등장 방지
 function itemName(id) { return (WEAPONS[id] || PASSIVES[id]).name; }
 
 /* 강화 3단계 도달 → 분기 대기열 적재 */
@@ -69,21 +69,7 @@ function applyBranch(c) {
 }
 
 /* 보물 상자 — 유물 후보 우선, 없으면 유물 재료 카드, 나머지는 강화 1회 */
-function chestCands() {
-  const p = G.p, out = [];
-  for (const id of RELIC_ORDER) if (relicReady(id)) out.push({ t: 'relic', id });
-  if (out.length < 3) for (const id of RELIC_ORDER) {
-    const R = RELICS[id]; if (hasRelic(id)) continue;
-    for (const [m, o] of [[R.a, R.b], [R.b, R.a]]) if (owns(o) && !owns(m) && !G.banished.has(m)) {
-      if (WEAPONS[m] && p.weapons.length < slotW() && catOk(WEAPONS[m].cat) && !out.some(x => x.id === m)) out.push({ t: 'wnew', id: m, mat: id });
-      if (PASSIVES[m] && p.passives.length < CFG.slots.passive && !out.some(x => x.id === m)) out.push({ t: 'pnew', id: m, mat: id });
-    }
-  }
-  const ups = shuffle(levelCands().filter(c => c.t === 'wup' || c.t === 'pup'));
-  while (out.length < 3 && ups.length) out.push(ups.shift());
-  while (out.length < 3) out.push(FILL_CARDS[out.length % 2]);
-  return out.slice(0, 3);
-}
+function chestCands() { return drawCards(selN()); }   // 0.42 레벨업 상자: 레벨업 선택지와 동일 구성
 function openChest() {
   G.pendingChest--; G.stats.chests++; sfx('chest'); jChest();
   STATE.mode = 'select'; clearInput();

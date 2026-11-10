@@ -18,46 +18,33 @@ const DEV = {
   },
   draw() {
     if (!this.el) return;
-    const d = STATE.dev;
-    this.el.innerHTML = `<div class="g">
-      <button data-k="fps" class="${d.fps ? 'on' : ''}">FPS 표시</button>
-      <button data-k="god" class="${d.god ? 'on' : ''}">무적</button>
-      <button data-k="lv">즉시 레벨업</button>
-      <button data-k="auto" class="${d.auto ? 'on' : ''}">자동 이동</button>
-      <button data-k="speed">배속 ×${d.speed}</button>
-      <button data-k="restart">새 판</button>
-      <button data-k="dlg">대사창 시험</button>
-      <button data-k="ult">궁극기 충전</button>
-      <button data-k="elite">정예 호출</button>
-      <button data-k="altar">제단 호출</button>
-      <button data-k="gate">수문장전 이동</button>
-      <button data-k="demon">마왕전 이동</button>
-      <button data-k="sv_release">고리 해제 직전</button>
-      <button data-k="sv_post">진엔딩 후</button>
-      <button data-k="perf">성능 측정 초기화</button>
-      <button data-k="sv_restore" class="${devHasBak() ? '' : 'off'}">저장 복원</button></div>
-      <pre id="devinfo"></pre>`;
-    this.info();
+    const d = STATE.dev, sp = [1, 2, 4, 8, 16], mode = d.auto ? (d.semi ? 'semi' : 'full') : 'off';
+    const chip = (k, label, on) => `<button data-k="${k}" class="${on ? 'on' : ''}">${label}</button>`;
+    this.el.innerHTML = `<div class="r">${sp.map(v => chip('sp' + v, v + '배', d.speed === v)).join('')}</div>
+      <div class="r">${chip('m_full', '완전 자동', mode === 'full')}${chip('m_semi', '반자동', mode === 'semi')}${chip('m_off', '수동', mode === 'off')}</div>
+      <div class="r">${chip('god', '무적', d.god)}${chip('lv', '레벨업')}${chip('ult', '궁극기')}${chip('elite', '정예')}${chip('altar', '제단')}${chip('fz', '연성')}</div>
+      <div class="r">${chip('gate', '수문장전')}${chip('demon', '마왕전')}${chip('restart', '새 판')}${chip('fps', 'FPS', d.fps)}</div>`;
     this.el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       const k = b.dataset.k;
-      if (k === 'fps' || k === 'god' || k === 'auto') d[k] = !d[k];
+      if (k.startsWith('sp')) d.speed = +k.slice(2);
+      if (k === 'm_full') { d.auto = true; d.semi = false; if (STATE.mode === 'select') autoLater(); }
+      if (k === 'm_semi') { d.auto = true; d.semi = true; }
+      if (k === 'm_off') { d.auto = false; d.semi = false; }
+      if (k === 'fps' || k === 'god') d[k] = !d[k];
       if (k === 'god' && d.god) G.p.hp = G.p.maxHp;
       if (k === 'lv') addXp(G.p.need - G.p.xp);
-      if (k === 'speed') d.speed = { 1: 2, 2: 4, 4: 8, 8: 1 }[d.speed];
       if (k === 'restart') newRun();
       if (k === 'gate' && STATE.mode === 'play' && G.ph.id !== 'gate') { G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
       if (k === 'demon' && STATE.mode === 'play' && !isBossPhase()) { G.runType = 'retry'; G.ph.order = G.ph.order.slice(0, G.ph.i + 1).concat('demon'); G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
-      if (k === 'sv_release' || k === 'sv_post') return devPreset(k.slice(3));
-      if (k === 'sv_restore') return devRestore();
-      if (k === 'perf') perfReset();
       if (k === 'ult' && G.p.job) G.p.ult = JOB_CFG.ultNeed;
       if (k === 'elite' && STATE.mode === 'play') spawnElite();
+      if (k === 'fz' && G.p.job) { const f = F42(); f.done = Math.min(2, f.done + 1); f.cool = 0; G.p.weapons.forEach(w => { if (w.lvl < CFG.weaponMax && !w.fx && !w.fz) w.lvl = CFG.weaponMax; }); }
       if (k === 'altar' && !G.p.job) { const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i }; }
-      if (k === 'dlg' && (STATE.mode === 'play' || STATE.mode === 'pause')) { if (STATE.mode === 'pause') resumeGame(); showDialog([{ name: '시험', text: '대사창 틀 시험 문장. 누르면 전체 표시, 다시 누르면 다음 줄.', color: '#7f74d6' }, { name: '들판의 목소리', text: '두 번째 줄. 끝나면 게임 재개.', color: '#5fbf6a' }]); }
       this.draw();
     }));
   },
   info() {
+    return;   // 0.42 하단 수치 표시 제거
     const el = this.el && this.el.querySelector('#devinfo'); if (!el || !G) return;
     el.textContent = `버전 ${CFG.VERSION} · 시간 ${fmtTime(G.time)} · 체력 ${Math.round(G.p.hp)}/${G.p.maxHp}\n경험치 ${Math.floor(G.p.xp)}/${G.p.need} · 무기 ${G.p.weapons.map(w => WEAPONS[w.id].name + w.lvl).join(' ')}\n성능 ${(() => { const P = perfStat(); return P ? `평균 ${P.avg} FPS · 하위 1% ${P.low1} · 하위 5% ${P.low5} · 20ms 초과 ${P.slow}% · 측정 ${P.sec}초` : '측정 중'; })()}\n직업 ${G.p.job ? JOBS[G.p.job].name + (G.p.job2 ? '/' + G.p.job2 : '') + ' 궁극기 ' + Math.floor(G.p.ult) : '-'} · 유물 ${G.p.relics.length}\n보조 ${G.p.passives.map(x => PASSIVES[x.id].name + x.lvl).join(' ') || '-'} · 다시 뽑기 ${G.rerolls} · 제외 ${G.banishes}`;
   },

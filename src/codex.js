@@ -6,7 +6,7 @@
    — 게임 중 열람: 일시정지 화면 '도감' 버튼, 진행 중인 판의 획득분도 즉시 반영
    — 기록: 저장 데이터 seenW·seenE·seenJ(기존) + seenP(보조 효과)·seenR(유물) 추가
    ============================================================ */
-const CODEX_TABS = [['w', '무기'], ['p', '보조'], ['r', '유물'], ['j', '직업'], ['e', '적'], ['f', '조각'], ['u', '해금']];   // 0.37 한 줄 탭 (짧은 이름)
+const CODEX_TABS = [['w', '무기'], ['p', '보조'], ['x', '연성'], ['j', '직업'], ['e', '적'], ['f', '조각'], ['u', '해금']];   // 0.37 한 줄 탭 (짧은 이름)
 
 /* 기본 수치 표기 순서·명칭 (밀쳐내기·투사체 속도 등 체감 어려운 항목 제외) */
 const CX_STAT = [['dmg', '피해', v => Math.round(v)], ['cd', '재사용', v => v + '초'], ['n', '개수', v => v], ['pierce', '관통', v => v], ['range', '사거리', v => v], ['len', '길이', v => v], ['R', '범위', v => v],
@@ -80,8 +80,14 @@ function cxRelic(id, seen) {
 }
 function cxJob(id, seen) {
   const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id];
-  const cats = jobCats(id).map(c => CAT_NAME[c]).join('·');
-  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: cats + ' 계열', lines: [esc(J.rule), cxL('궁극기 ' + U[0], U[1]), cxL('연성 · ' + X.pre, X.ds + ' (0.42 구현 예정)'), cxBr(JOB2[id], '2차 전직')] });
+  return cxCard({ dim: !seen, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: X.tag, lines: [`<b>${esc(JOB_SHORT[id])}</b>`, cxChips([['궁극기', esc(U[0])], ['연성', esc(X.pre)]]),
+    `<details class="acc"><summary>상세</summary><div class="cxg"><div><b>핵심 규칙</b><span>${esc(J.rule)}</span></div><div><b>궁극기 ${esc(U[0])}</b><span>${esc(U[1])}</span></div><div><b>연성 · ${esc(X.pre)}</b><span>${esc(X.ds)}</span></div></div></details>`, cxBr(JOB2[id], '2차 전직')] });
+}
+function cxFuse() {
+  const types = Object.entries(FZ_TYPES).map(([k, T]) => cxCard({ col: '#ffd27a', ic: T[0].slice(0, 1), nm: T[0], tag: k, lines: [`<b>${esc(T[2])}</b>`] })).join('');
+  const jobs = JOB_ORDER.map(id => { const T = FZ_TRIAL[id], W = WEAPONS[FZ_SYMBOL[id]];
+    return cxCard({ col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name, tag: T.nm, lines: [`<b>${esc(T.ds)}</b>`, cxChips([['상징 무기', esc(W.name)], ['연성', esc(FZ_JOB[id])]]), `<details class="acc"><summary>상징 무기 효과</summary><div class="cxg"><div><b>${esc(W.name)}</b><span>${esc(FZ_SYM_TX[id])}</span></div></div></details>`] }); }).join('');
+  return '<p class="hint">직업 시련 완수 시 Lv 6 무기 2종을 합침 · 판당 최대 2회 · 부품 무기는 슬롯을 차지하지 않음</p>' + types + '<h3>직업별 시련·연성</h3>' + jobs;
 }
 function cxEnemies(S) {
   const mob = ENEMY_ORDER.map(k => { const E = ENEMIES[k], v = S.seenE.has(k); return cxCard({ lock: !v, hint: '조우 시 기록', col: E.color, ic: E.name.slice(0, 1), nm: E.name, tag: '잡몹', lines: [cxL('능력치', `체력 ${E.hp} · 이동 ${E.speed} · 접촉 피해 ${E.dmg} · 경험치 ${E.xp}`), cxL('등장', `${E.from}분 이후`) + (E.mb ? ' · ' + esc(CX_MB[E.mb] || '') : '')] }); });
@@ -98,7 +104,7 @@ function cxUnlock(S) {
     <span>플레이</span><span>${s.runs || 0}판</span><span>돌파</span><span>${s.clears || 0}회</span><span>최고 생존</span><span>${s.bestTime ? fmtTime(s.bestTime) : '-'}</span><span>열린 문</span><span>${n('gates')}/4</span>
     <span>마왕 처치</span><span>${s.demonKills || 0}회</span><span>기록 조각</span><span>${n('frags')}/${FRAG_N}</span>
     <span>무기</span><span>${WEAPON_ORDER.filter(id => S.seenW.has(id)).length}/${WEAPON_ORDER.length}</span><span>보조 효과</span><span>${PASSIVE_ORDER.filter(id => S.seenP.has(id)).length}/${PASSIVE_ORDER.length}</span>
-    <span>유물</span><span>${RELIC_ORDER.filter(id => S.seenR.has(id)).length}/${RELIC_ORDER.length}</span><span>직업</span><span>${JOB_ORDER.filter(id => S.seenJ.has(id)).length}/${JOB_ORDER.length}</span>
+    <span>직업</span><span>${JOB_ORDER.filter(id => S.seenJ.has(id)).length}/${JOB_ORDER.length}</span>
     <span>적</span><span>${eSeen}/${ce}</span>
     <span>진엔딩</span><span>${s.trueEnd ? '달성' : '-'}</span><span>최고 점수</span><span>${s.bestScore || 0}</span><span>최고 단계</span><span>${s.trueEnd ? TIERS[Math.min(3, s.tierMax || 1)].nm + ' 개방' : '-'}</span></div>
     <h3>칭호</h3><div class="chips">${titles.length ? `<button class="chipb ${!s.title ? 'pri' : ''}" data-t="">없음</button>` + titles.map(t => `<button class="chipb ${s.title === t ? 'pri' : ''}" data-t="${t}">${esc(TITLES[t])}</button>`).join('') : '<p class="hint">진엔딩·고난도·도전 조건 첫 돌파 시 해금</p>'}</div>
@@ -110,7 +116,7 @@ function showCodex(tab, back) {
   const bodyOf = t => {
     if (t === 'w') return '<p class="hint">수치: 1레벨 → 6레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
     if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
-    if (t === 'r') return RELIC_ORDER.map(id => cxRelic(id, S.seenR.has(id))).join('');
+    if (t === 'x') return cxFuse();
     if (t === 'j') return `<p class="hint">2차 전직은 눌러서 펼침 · 공통 선택지 ${esc(JOB2_STAT.nm)}(${esc(JOB2_STAT.ds)})</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
     if (t === 'e') return cxEnemies(S);
     if (t === 'f') return FRAGS.map((f, i) => { const v = (S.s.frags || []).includes(f.id); return cxCard({ lock: !v, hint: '해금 조건 · ' + f.cond, col: '#e8d8ff', ic: String(i + 1), nm: f.nm, lines: [esc(f.tx)] }); }).join('');

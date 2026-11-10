@@ -1,7 +1,7 @@
 /* ============================================================
    판 상태 · 진행
    ============================================================ */
-const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: false, speed: 1, gk: null, demon: null } };   // gk: 수문장 지정, demon: 판 구조 지정 final·retry (시험용)
+const STATE = { mode: 'title', fps: 60, dev: { god: false, fps: true, auto: true, semi: false, speed: 4, gk: null, demon: null } };   // gk: 수문장 지정, demon: 판 구조 지정 final·retry (시험용)
 let G = null;
 
 function earlyOn() { return !!(G && G.ph && G.ph.i < CFG.early.phases && !isBossPhase()); }   // 0.16 초반 완화 구간
@@ -71,7 +71,7 @@ function step(dt) {
   if (!G.result) { updatePhase(dt); if (!G.result) updateEvent(dt); updateEliteSpawn(dt); }
   if (!G.result) updateSpawn(dt);
   gridBuild(G.enemies);
-  if (!G.result) { updateWeapons(dt); updateJob(dt); updatePassiveBranches(dt); updateRelics(dt); }
+  if (!G.result) { updateWeapons(dt); updateJob(dt); updatePassiveBranches(dt); updateRelics(dt); v42Update(dt); }
   updateProjectiles(dt);
   updatePools(dt);
   updateEnemies(dt);
@@ -283,7 +283,7 @@ function buildReport() {
     xp: [G.stats.xpGot, G.stats.xpDrop], selOpen: G.stats.selOpen, pendingLv: G.pendingLv, lastMinShare: lastMinShare(), picks: G.stats.picks, wFullAt: G.stats.wFullAt, pFullAt: G.stats.pFullAt,
     phases: G.ph.log, phaseReached: G.ph.i + 1, phaseAt: G.ph.id || 'gap',
     rerollsUsed: CFG.select.rerolls - G.rerolls, banishUsed: CFG.select.banishes - G.banishes,
-    branches: G.stats.branches, relics: G.p.relics, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
+    branches: G.stats.branches, relics: G.p.relics, fuses: G.stats.fuses || [], f42: G.f42 ? [G.f42.done, G.f42.used] : null, elites: [G.stats.elites, G.stats.eliteKills], chests: G.stats.chests,
     job: G.stats.job, jobAt: G.stats.jobAt, job2: G.stats.job2, job2At: G.stats.job2At, ults: G.stats.ults, bond: G.stats.bond || null, bondPicks: G.stats.bondPicks || [],
     altar: [G.stats.altarSeen, G.stats.altarOpen, G.stats.altarLeave, G.stats.offers], passes: G.stats.passes, chestPicks: G.stats.chestPicks || [], maxMinions: G.stats.maxMinions || 0,
     order: G.ph.order, gate: G.stats.gate ? [G.stats.gate.id, G.stats.gate.killed ? 'kill' : G.result, G.stats.gate.dur || Math.round(G.time - G.stats.gate.t0), G.stats.gate.killed ? 0 : G.gkMob ? Math.round(Math.max(0, G.gkMob.hp) / G.gkMob.maxHp * 100) : 100, G.stats.gate.rageAt] : null, gk: G.gk, runType: G.runType, demon: dmReport(), events: G.ev ? G.ev.log : [], curses: G.p.curses, camp: G.stats.camp || [], traits: G.stats.traits || [], mobs: Object.keys(G.stats.kt), crisis: G.stats.crisis, start: G.stats.start,

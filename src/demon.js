@@ -38,6 +38,8 @@ function runTypeOf() {
 }
 
 function dmSpawn() {
+  if (G.enemies.some(o => o.gk === 'demon' && !o.dead)) return;                    // 0.42 마왕 중복 생성 차단
+  for (const o of G.enemies) if (o.gk && !o.dead) o.dead = true;                  // 잔존 수문장 개체 정리
   sfx('boss'); jBoss(DEMON.name || '마왕', '마왕성 · 최후의 결전');
   const q = ringAt(DM_CFG.spawn[0], DM_CFG.spawn[1]), e = makeEnemy('brute', q.x, q.y);
   e.hp = e.maxHp = e.hp * DM_CFG.hpMul * (G.runType === 'retry' ? DM_CFG.retryHp : DM_CFG.finalHp); e.dmg *= DM_CFG.dmgMul; e.r = DEMON.r; e.speed = DEMON.speed; e.color = DEMON.color; e.shape = DEMON.shape; e.xp = 0;
