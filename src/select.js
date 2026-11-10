@@ -101,19 +101,17 @@ function renderSelect() { const s0 = G.sel; if (s0 && s0._drawn && !s0._top) ret
 function renderSelect0() {
   const s = G.sel, kind = s.kind || 'level';
   let cards;
-  if (kind === 'job' && s.offer) cards = G.p.weapons.map((w, i) => { const d = WEAPONS[w.id]; return `<button class="card k-${d.cat} banish" data-w="${w.id}">${icBox(CFG.colors[d.cat], d.ic, w.id)}<span class="tx"><span class="nm">${esc(d.name)} <span class="tag">Lv ${w.lvl}</span></span><span class="ds">봉헌 시 무기 삭제</span></span></button>`; }).join('');
+  if (kind === 'job' && s.offer) cards = G.p.weapons.map((w, i) => { const d = WEAPONS[w.id]; return choiceCard({t:'wup',id:w.id},{id:w.id,k:'k-'+d.cat,col:CFG.colors[d.cat],ic:d.ic,nm:d.name,tag:'Lv '+w.lvl,ds:'봉헌 시 무기 삭제'},i,{banish:true,offer:true}); }).join('');
   else cards = s.cards.map((c, i) => {
     const f = cardInfo(c), off = s.banish && isFill(c);
-    return `<button class="card ${f.k}${s.banish ? ' banish' : ''}" data-i="${i}" ${off ? 'disabled' : ''}>
-      ${icBox(f.col, f.ic, f.id)}
-      <span class="tx"><span class="nm">${esc(f.nm)} <span class="tag">${esc(f.tag)}</span></span><span class="ds">${esc(f.ds)}</span></span></button>`;
+    return choiceCard(c,f,i,{off,banish:s.banish});
   }).join('');
   const [h, sub] = SEL_HEAD[kind](s);
   let acts = '';
   if (kind === 'level') acts = `<button id="reroll" ${G.rerolls ? '' : 'disabled'}>다시 뽑기 (${G.rerolls})</button><button id="banish" class="${s.banish ? 'on' : ''}" ${G.banishes ? '' : 'disabled'}>${s.banish ? '제외 취소' : `제외 (${G.banishes})`}</button>`;
   if (kind === 'job') acts = `<button id="offer" class="${s.offer ? 'on' : ''}" ${G.p.weapons.length >= 2 ? '' : 'disabled'}>${s.offer ? '봉헌 취소' : '무기 봉헌'}</button><button id="leave">떠나기</button>`;
   UI.innerHTML = `<div class="layer sel sel-${kind}">
-    <div class="sel-head"><h2>${h}</h2><p class="sub">${sub}</p>${kind === 'start' ? '' : `<div class="sel-tools"><button id="abtn" class="${s.abil ? 'on' : ''}">${s.abil ? '능력 닫기' : '내 능력'}</button><button id="cbtn">도감</button></div>`}</div>
+    <div class="sel-head">${choiceHeading(kind)}<h2>${h}</h2><p class="sub" role="status" aria-live="polite">${sub}</p>${kind === 'start' ? '' : `<div class="sel-tools"><button id="abtn" class="${s.abil ? 'on' : ''}">${s.abil ? '능력 닫기' : '내 능력'}</button><button id="cbtn">도감</button></div>`}</div>
     ${s.abil ? abilityHTML() : `<div class="cards">${cards}</div>`}
     ${acts ? `<div class="sel-actions">${acts}</div>` : ''}</div>`;
   s.armed = null;

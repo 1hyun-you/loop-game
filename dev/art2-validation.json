@@ -26,9 +26,9 @@
     "terrainCache": 14
   },
   "play": {
-    "time": 4.5496000000000025,
+    "time": 4.5498,
     "mode": "play",
-    "enemies": 5,
+    "enemies": 4,
     "canvasError": false,
     "cache": 128
   }
