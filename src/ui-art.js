@@ -28,6 +28,37 @@ const UI_JOB_CREST = {
   druid: '<path d="M24 28C7 29 3 17 6 5c13 0 21 7 18 23Z" fill="@"/><path d="M25 30C22 14 33 8 43 10c1 12-5 22-18 20Z" fill="@"/><path d="m11 11 13 18 13-13M24 29v11m0-4-11 6m11-2 10 4m-10-9 14 1" fill="none" stroke="#b8e6a1" stroke-width="3"/><path d="m21 38-3 6m9-5 2 6" stroke="@" stroke-width="3" fill="none"/>'
 };
 for (const id of Object.keys(UI_JOB_CREST)) UI_PATH['crest_'+id] = UI_JOB_CREST[id].replace(/@/g, JOB_COL[id]);
+// 0.42-art2: inherited primary motif plus specialization silhouette; UI only.
+const UI_JOB2_CREST = {
+  berserk: { job: 'warrior', art: '<path d="m31 4-6 11 6-2-3 10 13-14-8 2 3-7ZM28 27l7-5-1 8 10-3-7 9 7 6-13-2-5 5Z" fill="@"/>' },
+  guard: { job: 'warrior', art: '<path d="m26 19 18 4v11q-2 8-10 12-9-5-10-12V23Z" fill="@"/><path d="M34 25v14m-6-9h12" stroke="url(#steel)" stroke-width="3"/>' },
+  assassin: { job: 'rogue', art: '<path d="m38 4 6 3-9 22-7-3Z" fill="url(#steel)"/><path d="m24 27 13 5m-8-3-5 13" stroke="@" stroke-width="5"/><path d="m28 11 3 3m-6 2 3 3" stroke="@" stroke-width="2"/>' },
+  dancer: { job: 'rogue', art: '<path d="M31 6q17 2 13 18L34 42l-6-8 8-13-6-4Z" fill="@"/><path d="M28 11q-9 8-3 20l-9 12 12-5" fill="none" stroke="url(#steel)" stroke-width="3"/>' },
+  conqueror: { job: 'sovereign', art: '<path d="M28 5v38" stroke="url(#steel)" stroke-width="4"/><path d="M29 6h15l-4 8 4 7H29Z" fill="@"/><path d="m33 29 11 11-8-1-2 5-4-13" fill="url(#steel)"/>' },
+  benevolent: { job: 'sovereign', art: '<path d="M27 25q-4-6 0-9 4-3 7 2 4-5 8-2 4 4-1 9l-7 6Z" fill="@"/><path d="m23 34 11 5 11-6-4 10H27Z" fill="url(#page)"/>' },
+  sniper: { job: 'archer', art: '<circle cx="33" cy="24" r="11" fill="#30424a" stroke="@" stroke-width="3"/><path d="M33 8v10m0 12v10M17 24h10m12 0h7" stroke="url(#steel)" stroke-width="3"/><circle cx="33" cy="24" r="3" fill="@"/>' },
+  hunter: { job: 'archer', art: '<path d="m23 24 6-13 5 7 11-9-3 16-8 10-1 9-5-10-7-3Z" fill="@"/><path d="m31 22 5 1-4 4m-9 0-5-8" fill="none" stroke="url(#page)" stroke-width="2"/>' },
+  artillery: { job: 'engineer', art: '<path d="m26 28 9-21 9 4-9 22Z" fill="url(#steel)"/><path d="m23 32 16-1 5 11H22Z" fill="@"/><circle cx="28" cy="40" r="4" fill="#4b424a"/><circle cx="39" cy="40" r="4" fill="#4b424a"/>' },
+  mechanic: { job: 'engineer', art: '<path d="M27 19h15v13H27Z" fill="url(#steel)"/><path d="M31 20V9h13v6h-8v5M30 32l-4 9h-6m18-9 4 9h4" stroke="@" stroke-width="4" fill="none"/><circle cx="34" cy="26" r="3" fill="@"/>' },
+  accel: { job: 'chrono', art: '<path d="m25 11 10 13-10 13 9-3 10-10L34 14Z" fill="@"/><path d="M7 7h12M4 13h10M6 40h13" stroke="@" stroke-width="3"/>' },
+  rewind: { job: 'chrono', art: '<path d="M28 9a17 17 0 1 1-3 32" fill="none" stroke="@" stroke-width="5"/><path d="m22 5 13 2-7 11Z" fill="@"/><path d="M34 21v9h-8" stroke="url(#page)" stroke-width="3" fill="none"/>' },
+  elemental: { job: 'mage', art: '<path d="m34 5 9 12-9 7-8-7Z" fill="@"/><path d="m26 26 9 8-8 11-9-9Z" fill="url(#steel)"/><path d="M40 26q10 11-1 18-8-4-6-10Z" fill="url(#page)"/>' },
+  archmage: { job: 'mage', art: '<path d="m25 8 16-4-4 12 7 6-21 3Z" fill="@"/><path d="M23 29q6-4 11 0 6-4 11 0v14q-6-4-11 0-5-4-11 0Z" fill="url(#page)"/><path d="M34 30v12" stroke="#864e8c" stroke-width="2"/>' },
+  necro: { job: 'summoner', art: '<path d="M27 16q-1-11 9-11t8 13l-5 4v5h-9v-5Z" fill="url(#page)"/><path d="m29 14 4 1m5 0 4-1M34 21v5m4-5v5" stroke="#352c46" stroke-width="3"/><path d="M26 31v12m7-12v12m7-12v12" stroke="@" stroke-width="4"/>' },
+  lord: { job: 'summoner', art: '<path d="m24 14-1-10 8 5 5-7 4 7 6-3-2 11Z" fill="@"/><path d="M26 43V28q0-12 10-12t9 14v13l-6-5-4 6-4-6Z" fill="@"/><path d="m30 27 4 2m5 0 4-2" stroke="#352c46" stroke-width="3"/>' },
+  judge: { job: 'priest', art: '<path d="m30 7 13 6-3 8-13-6Z" fill="@"/><path d="m33 18-8 25" stroke="url(#steel)" stroke-width="5"/><path d="m35 29 9 1-3 5 5 4-11 4" fill="none" stroke="@" stroke-width="3"/>' },
+  saint: { job: 'priest', art: '<path d="m34 5 3 9 9 3-9 3-3 9-3-9-9-3 9-3Z" fill="@"/><path d="m25 30 9 4 10-4-3 12H28Z" fill="url(#page)"/><path d="M34 34v8" stroke="@" stroke-width="3"/>' },
+  ursa: { job: 'druid', art: '<circle cx="27" cy="15" r="5" fill="@"/><circle cx="41" cy="15" r="5" fill="@"/><path d="M23 25q0-12 11-12t11 12v8q-2 11-11 11T23 33Z" fill="@"/><ellipse cx="34" cy="32" rx="7" ry="6" fill="url(#page)"/><path d="m31 29 6 0-3 5Z" fill="#304234"/>' },
+  pack: { job: 'druid', art: '<path d="m24 15 1-10 8 6 8-6 3 14-3 14-8 11-9-12Z" fill="@"/><path d="m26 23 5 2m5 0 5-2m-12 9 8 0-4 6Z" stroke="#304234" stroke-width="2" fill="#304234"/><path d="m16 32 4 10m-9-7 3 9" stroke="@" stroke-width="3"/>' },
+};
+for (const [k, v] of Object.entries(UI_JOB2_CREST)) {
+  UI_PATH['crest_'+k] = ('<g transform="translate(0 7) scale(.72)">'+UI_JOB_CREST[v.job]+'</g>'+v.art).replace(/@/g, JOB_COL[v.job]);
+}
+function uiJob2Crest(id, k, cls = '') {
+  const v = UI_JOB2_CREST[k];
+  if (!v || v.job !== id) return `<span class="ic choice-symbol ${cls}" aria-hidden="true"><img src="${uiIcon('crest')}" alt=""></span>`;
+  return `<span class="ic px job-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><span hidden>${esc(JOBS[id].ic)}</span><img src="${uiIcon('crest_'+k)}" alt="" data-job2-crest="${k}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
+}
 function uiJobCrest(id, cls = '') {
   if (!UI_JOB_CREST[id]) return icBox('#8a86a0', '?');
   // Keep the former codex letter beneath the image for decoding failures.

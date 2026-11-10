@@ -28,7 +28,7 @@ const ok=(v,n)=>{if(!v)throw Error(n);report.checks.push(n)};
   await p.evaluate(()=>{const im=document.querySelector('[data-job-crest]');im.src='data:image/svg+xml,broken'});
   await p.waitForFunction(()=>{const im=document.querySelector('[data-job-crest]');return im.hidden&&!im.previousElementSibling.hidden});
   ok(true,'image decoding failure restores the former letter icon');
-  ok(await p.evaluate(()=>{G.p.job='warrior';const c={t:'job2',id:'warrior',k:JOB2.warrior[0].k};return !choiceIcon(c,cardInfo(c)).includes('data-job-crest')}),'second-job crests remain explicitly deferred');
+  ok(await p.evaluate(()=>{G.p.job='warrior';const c={t:'job2',id:'warrior',k:JOB2.warrior[0].k};return choiceIcon(c,cardInfo(c)).includes('data-job2-crest')}),'second-job selection now uses its specialization crest');
   ok(report.errors.length===0,'no browser runtime errors');
  }finally{await browser.close();server.close();fs.writeFileSync(path.join(root,'dev/crests-validation.json'),JSON.stringify(report,null,2))}
  console.log(JSON.stringify(report));
