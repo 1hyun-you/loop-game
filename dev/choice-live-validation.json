@@ -1,0 +1,21 @@
+{
+  "checks": [
+    "actual service version and embedded art",
+    "first tap highlights choice without applying it",
+    "new choice artwork and responsive cards at 320/390/690px",
+    "start dialogue and weapon choice",
+    "real pointer input advances walking and animation tracking",
+    "pause and resume",
+    "390 to 690 to 390 width changes",
+    "reduced motion"
+  ],
+  "errors": [],
+  "version": "v0.40-choice1",
+  "movement": {
+    "x": 197.74499999999992,
+    "y": 0,
+    "time": 2.165799999904632,
+    "tracked": true,
+    "error": false
+  }
+}
