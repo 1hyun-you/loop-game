@@ -25,12 +25,13 @@ jobs:
         env:
           CHOICE_BASELINE_HTML: ${{ github.workspace }}/baseline-042.html
         run: |
-          git show 14e1c88:index.html > baseline-042.html
+          git show 030726b:index.html > baseline-042.html
           node dev/build.cjs
           node dev/check-build.cjs
           node dev/check-crests.cjs
           node dev/check-job2-crests.cjs
           node dev/check-trial-crests.cjs
+          node dev/check-fuse-crests.cjs
       - name: Verify selection regression
         timeout-minutes: 3
         env:

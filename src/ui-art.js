@@ -72,6 +72,18 @@ function uiTrialCrest(id, cls = '') {
   if (!UI_TRIAL_CREST[id]) return icBox('#8a86a0', '시', '', cls);
   return `<span class="ic px trial-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><i hidden style="font-style:normal">시</i><img src="${uiIcon('trial_'+id)}" alt="" data-trial-crest="${id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
 }
+// 0.42-art4: three static combination emblems, shared by codex and abilities.
+const UI_FUSE_CREST = {
+  trans: '<path d="m9 6 12 6-8 15-8-4Z" fill="url(#steel)"/><path d="m6 29 9 5m-5-3-5 10" stroke="url(#bronze)" stroke-width="4"/><path d="M22 18h11l-4-5m4 5-4 5" fill="none" stroke="url(#page)" stroke-width="3"/><path d="m34 25 3 6 8-2-4 7 4 7-8-2-5 5-1-8-7-3 8-3Z" fill="url(#bronze)"/>',
+  stack: '<path d="m5 17 16-10 17 10-17 10Z" fill="url(#steel)"/><path d="m10 25 16-10 17 10-17 10Z" fill="url(#bronze)"/><path d="m10 34 16-10 17 10-17 10Z" fill="url(#page)"/><path d="m19 34 7-4 7 4-7 4Z" fill="#897049"/>',
+  merge: '<path d="M5 7h10l9 12 9-12h10L29 27v13H19V27Z" fill="url(#steel)"/><path d="m5 7 10 0 9 12v10L19 27Z" fill="url(#bronze)"/><path d="M24 21v19" stroke="url(#page)" stroke-width="3"/><path d="m17 39 7 7 7-7" fill="url(#bronze)"/>',
+};
+for (const [id, art] of Object.entries(UI_FUSE_CREST)) UI_PATH['fuse_'+id] = art;
+function uiFuseCrest(type, cls = '') {
+  if (!UI_FUSE_CREST[type]) return icBox('#ffd27a', '연', '', cls);
+  const T = Object.values(FZ_TYPES).find(t => t[1] === type);
+  return `<span class="ic px fuse-crest ${cls}" style="position:relative;background:${shadeHex('#ffd27a',.42)};border-color:#ffd27a" aria-hidden="true"><i hidden style="font-style:normal">${esc(T[0].slice(0,1))}</i><img src="${uiIcon('fuse_'+type)}" alt="" data-fuse-crest="${type}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
+}
 // Observe the existing completion banner. Reuse its timing/opacity; never create one.
 function uiTrialBanner(c, b, alpha) {
   const id = G.p.job, T = FZ_TRIAL[id];
