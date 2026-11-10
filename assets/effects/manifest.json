@@ -1,0 +1,23 @@
+{
+  "columns": 4,
+  "cell": 96,
+  "names": [
+    "fire",
+    "frost",
+    "vine",
+    "holy",
+    "time",
+    "wind",
+    "earth",
+    "shield",
+    "explosion",
+    "shatter",
+    "arcane",
+    "dust",
+    "heal",
+    "blessing",
+    "summon",
+    "lightning"
+  ],
+  "source": "Mobile 4x4 atlas derived from the user-supplied transparent 1254px sheet. Full-resolution original preserved in the delivered backup."
+}

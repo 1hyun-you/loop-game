@@ -1,0 +1,29 @@
+name: Build game HTML
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'build.sh', 'dev/build.cjs', 'dev/check-build.cjs', '.github/workflows/build-game.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: build-game-main
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and validate the single-file game
+        run: |
+          node dev/build.cjs
+          node dev/check-build.cjs
+      - name: Save generated HTML
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'Build game HTML from reviewed sources'
+            git push origin HEAD:main
+          fi

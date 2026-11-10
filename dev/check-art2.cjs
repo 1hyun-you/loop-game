@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,'..'),dir=root,report={checks:[],errors:[],scr
 const mime={'.html':'text/html','.js':'text/javascript','.webp':'image/webp','.woff2':'font/woff2'};
 function ok(v,name){if(!v)throw Error(name);report.checks.push(name);}
 (async()=>{
-  const server=http.createServer((req,res)=>{let p=path.join(dir,new URL(req.url,'http://localhost').pathname);if(p===dir+'/')p+='index.html';if(!p.startsWith(dir)||!fs.existsSync(p)){res.statusCode=204;return res.end();}res.setHeader('Content-Type',mime[path.extname(p)]||'application/octet-stream');res.end(fs.readFileSync(p));}).listen(8788,'127.0.0.1');
+  const server=http.createServer((req,res)=>{let p=path.join(dir,new URL(req.url,'http://localhost').pathname);if(fs.existsSync(p)&&fs.statSync(p).isDirectory())p=path.join(p,'index.html');if(!p.startsWith(dir)||!fs.existsSync(p)){res.statusCode=204;return res.end();}res.setHeader('Content-Type',mime[path.extname(p)]||'application/octet-stream');res.end(fs.readFileSync(p));}).listen(8788,'127.0.0.1');
   const browser=await chromium.launch({executablePath:process.env.ART2_CHROMIUM_PATH || undefined,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
   try{
     const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});

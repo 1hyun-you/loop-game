@@ -2,7 +2,7 @@ const {chromium}=require('playwright'),fs=require('fs'),path=require('path'),htt
 const root=path.resolve(__dirname,'..'),out={checks:[],errors:[]};
 function ok(v,name){if(!v)throw Error(name);out.checks.push(name);}
 (async()=>{
- const server=http.createServer((req,res)=>{let file=path.join(root,new URL(req.url,'http://localhost').pathname);if(file===root+'/')file+='index.html';if(!file.startsWith(root)||!fs.existsSync(file)){res.statusCode=204;return res.end();}res.setHeader('Content-Type',file.endsWith('.woff2')?'font/woff2':file.endsWith('.webp')?'image/webp':'text/html');res.end(fs.readFileSync(file));}).listen(8789,'127.0.0.1');
+ const server=http.createServer((req,res)=>{let file=path.join(root,new URL(req.url,'http://localhost').pathname);if(fs.existsSync(file)&&fs.statSync(file).isDirectory())file=path.join(file,'index.html');if(!file.startsWith(root)||!fs.existsSync(file)){res.statusCode=204;return res.end();}res.setHeader('Content-Type',file.endsWith('.woff2')?'font/woff2':file.endsWith('.webp')?'image/webp':'text/html');res.end(fs.readFileSync(file));}).listen(8789,'127.0.0.1');
  const browser=await chromium.launch({executablePath:process.env.ART2_CHROMIUM_PATH||undefined,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});page.on('pageerror',e=>out.errors.push(e.message));

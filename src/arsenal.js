@@ -241,6 +241,7 @@ function drawArsenal(c, inView) {
   if (G.vortex) for (const v of G.vortex) {                         // 회오리: 회전 나선 3겹
     if (!inView(v.x, v.y, v.R + 10)) continue;
     const fade = Math.min(1, (v.dur - v.t) * 3, v.t * 5), col = jobTint('magic') || '#c8f0ff';
+    if(paintedEffect(c,'wind',v.x,v.y,v.R,.7*fade,v.spin)){effectBoundary(c,v.x,v.y,v.R,col,.2*fade);continue;}
     c.globalAlpha = 0.18 * fade; c.fillStyle = col; c.beginPath(); c.arc(v.x, v.y, v.R, 0, 7); c.fill();
     c.lineWidth = 2.5;
     for (let i = 0; i < 3; i++) { c.globalAlpha = (0.75 - i * 0.18) * fade; c.strokeStyle = i ? col : '#ffffff'; const r = v.R * (0.35 + i * 0.28); c.beginPath(); c.arc(v.x, v.y, r, v.spin * (1 + i * 0.3) + i * 2, v.spin * (1 + i * 0.3) + i * 2 + 3.6); c.stroke(); }
@@ -260,7 +261,8 @@ function drawArsenal(c, inView) {
       const b = w.bm, fade = Math.min(1, (b.dur - b.t) * 6, b.t * 12), col = jobTint('magic') || '#9fd8ff';
       const angs = w.br === 'prism' ? [b.a - 0.3, b.a, b.a + 0.3] : [b.a];
       for (const a of angs) {
-        const ex = p.x + Math.cos(a) * b.L, ey = p.y + Math.sin(a) * b.L; c.lineCap = 'round';
+        const ex = p.x + Math.cos(a) * b.L, ey = p.y + Math.sin(a) * b.L;
+        if(paintedBeam(c,p.x,p.y,a,b.L,b.wd*1.4,fade)){paintedAura(c,'holy',ex,ey,b.wd*1.3,.6*fade);continue;}c.lineCap = 'round';
         for (const [wd, cl, al] of [[b.wd * 2.6, col, 0.25], [b.wd * 1.4, col, 0.55], [b.wd * 0.5, '#ffffff', 1]]) { c.globalAlpha = al * fade; c.strokeStyle = cl; c.lineWidth = wd; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(ex, ey); c.stroke(); }
         c.globalAlpha = 0.8 * fade; c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex, ey, b.wd * 0.9 + Math.sin(G.time * 40) * 2, 0, 7); c.fill();
         c.lineCap = 'butt';

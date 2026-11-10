@@ -11,7 +11,7 @@ WEAPONS.icering.desc = '주기적으로 퍼지는 냉기 파동, 둔화·피해,
 AW_BASE.icering = function (w, S) {                   // 각성 감싸기(awaken.js) 안쪽 기본 동작 교체
   const C = V40.ice, Rm = WEAPONS.icering.base.R * C.reach * S.area, frz = w.br === 'freeze', hit = new Set(), dmg = S.dmg * C.hit;
   w.R = Rm;
-  fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 8, r1: Rm, dur: C.dur, color: '#bfe8ff' });
+  fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 8, r1: Rm, dur: C.dur, element:'ice', color: '#bfe8ff' });
   for (let k = 1; k <= C.steps; k++) {
     G.later.push({
       t: C.dur * k / C.steps, f: () => {
@@ -26,7 +26,7 @@ AW_BASE.icering = function (w, S) {                   // 각성 감싸기(awaken
         if (last) {                                                            // 최대 확장: 외곽 적 파쇄
           for (const e of sh.slice(0, 14)) {
             const x = e.x, y = e.y, d = S.dmg * C.shMul;
-            fx({ kind: 'ring', x, y, r0: 4, r1: C.shR, dur: 0.2, color: '#e6f6ff', fill: true });
+            fx({ kind: 'ring', x, y, r0: 4, r1: C.shR, dur: 0.2, art:'shatter', color: '#e6f6ff', fill: true });
             gridQuery(x, y, C.shR, t => damageEnemy(t, d, { src: 'icering_x' }));
           }
         }

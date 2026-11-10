@@ -1,0 +1,308 @@
+{
+  "checks": [
+    "version and embedded atlas loaded",
+    "compact layout, 8px pause separation and no slot collisions at 280–1366px",
+    "actual pause coordinates 320x568",
+    "actual pause coordinates 390x844",
+    "actual pause coordinates 412x915",
+    "actual pause coordinates 690x829",
+    "actual pause coordinates 844x390",
+    "effects preserve gameplay state, RNG and canvas state; missing-image fallback draws",
+    "all ten jobs, twenty advanced variants, dedicated weapons and ultimates render",
+    "live mixed spell combat",
+    "pause button opens pause",
+    "reduced motion and no browser errors"
+  ],
+  "errors": [],
+  "layout": [
+    {
+      "width": 280,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 280,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 320,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 320,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 360,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 360,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 390,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 390,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 412,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 412,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 690,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 690,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 768,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 768,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 844,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 844,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 1366,
+      "sat": 0,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    },
+    {
+      "width": 1366,
+      "sat": 28,
+      "height": 68,
+      "gap": 8,
+      "bounded": true,
+      "overlap": false
+    }
+  ],
+  "effects": {
+    "readOnly": true,
+    "randomCalls": 0,
+    "canvasState": true,
+    "names": [
+      "fire",
+      "frost",
+      "vine",
+      "holy",
+      "time",
+      "wind",
+      "earth",
+      "shield",
+      "explosion",
+      "shatter",
+      "arcane",
+      "dust",
+      "heal",
+      "blessing",
+      "summon",
+      "lightning"
+    ]
+  },
+  "jobs": [
+    {
+      "job": "warrior",
+      "variant": null
+    },
+    {
+      "job": "warrior",
+      "variant": "berserk"
+    },
+    {
+      "job": "warrior",
+      "variant": "guard"
+    },
+    {
+      "job": "rogue",
+      "variant": null
+    },
+    {
+      "job": "rogue",
+      "variant": "assassin"
+    },
+    {
+      "job": "rogue",
+      "variant": "dancer"
+    },
+    {
+      "job": "archer",
+      "variant": null
+    },
+    {
+      "job": "archer",
+      "variant": "sniper"
+    },
+    {
+      "job": "archer",
+      "variant": "hunter"
+    },
+    {
+      "job": "engineer",
+      "variant": null
+    },
+    {
+      "job": "engineer",
+      "variant": "artillery"
+    },
+    {
+      "job": "engineer",
+      "variant": "mechanic"
+    },
+    {
+      "job": "mage",
+      "variant": null
+    },
+    {
+      "job": "mage",
+      "variant": "elemental"
+    },
+    {
+      "job": "mage",
+      "variant": "archmage"
+    },
+    {
+      "job": "summoner",
+      "variant": null
+    },
+    {
+      "job": "summoner",
+      "variant": "necro"
+    },
+    {
+      "job": "summoner",
+      "variant": "lord"
+    },
+    {
+      "job": "sovereign",
+      "variant": null
+    },
+    {
+      "job": "sovereign",
+      "variant": "conqueror"
+    },
+    {
+      "job": "sovereign",
+      "variant": "benevolent"
+    },
+    {
+      "job": "chrono",
+      "variant": null
+    },
+    {
+      "job": "chrono",
+      "variant": "accel"
+    },
+    {
+      "job": "chrono",
+      "variant": "rewind"
+    },
+    {
+      "job": "priest",
+      "variant": null
+    },
+    {
+      "job": "priest",
+      "variant": "judge"
+    },
+    {
+      "job": "priest",
+      "variant": "saint"
+    },
+    {
+      "job": "druid",
+      "variant": null
+    },
+    {
+      "job": "druid",
+      "variant": "ursa"
+    },
+    {
+      "job": "druid",
+      "variant": "pack"
+    }
+  ]
+}

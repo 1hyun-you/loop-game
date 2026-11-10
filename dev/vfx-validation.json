@@ -71,7 +71,7 @@
   "play": {
     "time": 6.016400000000017,
     "error": false,
-    "particles": 0
+    "particles": 1
   },
   "renderBenchmark": {
     "fixture": {
@@ -79,8 +79,8 @@
       "effects": 120,
       "particles": 180
     },
-    "meanMs": 1.5075000000001941,
-    "p95Ms": 2.099999999976717,
+    "meanMs": 0.7291666656732559,
+    "p95Ms": 1.100000023841858,
     "samples": 120
   }
 }

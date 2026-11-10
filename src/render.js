@@ -22,6 +22,7 @@ function render() {
   c.imageSmoothingEnabled = false;
   const vx0 = camX - 40, vy0 = camY - 40, vx1 = camX + VIEW.w + 40, vy1 = camY + VIEW.h + 40;
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
+  EFFECT_ART.count=0;
   drawGround(c, camX, camY);
   drawPhaseGround(c);
   drawBossGround(c);
@@ -109,13 +110,11 @@ function drawEnemies(c, inView) {
   for (const e of G.enemies) {
     if (e.dead || !e.elite || !inView(e.x, e.y, e.r)) continue;
     if (!spriteFor(e)) { c.strokeStyle = '#ffd24a'; c.lineWidth = 3; c.beginPath(); enemyPath(c, e); c.stroke(); }
-    if (e.sh > 0) { c.strokeStyle = 'rgba(140,200,255,0.85)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 6, 0, 7); c.stroke(); }
+    if(e.sh>0)paintedAura(c,'shield',e.x,e.y,e.r+8,.65);
     if (e.tele > 0) { c.strokeStyle = 'rgba(255,80,60,0.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(G.p.x, G.p.y); c.stroke(); }
     const w = e.r * 2, y = e.y - e.r - 9; uiBar(c, e.x - w / 2, y, w, 4, e.hp / e.maxHp, '#cfb476');
   }
-  c.strokeStyle = 'rgba(190,235,255,0.9)'; c.lineWidth = 2; c.beginPath();
-  for (const e of G.enemies) if (!e.dead && e.frz > 0 && inView(e.x, e.y, e.r)) { c.moveTo(e.x + e.r + 3, e.y); c.arc(e.x, e.y, e.r + 3, 0, 7); }
-  c.stroke();
+  for(const e of G.enemies)if(!e.dead&&e.frz>0&&inView(e.x,e.y,e.r))paintedAura(c,'frost',e.x,e.y,e.r+5,.65);
   if (G.p.job === 'archer') { c.fillStyle = '#b8ff9a'; for (const e of G.enemies) if (!e.dead && e.mk && inView(e.x, e.y, e.r)) for (let i = 0; i < e.mk; i++) c.fillRect(e.x - 8 + i * 4, e.y - e.r - 6, 3, 3); }
 }
 /* 도트 적 그리기: 그림자 → (엘리트 금색 외곽선) → 본체/피격 반짝임, 플레이어 방향으로 좌우 반전 */
@@ -134,28 +133,29 @@ function drawEnemySprites(c, list) {
 function drawGrowthGround(c, inView) {
   for (const z of G.pools) {
     if (!inView(z.x, z.y, z.r)) continue;
+    if(paintedPool(c,z))continue;
     const k = 1 - z.t / z.dur;
     c.fillStyle = z.kind === 'trail' ? `rgba(200,255,220,${0.25 * k})` : z.kind === 'vine' ? `rgba(90,190,90,${0.32 * k})` : z.kind === 'crack' ? `rgba(150,110,70,${0.4 * k})` : `rgba(255,120,40,${0.28 * k})`;
     c.beginPath(); c.arc(z.x, z.y, z.r, 0, 7); c.fill();
     if (z.kind === 'fire' || !z.kind) { c.strokeStyle = `rgba(255,220,140,${0.55 * k})`; c.lineWidth = 1.5; c.stroke(); }   // 0.25 아군 장판 금색 테두리
   }
   const p = G.p;
-  if (p.exw && p.exw.id === 'mage') { c.strokeStyle = 'rgba(170,220,255,0.35)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, EXW.mage.R, 0, 7); c.stroke(); }
-  if (G.banner) { const b = G.banner; c.fillStyle = 'rgba(255,210,74,0.08)'; c.beginPath(); c.arc(b.x, b.y, b.r * ultBannerR(), 0, 7); c.fill(); c.strokeStyle = 'rgba(255,210,74,0.5)'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#8a6a2a'; c.fillRect(b.x - 1.5, b.y - 26, 3, 26); c.fillStyle = '#ffd24a'; c.fillRect(b.x + 1.5, b.y - 26, 14, 9); }
-  if (G.sanct) { const S = G.sanct; c.fillStyle = 'rgba(255,242,168,0.12)'; c.beginPath(); c.arc(S.x, S.y, S.r, 0, 7); c.fill(); c.strokeStyle = 'rgba(255,242,168,0.6)'; c.lineWidth = 2; c.stroke(); }
+  if(p.exw&&p.exw.id==='mage')paintedAura(c,'frost',p.x,p.y,EXW.mage.R,.3);
+  if(G.banner){const b=G.banner;paintedAura(c,'blessing',b.x,b.y,b.r*ultBannerR(),.45);drawSpriteC(c,'flag',0,b.x,b.y);}
+  if(G.sanct){const S=G.sanct;paintedAura(c,'holy',S.x,S.y,S.r,.5);effectBoundary(c,S.x,S.y,S.r,'#fff2a8',.35);}
   const ice = p.weapons.find(w => w.id === 'icering');
-  if (ice && ice.R) { c.fillStyle = 'rgba(170,220,255,0.04)'; c.beginPath(); c.arc(p.x, p.y, ice.R, 0, 7); c.fill(); c.strokeStyle = 'rgba(190,230,255,0.45)'; c.lineWidth = 1.5; c.stroke(); drawVfxIce(c, p.x, p.y, ice.R); }
+  if(ice&&ice.R){paintedAura(c,'frost',p.x,p.y,ice.R,.24);effectBoundary(c,p.x,p.y,ice.R,'#bee6ff',.22);}
   for (const t of G.traps) { if (!inView(t.x, t.y, 14)) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
-  for (const m of G.mines) { c.fillStyle = m.arm > 0 ? '#8a7040' : '#ffcf70'; c.beginPath(); c.arc(m.x, m.y, 5, 0, 7); c.fill(); }
+  for(const m of G.mines){if(inView(m.x,m.y,10))drawSpriteC(c,'bomb',0,m.x,m.y);}
   for (const ch of G.chests) {
     const b = Math.round(Math.sin(G.time * 5) * 1.5);
-    c.fillStyle = 'rgba(255,220,90,' + (0.16 + 0.08 * Math.sin(G.time * 5)) + ')'; c.beginPath(); c.arc(ch.x, ch.y, 20, 0, 7); c.fill();
+    paintedAura(c,'blessing',ch.x,ch.y,20,.5);
     drawSpriteC(c, 'chest', 0, ch.x, ch.y + b);
   }
   const a = G.altar;
   if (a) {
     const pulse = 0.5 + 0.5 * Math.sin(G.time * 3);
-    c.fillStyle = `rgba(200,150,255,${0.15 + pulse * 0.1})`; c.beginPath(); c.arc(a.x, a.y, a.r + 14, 0, 7); c.fill();
+    paintedAura(c,'summon',a.x,a.y,a.r+14,.35+pulse*.15);
     drawSprite(c, 'altar', Math.floor(G.time * 3) & 1, a.x, a.y + 14);
     if (a.stay > 0) { c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(a.x, a.y, a.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * a.stay / JOB_CFG.altarStay); c.stroke(); }
   }
@@ -183,13 +183,13 @@ function drawPlayer(c) {
   drawHeroReact(c, mv ? Math.floor(G.time * 8) & 1 : 0, !!p._fl, heroTint());   // 0.26 직업 색 옷   // 색상 변형 (0.15)
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   uiBar(c, x, y, w, h, p.hp / p.maxHp, p.hp / p.maxHp > 0.3 ? '#a7c79c' : '#d58c86');
-  if (p.shield) { c.strokeStyle = 'rgba(140,210,255,0.9)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, p.r + 5, 0, 7); c.stroke(); }
-  if (G.tm.inv > 0) { c.strokeStyle = 'rgba(255,240,160,0.8)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, p.r + 8, 0, 7); c.stroke(); }
+  if(p.shield)paintedAura(c,'shield',p.x,p.y,p.r+9,.72);
+  if(G.tm.inv>0)paintedAura(c,'blessing',p.x,p.y,p.r+12,.6);
   if (p.job) {                                              // 궁극기 게이지 (체력 막대 아래)
     const k = p.ult / JOB_CFG.ultNeed, full = k >= 1;
     c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y + h + 1, w + 2, 4);
     c.fillStyle = full ? (Math.floor(G.time * 4) % 2 ? '#ffe08a' : '#fff6c8') : '#c8a040'; c.fillRect(x, y + h + 2, w * k, 2);
-    if (full && G.tm.stopT > 0) { c.strokeStyle = '#ffe08a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * G.tm.stopT / JOB_CFG.ultStop); c.stroke(); }
+    if(full&&G.tm.stopT>0)paintedAura(c,'time',p.x,p.y,p.r+15,.65);
     if (p.job === 'warrior' && p.fury > 0) { c.fillStyle = '#ff7a5a'; c.fillRect(x, y - 4, w * p.fury / 100, 2); }
   }
 }
@@ -200,13 +200,13 @@ function drawWeapons(c, inView) {
   for (const w of p.weapons) {
     if (w.id !== 'spin' || !w.n) continue;
     const mul = w.bs > 15 ? 2 : 1;
-    const jt = jobTint('melee'); if (jt) { c.globalAlpha = 0.3; c.fillStyle = jt; c.beginPath(); for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R; c.moveTo(bx + w.bs, by); c.arc(bx, by, w.bs, 0, 7); } c.fill(); c.globalAlpha = 1; }
+    const jt=jobTint('melee');if(jt)for(let i=0;i<w.n;i++){const a=w.a+i*Math.PI*2/w.n;paintedAura(c,'arcane',p.x+Math.cos(a)*w.R,p.y+Math.sin(a)*w.R,w.bs+3,.3);}
     for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; drawSpriteRot(c, 'blade', 0, p.x + Math.cos(a) * w.R, p.y + Math.sin(a) * w.R, a + Math.PI / 2, { mul }); }
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
-    if (pr.jt) { c.globalAlpha = 0.35; c.fillStyle = pr.jt; c.beginPath(); c.arc(pr.x, pr.y, pr.r + 5, 0, 7); c.fill(); c.globalAlpha = 1; }   // 직업 변환 발광 (0.26)
+    if(pr.jt)paintedAura(c,effectKey(pr.jt),pr.x,pr.y,pr.r+5,.3);
     const ps = pjSprite(pr);                                  // 0.29 전용 무기·신규 투사체 도트
     if (ps) { const fr = SPR[ps].frames.length > 1 ? Math.floor(G.time * 10 + pr.id) & 1 : 0; if (ps === 'pj_gear') drawSpriteRot(c, ps, 0, pr.x, pr.y, pr.t * 6); else if (ps === 'pj_soul') drawSpriteC(c, ps, fr, pr.x, pr.y, { flip: pr.vx < 0 }); else drawSpriteRot(c, ps, fr, pr.x, pr.y, a); continue; }
     if (pr.kind === 'star') drawSpriteRot(c, 'star', 0, pr.x, pr.y, pr.t * 16);

@@ -192,7 +192,7 @@ const ULT_FN = {
 function updateUltFx(dt) {
   const U = G.U; if (!U) return; const p = G.p;
   for (const k of ['rage', 'rally', 'haste', 'raise', 'bigPets', 'saint']) if (U[k] > 0) U[k] -= dt;
-  if (U.wall) { U.wall.t -= dt; const W = U.wall; gridQuery(W.x, W.y, W.r + 8, e => { if (isBossE(e)) return; const dx = e.x - W.x, dy = e.y - W.y, d = Math.hypot(dx, dy) || 1; if (d < W.r) { e.kbx += dx / d * 260 * dt * 6; e.kby += dy / d * 260 * dt * 6; } }); if (W.t <= 0) U.wall = null; }
+  if(U.wall){const W=U.wall,k=Math.min(1,W.t);paintedAura(c,'shield',W.x,W.y,W.r,.6*k);effectBoundary(c,W.x,W.y,W.r,'#ffd0a0',.4*k);}
   if (U.dance > 0) {
     U.dance -= dt; U.bladeT -= dt;
     U.clones.forEach((c, i) => { c.a += dt * 3; const tx = p.x + Math.cos(c.a) * 46, ty = p.y + Math.sin(c.a) * 46; c.x += (tx - c.x) * Math.min(1, dt * 8); c.y += (ty - c.y) * Math.min(1, dt * 8); });
@@ -284,19 +284,20 @@ function benevolentHeal(dt) { const U = G.U; if (U && U.rally > 0 && ult2('benev
 /* ---------- 그리기 (월드 좌표) ---------- */
 function drawUlt(c) {
   const U = G.U; if (!U) return; const p = G.p;
-  for (const w of U.warn) { const k = w.t / w.dur; c.globalAlpha = 0.18 + 0.25 * k; c.fillStyle = w.col; c.beginPath(); c.arc(w.x, w.y, w.r * k, 0, 7); c.fill(); c.globalAlpha = 0.7; c.strokeStyle = w.col; c.lineWidth = 2; c.beginPath(); c.arc(w.x, w.y, w.r, 0, 7); c.stroke(); }
-  for (const b of U.beams) { const k = 1 - b.t / b.dur; c.save(); c.translate(b.x, b.y); c.rotate(b.a); c.globalAlpha = 0.25 * k; c.fillStyle = b.col; c.fillRect(0, -b.w / 2, b.L, b.w); c.globalAlpha = 0.9 * k; c.fillStyle = '#ffffff'; c.fillRect(0, -b.w * 0.12, b.L, b.w * 0.24); c.restore(); }
-  if (U.wall) { const W = U.wall, k = Math.min(1, W.t); c.globalAlpha = 0.12 * k; c.fillStyle = '#ffd0a0'; c.beginPath(); c.arc(W.x, W.y, W.r, 0, 7); c.fill(); c.globalAlpha = 0.8 * k; c.strokeStyle = '#ffd0a0'; c.lineWidth = 3; c.setLineDash([8, 5]); c.beginPath(); c.arc(W.x, W.y, W.r, G.time, G.time + 7); c.stroke(); c.setLineDash([]); }
-  if (U.rage > 0) { c.globalAlpha = 0.35 + 0.15 * Math.sin(G.time * 14); c.strokeStyle = '#ff6a4a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 8, 0, 7); c.stroke(); }
-  for (const b of U.blades) { c.globalAlpha = Math.min(1, b.t * 2) * 0.7; c.strokeStyle = '#d0b0ff'; c.lineWidth = 2; c.beginPath(); c.moveTo(b.x - Math.cos(b.a) * 10, b.y - Math.sin(b.a) * 10); c.lineTo(b.x + Math.cos(b.a) * 10, b.y + Math.sin(b.a) * 10); c.stroke(); }
+  for(const w of U.warn){const k=w.t/w.dur;paintedAura(c,effectKey(w.col),w.x,w.y,w.r*k,.45);effectBoundary(c,w.x,w.y,w.r,w.col,.7);}
+  for(const b of U.beams){const k=1-b.t/b.dur;if(!paintedBeam(c,b.x,b.y,b.a,b.L,b.w,k)) {c.save();c.translate(b.x,b.y);c.rotate(b.a);c.globalAlpha=.5*k;c.fillStyle=b.col;c.fillRect(0,-b.w/2,b.L,b.w);c.restore();}}
+  if(U.wall){const W=U.wall,k=Math.min(1,W.t);paintedAura(c,'shield',W.x,W.y,W.r,.6*k);effectBoundary(c,W.x,W.y,W.r,'#ffd0a0',.4*k);}
+  if(U.rage>0)paintedAura(c,'fire',p.x,p.y,p.r+12,.6);
+  for(const b of U.blades){c.save();c.globalAlpha=Math.min(1,b.t*2)*.8;drawSpriteRot(c,'knife',0,b.x,b.y,b.a);c.restore();}
   if (U.dance > 0) for (const s of U.clones) { c.globalAlpha = 0.45; drawSprite(c, 'hero', Math.floor(G.time * 8) & 1, s.x, s.y + p.r * 1.1, { tint: '#6a5aa0' }); }
-  if (U.mech) { const M = U.mech; c.globalAlpha = 1; c.fillStyle = '#3a4a5a'; c.fillRect(M.x - 14, M.y - 10, 28, 20); c.save(); c.translate(M.x, M.y - 4); c.rotate(M.a || 0); c.fillStyle = '#9ad8ff'; c.fillRect(0, -4, 22, 8); c.restore(); c.strokeStyle = '#9ad8ff'; c.lineWidth = 2; c.strokeRect(M.x - 14, M.y - 10, 28, 20); }
-  for (const g of U.giants) { const a = Math.min(1, g.t); c.globalAlpha = 0.25 * a; c.fillStyle = '#c9a8ff'; c.beginPath(); c.arc(g.x, g.y, g.r + 10, 0, 7); c.fill(); c.globalAlpha = 0.85 * a; c.save(); c.translate(g.x, g.y); c.scale(2.4, 2.4); drawSprite(c, 'hero', Math.floor(G.time * 6) & 1, 0, 8, { flip: (g.vx || 0) < 0, tint: '#b89cff', mode: 'white' }); c.restore(); }
-  if (U.bigBear && U.bigBear.m) { const m = U.bigBear.m; c.globalAlpha = 0.3 + 0.1 * Math.sin(G.time * 8); c.strokeStyle = '#c89060'; c.lineWidth = 4; c.beginPath(); c.arc(m.x, m.y, 34, 0, 7); c.stroke(); }
-  if (U.bigPets > 0) for (const m of G.pets) { c.globalAlpha = 0.25; c.fillStyle = '#7fd07a'; c.beginPath(); c.arc(m.x, m.y, 26, 0, 7); c.fill(); }
-  if (U.rally > 0 && U.banners.length) for (const b of U.banners) { c.globalAlpha = 0.1; c.fillStyle = '#ffd24a'; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.fill(); c.globalAlpha = 0.6; c.strokeStyle = '#ffd24a'; c.lineWidth = 1.5; c.stroke(); c.fillStyle = '#ffd24a'; c.fillRect(b.x - 1, b.y - 22, 2, 22); c.fillRect(b.x + 1, b.y - 22, 10, 7); }
-  if (U.shield && U.rally > 0) { c.globalAlpha = 0.6; c.strokeStyle = '#ffd24a'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, p.r + 6, 0, 7); c.stroke(); }
-  if (U.hold > 0 && U.held) { c.fillStyle = '#c8c0ff'; for (const e of U.held) if (!e.dead && e.held) { c.globalAlpha = Math.min(0.9, 0.25 + e.held / (e.hp + 1) * 0.4); c.beginPath(); c.arc(e.x, e.y, e.r + 3, 0, 7); c.fill(); } }
+  if (U.mech) { const M = U.mech; c.globalAlpha = 1;
+    if(EFFECT_ART.image){drawSpriteC(c,'turret',0,M.x,M.y,{mul:2});paintedAura(c,'lightning',M.x,M.y,28,.35);}else{ c.fillStyle = '#3a4a5a'; c.fillRect(M.x - 14, M.y - 10, 28, 20); c.save(); c.translate(M.x, M.y - 4); c.rotate(M.a || 0); c.fillStyle = '#9ad8ff'; c.fillRect(0, -4, 22, 8); c.restore(); c.strokeStyle = '#9ad8ff'; c.lineWidth = 2; c.strokeRect(M.x - 14, M.y - 10, 28, 20); }}
+  for (const g of U.giants) { const a = Math.min(1, g.t); paintedAura(c,'summon',g.x,g.y,g.r+10,.6*a); c.globalAlpha = 0.85 * a; c.save(); c.translate(g.x, g.y); c.scale(2.4, 2.4); drawSprite(c, 'hero', Math.floor(G.time * 6) & 1, 0, 8, { flip: (g.vx || 0) < 0, tint: '#b89cff', mode: 'white' }); c.restore(); }
+  if(U.bigBear&&U.bigBear.m){const m=U.bigBear.m;paintedAura(c,'earth',m.x,m.y,34,.65);}
+  if(U.bigPets>0)for(const m of G.pets)paintedAura(c,'heal',m.x,m.y,26,.55);
+  if(U.rally>0&&U.banners.length)for(const b of U.banners){paintedAura(c,'blessing',b.x,b.y,b.r,.5);effectBoundary(c,b.x,b.y,b.r,'#ffd24a',.3);drawSpriteC(c,'flag',0,b.x,b.y);}
+  if(U.shield&&U.rally>0)paintedAura(c,'shield',p.x,p.y,p.r+10,.7);
+  if(U.hold>0&&U.held)for(const e of U.held)if(!e.dead&&e.held)paintedAura(c,'time',e.x,e.y,e.r+5,.65);
   c.globalAlpha = 1;
 }
 /* 화면 좌표: 시간 단절 중 화면 색조 */

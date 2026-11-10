@@ -2,7 +2,7 @@ const {chromium}=require('playwright'),fs=require('fs'),path=require('path'),htt
 const root=path.resolve(__dirname,'..'),report={checks:[],errors:[]};
 function ok(v,n){if(!v)throw Error(n);report.checks.push(n);}
 (async()=>{
- const server=http.createServer((req,res)=>{let file=new URL(req.url,'http://localhost').pathname==='/baseline' ? process.env.VFX_BASELINE_HTML : path.join(root,new URL(req.url,'http://localhost').pathname);if(file===root+'/')file+='index.html';if(!file||!fs.existsSync(file)){res.statusCode=204;return res.end();}res.setHeader('Content-Type',file.endsWith('.woff2')?'font/woff2':'text/html');res.end(fs.readFileSync(file));}).listen(8790,'127.0.0.1');
+ const server=http.createServer((req,res)=>{let file=new URL(req.url,'http://localhost').pathname==='/baseline' ? process.env.VFX_BASELINE_HTML : path.join(root,new URL(req.url,'http://localhost').pathname);if(fs.existsSync(file)&&fs.statSync(file).isDirectory())file=path.join(file,'index.html');if(!file||!fs.existsSync(file)){res.statusCode=204;return res.end();}res.setHeader('Content-Type',file.endsWith('.woff2')?'font/woff2':'text/html');res.end(fs.readFileSync(file));}).listen(8790,'127.0.0.1');
  const browser=await chromium.launch({executablePath:process.env.ART2_CHROMIUM_PATH||undefined,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
  try{
   const p=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});p.on('pageerror',e=>report.errors.push(e.message));
@@ -35,7 +35,8 @@ function ok(v,n){if(!v)throw Error(n);report.checks.push(n);}
    explode(0,0,45,25,'bomb');slash(0,Math.PI/2,60,10,30);
    const snapshot=G.enemies.map(e=>({hp:e.hp,kbx:e.kbx,kby:e.kby}));
    G.p.hp=G.p.maxHp-30;heal(15,'test');const healed=G.p.hp;
-   const rings=G.fx.filter(f=>f.kind==='ring'||f.kind==='arc').map(f=>({kind:f.kind,r:f.r,r0:f.r0,r1:f.r1,arc:f.arc,dur:f.dur}));
+   // The added heal stamp is presentation-only; compare the original attack geometry.
+   const rings=G.fx.filter(f=>(f.kind==='ring'||f.kind==='arc')&&f.art!=='heal').map(f=>({kind:f.kind,r:f.r,r0:f.r0,r1:f.r1,arc:f.arc,dur:f.dur}));
    return {snapshot,healed,damage:G.stats.dmg,rings,saveKey:CFG.SAVE_KEY};
   };
   const actual=await p.evaluate(mechanics);report.mechanics=actual;
@@ -66,7 +67,7 @@ function ok(v,n){if(!v)throw Error(n);report.checks.push(n);}
    for(let i=0;i<400;i++)G.proj.push({x:(i%20)*15-150,y:Math.floor(i/20)*22-220,r:4,t:.5,vx:180,vy:-40,color:'#d3b68a',kind:'fire'});
    for(let i=0;i<120;i++)G.fx.push({kind:['ring','bolt','arc','zap'][i%4],x:(i%12)*24-144,y:Math.floor(i/12)*30-150,x2:60,y2:0,r0:4,r1:25,r:45,a:0,arc:2,dur:1,t:.4,color:'#abc4d0',fill:i%4===0});
    burst(0,0,180,'#c9ad7c');const c=document.createElement('canvas').getContext('2d');c.canvas.width=390;c.canvas.height=844;c.translate(195,422);
-   const times=[];for(let i=0;i<140;i++){const t=performance.now();c.clearRect(-195,-422,390,844);drawVfxTrails(c,()=>true);drawFx(c);drawJuice(c);if(i>19)times.push(performance.now()-t);}
+   const times=[];for(let i=0;i<140;i++){if(typeof EFFECT_ART!=='undefined')EFFECT_ART.count=0;const t=performance.now();c.clearRect(-195,-422,390,844);drawVfxTrails(c,()=>true);drawFx(c);drawJuice(c);if(i>19)times.push(performance.now()-t);}
    times.sort((a,b)=>a-b);return {fixture:{projectiles:400,effects:120,particles:180},meanMs:times.reduce((s,n)=>s+n,0)/times.length,p95Ms:times[Math.floor(times.length*.95)],samples:times.length};
   });ok(report.renderBenchmark.meanMs<16.7,'stress VFX render CPU mean below 16.7ms on QA Chromium');
   await p.setViewportSize({width:320,height:568});await p.evaluate(()=>showTitle());ok(await p.locator('.ver').innerText()==='v'+await p.evaluate(()=>CFG.VERSION),'320px title version');ok(report.errors.length===0,'no JavaScript runtime errors');

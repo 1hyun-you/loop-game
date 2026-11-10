@@ -38,6 +38,7 @@ function vfxHeal() {
   const v = vfxState(); if (G.time - v.healAt < 0.8) return;
   v.healAt = G.time;
   sparkUp(G.p.x, G.p.y, 4, ['#b8dca1', '#e5efc4'], 12);
+  fx({kind:'ring',art:'heal',x:G.p.x,y:G.p.y,r0:12,r1:26,dur:.45,follow:true,color:'#b8dca1'});
 }
 /* Short analytic streaks; no history allocation, no mutation during rendering.
    culling/budget before drawing, no world-wide additive bloom. */
@@ -70,6 +71,7 @@ function drawFx(c) {
     const k = clamp(f.t / f.dur, 0, 1), fade = (1 - k) * (1 - k), x = f.follow ? G.p.x : f.x, y = f.follow ? G.p.y : f.y;
     if (k >= 1) continue;
     if (Number.isFinite(x) && Number.isFinite(y) && (Math.abs(x - G.p.x) > VIEW.w / 2 + (f.r1 || f.r || 0) + 200 || Math.abs(y - G.p.y) > VIEW.h / 2 + (f.r1 || f.r || 0) + 200)) continue;
+    if(paintedRing(c,f,k,x,y))continue;
     if (f.kind === 'ring') {
       const r = Math.max(1, lerp(f.r0, f.r1, 1 - (1 - k) ** 2)), col = f.color || '#e8d8af';
       if (f.fill) {
@@ -103,7 +105,7 @@ function drawFx(c) {
       for (let i = 0; i <= n; i++) { const t = i / n, off = i && i < n ? (hash2(seed, i) - 0.5) * (bolt ? 26 : 17) : 0; pts.push([sx + dx * t - dy / L * off, sy + dy * t + dx / L * off]); }
       if (!lite) vfxLine(c, pts, 7, '#8d9ec7', 0.20 * fade);
       vfxLine(c, pts, 2.7, '#b9d6eb', 0.82 * fade); vfxLine(c, pts, 1, '#f4f0dc', fade);
-      if (bolt) { vfxGlow(c, ex, ey, 15 + 12 * k, '#aacfe3', 0.65 * fade); c.globalAlpha = fade * 0.65; c.strokeStyle = '#d6e5e6'; c.lineWidth = 1; c.beginPath(); c.ellipse(ex, ey, 6 + 18 * k, 2 + 6 * k, 0, 0, tau); c.stroke(); }
+      if (bolt) { paintedEffect(c,'lightning',ex,ey,17+12*k,.7*fade); }
     } else if (f.kind === 'slash' || f.kind === 'glint') {
       const glint = f.kind === 'glint', L = glint ? f.r * (0.5 + k) : 26 * (0.6 + Math.min(1, k * 4) * 0.4);
       for (const da of [0.5, -0.5]) {
@@ -117,7 +119,7 @@ function drawFx(c) {
           c.globalAlpha = fade; c.strokeStyle = '#f5e8cf'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(-L * 0.6, -0.5); c.quadraticCurveTo(0, -2, L * 0.85, 0); c.stroke(); c.restore();
         }
       }
-    } else if (f.kind === 'pop') vfxGlow(c, x, y, f.r * (1 + k), f.color, 0.7 * fade);
+    } else if (f.kind === 'pop') { if(!paintedEffect(c,effectKey(f.color,true),x,y,f.r*(1+k),.7*fade))vfxGlow(c,x,y,f.r*(1+k),f.color,.7*fade); }
   }
   c.restore();
 }

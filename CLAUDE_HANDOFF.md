@@ -1,6 +1,6 @@
 # 클로드 후속 작업 전달
 
-- ChatGPT에서 그래픽 개편 패치 `0.40-ui1` 적용. VFX 개편 보존. 기존 art1~art3 손그림 에셋 보존.
+- 최신 패치 `0.40-fx2`: 사용자가 제공한 16종 효과 이미지 적용 및 HUD 축소. 기존 art1~art3 손그림 에셋 보존. 이 문서 마지막의 fx2 항목이 이전 ui1 배치·빌드 순서보다 우선.
 - 작업 시작 전 두 저장소의 최신 main 및 최근 커밋 확인 필요.
 - 게임 원본: `1hyun-you/loop-game`.
 - 실제 서비스: `1hyun-you/1hyun-you.github.io`의 `field/index.html`.
@@ -64,3 +64,26 @@
 - 검사: `node dev/check-ui.cjs`, `node dev/check-vfx.cjs`, 기존 `check-art2.cjs`/`check-art3.cjs`. 결과는 `dev/ui-validation.json` 등 참조. `ART2_CHROMIUM_PATH`로 Chromium 지정 가능.
 - 테스트 범위: 280~1366px 슬롯 무겹침·경계, 안전 영역, 10개 직업/전용 무기 2단계, HUD 상태 불변, 실제 전투·일시정지, 안내 줄바꿈, 기존 스프라이트/VFX 회귀 검사. 휴대폰별 실제 글꼴과 장시간 성능 보장은 아님.
 - 다음 담당자는 최신 main에서 시작하여 `sh build.sh` 후 서비스 저장소 `field/index.html`까지 배포 및 버전 확인 필요.
+
+## 최신 패치 — 0.40-fx2
+
+- 폴드 사용자 요청: 전투 화면을 덜 가리는 HUD, 일시정지와 처치 표시 분리, 단순 원 도형만 남은 무기·효과의 원화 적용.
+- HUD 높이 142px → 68px. 불투명한 대형 패널과 빈 장비칸 표시 제거. 보유 무기·보조 효과만 작은 두 줄로 표시. 체력·레벨·시간·처치·페이즈 및 직업 자원 유지. 직업 상세 이름과 장비 상세는 일시정지 화면에서 확인.
+- `hudLayout()`이 Canvas HUD와 DOM 일시정지 버튼의 공통 기준. 우측 44×44px 버튼 영역 및 처치 표시와 8px 간격 확보. 화면 회전·접힘으로 폭이 바뀌면 같은 VIEW 좌표로 재계산. 280~1366 CSS px, 안전영역 0/28px 검사. 실제 폴드8 기기 검증은 아님.
+- 사용자가 제공한 시트의 모바일용 원화: assets/effects/atlas.webp (384px, 셀 96px, 약 44KB). 고해상도 원본은 별도 전달 파일에 보관. 투명 배경을 유지한 WebP와 내장 데이터 제공. 원화를 다시 생성할 필요 없이 후속 수정 가능.
+- `src/effect-art.js`: 원화 슬라이스·낮은 불투명도·반경 내 클리핑·화면 밖 생략. 프레임당 원화 스탬프 96회, 낮은 FPS/동작 줄이기 48회 상한. `render()`에서 표시 예산 초기화. 게임 난수·피해 판정 변경 없음. 이미지 로딩 실패 시 기존 원형/선 렌더링으로 대체.
+- 적용: 아군 장판, 냉기 고리·파동·파쇄, 화염·폭발, 회오리, 광선 끝 장식·기존 손그림 광선, 플레이어/정예 보호막, 빙결, 직업 문양, 회복, 상자·제단 장식, 되감기, 시간 단절, 궁극기 방벽·광폭화·소환·동료 강화·군기. 궁극기 칼날은 기존 손그림 단검, 거대 포탑은 기존 포탑 원화 사용.
+- 정확한 위험 범위·피해 예고·재사용 대기시간을 전달하는 얇은 경계선과 진행 표시는 유지. 보스의 적색 공격 예고를 임의의 원화로 덮지 않음. 기존 캐릭터·무기 손그림·세이브 키·밸런스 보존.
+- 빌드 순서: `src/vfx.js src/effect-data.js src/effect-art.js src/ui-art.js src/main.js`. `build.sh`의 순서가 기준. `node dev/build.cjs`는 Windows에서도 같은 순서로 통합본 생성.
+- 원화 수정 후 node dev/pack-effects.cjs 로 내장 데이터를 갱신하고 (새 고해상도 시트 변환 시 파일 경로를 인수로 전달, sharp 필요), 이어서 `node dev/build.cjs` 또는 `sh build.sh`. art2/art3를 수정할 때는 기존 pack 명령도 유지. 이미지 데이터가 HTML에 내장되어 별도 에셋 요청 없이 서비스 가능.
+- 검사: `node dev/check-fx2.cjs`, `node dev/check-ui.cjs`, `node dev/check-vfx.cjs`, `node dev/check-art2.cjs`, `node dev/check-art3.cjs` (Playwright 필요). `ART2_CHROMIUM_PATH`로 브라우저 경로 지정 가능. VFX는 `VFX_BASELINE_HTML` 지정 시 이전 ui1과 공격 피해·밀림·회복·범위·지속시간·저장 키 비교. 새 회복 장식은 비교 대상 공격 형상에서 제외.
+- 이번 검증: 10개 직업·20개 2차 전직 렌더링, 320/390/412/690px 및 가로 화면 버튼 위치, 실제 혼합 무기 전투와 일시정지, 원화 누락 대체·동작 줄이기, 기존 320/820가지 스프라이트 조합 검사. Chromium 자동 검사이며 실제 휴대폰의 장시간 FPS·최종 사용자 평가는 별도.
+- 원본 저장소 패치만으로 서비스가 바뀌지 않음. 서비스 저장소 `1hyun-you/1hyun-you.github.io`의 `field/index.html`에도 빌드 결과 반영 후 실제 URL 버전 확인 필요. 다음 담당자는 두 저장소 최신 main을 받고 동시 작업을 피할 것.
+
+## 승인된 자동 빌드·배포
+
+- 사용자가 두 저장소 main에 자동 빌드 결과를 저장하는 기능의 추가를 승인함.
+- 게임 저장소: .github/workflows/build-game.yml 이 main의 게임 소스·빌드 코드 변경 시 node dev/build.cjs 및 node dev/check-build.cjs 실행 후 index.html을 자동 커밋.
+- 서비스 저장소: .github/workflows/build-field.yml 이 field/source-ref.json의 정확한 소스 커밋을 받아 같은 빌드를 실행하고 field/index.html을 자동 커밋. 다음 패치 배포 시 source-ref.json의 commit을 새 게임 소스 커밋으로 변경.
+- GitHub Actions 자체 토큰의 커밋은 Pages 빌드를 자동 유발하지 않으므로, 사이트 빌드 성공 후 연결된 GitHub 도구로 field/version.json의 버전을 갱신하여 Pages 게시를 유발하고 실제 URL 버전까지 확인할 것.
+- 각 워크플로의 contents:write는 자기 저장소에만 적용. 별도 개인 토큰 불필요.

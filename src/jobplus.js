@@ -60,6 +60,10 @@ function jobCeremony(id, second) {
 /* 발밑 직업 문양 (그림자 위, 주인공 아래) */
 function drawJobAura(c) {
   const p = G.p; if (!p.job) return;
+  if(EFFECT_ART.image){
+    const key={warrior:'earth',rogue:'arcane',archer:'wind',engineer:'lightning',mage:'frost',summoner:'summon',sovereign:'blessing',chrono:'time',priest:'holy',druid:'vine'}[p.job];
+    paintedEffect(c,key,p.x,p.y+p.r*.85,p.r+12,.48,0,.38);return;
+  }
   const col = JOB_COL[p.job], t = G.time, y = p.y + p.r * 0.85, pulse = 0.55 + 0.25 * Math.sin(t * 3);
   c.globalAlpha = pulse; c.strokeStyle = col; c.lineWidth = 2;
   c.beginPath(); c.ellipse(p.x, y, p.r + 7, (p.r + 7) * 0.38, 0, 0, 7); c.stroke();
@@ -244,6 +248,6 @@ function drawRewind(c) {
     c.globalAlpha = 0.12 * (4 - i); drawSprite(c, 'hero', 0, q.x, q.y + G.p.r * 1.1, { flip: true, tint: '#8a7ae0', mode: 'white' });
   }
   c.globalAlpha = 0.7; drawSprite(c, 'hero', Math.floor(G.time * 8) & 1, R.x, R.y + G.p.r * 1.1, { flip: true, tint: '#c8c0ff' });
-  c.globalAlpha = 0.25; c.fillStyle = '#c8c0ff'; c.beginPath(); c.arc(R.x, R.y, RW.R, 0, 7); c.fill();
+    paintedAura(c,'time',R.x,R.y,RW.R,.45);
   c.globalAlpha = 1;
 }

@@ -1,3 +1,6 @@
 dev/sim_log/*.p1
 dev/sim_log/*.p2
 dev/sim_log/*.log
+dev/*.png
+dev/fx2/
+assets/effects/source.png
