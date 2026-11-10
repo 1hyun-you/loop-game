@@ -30,11 +30,11 @@ const ok=(v,n)=>{if(!v)throw Error(n);report.checks.push(n)};
  }
  }
  await p.evaluate(()=>{showCodex('j',()=>{});UI.querySelectorAll('details').forEach(el=>el.open=true)});await p.waitForTimeout(80);
- ok(await p.locator('[data-job2-crest]').evaluateAll(imgs=>imgs.length===20&&imgs.every(im=>im.complete&&im.naturalWidth===48)),'all 20 crests decode in expanded codex '+width);
+ ok(await p.locator('[data-job2-crest]').evaluateAll(imgs=>imgs.length===20&&imgs.every(im=>im.complete&&im.naturalWidth===48&&getComputedStyle(im.previousElementSibling).display==='none')),'all 20 crests decode in expanded codex '+width);
  ok(await p.evaluate(()=>UI.scrollWidth<=innerWidth+1),'expanded codex width '+width);await p.screenshot({path:path.join(out,'job2-codex-'+width+'.png')});
  }
  const count=await p.locator('[data-job2-crest]').count();for(let i=0;i<count;i++){await p.locator('[data-job2-crest]').nth(i).evaluate(im=>im.src='data:image/svg+xml,broken');}
- await p.waitForFunction(()=>[...document.querySelectorAll('[data-job2-crest]')].every(im=>im.hidden&&!im.previousElementSibling.hidden));ok(true,'all 20 decoding failures restore parent job letters');
+ await p.waitForFunction(()=>[...document.querySelectorAll('[data-job2-crest]')].every(im=>im.hidden&&!im.previousElementSibling.hidden&&getComputedStyle(im.previousElementSibling).display!=='none'));ok(true,'all 20 decoding failures restore parent job letters');
  ok(await p.evaluate(()=>!uiJob2Crest('warrior','veteran').includes('data-job2-crest')&&!uiJob2Crest('rogue','berserk').includes('data-job2-crest')),'common veteran and invalid parent retain generic crest');
  await p.emulateMedia({reducedMotion:'reduce'});ok(await p.evaluate(()=>uiJob2Crest('warrior','guard').includes('data-job2-crest')),'reduced motion retains static specialization icon');
  ok(report.errors.length===0,'no browser runtime errors');await b.close();

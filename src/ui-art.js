@@ -57,7 +57,7 @@ for (const [k, v] of Object.entries(UI_JOB2_CREST)) {
 function uiJob2Crest(id, k, cls = '') {
   const v = UI_JOB2_CREST[k];
   if (!v || v.job !== id) return `<span class="ic choice-symbol ${cls}" aria-hidden="true"><img src="${uiIcon('crest')}" alt=""></span>`;
-  return `<span class="ic px job-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><span hidden>${esc(JOBS[id].ic)}</span><img src="${uiIcon('crest_'+k)}" alt="" data-job2-crest="${k}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
+  return `<span class="ic px job-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><i hidden style="font-style:normal">${esc(JOBS[id].ic)}</i><img src="${uiIcon('crest_'+k)}" alt="" data-job2-crest="${k}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
 }
 function uiJobCrest(id, cls = '') {
   if (!UI_JOB_CREST[id]) return icBox('#8a86a0', '?');
