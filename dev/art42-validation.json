@@ -1,12 +1,16 @@
 {
-  "version": "0.42-art2",
-  "source": "396e1bca5c497dce423c7758b463a31a1996ce7a",
-  "gameBuild": "d046d63dbc52a13ccb0caf93b22f8047a17f9479",
-  "validationRun": 42921673612,
-  "validationBranch": "art/042-job2-crests",
-  "artifact": 13812047293,
-  "artifactExpiresAt": "2027-02-08T23:14:22Z",
+  "version": "0.42-art3",
+  "source": "662ff1dbeb685187ab26d1a9a70257e1ff2014ad",
+  "gameBuild": "97c3b24a7e2b823bb7bd3f987b2fcedabb27ad87",
+  "validationRun": 42923706795,
+  "validationBranch": "art/042-trial-crests",
+  "artifact": 13812288088,
+  "artifactExpiresAt": "2027-02-08T23:28:53Z",
   "checks": {
+    "trial-crests": {
+      "checks": 83,
+      "errors": []
+    },
     "job2-crests": {
       "checks": 113,
       "errors": []
@@ -45,19 +49,19 @@
     }
   ],
   "service": {
-    "sourceRefCommit": "d1ac4574301c34f9c515f5d552f5c65c18730c56",
-    "build": "f2ab1b040f3bad670384a65be7ef824def97cb66",
-    "versionCommit": "be48788c1be8ffe3ccb90299a325ba626f47111d",
-    "buildRun": 42922039068,
-    "pagesRun": 42922135861,
+    "sourceRefCommit": "e1e60b640d748cdc1037979f93c808a3637d261b",
+    "build": "106ff37b755796d34c571321310e14f026131513",
+    "versionCommit": "c72a2f44d61479f6e0911fda07a285384ce5dd0e",
+    "buildRun": 42924105838,
     "url": "https://1hyun-you.github.io/field/",
-    "htmlSha256": "edadbf1aeef4c1e028e703250408663355032ed350c6286437d128d12e22fb56",
-    "liveHtmlMatches": true,
+    "pagesRun": 42924176772,
     "pagesConclusion": "success",
+    "liveHtmlMatches": true,
+    "htmlSha256": "51ab731ef9ab2255877d66de145de7f3594c1eea2caa3992a2f6b48679b8b47e",
     "liveVersion": {
-      "version": "0.42-art2",
-      "source": "396e1bca5c497dce423c7758b463a31a1996ce7a",
-      "build": "f2ab1b040f3bad670384a65be7ef824def97cb66"
+      "version": "0.42-art3",
+      "source": "662ff1dbeb685187ab26d1a9a70257e1ff2014ad",
+      "build": "106ff37b755796d34c571321310e14f026131513"
     }
   },
   "limits": [
@@ -66,8 +70,8 @@
     "Local Chromium unavailable: socket() Operation not permitted; browser checks executed in GitHub Actions"
   ],
   "deferred": [
-    "trial crests (10)",
     "fusion crests (3)",
     "other ART42_PLAN batches"
-  ]
+  ],
+  "nextConversationRecommended": true
 }

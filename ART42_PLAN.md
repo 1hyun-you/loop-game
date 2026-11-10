@@ -54,3 +54,9 @@
 - 등록명 crest_berserk/guard/assassin/dancer/conqueror/benevolent/sniper/hunter/artillery/mechanic/accel/rewind/elemental/archmage/necro/lord/judge/saint/ursa/pack.
 - 공통 선택지 숙련은 기존 공통 문장 유지. 시련10종·결합3종·전투 발밑 문양 및 다른 묶음 미착수.
 - 검증·배포 최종 SHA와 결과는 CLAUDE_HANDOFF.md 마지막 art2 항목 참조. 다음 묶음은 사용자 지시에 따라 시련10종 또는 결합3종으로 분할 진행.
+
+## art3 — 시련 문양10종
+
+- 시련10종·도감 연성 탭·내 능력 시련 행·기존 완료 알림 중앙 직업 문장만 적용. 내장 UI SVG, JOB_COL 유지, 실패 시 글자 대체. 시련 조건·진행·연성 기회 횟수 변경 없음.
+- 다음 범위: 결합 문양3종 별도 묶음. 나머지 작업은 기존 순서·사용자 지시에 따라 한 묶음씩 검사·배포·인계 후 종료.
+- 사용자는 작업량 증가 시 적정 묶음 완료·저장 후 새 대화 권고를 요청. 이번 묶음 이후 새 대화 전환 권고. 최종 검사·배포 SHA는 CLAUDE_HANDOFF.md art3 기록 참조.
