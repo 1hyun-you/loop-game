@@ -249,3 +249,21 @@
 - 결과 dev/trial-crests-validation.json 및 이번에 재실행한 crests/job2-crests/choice/ui/art2-validation.json. dev/art42-validation.json에 이번 실행·배포 요약 저장. 과거의 다른 validation 파일을 이번 검사로 해석하지 말 것. 화면/가상시험 원본 Actions artifact13812288088 (2027-02-08 만료 예정), 로컬 /workspace/scratch/dca915f4a032/trial-final/.
 - 이번 묶음 완료·저장 후 종료. 새 대화 권고. 다음 기본 후보는 결합 문양3종(변신/중첩/융합)만. 전체 아트 완료 아님. 다음 재개 문구: 회귀의 들판 아트 작업 계속. loop-game 최신 main의 ART42_PLAN.md와 CLAUDE_HANDOFF.md 확인 후 결합 문양3종만 진행. 한 묶음 완료 후 검사·배포·인계 기록 저장 및 종료.
 - 본 기록 커밋은 문서·검사 결과만 변경하므로 배포 소스 SHA와 구분. art2 인계 문서의 중복 설명1개 정리, 기존 최종 검사·배포 기록 보존.
+
+## 0.42-art4 — 결합 문양3종 (2026-11-11 한국시간)
+
+- 사용자 지시: 최신 main의 ART42_PLAN.md·본 문서 확인 후 결합 문양3종만 검사·배포·인계 기록 저장 후 종료. 시작 main 030726b880e82f3eac52cc1cfba62869e8eec1a7, 기존 서비스 0.42-art3.
+- 기존 UI SVG 확장. 변신형(무기→폭발), 중첩형(겹친 세 층), 융합형(두 갈래가 하나로 합쳐지는 관통 형태). 양피지·청동·회청 팔레트, 자주 외곽선, 48px 원본 및 38/24px 축소 검수. 등록명 fuse_trans/fuse_stack/fuse_merge, UI_FUSE_CREST/uiFuseCrest.
+- 도감 연성 탭의 유형3개와 내 능력 연성 행에 연결. 기존 FZ_TYPES/type 그대로 사용. 이름·설명·무기 조합·진행 문구 유지. 이미지 실패 시 유형 첫 글자 복원, 알 수 없는 유형은 공통 '연' 표시. 새 외부 요청·애니메이션 없음.
+- 변경 파일 src/ui-art.js, src/codex.js, src/select.js, src/config.js, dev/check-fuse-crests.cjs, .github/workflows/check-art42.yml. src/v42.js·전투·피해·범위·시련·연성 기회·저장 키·선택 확정 규칙·build.sh 순서 미변경. 결합 선택 카드/HUD/전투 효과는 후속8번 범위 유지.
+- 로컬 build/check-build 통과. 로컬 Chromium의 socket() Operation not permitted 제한으로 GitHub Actions 브라우저 검사 진행. 최종 실행·배포 결과는 아래 기록 참조. 실제 폴드8·장시간 FPS 미검증.
+
+### art4 최종 검사·배포 완료
+
+- 실제 서비스 https://1hyun-you.github.io/field/ 버전 0.42-art4 확인. 검증 소스 9a614f5c3e5bed95ee7c59a887c80fa87c1fb4d7, 게임 자동 HTML 빌드 3b6adecc02cd5e41206810a0601a57e775256c11.
+- 서비스 source-ref 반영 f878475e6cef9e94cb926bfa5903cef6c3dd20e4, 서비스 HTML 빌드 0fa81c1cdce5435cc2b41c49d29788e47768f1af, 최종 버전 기록 79749f558c62c2ab331bace132134d18d6896241. build-field 실행42925724591 및 최종 Pages 실행42925793046 성공.
+- 검증 브랜치 art/042-fuse-crests, Actions https://github.com/1hyun-you/loop-game/actions/runs/42925333569 전체 성공. 결합31항목·시련83항목·2차문장113항목·1차문장23항목·선택창78항목·HUD12항목·기존원화11항목 통과. 가상 플레이2판(각 최대120초) 오류0·페이지 오류0·저장 유지.
+- 10직업×무기153조합=1530건의 연성 메타데이터·부품 플래그·통계·시련 사용횟수·알림·효과·도감/내 능력 설명·저장·난수 호출을 art3와 비교하여 일치. 반복 UI 생성 상태/저장/RNG 불변, 유형3종 실제 조합 연결, 실패 글자 복원, 미확인 유형 공통 대체, 동작 줄이기 확인. 전투 함수 변경 없음.
+- 48/38/24px 비교판 및 320/390/690px 도감·내 능력 화면 검사. 390px 실제 캡처와 비교판 육안 검토. 실제 응답 HTML 1767337바이트가 검사 소스 빌드와 바이트 일치. SHA256 ca781a221c081ef4d19a0a75baa4c32d32f4e3a73eadd3ede4e4e749de1f9899. version.json 소스/빌드 일치. 브라우저 상호작용은 검증 소스에서 실행했으며 실제 서비스는 동일 HTML·버전 응답으로 확인. 폴드8 실기기·장시간 FPS 미검증.
+- 결과 dev/fuse-crests-validation.json 및 이번 재실행한 trial-crests/job2-crests/crests/choice/ui/art2-validation.json. dev/art42-validation.json에 이번 검사·배포 요약 저장. 다른 과거 validation 파일을 이번 검사로 해석하지 말 것. 화면/가상시험 원본 Actions artifact13813881757 (2027-02-08 만료 예정), 로컬 /workspace/scratch/ce38e9eab285/fuse-final/.
+- 이번 결합3종 묶음 완료·인계 저장 후 종료. 전체 아트 완료 아님. 다음 기본 후보는 ART42_PLAN.md 3번 기타 화면 아이콘이며 사용자 지정 범위만 진행. 선택/HUD 결합 연출은8번에 남아 있음. 다음 새 대화에서 두 저장소 최신 main·본 문서·작업 계획 확인 후 재개. 기록 커밋은 문서·검사 결과만 변경하므로 배포 소스 SHA와 구분.

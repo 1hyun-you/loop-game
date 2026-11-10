@@ -1,77 +1,34 @@
 {
-  "version": "0.42-art3",
-  "source": "662ff1dbeb685187ab26d1a9a70257e1ff2014ad",
-  "gameBuild": "97c3b24a7e2b823bb7bd3f987b2fcedabb27ad87",
-  "validationRun": 42923706795,
-  "validationBranch": "art/042-trial-crests",
-  "artifact": 13812288088,
-  "artifactExpiresAt": "2027-02-08T23:28:53Z",
-  "checks": {
-    "trial-crests": {
-      "checks": 83,
-      "errors": []
-    },
-    "job2-crests": {
-      "checks": 113,
-      "errors": []
-    },
-    "crests": {
-      "checks": 23,
-      "errors": []
-    },
-    "choice": {
-      "checks": 78,
-      "errors": []
-    },
-    "ui": {
-      "checks": 12,
-      "errors": []
-    },
-    "art2": {
-      "checks": 11,
-      "errors": []
-    }
-  },
-  "simulations": [
-    {
-      "fatal": null,
-      "errors": [],
-      "pageErrors": [],
-      "errorShown": false,
-      "saveOk": true
-    },
-    {
-      "fatal": null,
-      "errors": [],
-      "pageErrors": [],
-      "errorShown": false,
-      "saveOk": true
-    }
+  "version": "0.42-art4",
+  "source": "9a614f5c3e5bed95ee7c59a887c80fa87c1fb4d7",
+  "workflow_run": 42925333569,
+  "artifact": 13813881757,
+  "checks": [
+    "build/check-build",
+    "fuse-crests 31 checks including 1530 combination comparisons",
+    "trial-crests 83",
+    "job2-crests 113",
+    "crests 23",
+    "choice 78",
+    "ui 12",
+    "art2 11",
+    "vtest 2 runs, no runtime/page errors, save retained",
+    "48/38/24px sheet and 320/390/690px codex/ability inspection",
+    "live HTML byte equality and version/source/build equality"
   ],
-  "service": {
-    "sourceRefCommit": "e1e60b640d748cdc1037979f93c808a3637d261b",
-    "build": "106ff37b755796d34c571321310e14f026131513",
-    "versionCommit": "c72a2f44d61479f6e0911fda07a285384ce5dd0e",
-    "buildRun": 42924105838,
-    "url": "https://1hyun-you.github.io/field/",
-    "pagesRun": 42924176772,
-    "pagesConclusion": "success",
-    "liveHtmlMatches": true,
-    "htmlSha256": "51ab731ef9ab2255877d66de145de7f3594c1eea2caa3992a2f6b48679b8b47e",
-    "liveVersion": {
-      "version": "0.42-art3",
-      "source": "662ff1dbeb685187ab26d1a9a70257e1ff2014ad",
-      "build": "106ff37b755796d34c571321310e14f026131513"
-    }
+  "errors": [],
+  "deployment": {
+    "game_build": "3b6adecc02cd5e41206810a0601a57e775256c11",
+    "service_source_ref": "f878475e6cef9e94cb926bfa5903cef6c3dd20e4",
+    "service_build": "0fa81c1cdce5435cc2b41c49d29788e47768f1af",
+    "service_publish": "79749f558c62c2ab331bace132134d18d6896241",
+    "build_run": 42925724591,
+    "pages_run": 42925793046,
+    "sha256": "ca781a221c081ef4d19a0a75baa4c32d32f4e3a73eadd3ede4e4e749de1f9899"
   },
   "limits": [
-    "No physical Fold8 testing",
-    "No long-duration device FPS measurement",
-    "Local Chromium unavailable: socket() Operation not permitted; browser checks executed in GitHub Actions"
-  ],
-  "deferred": [
-    "fusion crests (3)",
-    "other ART42_PLAN batches"
-  ],
-  "nextConversationRecommended": true
+    "No physical Fold8 test or long-duration FPS test",
+    "Browser interaction verified on test source; production verified as byte-identical HTML",
+    "Only combination crest batch completed"
+  ]
 }
