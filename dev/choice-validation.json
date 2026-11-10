@@ -13,48 +13,58 @@
     "unchanged catalogue and descriptions: fill",
     "unchanged catalogue and descriptions: offer",
     "rendering preserves selection data, player stats and gameplay RNG",
-    "readable cards, art and no overflow start 280",
-    "readable cards, art and no overflow level 280",
-    "readable cards, art and no overflow job 280",
-    "readable cards, art and no overflow job2 280",
-    "readable cards, art and no overflow door 280",
-    "readable cards, art and no overflow offer 280",
-    "readable cards, art and no overflow start 320",
-    "readable cards, art and no overflow level 320",
-    "readable cards, art and no overflow job 320",
-    "readable cards, art and no overflow job2 320",
-    "readable cards, art and no overflow door 320",
-    "readable cards, art and no overflow offer 320",
-    "readable cards, art and no overflow start 390",
-    "readable cards, art and no overflow level 390",
-    "readable cards, art and no overflow job 390",
-    "readable cards, art and no overflow job2 390",
-    "readable cards, art and no overflow door 390",
-    "readable cards, art and no overflow offer 390",
-    "readable cards, art and no overflow start 412",
-    "readable cards, art and no overflow level 412",
-    "readable cards, art and no overflow job 412",
-    "readable cards, art and no overflow job2 412",
-    "readable cards, art and no overflow door 412",
-    "readable cards, art and no overflow offer 412",
-    "readable cards, art and no overflow start 690",
-    "readable cards, art and no overflow level 690",
-    "readable cards, art and no overflow job 690",
-    "readable cards, art and no overflow job2 690",
-    "readable cards, art and no overflow door 690",
-    "readable cards, art and no overflow offer 690",
-    "readable cards, art and no overflow start 768",
-    "readable cards, art and no overflow level 768",
-    "readable cards, art and no overflow job 768",
-    "readable cards, art and no overflow job2 768",
-    "readable cards, art and no overflow door 768",
-    "readable cards, art and no overflow offer 768",
-    "readable cards, art and no overflow start 844",
-    "readable cards, art and no overflow level 844",
-    "readable cards, art and no overflow job 844",
-    "readable cards, art and no overflow job2 844",
-    "readable cards, art and no overflow door 844",
-    "readable cards, art and no overflow offer 844",
+    "readable cards, art and no overflow start 280 {\"width\":280,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 280 {\"width\":280,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 280 {\"width\":280,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":false,\"scroll\":true}",
+    "readable cards, art and no overflow job2 280 {\"width\":280,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 280 {\"width\":280,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 280 {\"width\":280,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow start 320 {\"width\":320,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 320 {\"width\":320,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 320 {\"width\":320,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":false,\"scroll\":true}",
+    "readable cards, art and no overflow job2 320 {\"width\":320,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 320 {\"width\":320,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 320 {\"width\":320,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow start 360 {\"width\":360,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 360 {\"width\":360,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 360 {\"width\":360,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job2 360 {\"width\":360,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 360 {\"width\":360,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 360 {\"width\":360,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow start 390 {\"width\":390,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 390 {\"width\":390,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 390 {\"width\":390,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job2 390 {\"width\":390,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 390 {\"width\":390,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 390 {\"width\":390,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow start 412 {\"width\":412,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 412 {\"width\":412,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 412 {\"width\":412,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job2 412 {\"width\":412,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 412 {\"width\":412,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 412 {\"width\":412,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow start 690 {\"width\":690,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 690 {\"width\":690,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 690 {\"width\":690,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job2 690 {\"width\":690,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 690 {\"width\":690,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 690 {\"width\":690,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow start 768 {\"width\":768,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 768 {\"width\":768,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 768 {\"width\":768,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job2 768 {\"width\":768,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 768 {\"width\":768,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 768 {\"width\":768,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow start 844 {\"width\":844,\"kind\":\"start\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow level 844 {\"width\":844,\"kind\":\"level\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow job 844 {\"width\":844,\"kind\":\"job\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":false,\"scroll\":true}",
+    "readable cards, art and no overflow job2 844 {\"width\":844,\"kind\":\"job2\",\"count\":3,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow door 844 {\"width\":844,\"kind\":\"door\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "readable cards, art and no overflow offer 844 {\"width\":844,\"kind\":\"job\",\"count\":2,\"horizontal\":true,\"cards\":true,\"images\":true,\"allOnScreen\":true,\"scroll\":false}",
+    "longest three job descriptions and actions fit without scrolling 390 safe 0",
+    "longest three job descriptions and actions fit without scrolling 390 safe 28",
+    "longest three job descriptions and actions fit without scrolling 690 safe 0",
+    "longest three job descriptions and actions fit without scrolling 690 safe 28",
     "first tap arms without applying choice",
     "arming moves to another card",
     "second tap confirms original choice action",
@@ -65,7 +75,7 @@
     "ability list toggles",
     "return to cards",
     "codex remains accessible",
-    "rerender preserves scroll position {\"before\":200,\"after\":200}",
+    "rerender preserves scroll position {\"before\":112,\"after\":112}",
     "reduced motion suppresses card animation",
     "no browser runtime errors"
   ],
@@ -104,7 +114,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "level",
@@ -114,7 +125,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job",
@@ -124,6 +136,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": false,
       "scroll": true
     },
     {
@@ -134,7 +147,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "door",
@@ -144,6 +158,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -154,7 +169,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "start",
@@ -164,7 +180,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "level",
@@ -174,7 +191,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job",
@@ -184,6 +202,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": false,
       "scroll": true
     },
     {
@@ -194,7 +213,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "door",
@@ -204,7 +224,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "offer",
@@ -214,7 +235,74 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
+    },
+    {
+      "name": "start",
+      "width": 360,
+      "kind": "start",
+      "count": 3,
+      "horizontal": true,
+      "cards": true,
+      "images": true,
+      "allOnScreen": true,
+      "scroll": false
+    },
+    {
+      "name": "level",
+      "width": 360,
+      "kind": "level",
+      "count": 3,
+      "horizontal": true,
+      "cards": true,
+      "images": true,
+      "allOnScreen": true,
+      "scroll": false
+    },
+    {
+      "name": "job",
+      "width": 360,
+      "kind": "job",
+      "count": 3,
+      "horizontal": true,
+      "cards": true,
+      "images": true,
+      "allOnScreen": true,
+      "scroll": false
+    },
+    {
+      "name": "job2",
+      "width": 360,
+      "kind": "job2",
+      "count": 3,
+      "horizontal": true,
+      "cards": true,
+      "images": true,
+      "allOnScreen": true,
+      "scroll": false
+    },
+    {
+      "name": "door",
+      "width": 360,
+      "kind": "door",
+      "count": 2,
+      "horizontal": true,
+      "cards": true,
+      "images": true,
+      "allOnScreen": true,
+      "scroll": false
+    },
+    {
+      "name": "offer",
+      "width": 360,
+      "kind": "job",
+      "count": 2,
+      "horizontal": true,
+      "cards": true,
+      "images": true,
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "start",
@@ -224,6 +312,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -234,7 +323,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job",
@@ -244,7 +334,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job2",
@@ -254,7 +345,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "door",
@@ -264,6 +356,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -274,6 +367,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -284,6 +378,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -294,6 +389,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -304,7 +400,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job2",
@@ -314,7 +411,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "door",
@@ -324,6 +422,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -334,6 +433,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -344,7 +444,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "level",
@@ -354,7 +455,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job",
@@ -364,7 +466,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job2",
@@ -374,7 +477,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "door",
@@ -384,6 +488,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -394,6 +499,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -404,6 +510,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -414,7 +521,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job",
@@ -424,7 +532,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job2",
@@ -434,7 +543,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "door",
@@ -444,6 +554,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -454,6 +565,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": true,
       "scroll": false
     },
     {
@@ -464,7 +576,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "level",
@@ -474,7 +587,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "job",
@@ -484,6 +598,7 @@
       "horizontal": true,
       "cards": true,
       "images": true,
+      "allOnScreen": false,
       "scroll": true
     },
     {
@@ -494,7 +609,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "door",
@@ -504,7 +620,8 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
     },
     {
       "name": "offer",
@@ -514,7 +631,46 @@
       "horizontal": true,
       "cards": true,
       "images": true,
-      "scroll": true
+      "allOnScreen": true,
+      "scroll": false
+    }
+  ],
+  "foldFit": [
+    {
+      "width": 390,
+      "height": 844,
+      "safe": 0,
+      "all": true,
+      "scroll": false,
+      "actions": true,
+      "font": 14
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "safe": 28,
+      "all": true,
+      "scroll": false,
+      "actions": true,
+      "font": 14
+    },
+    {
+      "width": 690,
+      "height": 829,
+      "safe": 0,
+      "all": true,
+      "scroll": false,
+      "actions": true,
+      "font": 14
+    },
+    {
+      "width": 690,
+      "height": 829,
+      "safe": 28,
+      "all": true,
+      "scroll": false,
+      "actions": true,
+      "font": 14
     }
   ]
 }

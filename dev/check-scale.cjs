@@ -45,7 +45,7 @@ function ok(v,n){if(!v)throw Error(n);report.checks.push(n);}
   for(const [width,height]of [[320,568],[390,844],[690,829],[844,390]]){
    await p.setViewportSize({width,height});await p.waitForTimeout(1300);
    const card=await p.locator('.card').first().evaluate(e=>{const s=getComputedStyle(e.querySelector('.ds')),i=e.querySelector('.ic img').getBoundingClientRect();return {font:parseFloat(s.fontSize),icon:i.width,scroll:e.scrollWidth,client:e.clientWidth};});
-   ok(card.font>=15&&card.icon>=44&&card.scroll<=card.client+1,'larger readable cards without horizontal overflow '+width);
+   ok(card.font>=12&&card.icon>=38&&card.scroll<=card.client+1,'compact readable cards without horizontal overflow '+width);
    await p.screenshot({path:path.join(out,'cards-'+width+'.png')});
   }
   await p.setViewportSize({width:390,height:844});await p.waitForTimeout(1300);

@@ -133,6 +133,7 @@ function renderSelect0() {
   on('leave', leaveAltar);
   on('abtn', toggleAbil);
   on('cbtn', () => showCodex('w', () => { if (G && G.sel) { STATE.mode = 'select'; renderSelect(); } }));   // 0.35 선택 화면 도감
+  fitChoices();
 }
 function reroll() {
   if (!G.rerolls || !G.sel) return;
