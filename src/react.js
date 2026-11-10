@@ -160,7 +160,7 @@ function drawReactScreen(c) {
 }
 
 /* 경험치 게이지 — 도트 틀(진보라 외곽·칸 눈금·위 밝은 줄), 보간 차오름, 가득 차기 직전 맥동, 레벨업 빛 흐름, 레벨 배지 */
-function drawXpGauge(c, top) {
+function pixelDrawXpGauge(c, top) {
   const p = G.p, r = RC(), W = VIEW.cw, y0 = top - 6, H = 12, k = clamp(r.xpShow, 0, 1);
   c.fillStyle = '#1b1626'; c.fillRect(0, y0, W, H);
   c.fillStyle = '#2e2444'; c.fillRect(2, y0 + 2, W - 4, H - 4);
@@ -186,7 +186,7 @@ function drawXpGauge(c, top) {
   c.fillStyle = r.lvT > 0 ? '#ffd24a' : '#8a6a2a'; c.fillRect(bx + 2 - pop, by + 2 - pop, bw - 4 + pop * 2, bh - 4 + pop * 2);
   c.fillStyle = '#3a2e4a'; c.fillRect(bx + 4 - pop, by + 4 - pop, bw - 8 + pop * 2, bh - 8 + pop * 2);
   c.fillStyle = '#1b1626'; c.fillRect(bx, by, 2, 2); c.fillRect(bx + bw - 2, by, 2, 2); c.fillRect(bx, by + bh - 2, 2, 2); c.fillRect(bx + bw - 2, by + bh - 2, 2, 2);   // 모서리 깎기
-  c.font = 'bold 13px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)';
+  c.font = 'bold 13px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)';
   const s = 'Lv ' + p.level; c.strokeText(s, bx + bw / 2, by + bh / 2 + 1); c.fillStyle = '#fff'; c.fillText(s, bx + bw / 2, by + bh / 2 + 1);
 }
 

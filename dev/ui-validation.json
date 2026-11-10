@@ -1,0 +1,186 @@
+{
+  "checks": [
+    "new version",
+    "title vector icons loaded at native 48px",
+    "pause accessible name preserved",
+    "settings back icon loaded",
+    "all loadout tiles fit without overlap at 280–1366px and safe-area offsets",
+    "all ten jobs and both dedicated tiers render",
+    "HUD render does not mutate game state",
+    "live engineer/fireball simulation",
+    "44px pause target within screen",
+    "new pause icon opens pause screen",
+    "wrapped guide rendering at 320px",
+    "no runtime errors"
+  ],
+  "errors": [],
+  "layout": [
+    {
+      "w": 280,
+      "safe": 0,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 280,
+      "safe": 28,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 320,
+      "safe": 0,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 320,
+      "safe": 28,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 360,
+      "safe": 0,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 360,
+      "safe": 28,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 390,
+      "safe": 0,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 390,
+      "safe": 28,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 768,
+      "safe": 0,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 768,
+      "safe": 28,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 1366,
+      "safe": 0,
+      "bounded": true,
+      "overlaps": false
+    },
+    {
+      "w": 1366,
+      "safe": 28,
+      "bounded": true,
+      "overlaps": false
+    }
+  ],
+  "jobs": {
+    "out": [
+      {
+        "job": "warrior",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "rogue",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "archer",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "engineer",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "mage",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "summoner",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "sovereign",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "chrono",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "priest",
+        "first": true,
+        "second": true
+      },
+      {
+        "job": "druid",
+        "first": true,
+        "second": true
+      }
+    ],
+    "readOnly": true
+  },
+  "viewport390": {
+    "width": 390,
+    "height": 844,
+    "hud": {
+      "x": 8,
+      "y": 6,
+      "w": 374,
+      "h": 142,
+      "S": 22,
+      "gap": 4
+    }
+  },
+  "viewport320": {
+    "width": 320,
+    "height": 568,
+    "hud": {
+      "x": 8,
+      "y": 6,
+      "w": 304,
+      "h": 142,
+      "S": 22,
+      "gap": 4
+    }
+  },
+  "viewport844": {
+    "width": 844,
+    "height": 390,
+    "hud": {
+      "x": 142,
+      "y": 6,
+      "w": 560,
+      "h": 142,
+      "S": 22,
+      "gap": 4
+    }
+  },
+  "play": {
+    "time": 4.516400000000004,
+    "error": false
+  }
+}

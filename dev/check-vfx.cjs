@@ -69,7 +69,7 @@ function ok(v,n){if(!v)throw Error(n);report.checks.push(n);}
    const times=[];for(let i=0;i<140;i++){const t=performance.now();c.clearRect(-195,-422,390,844);drawVfxTrails(c,()=>true);drawFx(c);drawJuice(c);if(i>19)times.push(performance.now()-t);}
    times.sort((a,b)=>a-b);return {fixture:{projectiles:400,effects:120,particles:180},meanMs:times.reduce((s,n)=>s+n,0)/times.length,p95Ms:times[Math.floor(times.length*.95)],samples:times.length};
   });ok(report.renderBenchmark.meanMs<16.7,'stress VFX render CPU mean below 16.7ms on QA Chromium');
-  await p.setViewportSize({width:320,height:568});await p.evaluate(()=>showTitle());ok(await p.locator('.ver').innerText()==='v0.40-vfx1','320px title version');ok(report.errors.length===0,'no JavaScript runtime errors');
+  await p.setViewportSize({width:320,height:568});await p.evaluate(()=>showTitle());ok(await p.locator('.ver').innerText()==='v'+await p.evaluate(()=>CFG.VERSION),'320px title version');ok(report.errors.length===0,'no JavaScript runtime errors');
   fs.writeFileSync(root+'/dev/vfx-validation.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
  }finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e.stack);process.exit(1)});

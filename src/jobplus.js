@@ -185,7 +185,7 @@ function drawPets(c, inView) {
     if (sc > 1.01) { c.save(); c.translate(m.x, m.y + S.r * 0.8); c.scale(sc, sc); drawSprite(c, m.kind, fr, (m.bite > 0 ? Math.sign(m.vx || 1) * 3 : 0), 0, { flip: (m.vx || 0) < 0 }); c.restore(); }
     else drawSprite(c, m.kind, fr, m.x + (m.bite > 0 ? Math.sign(m.vx || 1) * 3 : 0), m.y + S.r * 0.8, { flip: (m.vx || 0) < 0 });
     if (m.lvT > 0) { c.globalAlpha = Math.min(1, m.lvT); c.strokeStyle = '#d8ffb8'; c.lineWidth = 2; c.beginPath(); c.arc(m.x, m.y, S.r + 6 + (1.2 - m.lvT) * 10, 0, 7); c.stroke(); c.globalAlpha = 1; }
-    c.font = 'bold 9px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.7)'; c.fillStyle = '#c8f0a8';
+    c.font = 'bold 9px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.7)'; c.fillStyle = '#c8f0a8';
     const ly = m.y - S.r * 1.6 - 6; c.strokeText('Lv' + S.lv, m.x, ly); c.fillText('Lv' + S.lv, m.x, ly);
   }
 }

@@ -157,7 +157,7 @@ function dlgTap() {
 
 /* 일시정지 버튼 — 진행 중에만 표시 */
 const PBTN = document.createElement('button');
-PBTN.id = 'pausebtn'; PBTN.className = 'pausebtn'; PBTN.setAttribute('aria-label', '일시정지'); PBTN.textContent = 'Ⅱ';
+PBTN.id = 'pausebtn'; PBTN.className = 'pausebtn'; PBTN.setAttribute('aria-label', '일시정지'); PBTN.innerHTML = `<img src="${uiIcon('pause')}" alt="">`;
 PBTN.addEventListener('click', pauseGame); document.body.appendChild(PBTN);
 let pbShown = null;
 function syncPauseBtn() { const v = STATE.mode === 'play' && G && !G.result; if (v !== pbShown) { pbShown = v; PBTN.style.display = v ? '' : 'none'; } }

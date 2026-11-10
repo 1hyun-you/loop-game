@@ -295,13 +295,13 @@ function drawBossTop(c, inView) {
   drawEnemyShots(c, inView);
 }
 /* 상단 수문장 체력 막대 */
-function drawBossBar(c, y, txt) {
+function pixelDrawBossBar(c, y, txt) {
   const e = G.gkMob; if (!e || e.dead || !G.ph || !isBossPhase()) return;
   const D = bossDef(e.gk), W = VIEW.cw, bw = W - 48;
   c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(24, y, bw, 8);
   c.fillStyle = e.rage || e.st === 2 ? '#ff6a4a' : D.color; c.fillRect(24, y, bw * Math.max(0, e.hp / e.maxHp), 8);
   if (e.gk === 'demon') { c.fillStyle = 'rgba(255,255,255,0.8)'; for (const k of DM_CFG.stages) c.fillRect(24 + bw * k - 1, y - 2, 2, 12); }   // 페이즈 전환 눈금
-  c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#fff'; txt(e.gk === 'demon' ? `${D.name} · ${['그림자 군주', '암흑 결계', '종언'][e.st]} (${e.st + 1}/3)` : `${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
+  c.font = 'bold 12px system-ui, Galmuri11, sans-serif'; c.fillStyle = '#fff'; txt(e.gk === 'demon' ? `${D.name} · ${['그림자 군주', '암흑 결계', '종언'][e.st]} (${e.st + 1}/3)` : `${D.name} · ${D.gate}`, W / 2, y + 18, 'center');
 }
 
 /* 저장: 처치 수문장 누적 (finishRun에서 호출) */

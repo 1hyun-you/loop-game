@@ -90,7 +90,7 @@ function drawJuice(c) {
   for (const d of j.dn) {
     const k = d.t / d.dur, pop = d.crit && d.t < 0.1 ? 1.35 : 1;
     c.globalAlpha = k > 0.6 ? (1 - k) / 0.4 : 1;
-    c.font = `bold ${Math.round((d.crit ? 13 : 10) * pop)}px Galmuri11, system-ui`;
+    c.font = `bold ${Math.round((d.crit ? 13 : 10) * pop)}px system-ui, Galmuri11, sans-serif`;
     const s = String(Math.max(1, Math.round(d.v)));
     c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.75)'; c.strokeText(s, d.x, d.y);
     c.fillStyle = d.crit ? '#ffd24a' : '#ffffff'; c.fillText(s, d.x, d.y);
@@ -106,7 +106,7 @@ function drawBanner(c) {
   c.globalAlpha = a * 0.55; c.fillStyle = '#000'; c.fillRect(0, y - 30, W, b.sub ? 62 : 46);
   c.globalAlpha = a; c.fillStyle = b.color; c.fillRect(0, y - 30, W * sx, 2); c.fillRect(W * (1 - sx), y + (b.sub ? 30 : 14), W * sx, 2);
   c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,0,0.7)';
-  c.font = 'bold 22px Galmuri11, system-ui'; c.strokeText(b.text, W / 2, y - 6); c.fillStyle = b.color; c.fillText(b.text, W / 2, y - 6);
-  if (b.sub) { c.font = 'bold 13px Galmuri11, system-ui'; c.strokeText(b.sub, W / 2, y + 17); c.fillStyle = '#fff'; c.fillText(b.sub, W / 2, y + 17); }
+  c.font = 'bold 22px system-ui, Galmuri11, sans-serif'; c.strokeText(b.text, W / 2, y - 6); c.fillStyle = b.color; c.fillText(b.text, W / 2, y - 6);
+  if (b.sub) { c.font = 'bold 13px system-ui, Galmuri11, sans-serif'; c.strokeText(b.sub, W / 2, y + 17); c.fillStyle = '#fff'; c.fillText(b.sub, W / 2, y + 17); }
   c.globalAlpha = 1;
 }

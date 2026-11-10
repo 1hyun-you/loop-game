@@ -116,7 +116,7 @@ const UI_ICON = {
   back: ['............', '.....kk.....', '....keek....', '...keeek....', '..keeeekkkk.', '.keeeeeeeeek', '.keeeeeeeeek', '..keeeekkkk.', '...keeek....', '....keek....', '.....kk.....', '............'],
 };
 const UI_ICON_URL = {};
-function uiIcon(k) { if (!UI_ICON_URL[k]) UI_ICON_URL[k] = bakeGrid(UI_ICON[k], DOT_PAL, 4, false, 'n', null).cv.toDataURL(); return UI_ICON_URL[k]; }
+function pixelUiIcon(k) { if (!UI_ICON_URL[k]) UI_ICON_URL[k] = bakeGrid(UI_ICON[k], DOT_PAL, 4, false, 'n', null).cv.toDataURL(); return UI_ICON_URL[k]; }
 const icBtn = (id, k, label, cls = '') => `<button class="icb ${cls}" id="${id}" aria-label="${label}"><img src="${uiIcon(k)}" alt=""></button>`;
 
 /* ---------- 고정 헤더 + 밀기 탭 ---------- */

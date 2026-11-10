@@ -352,7 +352,7 @@ function drawPhaseGround(c) {
     const k = ph.cart;
     c.strokeStyle = 'rgba(255,230,150,0.35)'; c.lineWidth = 2; c.setLineDash([8, 8]); c.beginPath(); c.moveTo(k.x, k.y); c.lineTo(k.tx, k.ty); c.stroke(); c.setLineDash([]);
     drawSprite(c, 'flag', f2(3), k.tx + 8, k.ty, { mul: 2 });                                       // 0.30 목적지 깃발 도트
-    if (k.block) { c.fillStyle = '#ff8a6a'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.fillText(k.sp > 0 ? '감속' : '정지', k.x, k.y - 26); }
+    if (k.block) { c.fillStyle = '#ff8a6a'; c.font = 'bold 11px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.fillText(k.sp > 0 ? '감속' : '정지', k.x, k.y - 26); }
     drawSpriteC(c, 'cart', 0, k.x, k.y, { mode: k.hit > 0 ? 'white' : 'n' });   // 0.20 도트
     c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(k.x - 18, k.y - 20, 36, 4); c.fillStyle = k.hp <= k.maxHp * PH_CFG.cartWarn ? (Math.floor(G.time * 6) % 2 ? '#ff6a4a' : '#ffd0c0') : '#8ff0b0'; c.fillRect(k.x - 18, k.y - 20, 36 * Math.max(0, k.hp / k.maxHp), 4);   // 0.31 30% 이하 깜빡임
   }

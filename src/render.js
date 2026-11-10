@@ -103,7 +103,7 @@ function drawEnemies(c, inView) {
   // 대장·마법진·거대 몹 체력 막대 (0.10)
   for (const e of G.enemies) {
     if (e.dead || !e.cmd || e.gk || !inView(e.x, e.y, e.r)) continue;
-    const w = e.r * 2.2, y = e.y - e.r - 10; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 5); c.fillStyle = e.rit ? '#c8a0ff' : '#ff8a5a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 5);
+    const w = e.r * 2.2, y = e.y - e.r - 10; uiBar(c, e.x - w / 2, y, w, 4, e.hp / e.maxHp, e.rit ? '#b9a4ce' : '#ce927c');
   }
   // 엘리트: 금색 테두리(도트는 외곽선 변형) · 보호막 · 돌진 예고 · 체력 막대
   for (const e of G.enemies) {
@@ -111,7 +111,7 @@ function drawEnemies(c, inView) {
     if (!spriteFor(e)) { c.strokeStyle = '#ffd24a'; c.lineWidth = 3; c.beginPath(); enemyPath(c, e); c.stroke(); }
     if (e.sh > 0) { c.strokeStyle = 'rgba(140,200,255,0.85)'; c.lineWidth = 3; c.beginPath(); c.arc(e.x, e.y, e.r + 6, 0, 7); c.stroke(); }
     if (e.tele > 0) { c.strokeStyle = 'rgba(255,80,60,0.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(G.p.x, G.p.y); c.stroke(); }
-    const w = e.r * 2, y = e.y - e.r - 9; c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(e.x - w / 2, y, w, 4); c.fillStyle = '#ffd24a'; c.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 4);
+    const w = e.r * 2, y = e.y - e.r - 9; uiBar(c, e.x - w / 2, y, w, 4, e.hp / e.maxHp, '#cfb476');
   }
   c.strokeStyle = 'rgba(190,235,255,0.9)'; c.lineWidth = 2; c.beginPath();
   for (const e of G.enemies) if (!e.dead && e.frz > 0 && inView(e.x, e.y, e.r)) { c.moveTo(e.x + e.r + 3, e.y); c.arc(e.x, e.y, e.r + 3, 0, 7); }
@@ -182,8 +182,7 @@ function drawPlayer(c) {
   if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;
   drawHeroReact(c, mv ? Math.floor(G.time * 8) & 1 : 0, !!p._fl, heroTint());   // 0.26 직업 색 옷   // 색상 변형 (0.15)
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
-  c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(x - 1, y - 1, w + 2, h + 2);
-  c.fillStyle = p.hp / p.maxHp > 0.3 ? '#5fe07a' : '#ff5a5a'; c.fillRect(x, y, w * Math.max(0, p.hp / p.maxHp), h);
+  uiBar(c, x, y, w, h, p.hp / p.maxHp, p.hp / p.maxHp > 0.3 ? '#a7c79c' : '#d58c86');
   if (p.shield) { c.strokeStyle = 'rgba(140,210,255,0.9)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, p.r + 5, 0, 7); c.stroke(); }
   if (G.tm.inv > 0) { c.strokeStyle = 'rgba(255,240,160,0.8)'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, p.r + 8, 0, 7); c.stroke(); }
   if (p.job) {                                              // 궁극기 게이지 (체력 막대 아래)
@@ -229,32 +228,32 @@ function drawJoy(c) {
   c.fillStyle = 'rgba(255,255,255,0.45)'; c.beginPath(); c.arc(INPUT.ox + INPUT.dx * INPUT.mag * R, INPUT.oy + INPUT.dy * INPUT.mag * R, 22, 0, 7); c.fill();
 }
 /* 상단 집중형 정보 배치 */
-function drawHUD(c) {
+function pixelDrawHUD(c) {
   const p = G.p, W = VIEW.cw, top = VIEW.sat + 6;
   drawXpGauge(c, top);                                      // 도트 틀 경험치 게이지·레벨 배지 (0.28)
-  c.font = 'bold 14px Galmuri11, system-ui'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
+  c.font = 'bold 14px system-ui, Galmuri11, sans-serif'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
   const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
-  if (p.job) { c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px Galmuri11, system-ui'; }
-  c.font = 'bold 18px Galmuri11, system-ui'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
+  if (p.job) { c.font = 'bold 12px system-ui, Galmuri11, sans-serif'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px system-ui, Galmuri11, sans-serif'; }
+  c.font = 'bold 18px system-ui, Galmuri11, sans-serif'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
   const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)
-  c.font = 'bold 12px Galmuri11, system-ui'; c.fillStyle = '#ffe08a';
+  c.font = 'bold 12px system-ui, Galmuri11, sans-serif'; c.fillStyle = '#ffe08a';
   if (ph.ambush) c.fillStyle = '#ff9a7a';
   txt(P ? `${ph.i + 1}/${ph.order.length} ${curPhaseName()}` : (G.result === 'clear' ? '돌파' : '이동 중'), W / 2, top + 38, 'center');
   if (P) { const bw = 120, acc = ph.accT > 0; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = acc ? '#ffffff' : '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4);
-    if (acc) { c.font = 'bold 10px Galmuri11, system-ui'; c.fillStyle = '#fff6c8'; txt('▶▶', W / 2 + bw / 2 + 12, top + 49, 'center'); } }   // 처치 가속 표시 (0.24)
+    if (acc) { c.font = 'bold 10px system-ui, Galmuri11, sans-serif'; c.fillStyle = '#fff6c8'; txt('▶▶', W / 2 + bw / 2 + 12, top + 49, 'center'); } }   // 처치 가속 표시 (0.24)
   c.fillStyle = '#fff';
-  c.font = 'bold 14px Galmuri11, system-ui'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
+  c.font = 'bold 14px system-ui, Galmuri11, sans-serif'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
   if (STATE.dev.fps && STATE.mode !== 'result') { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
   drawSlots(c, top + 58);
   drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
   let ty = VIEW.ch * 0.3;
-  for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px Galmuri11, system-ui'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
+  for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px system-ui, Galmuri11, sans-serif'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
   c.globalAlpha = 1;
   drawGuide(c);                                             // 첫 판 안내 (0.31)
 }
 
 /* 상단 아래 아이콘 줄: 무기 5칸 · 보조 효과 5칸 */
-function drawSlots(c, y) {
+function pixelDrawSlots(c, y) {
   const p = G.p, S = 24, gap = 4, W = VIEW.cw;
   const row = (list, n, x0, colorOf, icOf) => {
     for (let i = 0; i < n; i++) {
@@ -264,8 +263,8 @@ function drawSlots(c, y) {
       c.strokeStyle = it && icv ? colorOf(it) : 'rgba(0,0,0,0.55)'; c.lineWidth = 1.5; c.strokeRect(x + 0.75, y + 0.75, S - 1.5, S - 1.5);
       if (!it) continue;
       if (icv) { const iw = icv.width / VIEW.dpr, ih = icv.height / VIEW.dpr; c.imageSmoothingEnabled = false; c.drawImage(icv, Math.round(x + (S - iw) / 2), Math.round(y + (S - ih) / 2), iw, ih); }
-      else { c.fillStyle = '#14121c'; c.font = 'bold 13px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1); }
-      c.font = 'bold 9px Galmuri11, system-ui'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
+      else { c.fillStyle = '#14121c'; c.font = 'bold 13px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1); }
+      c.font = 'bold 9px system-ui, Galmuri11, sans-serif'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
       const lv = String(it.lvl); c.strokeText(lv, x + S - 1, y + S - 1); c.fillStyle = '#fff'; c.fillText(lv, x + S - 1, y + S - 1);
     }
   };
@@ -283,13 +282,13 @@ function drawSlots(c, y) {
     const X = TB[st.id], cx = dx0 + S / 2, cy = y + S / 2, h = S / 2 + 1;
     c.fillStyle = fc; c.beginPath(); c.moveTo(cx, cy - h); c.lineTo(cx + h, cy); c.lineTo(cx, cy + h); c.lineTo(cx - h, cy); c.closePath(); c.fill();
     c.strokeStyle = '#7a5a10'; c.lineWidth = 2; c.stroke();
-    c.fillStyle = '#14121c'; c.font = 'bold 11px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(X.ic, cx, cy);
+    c.fillStyle = '#14121c'; c.font = 'bold 11px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(X.ic, cx, cy);
     if (X.cd > 0.6) pie(cx, cy, S / 2 - 5, 1 - Math.max(0, st.t) / X.cd);
     dx0 += S + gap + 2;
   }
   const dials = jobDials();
   dials.forEach((d, i) => { const x = dx0 + i * (S + gap) + S / 2, yy = y + S / 2; if (x + S / 2 > px0 - 4) return;
-    c.fillStyle = d.col; c.beginPath(); c.arc(x, yy, S / 2 - 1, 0, 7); c.fill(); c.fillStyle = '#14121c'; c.font = 'bold 12px Galmuri11, system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(d.ic, x, yy);
+    c.fillStyle = d.col; c.beginPath(); c.arc(x, yy, S / 2 - 1, 0, 7); c.fill(); c.fillStyle = '#14121c'; c.font = 'bold 12px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(d.ic, x, yy);
     pie(x, yy, S / 2 - 1, d.k); });
 }
 /* 직업 주기 효과 목록 (궁극기 충전·군기·포탑·형태 교대) */

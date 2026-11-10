@@ -1,6 +1,6 @@
 # 클로드 후속 작업 전달
 
-- ChatGPT에서 그래픽 개편 패치 `0.40-vfx1` 적용. 기존 art1~art3 손그림 에셋 보존.
+- ChatGPT에서 그래픽 개편 패치 `0.40-ui1` 적용. VFX 개편 보존. 기존 art1~art3 손그림 에셋 보존.
 - 작업 시작 전 두 저장소의 최신 main 및 최근 커밋 확인 필요.
 - 게임 원본: `1hyun-you/loop-game`.
 - 실제 서비스: `1hyun-you/1hyun-you.github.io`의 `field/index.html`.
@@ -14,7 +14,7 @@
 - 반전·의상 색상·피격·정예 표시·이미지 실패 시 기존 도트 대체 기능 유지.
 - 게임 수치·능력 행동·저장 키 변경 없음.
 - art3 추가: 늑대·곰·유령 소환수, 리안·에다·마왕 초상, 상호작용 물체와 경험치/회복 아이템, 특수 투사체와 경고·기절·수면 표식 교체.
-- 현재 `SPR`에 등록된 모든 스프라이트에 손그림 또는 공통 손그림 별칭 연결 확인. 메뉴의 작은 탐색 버튼 아이콘·캔버스 글꼴은 별도 기존 체계 유지.
+- 현재 `SPR`에 등록된 모든 스프라이트에 손그림 또는 공통 손그림 별칭 연결 확인. ui1에서 메뉴 탐색 아이콘·HUD 공통 체계 추가. 기기 UI 글꼴 우선 표시.
 
 ## 후속 패치 시 필수 확인
 
@@ -22,7 +22,7 @@
 2. `src/sprite.js`, `src/icons.js`, `src/render.js`, `src/ui37.js`의 원본 대체 렌더러 이름과 새 테마 연결 유지.
 3. `src/art-data.js`, `src/art-theme.js`, `src/art3-data.js`, `src/art3-theme.js` 및 `assets/art2/`, `assets/art3/` 보존. 오래된 `index.html` 전체 덮어쓰기 금지.
 4. 이미지를 수정한 경우 묶음에 맞춰 `node dev/pack-art2.cjs`, `node dev/pack-art3.cjs` 실행 후 `sh build.sh`로 통합본 생성.
-5. 빌드 시 `src/art-data.js src/art-theme.js src/art3-data.js src/art3-theme.js src/vfx.js`를 `src/main.js` 이전에 순서대로 결합할 것. `buildPixelPortraits`와 `art3LinkAliases` 연결 유지.
+5. 빌드 시 `src/art-data.js src/art-theme.js src/art3-data.js src/art3-theme.js src/vfx.js src/ui-art.js`를 `src/main.js` 이전에 순서대로 결합할 것. `buildPixelPortraits`와 `art3LinkAliases` 연결 유지.
 6. 실제 배포는 `deploy_field.sh` 방식으로 생성된 통합본을 사이트 저장소의 `field/`에 반영. 원본 저장소만 수정하면 실제 서비스에는 미반영.
 7. 동시 작업 금지. 사용자에게 담당 작업 시작·배포 완료 전달 후 다음 담당자가 최신 main을 기준으로 작업.
 
@@ -34,7 +34,7 @@
 - 실제 휴대폰별 프레임 속도나 전체 장시간 플레이를 보장하는 검증은 아님.
 - art3: 신규 820가지 프레임/효과/반전 조합, 투사체 색상 변형, 스프라이트 대체 처리, 공유 이미지 4개, 초상 재생성, 320px·390px 대사창, 실제 드루이드 소환수 시뮬레이션 검수.
 - 검사 명령: Playwright 설치 환경에서 `node dev/check-art3.cjs`, `node dev/check-art2.cjs`. 별도 Chromium 경로 사용 시 `ART2_CHROMIUM_PATH` 지정 가능.
-- 다음 작업 후보: 메뉴 탐색 아이콘·HUD 글꼴 통일, 직업별 별도 의상, 다방향·다프레임 애니메이션. 동시에 수정하지 말고 사용자 지시 후 순차 진행.
+- 다음 작업 후보: 직업별 별도 의상, 다방향·다프레임 애니메이션, 페이즈별 배경 소품 확대. 동시에 수정하지 말고 사용자 지시 후 순차 진행.
 
 
 ## 최신 추가 사항 — 공통 VFX 개편
@@ -50,3 +50,17 @@
 - 검사 결과: 800회 생성 요청의 개수 상한, 일시정지 재그리기 상태 불변, 파편 소멸·새 판 초기화·캐시 상한·게임 난수 미소비, 폭발/부채꼴 판정·피해·밀림·회복·범위·시간·저장 키의 art3 기준 비교, 복합 무기 실시간 플레이, 동작 줄이기 및 320px/390px 검수 통과.
 - `dev/vfx-validation.json`의 렌더 시간은 QA Chromium에서 공통 VFX만 반복 그린 CPU 측정. 전체 게임 FPS나 실제 휴대폰 성능으로 해석 금지.
 - 후속 수정 전 이 문서와 `ART_DIRECTION.md` 확인 후 최신 main에서 시작. 두 저장소 배포 및 버전 확인 후 다음 담당자에게 인계.
+
+
+## 최신 추가 사항 — 인터페이스 그래픽 개편
+
+- 최신 버전 `0.40-ui1`: 도감·설정·돌아가기·일시정지 아이콘, 전투 HUD, 경험치·체력·보스바, 장비·전용 무기·주기 효과 슬롯, 안내 패널 통일.
+- 새 `src/ui-art.js`: SVG 아이콘 내장 및 공통 렌더러. `build.sh`에서 `src/vfx.js` 다음, `src/main.js` 이전에 결합 필수.
+- 원본 대체 함수 `pixelUiIcon`, `pixelDrawHUD`, `pixelDrawSlots`, `pixelDrawXpGauge`, `pixelDrawBossBar`, `pixelDrawGuide` 보존. 실제 호출은 새 `uiIcon`, `drawHUD` 등 공통 함수 사용.
+- Canvas 글꼴을 기기 기본 UI 글꼴 우선으로 정리. `Galmuri11` 및 기존 폰트 파일은 글리프 대체용으로 보존. 한글 시스템 글꼴이 없는 환경에서는 Galmuri가 사용될 수 있음.
+- 무기·보조 효과를 두 줄로 배치, 전용 무기와 직업 주기를 우측 영역으로 분리. HUD 최대 폭 560px. 작은 화면에서 긴 직업명 말줄임, 드루이드·사제 수치 우선 표시. 큰 처치 수는 만 단위 축약.
+- `main.js`의 일시정지 버튼에 아이콘 이미지 사용. aria-label 유지, 최소 44px 터치 영역 확보. 안내 패널 줄바꿈 적용.
+- 기존 art1~art3, VFX, 저장 키와 게임 수치 유지. 주인공·정예·대장 체력바의 색·외곽 표현만 변경.
+- 검사: `node dev/check-ui.cjs`, `node dev/check-vfx.cjs`, 기존 `check-art2.cjs`/`check-art3.cjs`. 결과는 `dev/ui-validation.json` 등 참조. `ART2_CHROMIUM_PATH`로 Chromium 지정 가능.
+- 테스트 범위: 280~1366px 슬롯 무겹침·경계, 안전 영역, 10개 직업/전용 무기 2단계, HUD 상태 불변, 실제 전투·일시정지, 안내 줄바꿈, 기존 스프라이트/VFX 회귀 검사. 휴대폰별 실제 글꼴과 장시간 성능 보장은 아님.
+- 다음 담당자는 최신 main에서 시작하여 `sh build.sh` 후 서비스 저장소 `field/index.html`까지 배포 및 버전 확인 필요.
