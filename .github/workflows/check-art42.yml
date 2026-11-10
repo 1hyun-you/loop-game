@@ -21,6 +21,7 @@ jobs:
           npm install --no-save --package-lock=false playwright
           npx playwright install --with-deps chromium
       - name: Build and validate first crest batch
+        timeout-minutes: 3
         env:
           CHOICE_BASELINE_HTML: ${{ github.workspace }}/baseline-042.html
         run: |
@@ -28,9 +29,19 @@ jobs:
           node dev/build.cjs
           node dev/check-build.cjs
           node dev/check-crests.cjs
-          node dev/check-choice.cjs
+      - name: Verify selection regression
+        timeout-minutes: 3
+        env:
+          CHOICE_BASELINE_HTML: ${{ github.workspace }}/baseline-042.html
+        run: node dev/check-choice.cjs
+      - name: Verify HUD and original artwork
+        timeout-minutes: 3
+        run: |
           node dev/check-ui.cjs
           node dev/check-art2.cjs
+      - name: Verify two virtual runs
+        timeout-minutes: 3
+        run: |
           node dev/vtest.js 2 --speed 8 --cap 120 --render 30 --out dev/sim_log/art1.jsonl
           node -e "const fs=require('fs');const rows=fs.readFileSync('dev/sim_log/art1.jsonl','utf8').trim().split('\n').map(JSON.parse);if(rows.length!==2||rows.some(r=>r.fatal||r.errs.length||r.pageErr.length||r.errShown||!r.saveOk))throw Error('Virtual test failed');"
       - uses: actions/upload-artifact@v4

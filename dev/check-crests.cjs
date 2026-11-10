@@ -8,6 +8,7 @@ const ok=(v,n)=>{if(!v)throw Error(n);report.checks.push(n)};
  const browser=await chromium.launch({headless:true,executablePath:process.env.ART2_CHROMIUM_PATH});
  try{
   const p=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
+  p.setDefaultTimeout(15000);
   p.on('pageerror',e=>report.errors.push(e.message));await p.goto('http://127.0.0.1:8799/');
   await p.waitForFunction(()=>JOB_ORDER.every(id=>UI_ART.images['crest_'+id]));
   const meta=await p.evaluate(()=>({count:Object.keys(UI_JOB_CREST).length,unique:new Set(JOB_ORDER.map(id=>UI_JOB_CREST[id])).size,colors:JOB_ORDER.every(id=>decodeURIComponent(uiIcon('crest_'+id)).includes(JOB_COL[id])),game:JSON.stringify(G),save:localStorage.getItem(CFG.SAVE_KEY)}));
