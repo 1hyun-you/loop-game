@@ -1,16 +1,19 @@
 const {chromium}=require('playwright'),fs=require('fs'),path=require('path'),http=require('http');
 const root=path.resolve(__dirname,'..'),dir=root,report={checks:[],errors:[],screens:[]};
 const mime={'.html':'text/html','.js':'text/javascript','.webp':'image/webp','.woff2':'font/woff2'};
-function ok(v,name){if(!v)throw Error(name);report.checks.push(name);}
+function ok(v,name){if(!v)throw Error(name+' '+JSON.stringify(report.errors));report.checks.push(name);}
 (async()=>{
   const server=http.createServer((req,res)=>{let p=path.join(dir,new URL(req.url,'http://localhost').pathname);if(fs.existsSync(p)&&fs.statSync(p).isDirectory())p=path.join(p,'index.html');if(!p.startsWith(dir)||!fs.existsSync(p)){res.statusCode=204;return res.end();}res.setHeader('Content-Type',mime[path.extname(p)]||'application/octet-stream');res.end(fs.readFileSync(p));}).listen(8788,'127.0.0.1');
   const browser=await chromium.launch({executablePath:process.env.ART2_CHROMIUM_PATH || undefined,headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
   try{
     const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
-    page.on('pageerror',e=>report.errors.push(e.message));
+    page.on('pageerror',e=>{report.errors.push(e.message);console.error('Browser error: '+e.stack)});
     await page.goto('http://127.0.0.1:8788/');
     await page.waitForFunction(()=>typeof ART2!=='undefined'&&ART2.ground&&ART2.title&&ART2.icons&&['bat','skel','brute','gob','jelly','mush','boar','knight','wisp','bargan','igna','morden','seren','demon'].every(n=>FIELD_ART.ready[n]));
     ok(await page.locator('.ver').innerText()==='v'+await page.evaluate(()=>CFG.VERSION),'version');
+    // 0.42 starts with automatic selection at 4x. Static card/render fixtures
+    // must not be picked by an asynchronous bot while screenshots are taken.
+    await page.evaluate(()=>{STATE.dev.auto=false;STATE.dev.speed=1;});
     // QA host lacks Korean system fonts. The existing bundled font supplies glyphs only for local snapshots.
     await page.addStyleTag({content:'body{font-family:Galmuri11,system-ui,sans-serif}.hlogo h1{font-family:Galmuri11,serif}'});
     await page.screenshot({path:root+'/dev/art2-title-390.png'});report.screens.push('art2-title-390.png');
@@ -53,5 +56,5 @@ function ok(v,name){if(!v)throw Error(name);report.checks.push(name);}
     ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal overflow');
     ok(report.errors.length===0,'no JavaScript runtime errors');
     fs.writeFileSync(root+'/dev/art2-validation.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
-  }finally{await browser.close();server.close();}
+  }finally{fs.writeFileSync(root+'/dev/art2-validation.json',JSON.stringify(report,null,2));await browser.close();server.close();}
 })().catch(e=>{console.error(e.stack);process.exit(1)});
