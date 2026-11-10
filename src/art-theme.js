@@ -84,6 +84,7 @@ function groundPattern(c,tid) {
     g.fillStyle=ART2_PALETTE[tid]||ART2_PALETTE.field;g.fillRect(0,0,size,size);g.globalAlpha=1;g.globalCompositeOperation='source-over';
     if(meadow){g.fillStyle='rgba(32,47,22,.12)';g.fillRect(0,0,size,size);}
     if(tid==='demon'||tid==='gate'){g.fillStyle=tid==='demon'?'rgba(18,10,35,.3)':'rgba(48,18,12,.12)';g.fillRect(0,0,size,size);}
+    if(meadow)fieldSeamlessTile(cv);
     pat=c.createPattern(cv,'repeat');if(pat&&pat.setTransform)pat.setTransform(new DOMMatrix([1/ratio,0,0,1/ratio,0,0]));
     ART2.groundCache.set(key,pat);if(ART2.groundCache.size>16)ART2.groundCache.delete(ART2.groundCache.keys().next().value);
   }

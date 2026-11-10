@@ -2,6 +2,7 @@
   "checks": [
     "optimized props retain real transparent margins",
     "field version and both embedded assets loaded",
+    "opposing terrain edge pixels match after cached seam blend",
     "static decoration is deterministic and consumes no gameplay random numbers {\"randoms\":0,\"state\":true,\"deterministic\":true,\"readOnly\":true,\"order\":[\"scenery\",\"danger\",\"player\"],\"props\":5,\"patchCache\":2}",
     "scenery and shadows do not mutate gameplay state",
     "canvas state and decoration cache/budget bounded",

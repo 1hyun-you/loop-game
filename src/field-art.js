@@ -1,6 +1,14 @@
 /* 0.40-field1: static world decoration and contact shadows, no gameplay state/RNG. */
 const FIELD_ENV={ground:null,props:null,loaded:0,patches:new Map(),stats:{patches:0,props:0},shadow:null};
 for(const key of ['meadow','props']){const im=new Image();im.onload=()=>{FIELD_ENV[key==='meadow'?'ground':'props']=im;FIELD_ENV.loaded++;if(key==='meadow')ART2.groundCache.clear();};im.onerror=()=>console.warn('Field art unavailable; prior ground retained:',key);im.src=FIELD_DATA.images[key];}
+// Blend opposing edge pixels once per cached terrain tile, never per frame.
+function fieldSeamlessTile(cv){
+ const c=cv.getContext('2d'),im=c.getImageData(0,0,cv.width,cv.height),p=im.data,n=cv.width,m=cv.height,band=16;
+ const blend=(a,b,k)=>{for(let ch=0;ch<3;ch++){const x=p[a+ch],y=p[b+ch];p[a+ch]=Math.round(x+(y-x)*k);p[b+ch]=Math.round(y+(x-y)*k);}};
+ for(let y=0;y<m;y++)for(let d=0;d<band;d++)blend((y*n+d)*4,(y*n+n-1-d)*4,(1-d/band)*.5);
+ for(let x=0;x<n;x++)for(let d=0;d<band;d++)blend((d*n+x)*4,((m-1-d)*n+x)*4,(1-d/band)*.5);
+ c.putImageData(im,0,0);
+}
 function fieldHash(x,y,s=0){return hash2(x+s*71,y-s*43);}
 function fieldPatch(kind,dark){
  const key=kind+'|'+dark;if(FIELD_ENV.patches.has(key))return FIELD_ENV.patches.get(key);
