@@ -30,13 +30,13 @@ const SERVER = http.createServer((q, s) => {
 
 const INIT = () => {
   const realNow = performance.now.bind(performance);
-  const VT = { now: 0, seq: 1, timers: new Map(), raf: null, realNow, errs: [] };
+  const VT = { now: 0, seq: 1, timers: new Map(), raf: [], realNow, errs: [] };
   window.__VT = VT;
   performance.now = () => VT.now;
   window.setTimeout = (fn, ms, ...a) => { const id = VT.seq++; VT.timers.set(id, { t: VT.now + Math.max(0, +ms || 0), fn, a, rep: 0 }); return id; };
   window.setInterval = (fn, ms, ...a) => { const id = VT.seq++; const r = Math.max(1, +ms || 1); VT.timers.set(id, { t: VT.now + r, fn, a, rep: r }); return id; };
   window.clearTimeout = window.clearInterval = id => VT.timers.delete(id);
-  window.requestAnimationFrame = fn => { VT.raf = fn; return 1; };
+  window.requestAnimationFrame = fn => { VT.raf.push(fn); return VT.raf.length; };   // 0.40c 다중 콜백 대기열 (선택창 fitChoices 등 보조 rAF가 주 반복을 덮어쓰지 않도록)
   window.__onErr = e => VT.errs.push({ m: String(e && e.message).slice(0, 160), s: String(e && e.stack || '').split('\n').slice(0, 3).join(' | ').slice(0, 300) });
   VT.fire = () => {
     for (let g = 0; g < 200; g++) {
@@ -58,7 +58,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
   }
   Object.assign(H, { rc: 0, renEvery, stepMs: 0, steps: 0, renMs: 0, renders: 0, flow: [] });
   const wall0 = VT.realNow();
-  const tick = () => { VT.now += 1000 / 60; VT.fire(); const cb = VT.raf; VT.raf = null; if (cb) cb(VT.now); else H.flow.push('raf_lost'); };
+  const tick = () => { VT.now += 1000 / 60; VT.fire(); const q = VT.raf; VT.raf = []; if (q.length) for (const cb of q) cb(VT.now); else H.flow.push('raf_lost'); };
   const click = (id, tag) => { const b = document.getElementById(id); if (b) b.click(); else H.flow.push('no_btn_' + (tag || id)); };
   STATE.dev.demon = demon === 'mix' ? (idx % 2 ? 'retry' : 'final') : demon || null;   // 0.12 판 구조 지정 (새 판 생성 전)
   if (rot) STATE.dev.gk = GK_ORDER[idx % 4];
