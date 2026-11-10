@@ -182,3 +182,13 @@
 
 - choice2 실제 서비스 확인: v0.40-choice2. 소스 f9db249f5b73192f7b5f4806e7e105eeef644478, 게임 자동 빌드 7a4ab2c837b8a7a7b2c1de0ee4c07aecd703ae04, 서비스 빌드 05d5d2545e7e34651aeac20fcb92899219d68e66, 게시 ebfb972bb4d52ab635a1a59a29d44224ee8fe652. 실제 URL에서 320/390/690px 출발 선택지 전체와 무스크롤, 두 번 확정, 선택 후 이동/전투, 일시정지/재개·폭 변경·동작 줄이기 확인. 실제 폴드8 하드웨어 검사는 아님.
 - 실제 서비스 검사: dev/verify-live-choice.cjs 및 dev/choice-live-validation.json. 화면 dev/choice2/live-choice-390.png, live-choice-690.png. 과대한 choice1은 사용자 거부 기준으로 남기고 이후 작업은 작은 한 화면 비교를 우선.
+
+
+## 0.42 아트 분할 작업 — art1 (2026-11-11 한국시간)
+
+- 사용자 요청: 전체를 한 대화에서 진행하지 않고 작은 묶음별 검사·GitHub 반영·배포·인계 후 종료. 전체 후속 범위와 고정 조건은 ART42_PLAN.md에 보관. 이후 요청문 재전달 없이 이 문서부터 재개.
+- 1차 범위: 10직업 문장을 기존 UI SVG 체계로 제작하여 1차 전직 선택창·도감 직업 탭에 적용. 등록명 crest_warrior/rogue/sovereign/archer/engineer/chrono/mage/summoner/priest/druid. 대검·수리검·왕관 방패·활·기어 덫·모래시계·화염 구체·망령·신성 구체·잎/뿌리로 형태 구분. 기존 JOB_COL 팔레트 유지.
+- 파일: src/ui-art.js(원화·내장·실패 대체), src/select-art.js(choiceIcon 1차만), src/codex.js(cxCard/cxJob), src/config.js(0.42-art1), dev/check-crests.cjs, .github/workflows/check-art42.yml, .gitignore, ART42_PLAN.md. 게임 규칙·수치·저장 키·후보·확정 동작 변경 없음. build.sh 순서 미변경.
+- 미착수: 2차 문장 20종·시련·연성·기타 아이콘·설치물·소환물·상태·예고·외형 전체. 2차 선택은 공통 문장 유지. 현재 패치는 생성형 손그림 원화 제작이 아닌 기존 UI 전용 SVG 확장.
+- 로컬 build/check-build 통과. Chromium은 socket() Operation not permitted로 실행 불가. 검증용 art/042-crests 브랜치의 GitHub Actions에서 check-crests/choice/ui/art2와 vtest 2판 검증. 검사·배포 최종 결과는 아래 후속 기록 참조.
+- 다음 묶음: ART42_PLAN.md 2번을 우선 더 작은 범위로 분할(2차 문장과 시련·연성 문양을 각각 분리 가능). 작은 choice2 카드와 한 화면 비교 우선.

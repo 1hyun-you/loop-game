@@ -31,7 +31,7 @@ for (const id of Object.keys(UI_JOB_CREST)) UI_PATH['crest_'+id] = UI_JOB_CREST[
 function uiJobCrest(id, cls = '') {
   if (!UI_JOB_CREST[id]) return icBox('#8a86a0', '?');
   // Keep the former codex letter beneath the image for decoding failures.
-  return `<span class="ic px job-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><span hidden>${esc(JOBS[id].ic)}</span><img src="${uiIcon('crest_'+id)}" alt="" data-job-crest="${id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain" onerror="this.hidden=true;this.previousElementSibling.hidden=false"></span>`;
+  return `<span class="ic px job-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><span hidden>${esc(JOBS[id].ic)}</span><img src="${uiIcon('crest_'+id)}" alt="" data-job-crest="${id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
 }
 function uiIcon(k) {
   if (UI_ART.urls[k]) return UI_ART.urls[k];
