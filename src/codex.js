@@ -38,7 +38,7 @@ function cxSeen() {
 function cxCard(o) {
   const st = o.lock ? 'lock' : o.dim ? 'dim' : '';
   const L = o.lock ? [esc(o.hint || '')] : (o.lines || []).filter(Boolean), wrap = l => l.startsWith('<div') || l.startsWith('<details') ? l : `<p>${l}</p>`;
-  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : o.job ? uiJobCrest(o.job) : icBox(o.col, o.ic, o.id);
+  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : o.trial ? uiTrialCrest(o.trial) : o.job ? uiJobCrest(o.job) : icBox(o.col, o.ic, o.id);
   return `<div class="cx ${st}"><div class="cxt">${ic}<div class="cxb"><div class="cxh"><b>${esc(o.lock ? '???' : o.nm)}</b>${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}${o.dim ? '<span class="tag nw">미획득</span>' : ''}</div>${L.length ? wrap(L[0]) : ''}</div></div>${L.slice(1).map(wrap).join('')}</div>`;
 }
 const cxL = (k, v) => `<i>${esc(k)}</i> ${esc(v)}`;
@@ -89,7 +89,7 @@ function cxJob(id, seen) {
 function cxFuse() {
   const types = Object.entries(FZ_TYPES).map(([k, T]) => cxCard({ col: '#ffd27a', ic: T[0].slice(0, 1), nm: T[0], tag: k, lines: [`<b>${esc(T[2])}</b>`] })).join('');
   const jobs = JOB_ORDER.map(id => { const T = FZ_TRIAL[id], W = WEAPONS[FZ_SYMBOL[id]];
-    return cxCard({ col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name, tag: T.nm, lines: [`<b>${esc(T.ds)}</b>`, cxChips([['상징 무기', esc(W.name)], ['연성', esc(FZ_JOB[id])]]), `<details class="acc"><summary>상징 무기 효과</summary><div class="cxg"><div><b>${esc(W.name)}</b><span>${esc(FZ_SYM_TX[id])}</span></div></div></details>`] }); }).join('');
+    return cxCard({ trial: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name, tag: T.nm, lines: [`<b>${esc(T.ds)}</b>`, cxChips([['상징 무기', esc(W.name)], ['연성', esc(FZ_JOB[id])]]), `<details class="acc"><summary>상징 무기 효과</summary><div class="cxg"><div><b>${esc(W.name)}</b><span>${esc(FZ_SYM_TX[id])}</span></div></div></details>`] }); }).join('');
   return '<p class="hint">직업 시련 완수 시 Lv 6 무기 2종을 합침 · 판당 최대 2회 · 부품 무기는 슬롯을 차지하지 않음</p>' + types + '<h3>직업별 시련·연성</h3>' + jobs;
 }
 function cxEnemies(S) {

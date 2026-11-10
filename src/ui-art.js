@@ -54,6 +54,32 @@ const UI_JOB2_CREST = {
 for (const [k, v] of Object.entries(UI_JOB2_CREST)) {
   UI_PATH['crest_'+k] = ('<g transform="translate(0 7) scale(.72)">'+UI_JOB_CREST[v.job]+'</g>'+v.art).replace(/@/g, JOB_COL[v.job]);
 }
+// 0.42-art3: ten trial symbols; no changes to trial conditions or progress.
+const UI_TRIAL_CREST = {
+  warrior: '<path d="M12 10 24 5l12 5v17q-3 10-12 16-9-6-12-16Z" fill="@"/><path d="m24 11-5 12 7 2-5 12" stroke="#fff0d5" stroke-width="3" fill="none"/><path d="m3 19 7 5-7 5m42-10-7 5 7 5" stroke="url(#steel)" stroke-width="3" fill="none"/>',
+  rogue: '<ellipse cx="18" cy="13" rx="5" ry="8" transform="rotate(25 18 13)" fill="@"/><path d="m11 23 8 3-2 7-8-3Z" fill="@"/><ellipse cx="33" cy="27" rx="5" ry="8" transform="rotate(25 33 27)" fill="@"/><path d="m26 37 8 3-2 5-8-3Z" fill="@"/><path d="M4 9h7M3 16h7m8 20h6m-9 6h6" stroke="url(#steel)" stroke-width="3"/>',
+  sovereign: '<path d="m9 8 8 6 7-9 7 9 8-6-3 16H12Z" fill="@"/><path d="m9 29 27 14m3-14L12 43" stroke="url(#steel)" stroke-width="4"/><path d="m8 36 6-6m20 0 6 6" stroke="@" stroke-width="3"/><path d="M16 20h15" stroke="#fff2bf" stroke-width="2"/>',
+  archer: '<path d="M8 6Q38 23 8 41l8-18Z" fill="@"/><path d="m9 10 7 13-7 14" fill="none" stroke="url(#page)" stroke-width="2"/><path d="M20 24q12-14 24 0-12 14-24 0Z" fill="#30424a" stroke="@" stroke-width="3"/><circle cx="32" cy="24" r="4" fill="@"/><path d="M25 5v7m7-9v7m7-5v7" stroke="@" stroke-width="2"/>',
+  engineer: '<path d="M6 5h26l9 9v29H6Z" fill="#35434c" stroke="@" stroke-width="3"/><path d="M32 5v10h9M11 12h10M11 18h7M11 35h10" stroke="url(#steel)" stroke-width="2" fill="none"/><path d="m24 19 6-1 2 4 5 1v6l-5 1-2 5-6-1-1-5-4-2 1-6Z" fill="@"/><circle cx="28" cy="26" r="4" fill="#35434c"/>',
+  chrono: '<path d="M14 7h20M14 41h20" stroke="@" stroke-width="5"/><path d="M17 11q0 8 7 13-7 5-7 13h14q0-8-7-13 7-5 7-13Z" fill="url(#steel)"/><path d="m20 14 4 6 4-6m-4 15-5 6h10Z" fill="@"/><path d="M5 17v14m38-14v14" stroke="@" stroke-width="3"/><circle cx="5" cy="10" r="2" fill="@"/><circle cx="43" cy="38" r="2" fill="@"/>',
+  mage: '<path d="m24 3 5 11 12-7-5 13 10 4-11 5 6 13-13-7-4 11-5-11-13 7 6-13-10-5 11-4-7-13 13 7Z" fill="@"/><circle cx="24" cy="24" r="10" fill="#864e8c"/><path d="m24 15 4 9-4 9-4-9Z" fill="url(#page)"/>',
+  summoner: '<path d="M3 32V21q0-8 7-8t7 8v13l-5-3-4 5Z" fill="@"/><path d="M31 32V21q0-8 7-8t7 8v13l-5-3-4 5Z" fill="@"/><path d="M14 39V16q0-11 10-11t10 11v26l-6-4-4 6-4-6Z" fill="@"/><path d="m7 22 5 1m23 0 5-1m-22-4 4 2m5 0 4-2" stroke="#352c46" stroke-width="3"/>',
+  priest: '<path d="M7 11 24 5l17 6v15q-4 12-17 18Q11 38 7 26Z" fill="@"/><path d="M24 33 14 23q-5-10 4-10 4 0 6 5 2-5 6-5 9 0 4 10Z" fill="#504957"/><path d="M24 17v11m-5-6h10" stroke="#fffdf0" stroke-width="3"/>',
+  druid: '<path d="M13 29C1 27 3 13 7 5q14 3 10 18M35 29c12-2 10-16 6-24-14 3-10 18Z" fill="@"/><path d="M13 17v25m22-25v25" stroke="@" stroke-width="3"/><path d="M24 7q10 10 0 20-10-10 0-20Z" fill="@"/><path d="M24 27q-12 5 0 9t0 9" stroke="url(#page)" stroke-width="4" fill="none"/>',
+};
+for (const [id, art] of Object.entries(UI_TRIAL_CREST)) UI_PATH['trial_'+id] = art.replace(/@/g, JOB_COL[id]);
+function uiTrialCrest(id, cls = '') {
+  if (!UI_TRIAL_CREST[id]) return icBox('#8a86a0', '시', '', cls);
+  return `<span class="ic px trial-crest ${cls}" style="position:relative;background:${shadeHex(JOB_COL[id],.42)};border-color:${JOB_COL[id]}" aria-hidden="true"><i hidden style="font-style:normal">시</i><img src="${uiIcon('trial_'+id)}" alt="" data-trial-crest="${id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
+}
+// Observe the existing completion banner. Reuse its timing/opacity; never create one.
+function uiTrialBanner(c, b, alpha) {
+  const id = G.p.job, T = FZ_TRIAL[id];
+  if (!T || b.text !== T.nm || !b.sub || !b.sub.startsWith('연성 기회 ')) return false;
+  const im = UI_ART.images['crest_'+id]; if (!im) return false;
+  c.save(); c.globalAlpha = alpha; c.drawImage(im, VIEW.cw/2-18, VIEW.ch*.4-72, 36, 36); c.restore();
+  return true;
+}
 function uiJob2Crest(id, k, cls = '') {
   const v = UI_JOB2_CREST[k];
   if (!v || v.job !== id) return `<span class="ic choice-symbol ${cls}" aria-hidden="true"><img src="${uiIcon('crest')}" alt=""></span>`;

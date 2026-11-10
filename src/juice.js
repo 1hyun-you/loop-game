@@ -108,5 +108,6 @@ function drawBanner(c) {
   c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,0,0.7)';
   c.font = 'bold 22px system-ui, Galmuri11, sans-serif'; c.strokeText(b.text, W / 2, y - 6); c.fillStyle = b.color; c.fillText(b.text, W / 2, y - 6);
   if (b.sub) { c.font = 'bold 13px system-ui, Galmuri11, sans-serif'; c.strokeText(b.sub, W / 2, y + 17); c.fillStyle = '#fff'; c.fillText(b.sub, W / 2, y + 17); }
+  if (typeof uiTrialBanner === 'function') uiTrialBanner(c, b, a);
   c.globalAlpha = 1;
 }
