@@ -34,7 +34,7 @@ function sparkUp(x, y, n, cols, spread = 26) {
 /* 적 피격·처치 연계 (game.js damageEnemy·killEnemy에서 호출) */
 function jHit(e, dmg, o) {
   e.flash = o.crit ? 0.14 : JUICE.flash;
-  vfxHit(e, o.crit);
+  vfxHit(e, o.crit, o);
   if (o.crit) fx({ kind: 'ring', x: e.x, y: e.y, r0: e.r * 0.6, r1: e.r + 14, dur: 0.18, color: '#ffe08a' });
   if (SETTINGS.dmgNum) dmgNum(e, dmg, o.crit);
 }

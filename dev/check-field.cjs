@@ -10,7 +10,7 @@ function ok(v,n){if(!v)throw Error(n);report.checks.push(n);}
  try{
   const p=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});p.on('pageerror',e=>report.errors.push(e.message));
   await p.goto('http://127.0.0.1:8794/');await p.waitForFunction(()=>typeof FIELD_ENV!=='undefined'&&FIELD_ENV.loaded===2&&ART3.loaded===4&&FIELD_ART.ready.hero);
-  ok(await p.locator('.ver').innerText()==='v0.40-field1a','field version and both embedded assets loaded');
+  ok(await p.locator('.ver').innerText()==='v'+await p.evaluate(()=>CFG.VERSION),'field version and both embedded assets loaded');
   const seams=await p.evaluate(()=>{const cv=document.createElement('canvas');cv.width=cv.height=512;const c=cv.getContext('2d',{willReadFrequently:true});c.fillStyle=groundPattern(c,'field');c.fillRect(0,0,512,512);const d=c.getImageData(0,0,512,512).data;let max=0;for(let i=0;i<512;i++)for(let k=0;k<3;k++)max=Math.max(max,Math.abs(d[(i*512)*4+k]-d[(i*512+511)*4+k]),Math.abs(d[i*4+k]-d[(511*512+i)*4+k]));return max;});ok(seams===0,'opposing terrain edge pixels match after cached seam blend');
   const fixture=()=>{newRun();G.pendingStart=false;G.storyOn=true;hideUI();STATE.mode='pause';STATE.dev.speed=0;STATE.dev.fps=false;STATE.dev.god=true;GD.cur=null;G.jc=null;G.p.x=G.p.y=0;G.p.face={x:1,y:0};G.p.weapons=[];addWeapon('cleave');recalc();G.p.hp=100;G.time=15;G.enemies=[];for(const [type,x,y]of [['slime',-55,85],['bat',80,65],['skel',-80,-60],['brute',80,-100]])G.enemies.push(makeEnemy(type,x,y));G.pools=[];G.fx=[];G.ph.id='field';G.ph.inGap=false;G.ph.order=['field'];TER.cur='field';TER.prev=null;TER.k=1;};
   await p.evaluate(fixture);await p.screenshot({path:path.join(out,'after-390.png')});

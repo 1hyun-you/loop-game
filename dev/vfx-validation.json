@@ -7,7 +7,7 @@
     "glow cache capped at 16",
     "particles/effects expire through simulation updates",
     "new run resets visual state",
-    "baseline parity: explosion/sector hits, knockback, damage, healing, ranges, durations and save key",
+    "explosion and sector boundary fixture",
     "live mixed melee/fire/lightning/ice gameplay",
     "reduced-motion changes detected without reload",
     "reduced-motion suppresses projectile accents",
@@ -69,7 +69,7 @@
     "saveKey": "hoegwi_main_v1"
   },
   "play": {
-    "time": 6.033100000000023,
+    "time": 6.032900000000014,
     "error": false,
     "particles": 0
   },
@@ -79,8 +79,8 @@
       "effects": 120,
       "particles": 180
     },
-    "meanMs": 0.5866666664679845,
-    "p95Ms": 1.100000023841858,
+    "meanMs": 0.8349999994039535,
+    "p95Ms": 1.5,
     "samples": 120
   }
 }

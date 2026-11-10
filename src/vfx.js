@@ -26,12 +26,13 @@ function vfxLine(c, pts, width, color, alpha) {
   c.globalAlpha = alpha; c.strokeStyle = color; c.lineWidth = width;
   c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
 }
-function vfxHit(e, crit) {
+function vfxHit(e, crit, source = {}) {
   if (VFX.reduced.matches || G.fx.length >= (vfxLite() ? 60 : 120)) return;
   const v = vfxState(), last = v.hits.get(e);
   if (last !== undefined && G.time - last < 0.10) return;
   v.hits.set(e, G.time);
-  fx({ kind: 'glint', x: e.x, y: e.y, r: Math.min(12, e.r * 0.6), a: vfxRand(Math.PI), color: crit ? '#f2d48a' : '#e9ddbd', dur: crit ? 0.19 : 0.12 });
+  const a=Math.atan2(e.y-(source.fy??G.p.y),e.x-(source.fx??G.p.x)),contact=Math.min(e.r*.4,5);
+  fx({ kind: 'glint', x: e.x-Math.cos(a)*contact, y: e.y-Math.sin(a)*contact, r: Math.min(12, e.r * 0.6), a, crit:!!crit, color: crit ? '#f2d48a' : '#e9ddbd', dur: crit ? 0.19 : 0.12 });
 }
 function vfxHeal() {
   if (VFX.reduced.matches) return;
@@ -107,6 +108,16 @@ function drawFx(c) {
       vfxLine(c, pts, 2.7, '#b9d6eb', 0.82 * fade); vfxLine(c, pts, 1, '#f4f0dc', fade);
       if (bolt) { paintedEffect(c,'lightning',ex,ey,17+12*k,.7*fade); }
     } else if (f.kind === 'slash' || f.kind === 'glint') {
+      if(f.kind==='glint') {
+        // Confirmed contact: a quick directional fan; crits add two short rays.
+        const L=f.r*(.45+Math.min(1,k*5)*.8),a=f.a||0;
+        for(const da of (f.crit?[-1.15,-.5,0,.5,1.15]:[-.65,0,.65])) {
+          const ux=Math.cos(a+da),uy=Math.sin(a+da),inner=L*k*.6;
+          vfxLine(c,[[x+ux*inner,y+uy*inner],[x+ux*L,y+uy*L]],da===0?1.8:1.1,f.color,.88*fade);
+        }
+        if(k<.3&&!lite)vfxGlow(c,x,y,4,'#f8e6ba',.4*(1-k/.3));
+        continue;
+      }
       const glint = f.kind === 'glint', L = glint ? f.r * (0.5 + k) : 26 * (0.6 + Math.min(1, k * 4) * 0.4);
       for (const da of [0.5, -0.5]) {
         const a = (f.a || 0) + da, ux = Math.cos(a), uy = Math.sin(a);

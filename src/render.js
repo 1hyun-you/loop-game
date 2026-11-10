@@ -123,9 +123,11 @@ function drawEnemySprites(c, list) {
   if (!list.length) return;
   for (const e of list) fieldContactShadow(c,e.x,e.y+e.r*.95,e.r,e.type==='bat'||e.type==='wisp');
   for (const e of list) {
-    const nm = spriteFor(e), fr = Math.floor(G.time * (e.type === 'bat' ? 8 : 4) + e.id * 0.37) & 1, flip = G.p.x < e.x, mul = spriteMul(e), by = e.y + e.r * 0.95;
+    const nm = spriteFor(e), pose = motionPose(e), fr = pose.frame, flip = pose.flip, mul = spriteMul(e), by = e.y + e.r * 0.95;
+    c.save(); motionTransform(c,e.x,by,pose);
     if (e.elite || e.rage || e.thief) drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.rage ? 'rage' : 'gold' });
     drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.flash > 0 ? 'white' : 'n' });
+    c.restore();
   }
 }
 /* 지면: 장판·잔상·보물 상자·전직 제단·지뢰 */
@@ -177,9 +179,7 @@ function drawPlayer(c) {
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
   fieldContactShadow(c,p.x,p.y+p.r*1.1,p.r);
   drawJobAura(c);                                           // 0.26 직업 문양
-  const mv = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.05; p._lx = p.x; p._ly = p.y;   // 이동 중 걷기 동작 (0.19)
-  if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;
-  drawHeroReact(c, mv ? Math.floor(G.time * 8) & 1 : 0, !!p._fl, heroTint());   // 0.26 직업 색 옷   // 색상 변형 (0.15)
+  drawHeroReact(c, 0, false, heroTint());   // motion.js: completed movement drives visual poses; repainting is read-only
   const w = 30, h = 4, x = p.x - w / 2, y = p.y - p.r - 12;
   uiBar(c, x, y, w, h, p.hp / p.maxHp, p.hp / p.maxHp > 0.3 ? '#a7c79c' : '#d58c86');
   if(p.shield)paintedAura(c,'shield',p.x,p.y,p.r+9,.72);

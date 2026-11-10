@@ -1,0 +1,233 @@
+{
+  "checks": [
+    "distance-driven walking stops without repaint-dependent stepping",
+    "melee ranged and magic use distinct release/recovery poses",
+    "confirmed-hit recoil follows incoming direction",
+    "repainting preserves game/animation state, random stream and canvas state",
+    "frozen bodies, teleports and new-run reset",
+    "five bosses: restrained walk/brace/dash/hit poses preserve danger geometry",
+    "reduced motion disables added poses and impact accents",
+    "360-tick baseline parity: positions, damage, weapon cooldowns, AI, projectiles, stats, save key and gameplay RNG",
+    "live mixed combat",
+    "pause remains available",
+    "no runtime errors"
+  ],
+  "errors": [],
+  "poses": {
+    "walk": {
+      "x": 0,
+      "y": -0.8678400091286832,
+      "sx": 1.0142010183311967,
+      "sy": 0.9857989816688034,
+      "a": 0.022090472959639208,
+      "frame": 0,
+      "flip": false
+    },
+    "idle": {
+      "x": 0,
+      "y": 0,
+      "sx": 1,
+      "sy": 0.9935843491645906,
+      "a": 0,
+      "frame": 0,
+      "flip": false
+    },
+    "attacks": [
+      {
+        "x": 0.9823958076267628,
+        "y": 0.3929583230507051,
+        "sx": 1.055,
+        "sy": 0.9538409751980069,
+        "a": -0.105,
+        "frame": 0,
+        "flip": false
+      },
+      {
+        "x": -1.1335336241847263,
+        "y": -0.45845137689248927,
+        "sx": 1.055,
+        "sy": 0.9538409751980069,
+        "a": 0.055,
+        "frame": 0,
+        "flip": false
+      },
+      {
+        "x": -1.1335336241847263,
+        "y": -0.45845137689248927,
+        "sx": 1.025,
+        "sy": 0.9588088969438299,
+        "a": 0.035,
+        "frame": 0,
+        "flip": false
+      }
+    ],
+    "hitRight": {
+      "x": 1.0346232893145286,
+      "y": 0,
+      "sx": 1.034487442977151,
+      "sy": 0.965512557022849,
+      "a": 0.04483367587029624,
+      "frame": 0,
+      "flip": false
+    },
+    "hitLeft": {
+      "x": -1.4484726050403403,
+      "y": 0,
+      "sx": 1.034487442977151,
+      "sy": 0.965512557022849,
+      "a": -0.04483367587029624,
+      "frame": 0,
+      "flip": false
+    },
+    "readOnly": true,
+    "restored": true,
+    "calls": 0,
+    "pauseStable": true,
+    "frozen": {
+      "x": -1.4484726050403403,
+      "y": 0,
+      "sx": 1.034487442977151,
+      "sy": 0.965512557022849,
+      "a": -0.04483367587029624,
+      "frame": 0,
+      "flip": false
+    },
+    "teleport": {
+      "x": 0,
+      "y": 0,
+      "sx": 1,
+      "sy": 0.993347684112778,
+      "a": 0,
+      "frame": 0,
+      "flip": false
+    },
+    "reset": true
+  },
+  "bosses": [
+    {
+      "name": "bargan",
+      "act": "walk",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "bargan",
+      "act": "tele",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "bargan",
+      "act": "dash",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "bargan",
+      "act": "hit",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "igna",
+      "act": "walk",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "igna",
+      "act": "tele",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "igna",
+      "act": "dash",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "igna",
+      "act": "hit",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "morden",
+      "act": "walk",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "morden",
+      "act": "tele",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "morden",
+      "act": "dash",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "morden",
+      "act": "hit",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "seren",
+      "act": "walk",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "seren",
+      "act": "tele",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "seren",
+      "act": "dash",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "seren",
+      "act": "hit",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "demon",
+      "act": "walk",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "demon",
+      "act": "tele",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "demon",
+      "act": "dash",
+      "bounded": true,
+      "hazards": true
+    },
+    {
+      "name": "demon",
+      "act": "hit",
+      "bounded": true,
+      "hazards": true
+    }
+  ],
+  "replay": {
+    "calls": 206,
+    "time": 5.999999999999984,
+    "enemies": 7
+  }
+}
