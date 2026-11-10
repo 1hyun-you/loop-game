@@ -10,11 +10,11 @@
     "reduced motion"
   ],
   "errors": [],
-  "version": "v0.40-choice1",
+  "version": "v0.40-choice2",
   "movement": {
-    "x": 197.74499999999992,
+    "x": 197.69999999999996,
     "y": 0,
-    "time": 2.165799999904632,
+    "time": 2.165199999976158,
     "tracked": true,
     "error": false
   }

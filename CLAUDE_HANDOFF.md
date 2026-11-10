@@ -179,3 +179,6 @@
 - 검증: check-choice.cjs의 12상황 내용 동등성, 다시 뽑기/제외/전직/내 능력/도감/확정 및 게임 난수 보존, 화면 경계 및 가장 긴 3직업 검사 통과. check-art2.cjs의 320 스프라이트 조합·시작 선택·실제 전투·일시정지 통과. check-build.cjs 통과. check-scale.cjs의 카드 그림/글자 크기 기대값은 현재의 작은 카드에 맞춰 갱신.
 - 화면: 로컬 dev/choice2/, 비교본 ../baseline-choice1.html. 상세 검사 dev/choice-validation.json. 실제 폴드8 실기기를 조작한 검사는 아니므로 사용자 체감 확인이 필요.
 - 다음 대화에서는 choice1의 큰 카드 방향을 다시 적용하지 말 것. 도감 개편은 아직 하지 않았으며 사용자의 후속 지시에 따라 별도 범위를 정할 것.
+
+- choice2 실제 서비스 확인: v0.40-choice2. 소스 f9db249f5b73192f7b5f4806e7e105eeef644478, 게임 자동 빌드 7a4ab2c837b8a7a7b2c1de0ee4c07aecd703ae04, 서비스 빌드 05d5d2545e7e34651aeac20fcb92899219d68e66, 게시 ebfb972bb4d52ab635a1a59a29d44224ee8fe652. 실제 URL에서 320/390/690px 출발 선택지 전체와 무스크롤, 두 번 확정, 선택 후 이동/전투, 일시정지/재개·폭 변경·동작 줄이기 확인. 실제 폴드8 하드웨어 검사는 아님.
+- 실제 서비스 검사: dev/verify-live-choice.cjs 및 dev/choice-live-validation.json. 화면 dev/choice2/live-choice-390.png, live-choice-690.png. 과대한 choice1은 사용자 거부 기준으로 남기고 이후 작업은 작은 한 화면 비교를 우선.
