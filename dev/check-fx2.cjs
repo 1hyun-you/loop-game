@@ -7,7 +7,7 @@ fs.mkdirSync(out,{recursive:true});function ok(v,n){if(!v)throw Error(n);report.
  try{
  const p=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});p.on('pageerror',e=>report.errors.push(e.message));
  await p.goto('http://127.0.0.1:8792/');await p.waitForFunction(()=>typeof EFFECT_ART!=='undefined'&&EFFECT_ART.image&&ART3.loaded===4);
- ok(await p.locator('.ver').innerText()==='v0.40-scale1','version and embedded atlas loaded');
+ ok(await p.locator('.ver').innerText()==='v'+await p.evaluate(()=>CFG.VERSION),'version and embedded atlas loaded');
  await p.evaluate(()=>{newRun();STATE.mode='pause';hideUI();G.pendingStart=false;G.storyOn=true;G.p.job='engineer';G.p.job2='mechanic';G.p.exw1={id:'engineer',t:.4};G.p.exw={id:'engineer',t:1.1};G.p.weapons=[];for(const id of ['cleave','fireball','lightning','icering','orb'])addWeapon(id);G.p.passives=['vit','magnet','haste','might','regen'].map(id=>({id,lvl:3}));recalc();G.kills=12345;G.time=725;G.p.level=38;STATE.dev.fps=false;GD.cur=null;});
  report.layout=await p.evaluate(()=>{const rows=[];for(const width of [280,320,360,390,412,690,768,844,1366])for(const sat of [0,28]){
   const L=hudLayout(width,sat),tiles=[];for(let i=0;i<5;i++)tiles.push(L.tile(i,0),L.tile(i,1));for(let i=0;i<2;i++)tiles.push(L.tile(i,0,true,2));for(let i=0;i<3;i++)tiles.push(L.tile(i,1,true,3));const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;

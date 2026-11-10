@@ -13,7 +13,7 @@ function ok(v,n){if(!v)throw Error(n);report.checks.push(n);}
   const p=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
   p.on('pageerror',e=>report.errors.push(e.message));await p.goto('http://127.0.0.1:8793/');
   await p.waitForFunction(()=>typeof EFFECT_ART!=='undefined'&&EFFECT_ART.image&&ART3.loaded===4&&FIELD_ART.ready.hero);
-  ok(await p.locator('.ver').innerText()==='v0.40-scale1','scale version and embedded art loaded');
+  ok(await p.locator('.ver').innerText()==='v'+await p.evaluate(()=>CFG.VERSION),'scale version and embedded art loaded');
   const baseline=process.env.SCALE_BASELINE_HTML?await browser.newPage():null;
   if(baseline){await baseline.goto('http://127.0.0.1:8793/baseline');await baseline.evaluate(()=>{STATE.mode='pause';});}
   await p.evaluate(()=>{newRun();G.pendingStart=false;G.storyOn=true;STATE.mode='pause';hideUI();STATE.dev.speed=0;STATE.dev.fps=false;STATE.dev.god=true;GD.cur=null;G.jc=null;G.p.weapons=[];for(const id of ['cleave','fireball','lightning','icering','orb'])addWeapon(id);G.p.passives=['vit','magnet','haste','might','regen'].map(id=>({id,lvl:3}));G.p.job='engineer';G.p.job2='mechanic';G.p.exw1={id:'engineer',t:.2};G.p.exw={id:'engineer',t:.5};recalc();G.p.x=G.p.y=0;G.p.hp=73;G.time=725;G.kills=12345;G.p.level=38;G.enemies=[];

@@ -69,9 +69,9 @@
     "saveKey": "hoegwi_main_v1"
   },
   "play": {
-    "time": 6.016500000000018,
+    "time": 6.033100000000023,
     "error": false,
-    "particles": 3
+    "particles": 0
   },
   "renderBenchmark": {
     "fixture": {
@@ -79,8 +79,8 @@
       "effects": 120,
       "particles": 180
     },
-    "meanMs": 0.5399999996026357,
-    "p95Ms": 0.8999999761581421,
+    "meanMs": 0.5866666664679845,
+    "p95Ms": 1.100000023841858,
     "samples": 120
   }
 }

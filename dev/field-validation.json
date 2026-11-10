@@ -1,0 +1,790 @@
+{
+  "checks": [
+    "optimized props retain real transparent margins",
+    "field version and both embedded assets loaded",
+    "static decoration is deterministic and consumes no gameplay random numbers {\"randoms\":0,\"state\":true,\"deterministic\":true,\"readOnly\":true,\"order\":[\"scenery\",\"danger\",\"player\"],\"props\":5,\"patchCache\":2}",
+    "scenery and shadows do not mutate gameplay state",
+    "canvas state and decoration cache/budget bounded",
+    "all scenery rendered underneath danger areas and characters",
+    "all fourteen terrain colors and crossfades render",
+    "normal character outlines have transparent top/bottom safety margins",
+    "missing field image falls back to prior ground and skips props",
+    "live mixed combat on new field",
+    "pause works",
+    "reduced motion and no runtime errors"
+  ],
+  "errors": [],
+  "render": {
+    "randoms": 0,
+    "state": true,
+    "deterministic": true,
+    "readOnly": true,
+    "order": [
+      "scenery",
+      "danger",
+      "player"
+    ],
+    "props": 5,
+    "patchCache": 2
+  },
+  "terrains": [
+    {
+      "tid": "field",
+      "props": 10,
+      "cache": 1,
+      "valid": true
+    },
+    {
+      "tid": "calm",
+      "props": 5,
+      "cache": 2,
+      "valid": true
+    },
+    {
+      "tid": "fog",
+      "props": 5,
+      "cache": 3,
+      "valid": true
+    },
+    {
+      "tid": "camp",
+      "props": 5,
+      "cache": 4,
+      "valid": true
+    },
+    {
+      "tid": "surge",
+      "props": 5,
+      "cache": 5,
+      "valid": true
+    },
+    {
+      "tid": "warband",
+      "props": 5,
+      "cache": 6,
+      "valid": true
+    },
+    {
+      "tid": "hunt",
+      "props": 5,
+      "cache": 7,
+      "valid": true
+    },
+    {
+      "tid": "siege",
+      "props": 5,
+      "cache": 8,
+      "valid": true
+    },
+    {
+      "tid": "seal",
+      "props": 5,
+      "cache": 9,
+      "valid": true
+    },
+    {
+      "tid": "escort",
+      "props": 5,
+      "cache": 10,
+      "valid": true
+    },
+    {
+      "tid": "ritual",
+      "props": 5,
+      "cache": 11,
+      "valid": true
+    },
+    {
+      "tid": "collapse",
+      "props": 5,
+      "cache": 12,
+      "valid": true
+    },
+    {
+      "tid": "gate",
+      "props": 5,
+      "cache": 13,
+      "valid": true
+    },
+    {
+      "tid": "demon",
+      "props": 5,
+      "cache": 14,
+      "valid": true
+    }
+  ],
+  "sprites": [
+    {
+      "name": "hero",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "hero",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "hero",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "hero",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "hero",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "slime",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "slime",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "slime",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "slime",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "slime",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bat",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bat",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bat",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bat",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bat",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "brute",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "brute",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "brute",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "brute",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "brute",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bargan",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bargan",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bargan",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bargan",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bargan",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "demon",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "demon",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "demon",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "demon",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "demon",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "wolf",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "wolf",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "wolf",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "wolf",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "wolf",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bear",
+      "mode": "n",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "n",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "n",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "n",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "white",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "white",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "white",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "white",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": true
+    },
+    {
+      "name": "bear",
+      "mode": "gold",
+      "fr": 0,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bear",
+      "mode": "gold",
+      "fr": 1,
+      "flip": false,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bear",
+      "mode": "gold",
+      "fr": 0,
+      "flip": true,
+      "clearTopBottom": false
+    },
+    {
+      "name": "bear",
+      "mode": "gold",
+      "fr": 1,
+      "flip": true,
+      "clearTopBottom": false
+    }
+  ]
+}

@@ -28,7 +28,7 @@
   "play": {
     "time": 4.549800000000001,
     "mode": "play",
-    "enemies": 4,
+    "enemies": 9,
     "canvasError": false,
     "cache": 128
   }

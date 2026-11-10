@@ -1,6 +1,6 @@
 # 클로드 후속 작업 전달
 
-- 최신 패치 `0.40-scale1`: 전투 카메라와 UI를 독립적으로 확대. 기존 art1~art3·fx2 손그림과 전투 계산 보존. 이 문서 마지막의 scale1 항목 우선.
+- 최신 패치 `0.40-field1`: 풀·흙 바닥, 소품 4종, 접촉 그림자와 캐릭터 외곽 개선. scale1 카메라·UI와 기존 art1~art3·fx2 전투 계산 보존. 이 문서 마지막 field1 항목 우선.
 - 작업 시작 전 두 저장소의 최신 main 및 최근 커밋 확인 필요.
 - 게임 원본: `1hyun-you/loop-game`.
 - 실제 서비스: `1hyun-you/1hyun-you.github.io`의 `field/index.html`.
@@ -102,3 +102,16 @@
 - 다음 첫 작업: 두 저장소 main·`field/source-ref.json`·실제 서비스 `v0.40-scale1` 확인 후 폴드8에서 접은 화면과 펼친 화면의 체감 크기 피드백 확인. 크기 확정 후 필드 지형·그림자·실루엣 개선 여부를 사용자와 정할 것.
 
 - 배포 완료 확인: 소스 `961b6657652f74d57a3e81ea616b68a18f2c8d49`, 서비스 빌드 `7a435bb07c4fa7a1cc6a7913467cd26f0fc1bf5d`, 게시 `00623c484fd85a1cef2417887442c05372a22b77`. 서비스 Pages 게시 성공 및 실제 URL의 `v0.40-scale1` 확인. 실제 서비스에서 출발 무기 선택·전투·레벨업 선택·재시작·일시정지·재개, 390↔690px 폭 변경 확인. 실제 폴드8 실기기 확인은 아님.
+
+## 최신 인계 — 0.40-field1 (2026-11-10)
+
+- 목표·확정 방향: 사용자가 승인한 첫 번째 아트 개선안(필드와 캐릭터의 조화). 기존 손그림 판타지 시점·조명·주인공의 금발/파란 의상 유지. 동작·타격 타이밍과 선택창 재디자인은 이번 범위 아님. scale1의 확대 설정 유지.
+- 완료 구현: 새 풀·흙 바닥과 풀/돌/마른풀/들꽃 소품 4종, 부드러운 큰 색 덩어리, 주인공·적 접촉 그림자, 일반 상태 캐릭터의 자주색 외곽 보강. 소품은 바닥 장식으로 충돌·보상 없음. 게임 로직·데이터·저장 키 변경 없음.
+- 파일: `assets/field1/{meadow.webp,props.webp,manifest.json,prompts.json,ground-revision.txt}`, `src/field-data.js`, `src/field-art.js`, `dev/pack-field.cjs`, `dev/check-field.cjs`. 연결 수정은 build.sh, art-theme.js, render.js, sprite.js, 버전 config.js. 기존 이미지 모두 보존.
+- 원본 위치: 담당자 작업 폴더 `C:/Users/PC/Documents/ChatGPT/제작 2/art-originals/field1/`. 최종 PNG 2종과 생성 기록 전달본 `C:/Users/PC/Documents/ChatGPT/제작 2/outputs/field1_아트원본_제작기록.zip`. Git에는 배포용 WebP와 내장 데이터·원본 해시·프롬프트 보관. 임시 생성 폴더에만 원본을 두지 않음.
+- 빌드: field-data/field-art를 ui-art 다음, main 이전에 결합. 새 원본 변환 시 `node dev/pack-field.cjs <ground.png> <props.png>`(sharp 필요). 최적화본에서 내장 데이터만 다시 묶을 때는 인수 없이 pack, 이어서 `node dev/build.cjs`.
+- 필수 보존: `VIEW.w/h`와 cameraW/H 분리. 장식 배치는 좌표 해시만 사용하고 게임 난수·G 객체를 변경하지 않음. 바닥 장식은 보스/적의 공격 예고보다 먼저 그려야 함. 최대 소품 36회, 색 덩어리 캐시 4개, 바닥 캐시 16개. 어두운 지형은 돌만 낮은 불투명도로 표시.
+- 검증: 신규 field 검사에서 실제 알파·반복 동일성·그리기 상태 복원·게임 난수 미사용·G 불변·위험 예고 아래 배치·14개 지형/전환·원화 누락 대체·캐릭터 안전 여백·혼합 전투·일시정지·동작 줄이기 확인. 기존 art2 320조합, art3 820조합, fx2의 10직업/20전직, scale의 280~1366px와 폭 변경, vfx의 scale1 대비 피해/밀림/회복/범위/시간/저장 키 비교 유지. 결과는 dev/*-validation.json.
+- 비교·화면: 이전 통합본 로컬 `../baseline-scale1.html`. 전후 및 화면 폭별 캡처는 로컬 dev/field1/, Git에서 제외. 전체 판 재현·실기기 FPS를 보장하는 검사는 아님.
+- 소스/배포 위치: 게임 저장소 main의 field1 패치, 서비스 field/source-ref.json의 정확한 소스 SHA와 field/version.json의 빌드/게시 기록을 기준으로 확인. 실제 URL https://1hyun-you.github.io/field/ 에서 v0.40-field1 확인 필요.
+- 남은 확인·다음 첫 작업: 실제 폴드8에서 크기·풀밭 대비·소품 밀도·장시간 성능에 대한 사용자 평가. 다음 담당자는 두 저장소와 위 버전 기록부터 읽고, 2번 동작/타격감 또는 3번 선택창 디자인은 새 사용자 지시가 있을 때 진행.

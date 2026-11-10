@@ -24,6 +24,7 @@ function render() {
   const inView = (x, y, r) => x + r > vx0 && x - r < vx1 && y + r > vy0 && y - r < vy1;
   EFFECT_ART.count=0;
   drawGround(c, camX, camY);
+  drawFieldScenery(c, camX, camY);
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -120,9 +121,7 @@ function drawEnemies(c, inView) {
 /* 도트 적 그리기: 그림자 → (엘리트 금색 외곽선) → 본체/피격 반짝임, 플레이어 방향으로 좌우 반전 */
 function drawEnemySprites(c, list) {
   if (!list.length) return;
-  c.fillStyle = 'rgba(0,0,0,0.2)'; c.beginPath();
-  for (const e of list) { c.moveTo(e.x + e.r, e.y + e.r * 0.8); c.ellipse(e.x, e.y + e.r * 0.8, e.r, e.r * 0.32, 0, 0, 7); }
-  c.fill();
+  for (const e of list) fieldContactShadow(c,e.x,e.y+e.r*.95,e.r,e.type==='bat'||e.type==='wisp');
   for (const e of list) {
     const nm = spriteFor(e), fr = Math.floor(G.time * (e.type === 'bat' ? 8 : 4) + e.id * 0.37) & 1, flip = G.p.x < e.x, mul = spriteMul(e), by = e.y + e.r * 0.95;
     if (e.elite || e.rage || e.thief) drawSprite(c, nm, fr, e.x, by, { flip, mul, mode: e.rage ? 'rage' : 'gold' });
@@ -176,7 +175,7 @@ function drawJobUnits(c, inView) {
 function drawPlayer(c) {
   const p = G.p;
   if (p.invT > 0 && Math.floor(G.time * 14) % 2) return;
-  c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(p.x, p.y + p.r * 0.85, p.r, p.r * 0.35, 0, 0, 7); c.fill();
+  fieldContactShadow(c,p.x,p.y+p.r*1.1,p.r);
   drawJobAura(c);                                           // 0.26 직업 문양
   const mv = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.05; p._lx = p.x; p._ly = p.y;   // 이동 중 걷기 동작 (0.19)
   if (p.face.x < -0.05) p._fl = true; else if (p.face.x > 0.05) p._fl = false;

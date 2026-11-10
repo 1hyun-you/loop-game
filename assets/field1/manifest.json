@@ -1,0 +1,68 @@
+{
+  "version": "0.40-field1",
+  "frames": [
+    {
+      "name": "grass",
+      "x": 8,
+      "y": 69,
+      "w": 112,
+      "h": 51,
+      "source": {
+        "x": 146,
+        "y": 268,
+        "w": 337,
+        "h": 152
+      }
+    },
+    {
+      "name": "stones",
+      "x": 136,
+      "y": 61,
+      "w": 112,
+      "h": 59,
+      "source": {
+        "x": 772,
+        "y": 256,
+        "w": 346,
+        "h": 183
+      }
+    },
+    {
+      "name": "drygrass",
+      "x": 8,
+      "y": 173,
+      "w": 112,
+      "h": 75,
+      "source": {
+        "x": 190,
+        "y": 843,
+        "w": 268,
+        "h": 179
+      }
+    },
+    {
+      "name": "flowers",
+      "x": 136,
+      "y": 169,
+      "w": 112,
+      "h": 79,
+      "source": {
+        "x": 829,
+        "y": 862,
+        "w": 217,
+        "h": 153
+      }
+    }
+  ],
+  "sources": {
+    "ground": {
+      "file": "meadow-source.png",
+      "sha256": "a7984227ee3f89611fe466ddbc547301a63b4384024cc0d89b401870c603dfc7"
+    },
+    "props": {
+      "file": "props-source.png",
+      "sha256": "259e4b22c6de75eea744bbb96403ec140ae661b11251dc61e6061097c65cd65b"
+    }
+  },
+  "note": "Full generated PNG sources preserved in workspace art-originals/field1. Optimization/cropping only; genuine alpha preserved."
+}

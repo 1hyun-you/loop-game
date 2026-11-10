@@ -302,7 +302,8 @@ function getSprite(name, frame, opt) {
   const key = [name,fr,t,!!o.flip,mode,tint].join('|');
   if (FIELD_ART.cache.has(key)) return FIELD_ART.cache.get(key);
   const w = Math.max(...D.frames[0].map(row => row.length)), h = D.frames[0].length;
-  const glow = ['gold','rage','danger'].includes(mode), pad = glow ? 1 : 0;
+  const silhouette=name==='hero'||!!ENEMIES[name]||['bargan','igna','morden','seren','demon','wolf','bear','ghost'].includes(name);
+  const glow = ['gold','rage','danger'].includes(mode), pad = glow || silhouette ? 1 : 0;
   const cv = document.createElement('canvas'); cv.width = (w+2*pad)*t; cv.height = (h+2*pad)*t;
   const c = cv.getContext('2d'), f = art.frames[fr]; c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
   const stretch = name === 'pj_wind' || name === 'dbeam';
@@ -319,6 +320,12 @@ function getSprite(name, frame, opt) {
       }
     }
     c.putImageData(pixels,0,0);
+  }
+  if(silhouette&&mode==='n'){
+    const mask=document.createElement('canvas');mask.width=cv.width;mask.height=cv.height;const m=mask.getContext('2d');
+    m.drawImage(cv,0,0);m.globalCompositeOperation='source-in';m.fillStyle='#302738';m.fillRect(0,0,mask.width,mask.height);
+    const edge=Math.max(1,Math.round(VIEW.dpr*.6));c.save();c.globalCompositeOperation='destination-over';c.globalAlpha=.8;
+    for(const [x,y]of [[-1,0],[1,0],[0,-1],[0,1],[-.7,-.7],[.7,-.7],[-.7,.7],[.7,.7]])c.drawImage(mask,x*edge,y*edge);c.restore();
   }
   if (mode === 'white') { c.globalCompositeOperation='source-in'; c.fillStyle='#ffffff'; c.fillRect(0,0,cv.width,cv.height); c.globalCompositeOperation='source-over'; }
   if (glow) {

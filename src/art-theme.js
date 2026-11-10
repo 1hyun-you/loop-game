@@ -71,13 +71,18 @@ function art2Projectiles() {
   FIELD_ART.cache.clear();
 }
 function groundPattern(c,tid) {
-  if(!ART2.ground)return pixelGroundPattern(c,tid);
-  const ratio=VIEW.zoom*VIEW.dpr,size=Math.max(128,Math.round(256*ratio)),key=tid+'|'+size;
+  const meadow=FIELD_ENV.ground,ground=meadow||ART2.ground;
+  if(!ground)return pixelGroundPattern(c,tid);
+  const ratio=meadow?1:VIEW.zoom*VIEW.dpr,size=meadow?512:Math.max(128,Math.round(256*ratio)),key=tid+'|'+size+'|'+!!meadow;
   let pat=ART2.groundCache.get(key);
   if(!pat){
     const cv=document.createElement('canvas');cv.width=cv.height=size;const g=cv.getContext('2d');
-    g.drawImage(ART2.ground,0,0,size,size);g.globalCompositeOperation='color';
-    g.fillStyle=ART2_PALETTE[tid]||ART2_PALETTE.field;g.fillRect(0,0,size,size);g.globalCompositeOperation='source-over';
+    g.drawImage(ground,0,0,size,size);
+    if(meadow&&ART2.ground){g.globalAlpha=.24;g.drawImage(ART2.ground,0,0,size,size);g.globalAlpha=1;}
+    g.globalCompositeOperation='color';
+    g.globalAlpha=meadow&&['field','calm','camp','hunt','escort'].includes(tid)?.6:1;
+    g.fillStyle=ART2_PALETTE[tid]||ART2_PALETTE.field;g.fillRect(0,0,size,size);g.globalAlpha=1;g.globalCompositeOperation='source-over';
+    if(meadow){g.fillStyle='rgba(32,47,22,.12)';g.fillRect(0,0,size,size);}
     if(tid==='demon'||tid==='gate'){g.fillStyle=tid==='demon'?'rgba(18,10,35,.3)':'rgba(48,18,12,.12)';g.fillRect(0,0,size,size);}
     pat=c.createPattern(cv,'repeat');if(pat&&pat.setTransform)pat.setTransform(new DOMMatrix([1/ratio,0,0,1/ratio,0,0]));
     ART2.groundCache.set(key,pat);if(ART2.groundCache.size>16)ART2.groundCache.delete(ART2.groundCache.keys().next().value);
