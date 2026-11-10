@@ -2,7 +2,7 @@
 
 ## 새 대화 재개 요약 — 2026-11-10
 
-- 최신 작업: 사용자 지시로 2번 동작·타격감 개선 0.40-motion1 구현/검증. 아래 최신 항목 우선. 배포 확정 SHA는 서비스 field/source-ref.json 및 field/version.json 참조.
+- 최신 작업: 사용자 지시로 2번 동작·타격감 개선 0.40-motion1 구현/검증/실제 서비스 배포 완료. 아래 최신 항목 우선. 배포 확정 SHA는 서비스 field/source-ref.json 및 field/version.json 참조.
 - 현재 작업 폴더는 loop-game-field/. 원격 최신 bbe3567 기반 파일을 비교 확인하고 수정. 로컬 Git HEAD는 이전 작업과 마찬가지로 오래되어 git status만으로 배포 여부 판단 금지.
 
 - 현재 완료: scale1의 전투 화면 확대·UI 크기 조정, 이후 1번 필드/캐릭터 조화 개선과 타일 경계 보정까지 실제 배포 완료. 최종 `v0.40-field1a`.
@@ -144,3 +144,6 @@
 - 기존 check-field/check-scale/check-ui/check-fx2/check-vfx/check-art2/check-art3 통과. 320/390/690px 전투 화면과 280~1366px 기존 UI 검사, 320/820 스프라이트 조합 유지. 검사 결과 dev/*-validation.json, 동작 화면 dev/motion1/ (Git 제외).
 - 한계: 자동 Chromium 및 정지 화면 검토. 실제 폴드8의 체감 타격감·장시간 FPS 미확인. 360틱 비교는 해당 고정 시드/장비 조건에 한정하며 모든 판의 완전 동일성을 보장하는 검사는 아님.
 - 다음 항목은 3번 선택창 디자인 개편. 실제 기기 피드백을 반영하고 사용자 후속 지시에 따라 진행.
+
+- 최종 배포 완료: 실제 서비스 v0.40-motion1. 게임 소스 0707d1b35dd4a82720405fa12a1066d3e073fb68, 게임 자동 빌드 cb761b87c967b59ab0b3c5d5b0f77750df85448f, 서비스 빌드 96b247035a8a61eb36ef732eb7fcebc1b9460c50, 게시 356085965ebea2371815dd6c59145dce1264fb46. Pages 실행 42764096670 성공 확인.
+- 실제 URL에서 시작 대사·출발 무기 선택·포인터 이동과 MOTION 추적·일시정지/재개·390→690→390px 폭 변경·동작 줄이기 확인. 런타임 오류 없음. 재검사 dev/verify-live-motion.cjs, 결과 dev/motion-live-validation.json. 화면은 로컬 dev/motion1/live-*.png. 폴드8 실기기 확인은 아님.
