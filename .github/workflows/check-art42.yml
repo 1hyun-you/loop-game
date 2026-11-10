@@ -40,6 +40,7 @@ jobs:
           node dev/check-ui.cjs
           node dev/check-art2.cjs
       - name: Verify two virtual runs
+        if: ${{ !cancelled() }}
         timeout-minutes: 3
         run: |
           node dev/vtest.js 2 --speed 8 --cap 120 --render 30 --out dev/sim_log/art1.jsonl

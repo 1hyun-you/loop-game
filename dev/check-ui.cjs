@@ -33,9 +33,12 @@ const root=path.resolve(__dirname,'..'),report={checks:[],errors:[]};function ok
  // Force only the presentation phase predicate for a static boss-bar fixture.
  await p.evaluate(()=>{const c=document.getElementById('c').getContext('2d');c.setTransform(VIEW.dpr,0,0,VIEW.dpr,0,0);drawHUD(c);});
  await p.screenshot({path:root+'/dev/ui-boss-390.png'});
- await p.evaluate(()=>{G.gkMob=null;newRun();G.pendingStart=false;G.storyOn=true;G.p.job='engineer';G.p.weapons=[];addWeapon('fireball');recalc();STATE.dev.god=true;STATE.mode='play';hideUI();});await p.waitForTimeout(4500);
+ // Keep this a live HUD fixture: 0.42 defaults to 4x speed and can open a
+ // level-up choice before the pause button is inspected. Check normal speed
+ // with leveling disabled only inside this test; choice flows have own tests.
+ await p.evaluate(()=>{G.gkMob=null;newRun();G.pendingStart=false;G.storyOn=true;G.p.job='engineer';G.p.weapons=[];addWeapon('fireball');recalc();G.p.need=1e9;G.p.xp=0;STATE.dev.speed=1;STATE.dev.auto=false;STATE.dev.god=true;STATE.mode='play';hideUI();});await p.waitForTimeout(4500);
  const play=await p.evaluate(()=>({time:G.time,error:!!window.__errShown}));report.play=play;ok(play.time>2&&!play.error,'live engineer/fireball simulation');
- const pause=await p.locator('#pausebtn').evaluate(e=>{const r=e.getBoundingClientRect();return{w:r.width,h:r.height,x:r.x,right:r.right};});ok(pause.w>=44&&pause.h>=44&&pause.x>=0&&pause.right<=391,'44px pause target within screen');
+ const pause=await p.locator('#pausebtn').evaluate(e=>{const r=e.getBoundingClientRect();return{w:r.width,h:r.height,x:r.x,right:r.right,mode:STATE.mode};});ok(pause.w>=44&&pause.h>=44&&pause.x>=0&&pause.right<=391,'44px pause target within screen '+JSON.stringify(pause));
  await p.locator('#pausebtn').click();ok(await p.evaluate(()=>STATE.mode==='pause'),'new pause icon opens pause screen');
  await p.evaluate(()=>{STATE.mode='play';GD.cur={tx:'적이 남긴 보석을 모으면 레벨 업 · 카드 1장 선택'};GD.t=1;});
  await p.setViewportSize({width:320,height:568});await p.waitForTimeout(1350);
