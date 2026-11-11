@@ -35,7 +35,7 @@ const JOB43 = {
   druid: { pre: '야수', nm: '야수 무장', ds: '곰이 연성 무기로 강타, 늑대가 연성 무기를 물고 돌진' },
 };
 for (const j in JOB43) if (JOB_WX[j]) Object.assign(JOB_WX[j], { pre: JOB43[j].nm, ds: JOB43[j].ds });
-const fuseName = (j, id) => JOB43[j].pre + ' ' + WEAPONS[id].name;
+let fuseName = (j, id) => JOB43[j].pre + ' ' + WEAPONS[id].name;
 const F43 = () => G.f43 || (G.f43 = { trail: [], bat: null, wr: [], relicT: 0, kills0: 0, echoes: 0, fires: {} });
 const baseW = () => G.p.weapons.find(w => w.base);
 const slotWs = () => G.p.weapons.filter(w => !w.base);
