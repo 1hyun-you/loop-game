@@ -1,30 +1,34 @@
 {
-  "version": "0.42-art5",
-  "source": "170d3e82a598c2d3409fd02b98e7c81d22380e9e",
-  "workflow_run": 42931187554,
-  "artifact": 13815459701,
+  "version": "0.42-art4",
+  "source": "9a614f5c3e5bed95ee7c59a887c80fa87c1fb4d7",
+  "workflow_run": 42925333569,
+  "artifact": 13813881757,
   "checks": [
-    "build/check-build and git diff --check",
-    "15 RGBA portraits visually inspected at 96/40px",
-    "10 codex portrait checks locally and 10 against public production",
-    "existing crest, trial, fusion, choice, HUD and painted art regressions",
-    "2 virtual runs with no runtime errors and save retained",
-    "public HTML SHA-256 and version/source/build match"
+    "build/check-build",
+    "fuse-crests 31 checks including 1530 combination comparisons",
+    "trial-crests 83",
+    "job2-crests 113",
+    "crests 23",
+    "choice 78",
+    "ui 12",
+    "art2 11",
+    "vtest 2 runs, no runtime/page errors, save retained",
+    "48/38/24px sheet and 320/390/690px codex/ability inspection",
+    "live HTML byte equality and version/source/build equality"
   ],
   "errors": [],
   "deployment": {
-    "game_build": "33a55e5a18efa8efbd6f2f33258f2efa43abf0b2",
-    "game_build_run": 42931483302,
-    "service_source_ref": "80253b030bef869cf0d55f09c88b50ac50c3a004",
-    "service_build": "c034fe800465f52e2823e7131284031b0a8d8a74",
-    "service_publish": "da2a14f4a10d8ae2b81817f133e95316fd58c7f4",
-    "build_run": 42931496167,
-    "pages_run": 42931617313,
-    "sha256": "d5c03fc588c8fe0b0efb443165b78f6c80c8a933c540c6be8051a62c6a0f487b",
-    "bytes": 1863697
+    "game_build": "3b6adecc02cd5e41206810a0601a57e775256c11",
+    "service_source_ref": "f878475e6cef9e94cb926bfa5903cef6c3dd20e4",
+    "service_build": "0fa81c1cdce5435cc2b41c49d29788e47768f1af",
+    "service_publish": "79749f558c62c2ab331bace132134d18d6896241",
+    "build_run": 42925724591,
+    "pages_run": 42925793046,
+    "sha256": "ca781a221c081ef4d19a0a75baa4c32d32f4e3a73eadd3ede4e4e749de1f9899"
   },
   "limits": [
-    "No physical Fold8 or long-duration FPS test.",
-    "This batch covers the 15 enemy codex portraits."
+    "No physical Fold8 test or long-duration FPS test",
+    "Browser interaction verified on test source; production verified as byte-identical HTML",
+    "Only combination crest batch completed"
   ]
 }

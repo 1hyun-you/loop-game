@@ -61,6 +61,7 @@ function choiceType(c,f) {
 }
 function choiceIcon(c,f) {
   if(f.id)return icBox(f.col,f.ic,f.id);
+  if(c.t==='trait')return uiTraitIcon(c.id,f.col);
   if(c.t==='job'&&UI_JOB_CREST[c.id])return uiJobCrest(c.id);
   if(c.t==='job2'&&UI_JOB2_CREST[c.k]&&UI_JOB2_CREST[c.k].job===c.id)return uiJob2Crest(c.id,c.k);
   // Category symbols rather than pretending a shared weapon is unique job art.
