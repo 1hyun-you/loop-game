@@ -1,0 +1,46 @@
+name: Deploy field to site
+# 0.43 자동 배포: loop-game main 소스 변경 시 서비스 저장소 field/source-ref.json을 해당 커밋으로 갱신
+# → 서비스 저장소 build-field.yml이 게임 주소(1hyun-you.github.io/field/) 빌드·배포
+# 필요 비밀값: SITE_DEPLOY_TOKEN (1hyun-you.github.io 저장소 Contents 읽기·쓰기 전용 토큰)
+# 배포 제외: 커밋 메시지에 [skip deploy] 포함 시
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'build.sh', 'dev/build.cjs', 'dev/check-build.cjs', '.github/workflows/deploy-field.yml']
+  workflow_dispatch:
+concurrency:
+  group: deploy-field
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: ${{ !contains(github.event.head_commit.message, '[skip deploy]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: game
+          persist-credentials: false
+      - name: Validate the game build
+        id: game
+        run: |
+          node game/dev/build.cjs
+          node game/dev/check-build.cjs
+          node -e "const s=require('fs').readFileSync('game/src/config.js','utf8');const m=s.match(/VERSION:\s*'([^']+)'/);if(!m)throw Error('VERSION not found');require('fs').appendFileSync(process.env.GITHUB_OUTPUT,'version='+m[1]+'\n');"
+      - uses: actions/checkout@v4
+        with:
+          repository: 1hyun-you/1hyun-you.github.io
+          token: ${{ secrets.SITE_DEPLOY_TOKEN }}
+          path: site
+      - name: Point the site at this game revision
+        env:
+          SHA: ${{ github.sha }}
+          VER: ${{ steps.game.outputs.version }}
+        run: |
+          cd site
+          node -e "const fs=require('fs');fs.writeFileSync('field/source-ref.json',JSON.stringify({repository:'1hyun-you/loop-game',commit:process.env.SHA,version:process.env.VER},null,2)+'\n');"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add field/source-ref.json
+          if git diff --cached --quiet; then echo 'Already deployed'; exit 0; fi
+          git commit -m "Deploy loop-game ${VER} (${SHA:0:7})"
+          git push origin HEAD:main
