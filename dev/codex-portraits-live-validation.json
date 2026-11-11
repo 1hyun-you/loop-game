@@ -1,0 +1,15 @@
+{
+  "checks": [
+    "Enemy card text, order and lock classes match art4 across empty, legacy and complete records.",
+    "Actual title-to-codex navigation shows question marks for all unseen entries.",
+    "All 15 unique assets map to game IDs. Rendering preserves existing save, state and RNG.",
+    "Embedded bytes match every optimized source file.",
+    "280px: 15 portraits decode at 40px, fallback hidden, no horizontal overflow.",
+    "320px: 15 portraits decode at 40px, fallback hidden, no horizontal overflow.",
+    "390px: 15 portraits decode at 40px, fallback hidden, no horizontal overflow.",
+    "690px: 15 portraits decode at 40px, fallback hidden, no horizontal overflow.",
+    "Decode failures restore each original initial without changing unlocks.",
+    "A missing portrait uses the original text badge."
+  ],
+  "pageErrors": []
+}

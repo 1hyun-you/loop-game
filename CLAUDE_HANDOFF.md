@@ -8,7 +8,11 @@
 - 종료 시 새 대화로 전환하도록 권장하고, 바로 복사할 수 있는 다음 작업 요청문을 제공한다.
 - 다음 대화는 두 저장소의 최신 main, ART42_PLAN.md·CLAUDE_HANDOFF.md·ART_DIRECTION.md, 실제 서비스 버전을 확인한 뒤 이 기준을 이어받는다.
 
-## 최신 재개 지점 — 0.42-art3 (2026-11-11 한국시간)
+## 최신 재개 지점 — 0.42-art5 (2026-11-11 한국시간)
+
+- 도감 적 초상 15종 적용·검사·실제 배포 완료. 문서 마지막 art5 기록 참조. 다음 묶음은 숙련 특성 아이콘만 진행.
+
+## 이전 재개 지점 — 0.42-art3 (2026-11-11 한국시간)
 
 - 현재 묶음: 시련 문양10종, 도감 연성 탭·내 능력 시련 행·기존 시련 완료 알림의 중앙 직업 문장. 최종 검사·배포 결과는 문서 마지막 art3 기록 우선.
 - 1차 직업 문장10종·2차 전직 문장20종은 앞선 묶음 완료. 결합 문양3종과 그 밖의 아트는 미착수.
@@ -275,3 +279,19 @@
 - 48/38/24px 비교판 및 320/390/690px 도감·내 능력 화면 검사. 390px 실제 캡처와 비교판 육안 검토. 실제 응답 HTML 1767337바이트가 검사 소스 빌드와 바이트 일치. SHA256 ca781a221c081ef4d19a0a75baa4c32d32f4e3a73eadd3ede4e4e749de1f9899. version.json 소스/빌드 일치. 브라우저 상호작용은 검증 소스에서 실행했으며 실제 서비스는 동일 HTML·버전 응답으로 확인. 폴드8 실기기·장시간 FPS 미검증.
 - 결과 dev/fuse-crests-validation.json 및 이번 재실행한 trial-crests/job2-crests/crests/choice/ui/art2-validation.json. dev/art42-validation.json에 이번 검사·배포 요약 저장. 다른 과거 validation 파일을 이번 검사로 해석하지 말 것. 화면/가상시험 원본 Actions artifact13813881757 (2027-02-08 만료 예정), 로컬 /workspace/scratch/ce38e9eab285/fuse-final/.
 - 이번 결합3종 묶음 완료·인계 저장 후 종료. 전체 아트 완료 아님. 다음 기본 후보는 ART42_PLAN.md 3번 기타 화면 아이콘이며 사용자 지정 범위만 진행. 선택/HUD 결합 연출은8번에 남아 있음. 다음 새 대화에서 두 저장소 최신 main·본 문서·작업 계획 확인 후 재개. 기록 커밋은 문서·검사 결과만 변경하므로 배포 소스 SHA와 구분.
+
+## 0.42-art5 — 도감 일반 적 10종·보스 5종 초상 (2026-11-11 한국시간)
+
+- 시작 main `aa2c3079ac3e4212d0d43f5a0a1096883c4aa385`과 기존 서비스 0.42-art4 확인 후 착수했다.
+- 완료 15종. 일반 적은 초록 슬라임, 동굴 박쥐, 해골 병사, 오우거, 고블린 궁수, 분열 젤리, 자폭 버섯, 돌진 멧돼지, 기사, 위습. 보스는 바르간, 이그나, 모르덴, 세렌, 마왕.
+- 기존 전투 원화를 참조해 내장 이미지 생성 기능으로 도감 전용 원화 15장을 제작했다. 96×96 투명 WebP 15장 합계 71,236바이트. 원화 PNG·프롬프트·해시는 로컬 작업 폴더 `art-originals/codex-portraits/`에 저장했다.
+- `assets/codex-portraits/` → `node dev/pack-codex-portraits.cjs` → `src/codex-portrait-data.js` → `node dev/build.cjs`. `src/codex.js`에서 조우한 항목만 40px로 표시한다. 잠긴 항목은 물음표, 이미지 누락·실패는 기존 첫 글자, 엘리트 안내는 기존 '정'을 사용한다. 기존 전투·대화 원화, 저장 키 및 게임 규칙·수치·판정은 유지했다.
+- 로컬 build/check-build, git diff --check 통과. Chromium에서 280/320/390/690px에 걸쳐 실제 열기, 15개 고유 ID·파일 바이트, 초기/이전 저장/완료 기록의 문구·순서·잠금, 이미지 오류 대체, 화면 가로 넘침, 게임 상태·저장·난수 비교 검사 10항목 통과. 투명도와 40px 비교판·390px 화면을 육안 검토했다.
+- 검사 브랜치 `art/042-codex-portraits`. [자동 검사 42931187554](https://github.com/1hyun-you/loop-game/actions/runs/42931187554) 성공. 도감 초상 및 기존 1·2차 문장·시련·결합·선택·HUD·원화 검사, 가상 플레이 2판 오류 0건·저장 정상. 검사 원본 artifact 13815459701, 2027-02-09 만료 예정.
+- 소스 `170d3e82a598c2d3409fd02b98e7c81d22380e9e`, 게임 자동 HTML 빌드 `33a55e5a18efa8efbd6f2f33258f2efa43abf0b2` 및 실행 42931483302 성공.
+- 서비스 source-ref `80253b030bef869cf0d55f09c88b50ac50c3a004`, HTML 빌드 `c034fe800465f52e2823e7131284031b0a8d8a74`, 버전 기록 `da2a14f4a10d8ae2b81817f133e95316fd58c7f4`. [서비스 빌드 42931496167](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/42931496167)과 [Pages 게시 42931617313](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/42931617313) 성공.
+- 공개 서비스의 버전·소스·빌드 및 HTML 1,863,697바이트 일치 확인. SHA-256 `d5c03fc588c8fe0b0efb443165b78f6c80c8a933c540c6be8051a62c6a0f487b`. 공개 주소에서 Chromium 도감 검사 10항목을 다시 통과했고 페이지 오류는 0건이었다. 폴드8 실기기와 장시간 FPS는 검사하지 않았다. [실제 서비스](https://1hyun-you.github.io/field/)
+- 결과 `dev/codex-portraits-validation.json`, `dev/codex-portraits-live-validation.json`, `dev/art42-validation.json`. 본 인계 커밋은 문서와 결과만 기록한다.
+- 미완료 범위는 숙련 특성·저주별 아이콘, 유대 카드 초상, 계획 4~13번 묶음과 8번의 결합 선택·HUD·전투 표현이다. 이번 묶음을 마치고 종료한다. 다음은 새 대화에서 3번 중 숙련 특성 아이콘만 진행한다.
+
+> 회귀의 들판 아트 작업 계속. 두 저장소의 최신 main, ART42_PLAN.md·CLAUDE_HANDOFF.md·ART_DIRECTION.md와 실제 서비스 버전을 확인한 후, 이번에는 숙련 특성 아이콘만 제작·적용해 줘. 기존 화풍을 유지하고 게임 규칙·수치·판정·저장 데이터는 그대로 둬. 작은 묶음으로 끝내고, 검사·실제 서비스 배포·배포 확인·인계 기록 저장 후 종료해 줘. 종료 시 새 대화 전환을 권장하고 다음 요청문도 남겨 줘.
