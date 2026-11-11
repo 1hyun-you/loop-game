@@ -38,7 +38,7 @@ function cxSeen() {
 function cxCard(o) {
   const st = o.lock ? 'lock' : o.dim ? 'dim' : '';
   const L = o.lock ? [esc(o.hint || '')] : (o.lines || []).filter(Boolean), wrap = l => l.startsWith('<div') || l.startsWith('<details') ? l : `<p>${l}</p>`;
-  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : o.portrait ? cxEnemyPortrait(o) : o.fuse ? uiFuseCrest(o.fuse) : o.trial ? uiTrialCrest(o.trial) : o.job ? uiJobCrest(o.job) : icBox(o.col, o.ic, o.id);
+  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : o.portrait ? cxEnemyPortrait(o) : o.trait ? uiTraitIcon(o.trait, o.col) : o.fuse ? uiFuseCrest(o.fuse) : o.trial ? uiTrialCrest(o.trial) : o.job ? uiJobCrest(o.job) : icBox(o.col, o.ic, o.id);
   return `<div class="cx ${st}"><div class="cxt">${ic}<div class="cxb"><div class="cxh"><b>${esc(o.lock ? '???' : o.nm)}</b>${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}${o.dim ? '<span class="tag nw">미획득</span>' : ''}</div>${L.length ? wrap(L[0]) : ''}</div></div>${L.slice(1).map(wrap).join('')}</div>`;
 }
 const cxL = (k, v) => `<i>${esc(k)}</i> ${esc(v)}`;
@@ -124,7 +124,7 @@ function showCodex(tab, back) {
   const S = cxSeen(), K = CODEX_TABS.map(t => t[0]);
   const bodyOf = t => {
     if (t === 'w') return '<p class="hint">수치: 1레벨 → 6레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
-    if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
+    if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', trait: k, ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
     if (t === 'x') return cxFuse();
     if (t === 'j') return `<p class="hint">2차 전직은 눌러서 펼침 · 공통 선택지 ${esc(JOB2_STAT.nm)}(${esc(JOB2_STAT.ds)})</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
     if (t === 'e') return cxEnemies(S);

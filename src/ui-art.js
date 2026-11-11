@@ -84,6 +84,35 @@ function uiFuseCrest(type, cls = '') {
   const T = Object.values(FZ_TYPES).find(t => t[1] === type);
   return `<span class="ic px fuse-crest ${cls}" style="position:relative;background:${shadeHex('#ffd27a',.42)};border-color:#ffd27a" aria-hidden="true"><i hidden style="font-style:normal">${esc(T[0].slice(0,1))}</i><img src="${uiIcon('fuse_'+type)}" alt="" data-fuse-crest="${type}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
 }
+// 0.42-art6: distinct trait silhouettes on the existing 48px UI icon grid.
+const UI_TRAIT_ART = {
+  sharp: '<path fill="url(#steel)" d="m11 32 9-5L37 6l3 2-9 21-15 10Z"/><path fill="url(#bronze)" d="m9 30 10 9-4 5-11-9Z"/><path fill="#f1db9e" d="m16 6 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/><path d="M23 30 35 13" fill="none" stroke="#edf6f5" stroke-width="2"/>',
+  tough: '<path fill="url(#page)" d="M7 15 19 6l17 4 7 12-4 15-16 6-15-8Z"/><path fill="#a49073" d="m7 15 12 5 4 23-15-8Zm12 5 17-10 7 12-14 7Z"/><path d="m11 16 8 4 14-9" fill="none" stroke="#fff0cf" stroke-width="2"/>',
+  stride: '<path fill="url(#leather)" d="M25 5h14l-2 21 6 8-2 7H19q-8 0-8-6 0-4 5-6l8-3Z"/><path fill="url(#bronze)" d="M25 6h14l-1 7H24Z"/><path d="M4 19h13M3 25h9m6 11h21" fill="none" stroke="#c2d5db" stroke-width="2.5"/>',
+  tempo: '<path fill="url(#steel)" d="M15 7h18v6l-6 11 6 11v6H15v-6l6-11-6-11Z"/><path fill="url(#bronze)" d="M10 5h28v6H10Zm0 32h28v6H10Zm8-2 6-8 6 8Z"/><path d="M19 14h10" stroke="#f3e5c6" stroke-width="2"/>',
+  giant: '<path fill="url(#steel)" d="M10 23V12l14-7 14 7v11l-6 13H16Z"/><path fill="url(#leather)" d="m10 22 14-6 14 6-8 4-6-3-6 3Z"/><path fill="url(#bronze)" d="m5 38 7-9 5 4 14-9-9 16-5-4-7 8Z"/><path d="M15 14l9-5" stroke="#f0e7d4" stroke-width="2"/>',
+  execute: '<path fill="url(#steel)" d="M12 21h24v10L12 39Z"/><path fill="url(#bronze)" d="M7 5h5v39H7Zm29 0h5v39h-5ZM7 5h34v5H7Z"/><path d="M24 11v9m-7 5v8" stroke="#eee1c3" stroke-width="2"/>',
+  first: '<path fill="url(#bronze)" d="M8 33h32v5H8Z"/><path fill="url(#rose)" d="M13 33a11 11 0 1 1 22 0Z"/><path fill="url(#page)" d="m24 4 3 11h-6Z"/><path d="m8 15 5 5m27-5-5 5M14 29q2-6 8-7" fill="none" stroke="#f5d597" stroke-width="2.5"/>',
+  last: '<path fill="url(#leather)" d="M12 7h5v35h-5Z"/><path fill="url(#rose)" d="M17 8q11-6 24 0l-8 9 7 9q-15-5-23 1Z"/><path d="m22 12 6 0-4 6 6 1-4 4M7 42h15" fill="none" stroke="#f3dcac" stroke-width="2.5"/>',
+  armor: '<path fill="url(#steel)" d="m15 6 9 5 9-5 10 9-6 9-4-3 3 20H12l3-20-4 3-6-9Z"/><path fill="#5d717e" d="m24 12 8 7-2 20H18l-2-20Z"/><path d="m9 15 7-6m3 16 5 3 5-3m-10 8 5 3 5-3" fill="none" stroke="#cbdde0" stroke-width="2"/>',
+  dodge: '<path fill="url(#steel)" d="M6 30Q13 12 33 13l-4-8 15 10-9 14-1-8Q18 21 6 30Z"/><path fill="url(#leather)" d="M8 42q9-15 26-14-7 13-26 14Z"/><path d="M6 34q6-6 13-8m-9-4q8-7 16-7" fill="none" stroke="#e4e8e8" stroke-width="2"/>',
+  calm: '<path fill="url(#steel)" d="m24 5 14 12-6 18-8 8-8-8-6-18Z"/><path fill="#526c88" d="m24 5 1 15 13-3-6 18-8 8 1-23-15-3Z"/><path d="M17 22h14m-11 5h8m-7-15 3-4" fill="none" stroke="#eef5fa" stroke-width="2.5"/>',
+  guard: '<path fill="url(#bronze)" d="m24 5 15 6v13q-2 12-15 19Q11 36 9 24V11Z"/><path fill="url(#leather)" d="m24 11 10 4v9q-2 9-10 13-8-4-10-13v-9Z"/><path d="M24 17v12m-5-8 5-4 5 4M14 13l8-3" fill="none" stroke="#f3e5c6" stroke-width="2.5"/>',
+  leech: '<path fill="url(#rose)" d="M24 5q5 10 12 19c8 10-1 19-12 19S4 34 12 24Q19 15 24 5Z"/><path d="M17 25q-6 9 1 12" fill="none" stroke="#f8c4ab" stroke-width="2.5"/><path d="M25 25v10m-5-5h10" stroke="#fff0dc" stroke-width="2.5"/>',
+  hunter: '<path fill="url(#bronze)" d="M10 7h28v14l-7 9H17l-7-9Z"/><path fill="url(#steel)" d="m10 11-7 2 2 11 9 3-3-5-4-1-1-5 4-1Zm28 0 7 2-2 11-9 3 3-5 4-1 1-5-4-1Z"/><path fill="url(#bronze)" d="M21 30h6v7l9 2v4H12v-4l9-2Z"/><path d="m15 11 0 7" stroke="#fff0cf" stroke-width="2.5"/>',
+  breath: '<path fill="url(#rose)" d="M20 16c-9-4-14 10-14 18 0 5 4 7 9 5l6-3V21Zm8 0c9-4 14 10 14 18 0 5-4 7-9 5l-6-3V21Z"/><path d="M24 6v15m0-4-7 8m7-8 7 8" fill="none" stroke="#f3e5c6" stroke-width="3"/><path d="m12 28-2 5m26-5 2 5" stroke="#ffccba" stroke-width="2"/>',
+  magnet: '<path fill="url(#leather)" d="M9 9h9v21q0 6 6 6t6-6V9h9v21q0 14-15 14T9 30Z"/><path fill="url(#steel)" d="M9 9h9v12H9Zm21 0h9v12h-9Z"/><path fill="#c4a7e9" d="m24 14 5 8-5 8-5-8Z"/><path d="M12 24v6" stroke="#e9d6fb" stroke-width="2"/>',
+  study: '<path fill="url(#leather)" d="M6 12q9-3 18 3 9-6 18-3v25q-9-3-18 3-9-6-18-3Z"/><path fill="url(#page)" d="M9 9q8-1 14 4v22q-7-5-14-4Zm16 4q6-5 14-4v22q-7-1-14 4Z"/><path d="m13 16 6 2m-6 4 6 2m10-6 6-2m-6 8 6-2" stroke="#8e765e" stroke-width="2"/>',
+  focus: '<path fill="url(#bronze)" d="M5 24q19-25 38 0-19 25-38 0Z"/><circle cx="24" cy="24" r="9" fill="url(#leather)"/><path fill="#e6d3f4" d="m24 17 4 7-4 7-4-7Z"/><path d="M13 19q7-7 13-6" fill="none" stroke="#ffefc5" stroke-width="2"/>',
+  chain: '<path fill="url(#bronze)" d="m15 5 3 8 9-3-4 8 7 6-9 1-2 9-6-7-9 3 4-9-5-7 9 1Z"/><path fill="url(#rose)" d="m34 20 2 7 8-1-4 6 5 7-8-1-4 7-2-8-7-3 7-3Z"/><path d="m12 19 5 3m15 11 5 2" stroke="#ffefd1" stroke-width="2.5"/>',
+  luck: '<path fill="url(#bronze)" d="m7 13 18-8 16 8v22l-17 8-17-8Z"/><path fill="url(#page)" d="m7 13 17 8 17-8-16-8Z"/><path fill="url(#leather)" d="m24 21 17-8v22l-17 8Z"/><path d="M24 21v22" stroke="#332c3c"/><path d="m15 23 0 1m3 10 0 1m13-8 0 1m4-7 0 1m0 11 0 1M24 13v1" stroke="#fff2cb" stroke-width="3" stroke-linecap="round"/>',
+};
+for (const [id, art] of Object.entries(UI_TRAIT_ART)) UI_PATH['trait_'+id] = art;
+function uiTraitIcon(id, col) {
+  const glyph = TRAITS[id]?.ic || '?';
+  if (!Object.hasOwn(UI_TRAIT_ART, id)) return icBox(col, glyph);
+  return `<span class="ic px trait-icon" style="position:relative;background:${shadeHex(col,.42)};border-color:${col}" aria-hidden="true"><i hidden style="font-style:normal">${esc(glyph)}</i><img src="${uiIcon('trait_'+id)}" alt="" data-trait-icon="${id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto" onerror="this.hidden=true;this.style.display='none';this.previousElementSibling.hidden=false"></span>`;
+}
 // Observe the existing completion banner. Reuse its timing/opacity; never create one.
 function uiTrialBanner(c, b, alpha) {
   const id = G.p.job, T = FZ_TRIAL[id];
