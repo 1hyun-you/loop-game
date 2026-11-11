@@ -20,6 +20,7 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     const click = sel => ev(s => { const e = document.getElementById(s) || document.querySelector(s); if (e) e.click(); return !!e; }, sel);
     // 화면 배치 점검: 가로 넘침, 짧은 버튼 줄바꿈, 터치 영역
     const audit = async (name) => {
+      await ev(() => Promise.race([Promise.all(document.getAnimations().filter(a => a instanceof CSSTransition).map(a => a.finished.catch(() => 0))), new Promise(r => setTimeout(r, 1500))]));   // 0.43 탭 전환 이동 중 측정 방지 (전환 완료 후 배치 점검)
       const r = await ev(() => {
         const vw = innerWidth, bad = [];
         document.querySelectorAll('#ui *').forEach(e => { if (e.closest('.pgp:not(.on)') || e.classList.contains('pgtr')) return; const q = e.getBoundingClientRect(); if (q.width && (q.right > vw + 1 || q.left < -1)) bad.push('넘침:' + (e.id || e.className || e.tagName) + ' ' + Math.round(q.left) + '~' + Math.round(q.right)); });
@@ -98,19 +99,19 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
       const jt = await ev(() => { G.sel = { kind: 'job', cards: jobCands(), offer: false }; STATE.mode = 'select'; renderSelect(); const c = () => document.querySelector('.card[data-i="0"]'); c().click(); const a = STATE.mode === 'select' && !G.p.job && c().classList.contains('armed') && /한 번 더/.test(document.querySelector('.sel-head .sub').textContent); c().click(); return { a, b: STATE.mode === 'play' && !!G.p.job }; });
       chk(`[${W}x${H}] 전직 1회 강조·2회 확정`, jt.a && jt.b, JSON.stringify(jt));
     } else chk(`[${W}x${H}] 레벨업 선택 진입`, false, 'mode ' + await ev(() => STATE.mode));
-    // 제외한 유물 재등장
+    // 0.43 제외한 무기 재등장 (0.42 유물 폐지 → 무기 카드 기준으로 교체)
     const rel = await ev(() => {
-      if (!hasW('vortex')) addWeapon('vortex');
-      if (!G.p.passives.some(x => x.id === 'magnet')) G.p.passives.push({ id: 'magnet', lvl: 1 });
-      const before = levelCands().some(c => c.t === 'relic' && c.id === 'eyestorm');
-      G.sel = { kind: 'level', cards: [{ t: 'relic', id: 'eyestorm' }], banish: true }; G.banishes = Math.max(1, G.banishes); STATE.mode = 'select';
+      const free = WEAPON_ORDER.find(id => !hasW(id) && !G.banished.has(id)) || 'beam';
+      while (G.p.weapons.filter(w => !w.base).length >= slotW() - (G.p.weapons.some(w => w.base) ? 1 : 0)) G.p.weapons.pop();
+      const before = levelCands().some(c => c.t === 'wnew' && c.id === free);
+      G.sel = { kind: 'level', cards: [{ t: 'wnew', id: free }], banish: true }; G.banishes = Math.max(1, G.banishes); STATE.mode = 'select';
       pickCard(0);
-      const after = levelCands().some(c => c.t === 'relic' && c.id === 'eyestorm');
-      let chest = false; try { chest = chestCards ? JSON.stringify(chestCards()).includes('eyestorm') : false; } catch (e) { }
+      const after = levelCands().some(c => c.t === 'wnew' && c.id === free);
+      let chest = false; try { chest = JSON.stringify(chestCands()).includes('"' + free + '"'); } catch (e) { }
       closeSel && G.sel && closeSel();
-      return { before, after, chest };
+      return { free, before, after, chest };
     });
-    chk(`[${W}x${H}] 유물 제외 전 후보`, rel.before); chk(`[${W}x${H}] 유물 제외 후 미등장`, !rel.after && !rel.chest, JSON.stringify(rel));
+    chk(`[${W}x${H}] 무기 제외 전 후보`, rel.before, JSON.stringify(rel)); chk(`[${W}x${H}] 무기 제외 후 미등장`, !rel.after && !rel.chest, JSON.stringify(rel));
     // 0.37 회오리: 플레이어와 140 이상 떨어진 적 무리 지점 생성, 플레이어 근처 적 미흡인
     const vx = await ev(() => {
       G.enemies.length = 0; const p = G.p; p.face = { x: 1, y: 0 };

@@ -42,7 +42,7 @@ function cxCard(o) {
   return `<div class="cx ${st}"><div class="cxt">${ic}<div class="cxb"><div class="cxh"><b>${esc(o.lock ? '???' : o.nm)}</b>${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}${o.dim ? '<span class="tag nw">미획득</span>' : ''}</div>${L.length ? wrap(L[0]) : ''}</div></div>${L.slice(1).map(wrap).join('')}</div>`;
 }
 const cxL = (k, v) => `<i>${esc(k)}</i> ${esc(v)}`;
-/* 0.36 압축 표기: 수치 칩(1레벨→6레벨) · 분기 2칸 상자 */
+/* 0.36 압축 표기: 수치 칩(1레벨→5레벨, 0.43) · 분기 2칸 상자 */
 const cxChips = a => `<div class="cxs">${a.filter(Boolean).map(([k, v]) => `<span><i>${esc(k)}</i>${v}</span>`).join('')}</div>`;
 const cxArrow = (a, b, u = '') => a === b ? `${a}${u}` : `${a}<em>→${b}${u}</em>`;
 const cxBr = (list, head) => list && list.length ? `<details class="acc"><summary>${esc(head || '분기')} ${list.length}종</summary><div class="cxg">${list.map(o => `<div><b>${esc(o.nm)}</b><span>${esc(o.ds).replace(' · 궁극기: ', '</span><span class="u">궁극기 · ')}</span></div>`).join('')}</div></details>` : '';
@@ -61,7 +61,7 @@ function cxWeapon(id, seen) {
     B.dur ? ['지속', B.dur + '초'] : null,
     ...Object.keys(etc).map(k => { const t = upText(id, { [k]: etc[k] }); const m = t.match(/^(.*?) ([+-].*)$/); return m ? [m[1], `<em>${esc(m[2])}</em>`] : null; }),
   ];
-  return cxCard({ dim: !seen, id, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxChips(chips), cxBr(BRANCHES[id], '3렙 분기'), cxBr(AWAKEN[id], '6렙 각성')] });
+  return cxCard({ dim: !seen, id, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxChips(chips), cxBr(BRANCHES[id], '3렙 분기'), cxBr(AWAKEN[id], '5렙 각성')] });
 }
 /* 보조 효과: 1단계·5단계 문구의 수치만 화살표로 병합 */
 function cxRange(a, b) {
@@ -123,7 +123,7 @@ function cxUnlock(S) {
 function showCodex(tab, back) {
   const S = cxSeen(), K = CODEX_TABS.map(t => t[0]);
   const bodyOf = t => {
-    if (t === 'w') return '<p class="hint">수치: 1레벨 → 6레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
+    if (t === 'w') return '<p class="hint">수치: 1레벨 → 5레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
     if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', trait: k, ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
     if (t === 'x') return cxFuse();
     if (t === 'j') return `<p class="hint">2차 전직은 눌러서 펼침 · 공통 선택지 ${esc(JOB2_STAT.nm)}(${esc(JOB2_STAT.ds)})</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');

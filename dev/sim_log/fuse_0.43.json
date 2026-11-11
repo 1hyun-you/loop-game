@@ -1,0 +1,202 @@
+{
+ "v": "0.43",
+ "errs": [],
+ "res": {
+  "jobs": [
+   {
+    "j": "warrior",
+    "sym": "cleave",
+    "ws": [
+     "shield",
+     "slam",
+     "arrow"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "거신 방패 충격",
+    "retiredAll": true,
+    "fires": 30,
+    "ratio": 1.28,
+    "slots": "4/6"
+   },
+   {
+    "j": "rogue",
+    "sym": "shuriken",
+    "ws": [
+     "shield",
+     "slam",
+     "arrow"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "그림자 방패 충격",
+    "retiredAll": true,
+    "fires": 33,
+    "ratio": 1.07,
+    "slots": "4/4"
+   },
+   {
+    "j": "sovereign",
+    "sym": "shield",
+    "ws": [
+     "arrow",
+     "trap",
+     "shuriken"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "왕실 화살",
+    "retiredAll": true,
+    "fires": 46,
+    "ratio": 1.44,
+    "slots": "4/6"
+   },
+   {
+    "j": "archer",
+    "sym": "arrow",
+    "ws": [
+     "trap",
+     "shuriken",
+     "fireball"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "사냥 덫",
+    "retiredAll": true,
+    "fires": 39,
+    "ratio": 2.19,
+    "slots": "4/6"
+   },
+   {
+    "j": "engineer",
+    "sym": "trap",
+    "ws": [
+     "shuriken",
+     "fireball",
+     "icering"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "포대 수리검",
+    "retiredAll": true,
+    "fires": 40,
+    "ratio": 1.27,
+    "slots": "4/6"
+   },
+   {
+    "j": "chrono",
+    "sym": "icering",
+    "ws": [
+     "shuriken",
+     "fireball",
+     "orb"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "메아리 수리검",
+    "retiredAll": true,
+    "fires": 43,
+    "ratio": 0.84,
+    "slots": "4/6"
+   },
+   {
+    "j": "mage",
+    "sym": "fireball",
+    "ws": [
+     "icering",
+     "orb",
+     "beam"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "원소 얼음 고리",
+    "retiredAll": true,
+    "fires": 12,
+    "ratio": 1.8,
+    "slots": "4/6"
+   },
+   {
+    "j": "summoner",
+    "sym": "beam",
+    "ws": [
+     "cleave",
+     "shield",
+     "slam"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "망령 대검 베기",
+    "retiredAll": true,
+    "fires": 29,
+    "ratio": 1.24,
+    "slots": "4/6"
+   },
+   {
+    "j": "priest",
+    "sym": "orb",
+    "ws": [
+     "shield",
+     "slam",
+     "arrow"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "성물 방패 충격",
+    "retiredAll": true,
+    "fires": 33,
+    "ratio": 1.25,
+    "slots": "4/6"
+   },
+   {
+    "j": "druid",
+    "sym": "slam",
+    "ws": [
+     "arrow",
+     "trap",
+     "shuriken"
+    ],
+    "baseMove": true,
+    "card": 1,
+    "cardUI": true,
+    "applied": true,
+    "name": "야수 화살",
+    "retiredAll": true,
+    "fires": 46,
+    "ratio": 1.6,
+    "slots": "4/6"
+   }
+  ],
+  "cands": [
+   "archer,mage,priest"
+  ],
+  "fails": [],
+  "awFlow": {
+   "q": [
+    {
+     "kind": "w",
+     "id": "arrow",
+     "aw": true
+    }
+   ],
+   "lvl": 5
+  }
+ }
+}

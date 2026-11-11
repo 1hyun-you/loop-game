@@ -69,6 +69,8 @@ const out = {
       runTime: { final: avg(ok.filter(r => r.runType === 'final').map(r => r.time)), retry: avg(ok.filter(r => r.runType === 'retry').map(r => r.time)) } }; })(),
   meat: (() => { const M = ok.filter(r => r.meat); const t5 = M.filter(r => r.time >= 300).map(r => r.meat[2].filter(t => t <= 300).length);   // 회복 고기 (0.28): [드롭 수, 먹은 수, 드롭 시각]
     return { runs: M.length, dropAvg: avg(M.map(r => r.meat[0])), eatAvg: avg(M.map(r => r.meat[1])), first5min: { avg: avg(t5), min: q(t5, 0), max: q(t5, 1), in1_5to2_5: t5.filter(x => x >= 1.5 && x <= 2.5).length, n: t5.length } }; })(),
+  fuse43: (() => { const F = ok.map(r => (r.fuses || []).filter(x => typeof x === 'string' && x.split(':').length === 3));   // 0.43 연성: 판당 횟수·첫 연성 시각·도달 판
+    const first = F.filter(f => f.length).map(f => +f[0].split(':')[2]); return { runs: F.filter(f => f.length).length, perRun: avg(F.map(f => f.length)), max: Math.max(0, ...F.map(f => f.length)), firstAt: { avg: avg(first), min: q(first, 0), max: q(first, 1) } }; })(),
   errors: errs, pageErr: ok.reduce((s, r) => s + (r.pageErr || []).length, 0), errShownRuns: ok.filter(r => r.errShown).length,
   flow: flows, saveBad: ok.filter(r => !r.saveOk).length,
   perf: { maxEnP90: q(ok.map(r => r.maxEn || 0), .9), stepMsAvg: avg(ok.map(r => r.cost.stepMs)), stepMsMax: q(ok.map(r => r.cost.stepMs), 1), renMsAvg: avg(ok.map(r => r.cost.renMs)), renMsMax: q(ok.map(r => r.cost.renMs), 1) },

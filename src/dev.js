@@ -38,7 +38,7 @@ const DEV = {
       if (k === 'demon' && STATE.mode === 'play' && !isBossPhase()) { G.runType = 'retry'; G.ph.order = G.ph.order.slice(0, G.ph.i + 1).concat('demon'); G.ph.i = G.ph.order.length - 2; G.ph.inGap = true; G.ph.id = null; G.ph.gapT = 1; }
       if (k === 'ult' && G.p.job) G.p.ult = JOB_CFG.ultNeed;
       if (k === 'elite' && STATE.mode === 'play') spawnElite();
-      if (k === 'fz' && G.p.job) { const f = F42(); f.done = Math.min(2, f.done + 1); f.cool = 0; G.p.weapons.forEach(w => { if (w.lvl < CFG.weaponMax && !w.fx && !w.fz) w.lvl = CFG.weaponMax; }); }
+      if (k === 'fz' && G.p.job) { G.p.weapons.forEach(w => { if (w.fu) return; w.lvl = CFG.weaponMax; if (BRANCHES[w.id] && !w.br) { w.br = BRANCHES[w.id][0].k; w.brQ = true; } if (AWAKEN[w.id] && !w.aw) { w.aw = AWAKEN[w.id][0].k; w.awQ = true; } }); G.pendingLv++; recalc(); }   // 0.43 연성 시험: 무기 전부 Lv 5·각성 → 레벨업 연성 카드
       if (k === 'altar' && !G.p.job) { const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i }; }
       this.draw();
     }));

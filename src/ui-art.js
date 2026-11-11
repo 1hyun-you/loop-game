@@ -116,7 +116,7 @@ function uiTraitIcon(id, col) {
 // Observe the existing completion banner. Reuse its timing/opacity; never create one.
 function uiTrialBanner(c, b, alpha) {
   const id = G.p.job, T = FZ_TRIAL[id];
-  if (!T || b.text !== T.nm || !b.sub || !b.sub.startsWith('연성 기회 ')) return false;
+  if (!T || b.text !== T.nm || !b.sub || !(b.sub.startsWith('연성 기회 ') || b.sub.startsWith('2차 전직'))) return false;
   const im = UI_ART.images['crest_'+id]; if (!im) return false;
   c.save(); c.globalAlpha = alpha; c.drawImage(im, VIEW.cw/2-18, VIEW.ch*.4-72, 36, 36); c.restore();
   return true;
