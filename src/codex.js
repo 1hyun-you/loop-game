@@ -38,7 +38,7 @@ function cxSeen() {
 function cxCard(o) {
   const st = o.lock ? 'lock' : o.dim ? 'dim' : '';
   const L = o.lock ? [esc(o.hint || '')] : (o.lines || []).filter(Boolean), wrap = l => l.startsWith('<div') || l.startsWith('<details') ? l : `<p>${l}</p>`;
-  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : o.fuse ? uiFuseCrest(o.fuse) : o.trial ? uiTrialCrest(o.trial) : o.job ? uiJobCrest(o.job) : icBox(o.col, o.ic, o.id);
+  const ic = o.lock ? '<span class="ic" style="background:var(--panel2)">?</span>' : o.portrait ? cxEnemyPortrait(o) : o.fuse ? uiFuseCrest(o.fuse) : o.trial ? uiTrialCrest(o.trial) : o.job ? uiJobCrest(o.job) : icBox(o.col, o.ic, o.id);
   return `<div class="cx ${st}"><div class="cxt">${ic}<div class="cxb"><div class="cxh"><b>${esc(o.lock ? '???' : o.nm)}</b>${o.tag ? `<span class="tag">${esc(o.tag)}</span>` : ''}${o.dim ? '<span class="tag nw">미획득</span>' : ''}</div>${L.length ? wrap(L[0]) : ''}</div></div>${L.slice(1).map(wrap).join('')}</div>`;
 }
 const cxL = (k, v) => `<i>${esc(k)}</i> ${esc(v)}`;
@@ -92,11 +92,17 @@ function cxFuse() {
     return cxCard({ trial: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name, tag: T.nm, lines: [`<b>${esc(T.ds)}</b>`, cxChips([['상징 무기', esc(W.name)], ['연성', esc(FZ_JOB[id])]]), `<details class="acc"><summary>상징 무기 효과</summary><div class="cxg"><div><b>${esc(W.name)}</b><span>${esc(FZ_SYM_TX[id])}</span></div></div></details>`] }); }).join('');
   return '<p class="hint">직업 시련 완수 시 Lv 6 무기 2종을 합침 · 판당 최대 2회 · 부품 무기는 슬롯을 차지하지 않음</p>' + types + '<h3>직업별 시련·연성</h3>' + jobs;
 }
+function cxEnemyPortrait(o) {
+  const src = CODEX_PORTRAITS[o.portrait];
+  if (!src) return icBox(o.col, o.ic);
+  return `<span class="ic cx-portrait" style="--portrait-accent:${o.col}" aria-hidden="true"><i hidden>${esc(o.ic)}</i><img data-enemy-portrait="${esc(o.portrait)}" src="${src}" width="40" height="40" alt="" onerror="this.hidden=true;this.previousElementSibling.hidden=false"></span>`;
+}
+
 function cxEnemies(S) {
-  const mob = ENEMY_ORDER.map(k => { const E = ENEMIES[k], v = S.seenE.has(k); return cxCard({ lock: !v, hint: '조우 시 기록', col: E.color, ic: E.name.slice(0, 1), nm: E.name, tag: '잡몹', lines: [cxL('능력치', `체력 ${E.hp} · 이동 ${E.speed} · 접촉 피해 ${E.dmg} · 경험치 ${E.xp}`), cxL('등장', `${E.from}분 이후`) + (E.mb ? ' · ' + esc(CX_MB[E.mb] || '') : '')] }); });
-  const gk = GK_ORDER.map(k => { const D = GATEKEEPERS[k], v = S.s.metGk && S.s.metGk.includes(k) || (S.s.gates || []).includes(k); return cxCard({ lock: !v, hint: '조우 시 기록', col: D.color, ic: D.name.slice(0, 1), nm: D.name, tag: '사문의 수문장 · ' + D.gate, lines: [cxL('특징', D.ds + ` · 이동 ${D.speed}`), cxL('패턴', CX_GK_PAT[k].p), cxL('격노(체력 50%)', CX_GK_PAT[k].r + ' · 패턴 간격 단축'), cxL('면역', '시간 정지·빙결(둔화 0.3배)·밀쳐내기')] }); });
+  const mob = ENEMY_ORDER.map(k => { const E = ENEMIES[k], v = S.seenE.has(k); return cxCard({ lock: !v, portrait: k, hint: '조우 시 기록', col: E.color, ic: E.name.slice(0, 1), nm: E.name, tag: '잡몹', lines: [cxL('능력치', `체력 ${E.hp} · 이동 ${E.speed} · 접촉 피해 ${E.dmg} · 경험치 ${E.xp}`), cxL('등장', `${E.from}분 이후`) + (E.mb ? ' · ' + esc(CX_MB[E.mb] || '') : '')] }); });
+  const gk = GK_ORDER.map(k => { const D = GATEKEEPERS[k], v = S.s.metGk && S.s.metGk.includes(k) || (S.s.gates || []).includes(k); return cxCard({ lock: !v, portrait: k, hint: '조우 시 기록', col: D.color, ic: D.name.slice(0, 1), nm: D.name, tag: '사문의 수문장 · ' + D.gate, lines: [cxL('특징', D.ds + ` · 이동 ${D.speed}`), cxL('패턴', CX_GK_PAT[k].p), cxL('격노(체력 50%)', CX_GK_PAT[k].r + ' · 패턴 간격 단축'), cxL('면역', '시간 정지·빙결(둔화 0.3배)·밀쳐내기')] }); });
   const dv = !!(S.s.metDemon || S.s.demonTries);
-  const dm = cxCard({ lock: !dv, hint: '조우 시 기록', col: DEMON.color, ic: '마', nm: DEMON.name, tag: '마왕성의 주인', lines: CX_DEMON.map(t => esc(t)).concat([cxL('전환', '공격 정지 연출 (피해는 받음) · 체력 0 즉시 처치')]) });
+  const dm = cxCard({ lock: !dv, portrait: 'demon', hint: '조우 시 기록', col: DEMON.color, ic: '마', nm: DEMON.name, tag: '마왕성의 주인', lines: CX_DEMON.map(t => esc(t)).concat([cxL('전환', '공격 정지 연출 (피해는 받음) · 체력 0 즉시 처치')]) });
   const el = cxCard({ col: '#ffd24a', ic: '정', nm: '엘리트', tag: '잡몹 강화형', lines: [cxL('능력치', `크기 ${ELITE.size}배 · 체력 ${ELITE.hp}배 · 경험치 ${ELITE.xp}배`), cxL('특수 능력 1종', ELITE.ab.map(a => ELITE_AB[a]).join(' · ')), cxL('출현', `페이즈당 ${ELITE.perPhase.join('~')}회 · 처치 시 보물 상자`)] });
   return mob.join('') + el + '<h3>보스</h3>' + gk.join('') + dm;
 }

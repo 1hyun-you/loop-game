@@ -32,6 +32,7 @@ jobs:
           node dev/check-job2-crests.cjs
           node dev/check-trial-crests.cjs
           node dev/check-fuse-crests.cjs
+          node dev/check-codex-portraits.cjs
       - name: Verify selection regression
         timeout-minutes: 3
         env:
