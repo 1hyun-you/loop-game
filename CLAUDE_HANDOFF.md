@@ -363,3 +363,11 @@
 - `src/config.js` 버전 `0.46-art4`. 배포 소스 `075dd8f62dbc2ae2c7299897281255ff45d22147`, 게임 HTML `c32cc5e1647499826a8749557ef4fbaa59cdd347`, 서비스 source-ref `6f12994f537a575004eadddd549df20d2d111f2d`, 서비스 HTML `875876f7f039a044ad6c044ce530204c435ac089`. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 배포](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43172893659).
 - `dev/vfuse44.js` 연성 90종 발동·피해·이름 실패 0건, 브라우저 오류 0건. `dev/check-rogue-art4.cjs` Chromium 320px·390px 도적 9종 3단계 화면, 원화 사용, 그림자 선 이미지 누락 대체, 렌더링 전후 전투·저장 상태 불변 검사 통과. 공개 HTML과 검증 빌드 바이트 일치, SHA-256 `43fae6b5ba61efab20227c1efdd456014fa3d7a7754fcd7769c05230df697884`. [배포 전 검사](https://github.com/1hyun-you/loop-game/actions/runs/43172671384) · [공개 게임 검사](https://github.com/1hyun-you/loop-game/actions/runs/43172985772) · [공개 게임 캡처 54장](https://github.com/1hyun-you/loop-game/actions/runs/43172985772/artifacts/13922393633).
 - G44-2의 남은 제작 항목 없음. 폴드8 실기기 및 장시간 성능 미검증. 다음 아트 작업은 사용자 지정 범위에 따라 최신 main·`ART_DIRECTION.md`·본 문서·`GPT_REQUESTS.md`부터 확인.
+
+## 0.46-art5 — 진행 중
+
+- 2026-11-12 한국시간. G44-3 군주 기본 방패 충격 및 연성 무기 9종 외형·동작 작업. 시작 main `0e8d6faa34302a83d16197a62ff30110509ca813`. `ART_DIRECTION.md`, 직전 인계 `0.46-art4`, `GPT_REQUESTS.md` G44-3 및 `src/v44.js`의 군주 조합표 확인.
+- 첫 묶음 그림 선등록 `fc503ca1c2ff16e2e232bf48e79a056419c41d1f` (`[skip deploy]`). `assets/sovereign-art5/guard-cleave.webp` 근위 검열(왕관 방패와 대검을 든 근위병, 112×101), `assets/sovereign-art5/royal-advance.webp` 왕의 진격(쐐기형 하단과 돌 파편의 충격 방패, 86×112), `assets/sovereign-art5/archer-volley.webp` 궁수대 사격(오른쪽으로 향하는 왕실 화살, 112×22). 실제 알파 채널 확인, 3종 합계 14,212바이트. 왼쪽 위 조명, 어두운 자주색 외곽선, 군주 금색과 남색 적용.
+- 다음 첫 작업: 최신 main과 위 WebP 3종 확인 후 왕실 방책·방패 투척·왕실 포격 그림 제작 및 선등록. 이어 얼음 성벽·전령 매·군기 광휘와 기본 방패 충격 그림 선등록. 기존 그림 3종은 후속 적용에서 재사용.
+- 남은 적용: `src/v44.js`의 `FU44.sovereign`과 `drawJobAura`의 lines·traps·nodes에 준비·실행·여운 연결. 기존 판정 좌표·범위·시간, 적 공격 예고 및 이미지 실패 대체 유지. `src/config.js`의 VERSION을 `0.46-art5`로 변경하고 `dev/vfuse44.js` 연성 90종 검사, 320px·390px 군주 9종 화면 캡처, 실제 서비스 버전 확인 후 본 항목 및 `GPT_REQUESTS.md`의 완료 상태 갱신.
+- 현재 상태: 그림 3종 선등록만 완료. 코드 연결·동작·브라우저 검사·배포는 미착수. G44-3 요청은 제공 상태 유지.
