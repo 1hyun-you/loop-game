@@ -31,6 +31,7 @@ function render() {
   drawArcherArtWorld(c, inView);
   drawEngineerArtWorld(c, inView);
   drawChronoArtWorld(c, inView);
+  drawMageArtWorld(c, inView);
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -141,7 +142,7 @@ function drawGrowthGround(c, inView) {
   for (const z of G.pools) {
     if (!inView(z.x, z.y, z.r)) continue;
     if (z.src === 'fu_engineer_fireball' && engineerArtReady('incendiary-mine')) continue;
-    if(paintedPool(c,z))continue;
+    if(mageUsesPoolArt(z) || paintedPool(c,z))continue;
     const k = 1 - z.t / z.dur;
     c.fillStyle = z.kind === 'trail' ? `rgba(200,255,220,${0.25 * k})` : z.kind === 'vine' ? `rgba(90,190,90,${0.32 * k})` : z.kind === 'crack' ? `rgba(150,110,70,${0.4 * k})` : `rgba(255,120,40,${0.28 * k})`;
     c.beginPath(); c.arc(z.x, z.y, z.r, 0, 7); c.fill();
@@ -211,7 +212,7 @@ function drawWeapons(c, inView) {
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
-    if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr)) || archerUsesProjectileArt(pr) || engineerUsesProjectileArt(pr) || chronoUsesProjectileArt(pr)) continue;
+    if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr)) || archerUsesProjectileArt(pr) || engineerUsesProjectileArt(pr) || chronoUsesProjectileArt(pr) || mageUsesProjectileArt(pr)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
     if(pr.jt)paintedAura(c,effectKey(pr.jt),pr.x,pr.y,pr.r+5,.3);
     const ps = pjSprite(pr);                                  // 0.29 전용 무기·신규 투사체 도트

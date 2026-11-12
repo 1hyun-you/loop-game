@@ -61,9 +61,9 @@ function shoot(o) {
   if (G.proj.length < 400) G.proj.push(pr);
   return pr;
 }
-function explode(x, y, R, dmg, src, color = '#ff9a4a', engineerArt) {
+function explode(x, y, R, dmg, src, color = '#ff9a4a', engineerArt, mageArt) {
   gridQuery(x, y, R, e => damageEnemy(e, dmg, { src, kb: 80, fx: x, fy: y }));
-  fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.28, color, fill: true, engineerArt, art: /fire|flame|bomb/.test(src)?'explosion':/ice|frost|shatter/.test(src)?'shatter':undefined });
+  fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.28, color, fill: true, engineerArt, ...(mageArt ? { mageArt, mageKind: 'fireball' } : {}), art: /fire|flame|bomb/.test(src)?'explosion':/ice|frost|shatter/.test(src)?'shatter':undefined });
 }
 
 const WEAPON_FIRE = {
@@ -90,7 +90,7 @@ const WEAPON_FIRE = {
   /* 화염구: 착탄 또는 사거리 끝에서 폭발 */
   fireball(w, S) {
     const D = WEAPONS.fireball.base, a0 = aimAng(420), R = D.R * S.area;
-    for (let i = 0; i < S.n; i++) shoot({ kind: 'fire', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.25, sp: D.sp, r: 8, dmg: S.dmg, R, life: 1.0, color: '#ff8a3a', src: 'fireball', pool: w.br === 'pool' });
+    for (let i = 0; i < S.n; i++) shoot({ kind: 'fire', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.25, sp: D.sp, r: 8, dmg: S.dmg, R, life: 1.0, color: '#ff8a3a', src: 'fireball', pool: w.br === 'pool', ...(w.base && G.p.job === 'mage' ? { mageBaseFireball: true } : {}) });
   },
   /* 번개: 사거리 안 무작위 적 낙뢰, 대상 없으면 0.25초 후 재시도 */
   lightning(w, S) {
@@ -258,7 +258,8 @@ function updateProjectiles(dt) {
 /* 화염구 착탄: 폭발 + 불길 분기·화염 장판 유물 장판 */
 function fireBurst(pr) {
   if (pr.kind === 'shell') { explode(pr.x, pr.y, pr.R, pr.dmg, pr.src, '#ffd890'); return; }
-  explode(pr.x, pr.y, pr.R, pr.dmg, pr.src, jobTint('magic') || '#ff9a4a');
+  explode(pr.x, pr.y, pr.R, pr.dmg, pr.src, jobTint('magic') || '#ff9a4a', undefined,
+    pr.mageBaseFireball ? 'base-fireball' : undefined);
   if (pr.pool) addPool({ x: pr.x, y: pr.y, r: pr.R * 0.8, dur: 2.5, every: 0.4, dmg: pr.dmg * 0.25, src: 'fireball_pool', kind: 'fire' });
   if (hasRelic('firefield')) addPool({ x: pr.x, y: pr.y, r: pr.R * 0.9, dur: 2, every: 0.5, dmg: pr.dmg * 0.2, src: 'firefield', kind: 'fire' });
 }
