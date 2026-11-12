@@ -49,7 +49,7 @@ function drawVfxTrails(c, inView) {
   c.save(); c.lineCap = 'round'; c.imageSmoothingEnabled = true;
   for (const p of G.proj) {
     if (count >= cap) break;
-    if (p.dead || warriorArtReady(warriorProjectileArt(p)) || rogueProjectileReady(rogueProjectileArt(p)) || archerUsesProjectileArt(p) || engineerUsesProjectileArt(p) || chronoUsesProjectileArt(p) || mageUsesProjectileArt(p) || !inView(p.x, p.y, p.r + 26)) continue;
+    if (p.dead || warriorArtReady(warriorProjectileArt(p)) || rogueProjectileReady(rogueProjectileArt(p)) || archerUsesProjectileArt(p) || engineerUsesProjectileArt(p) || chronoUsesProjectileArt(p) || mageUsesProjectileArt(p) || summonerUsesProjectileArt(p) || !inView(p.x, p.y, p.r + 26)) continue;
     const speed = Math.hypot(p.vx, p.vy); if (speed < 20) continue;
     count++;
     const L = Math.min(24, speed * 0.045, speed * Math.max(0, p.t || 0)), ux = p.vx / speed, uy = p.vy / speed;
@@ -70,7 +70,7 @@ function drawFx(c) {
   c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.imageSmoothingEnabled = true;
   for (const f of G.fx) {
     const k = clamp(f.t / f.dur, 0, 1), fade = (1 - k) * (1 - k), x = f.follow ? G.p.x : f.x, y = f.follow ? G.p.y : f.y;
-    if (k >= 1 || warriorArtReady(f.warArt) || rogueArtReady(f.rogueArt) || archerArtReady(f.archerArt) || engineerArtReady(f.engineerArt) || chronoArtReady(f.chronoArt) || mageArtReady(f.mageArt)) continue;
+    if (k >= 1 || warriorArtReady(f.warArt) || rogueArtReady(f.rogueArt) || archerArtReady(f.archerArt) || engineerArtReady(f.engineerArt) || chronoArtReady(f.chronoArt) || mageArtReady(f.mageArt) || summonerArtReady(f.summonerArt)) continue;
     if (Number.isFinite(x) && Number.isFinite(y) && (Math.abs(x - G.p.x) > VIEW.cameraW / 2 + (f.r1 || f.r || 0) + 200 || Math.abs(y - G.p.y) > VIEW.cameraH / 2 + (f.r1 || f.r || 0) + 200)) continue;
     if(paintedRing(c,f,k,x,y))continue;
     if (f.kind === 'ring') {
