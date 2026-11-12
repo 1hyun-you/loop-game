@@ -158,7 +158,7 @@ const FU44 = {
     beam: { cd: 1.8, f(Z) { const p = G.p, N = F44S().nodes; N.push({ x: p.x, y: p.y, t: 0, life: 8, src: Z.src, dmg: Z.d(6), tk: 0 }); if (N.length > 5) N.shift(); fx({ kind: 'ring', x: p.x, y: p.y, r0: 20, r1: 4, dur: 0.3, color: '#ff5050', engineerArt: 'laser-pylon' }); } },
   },
   chrono: {
-    cleave: { cd: 1.4, f(Z) { const p = G.p, R = chronoRing(Z); chronoCue('frozen-blade', 'blade', 0.3, p.x, p.y, R + 40, angTo(p.x, p.y, R + 60)); later44(0.3, () => fan44(p.x, p.y, angTo(p.x, p.y, R + 60), 1.6, R + 40, Z.d(24), Z.src, 80, '#c8b0ff')); } },
+    cleave: { cd: 1.4, f(Z) { const p = G.p, R = chronoRing(Z); chronoCue('frozen-blade', 'blade', 0.3, p.x, p.y, R + 40); later44(0.3, () => fan44(p.x, p.y, angTo(p.x, p.y, R + 60), 1.6, R + 40, Z.d(24), Z.src, 80, '#c8b0ff')); } },
     shield: { cd: 1.6, f(Z) { const p = G.p; hitC(p.x, p.y, 90 * Z.a, Z.d(20), Z.src, { kb: 220, slow: 1, col: '#c8b0ff', chronoArt: 'time-backflow', chronoKind: 'backflow' }); } },
     slam: { cd: 2.0, f(Z) { const p = G.p, R = chronoRing(Z), ps = []; gridQuery(p.x, p.y, R, e => { if (nonBoss(e)) e.frz = Math.max(e.frz || 0, 0.8); if (ps.length < 4) { ps.push({ x: e.x, y: e.y }); chronoCue('time-collapse', 'collapse', 1, e.x, e.y, 80 * Z.a); } });
       later44(1.0, () => { for (const q of ps) hitC(q.x, q.y, 80 * Z.a, Z.d(36), Z.src, { kb: 80, col: '#c8b0ff', chronoArt: 'time-collapse', chronoKind: 'collapse' }); }); } },

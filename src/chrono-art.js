@@ -48,11 +48,14 @@ function chronoIceRing(c, x, y, r, alpha, a = 0) {
 
 function drawChronoCues(c, inView, reduced) {
   for (const cue of CHRONO_CUES.get(G) || []) {
-    if (cue.end <= G.time || !chronoArtReady(cue.id) || !inView(cue.x, cue.y, cue.r + 30)) continue;
+    if (cue.end <= G.time || !chronoArtReady(cue.id)) continue;
+    const blade = cue.kind === 'blade';
+    const { x, y } = blade ? G.p : cue;
+    const { r, a } = cue;
+    if (!inView(x, y, r + 30)) continue;
     const k = clamp(1 - (cue.end - G.time) / cue.dur, 0, 1);
-    const { x, y, r, a } = cue;
-    if (cue.kind === 'blade') {
-      const edge = a - .77;
+    if (blade) {
+      const edge = angTo(x, y, r + 20) - .80;
       chronoSprite(c, cue.id, x + Math.cos(edge) * r * .80, y + Math.sin(edge) * r * .80,
         Math.min(47, r * .38), .44 + .32 * k, edge + Math.PI / 2);
     } else if (cue.kind === 'collapse') {
@@ -111,14 +114,16 @@ function drawChronoProjectiles(c, inView, reduced) {
     const rewind = star && !pr.bounce;
     const angle = star ? (reduced ? a : a + pr.t * (rewind ? -19 : 19)) :
       orb ? (reduced ? 0 : Math.sin(pr.t * 11 + pr.ang) * .30) : a;
-    const size = orb ? 22 : star ? 22 : 29;
+    // The arrow shaft trails its collision circle. Round sprites fit within their collision diameter.
+    const size = star || orb ? pr.r * 2 : pr.r * 4.8;
+    const anchor = star || orb ? .5 : .80;
     if (!reduced) {
       const trail = Math.min(21, pr.t * Math.hypot(pr.vx, pr.vy));
       const tx = pr.x - Math.cos(a) * trail, ty = pr.y - Math.sin(a) * trail;
       if (trail > 0) vfxLine(c, [[tx, ty], [pr.x, pr.y]], 2, rewind ? '#a88aef' : '#c4defc', .48);
       if (rewind) chronoSprite(c, id, tx, ty, size * .69, .35, angle + .8);
     }
-    chronoSprite(c, id, pr.x, pr.y, size, 1, angle);
+    chronoSprite(c, id, pr.x, pr.y, size, 1, angle, anchor);
   }
 }
 
