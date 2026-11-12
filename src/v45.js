@@ -46,7 +46,9 @@ function bossOn45() { return !!(G.gkMob && !G.gkMob.dead && G.ph && isBossPhase(
 drawSlots = function (c) {
   const L = hudLayout(), p = G.p, T = G.tm, col = p.job ? JOB_COL[p.job] : '#c3a86d', K = 1 - H45.k; c.save(); c.imageSmoothingEnabled = true;
   slotWs().forEach((it, i) => {
-    uiWeaponTile(c, L.tile(i, 0), it, it.fu ? col : null);
+    const r = L.tile(i, 0), moment = fuseArtForSlot(it), t = fuseArtProgress(moment);
+    uiWeaponTile(c, r, it, it.fu && (t >= .52 || VFX.reduced.matches) ? col : null);
+    drawFuseArtSlot(c, r, moment, t);
   });
   const specials = [[p.exw1, EXW1], [p.exw, EXW]].filter(([s]) => s);
   specials.forEach(([st, table], i) => { const X = table[st.id], r = L.tile(i, 0, true, specials.length); uiTile(c, r, uiAbilityArt(st.id, table === EXW1), '#c3a86d', undefined, X.cd > 0.6 ? 1 - Math.max(0, st.t) / X.cd : undefined); uiText(c, table === EXW1 ? 'Ⅰ' : 'Ⅱ', r.x + 3, r.y + 5, 7, '#fff0bb', 'left', 10, 700); });

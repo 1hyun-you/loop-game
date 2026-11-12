@@ -25,6 +25,7 @@ function render() {
   EFFECT_ART.count=0;
   drawGround(c, camX, camY);
   drawFieldScenery(c, camX, camY);
+  drawFuseArtWorld(c);  // All danger warnings and units draw above the decorative art.
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);

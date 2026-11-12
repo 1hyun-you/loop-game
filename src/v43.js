@@ -113,10 +113,14 @@ function applyFuse(id) {
   if (fusedWs().length === 1) F43().kills0 = G.kills;
   banner('연성 · ' + w.fu.nm, `${JOB43[j].nm} · ${WEAPONS[id].name} + ${WEAPONS[baseW().id].name}`, JOB_COL[j], 2.4);
   toast(baseRetired() ? '모든 칸 연성 · 기본 무기 단독 발동 종료' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
-  fuseMoment(j); sfx('ult'); shake(3, 0.3); recalc();
+  fuseMoment(j, w); sfx('ult'); shake(3, 0.3); recalc();
 }
-/* 연성 순간 직업별 임시 연출 (최종본 아님 · 동작 차별화) */
-function fuseMoment(j) {
+/* 직업별 연성 순간 연출. 아트 로딩 실패 시 기존 연출 사용. */
+function fuseMoment(j, w) {
+  if (startFuseArt(j, w)) {
+    if (j === 'warrior') shake(6, 0.4);
+    return;
+  }
   const p = G.p, col = JOB_COL[j], R = (r0, r1, d, o = {}) => fx(Object.assign({ kind: 'ring', x: p.x, y: p.y, r0, r1, dur: d, color: col, follow: true }, o));
   if (j === 'warrior') { R(10, 200, 0.7, { fill: true }); shake(6, 0.4); }
   else if (j === 'rogue') for (let i = 0; i < 6; i++) fx({ kind: 'pop', x: p.x + Math.cos(i) * 40, y: p.y + Math.sin(i) * 40, r: 14, color: '#203040', dur: 0.4 });

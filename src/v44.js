@@ -234,7 +234,7 @@ applyFuse = function (id) {
   if (fusedWs().length === 1) F43().kills0 = G.kills;
   banner('연성 · ' + w.fu.nm, F ? (F.mode === '직업' ? '직업 변화' : '무기 결합') + ` · ${WEAPONS[id].name} + ${WEAPONS[baseW().id].name}` : '', JOB_COL[j], 2.4);
   toast(baseRetired() ? '모든 칸 연성 · 기본 무기 단독 발동 종료' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
-  fuseMoment(j); sfx('ult'); shake(3, 0.3); recalc();
+  fuseMoment(j, w); sfx('ult'); shake(3, 0.3); recalc();
 };
 const _cardInfo44 = cardInfo;
 cardInfo = function (c) {
