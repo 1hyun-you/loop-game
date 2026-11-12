@@ -1,0 +1,27 @@
+name: Verify G43-4 fusion art
+on:
+  push:
+    branches: ['art/046-fuse-moment']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FUSE_ART_OUTPUT: ${{ github.workspace }}/dev/fuse-art2-captures
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --package-lock=false playwright && npx playwright install --with-deps chromium
+      - run: |
+          node dev/build.cjs
+          node dev/check-build.cjs
+          node dev/check-fuse-art2.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fuse-art2-320-390
+          path: dev/fuse-art2-captures/
