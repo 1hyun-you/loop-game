@@ -382,3 +382,14 @@
 - `src/config.js` 버전 `0.46-art6`. 배포 소스 `06e2c76d823ae1b02f271106a7bac27a0799549b`, 게임 HTML `050e7e7fd011a5ced56f7ef2a7a4d1b8c4c0f332`, 서비스 source-ref `75f9a1254b4dc8d6bd9dd37f2b3b8b4501c50349`, 서비스 HTML `1064e1c01534252eb54ad13d8dc61c8de61ed6e1`. 공개 HTML과 검증 빌드 SHA-256 일치 `eb17ff5a41efd995e436df8ae19dfa4cd2af29f0871b04e0793b19cfc1dd29a7`. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 배포](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43189610821).
 - `dev/vfuse44.js` 연성 90종 발동·피해·이름 실패 0건, 브라우저 오류 0건. `dev/check-archer-art6.cjs` 320px·390px Chromium에서 11상황 3시점 캡처, 이미지 대체 표시, 렌더링 전후 전투·저장 상태, 동작 줄이기 렌더 확인. [배포 전 검사](https://github.com/1hyun-you/loop-game/actions/runs/43189337820) · [공개 게임 검사](https://github.com/1hyun-you/loop-game/actions/runs/43189655426) · [공개 게임 캡처 66장](https://github.com/1hyun-you/loop-game/actions/runs/43189655426/artifacts/13930950678).
 - 궁수 G44-4의 남은 제작 항목 없음. 실제 폴드8과 장시간 성능 미검증. 다음 작업은 사용자 지정 범위의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
+
+## 0.46-art7 — 진행 중
+
+- 2026-11-12 한국시간. G44-5 기술자 기본 덫 및 연성 무기 9종 외형·동작. 시작 main `04dd2c4b4786bfb85b314e14eed83b4c6b3396f8`. `ART_DIRECTION.md`, 최신 인계 0.46-art6 및 군주 0.46-art5 진행 기록, `GPT_REQUESTS.md` G44-5, `src/v44.js`의 기술자 조합과 지속 개체 확인.
+- 그림 제작 및 선등록 완료. `assets/engineer-art7/`에 투명 WebP 10종, 65,038바이트. 황토·황동과 강철 명암, 어두운 자주색 외곽선, 왼쪽 위 조명의 사선 탑다운. 투명 알파 및 45px 축소판 확인.
+- 첫 묶음 `d81bdd8e26915b5454cb0fd414b8ce4927806468` — `rotary-blades.webp` 회전 칼날 덫, `repulsion-plate.webp` 반발판, `crush-mine.webp` 압착 지뢰.
+- 둘째 묶음 `f55dc7a6e4a1029be46047a5200ecfae66ff313d` — `crossbow-turret.webp` 석궁 포대, `ricochet-saw.webp` 톱날 덫, `incendiary-mine.webp` 소이 지뢰.
+- 셋째 묶음 `c960ab890b199251d0c93b43e775280483f1463b` — `cooling-trap.webp` 냉각 덫, `tracking-drone.webp` 추적 드론, `laser-pylon.webp` 레이저 울타리, `base-trap.webp` 기본 덫. 세 커밋 모두 그림만 포함하고 `[skip deploy]` 표기.
+- 다음 첫 작업: 최신 main에서 이 10종을 읽어 기존 내장 WebP 방식으로 연결. `src/v44.js`의 `FU44.engineer`, `engTrap`, 실제 발사·도탄 시점, `drawJobAura`의 덫·말뚝·광선과 `src/weapons.js` 및 `src/render.js`의 기본 덫이 적용 지점. 덫 설치·대기, 실제 발동·지속·소멸을 연결하고 적 공격 예고보다 아래에 표시. 톱날·드론의 본체는 실제 투사체 위치·크기에 맞추고, 울타리의 연결 범위는 기존 판정 기준을 사용. 이미지 실패 시 기존 도형 유지.
+- 남은 작업: 게임 표시 코드 연결, 연성 90종 `dev/vfuse44.js` 검사, 320px·390px 기술자 9종 전투 캡처 및 이미지 실패 대체 확인, `src/config.js` 버전 `0.46-art7` 적용과 main 배포, 공개 서비스 확인 후 본 항목과 G44-5 완료 상태 갱신. 로컬 Chromium은 시작 시 소켓 권한 오류로 기준본 검사 미실행. 후속 검증은 기존 GitHub Actions 브라우저 검사 경로 활용 가능.
+- 현재 상태: 그림만 선등록. 공개 게임 HTML 버전 `0.46-art6` 확인. `GPT_REQUESTS.md` G44-5는 제공 상태 유지.
