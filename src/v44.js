@@ -46,7 +46,7 @@ function hitC(x, y, R, dmg, src, o = {}) {
     damageEnemy(e, d, { src, kb: o.kb || 0, fx: x, fy: y }); n++;
   });
   const rogueArt = ROGUE_RINGS[src], archerArt = ARCHER_RINGS[src];
-  fx({ kind: 'ring', x, y, ...(rogueArt ? { rogueArt } : {}), ...(archerArt ? { archerArt } : {}), r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
+  fx({ kind: 'ring', x, y, ...(rogueArt ? { rogueArt } : {}), ...(archerArt ? { archerArt } : {}), engineerArt: ENGINEER_IMPACT_ART[src], r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
   return n;
 }
 function fan44(x, y, a0, arc, R, dmg, src, kb, col, rogueCut) {
@@ -73,9 +73,10 @@ fireBurst = function (pr) { if (pr.on44) return pr.on44(pr); return _fireBurst44
 const _bounceProj44 = bounceProj;
 bounceProj = function (pr, e) {
   if (pr.on44b && !pr.dead) pr.on44b(pr, e);
-  if (pr.src !== 'fu_archer_shuriken') return _bounceProj44(pr, e);
+  if (pr.src !== 'fu_archer_shuriken' && pr.src !== 'fu_engineer_shuriken') return _bounceProj44(pr, e);
   const angle = Math.atan2(pr.vy, pr.vx), result = _bounceProj44(pr, e);
-  archerBounceArt(pr, angle);
+  if (pr.src === 'fu_archer_shuriken') archerBounceArt(pr, angle);
+  else engineerSawBounce(pr, angle);
   return result;
 };
 /* 기준점: 근위병·망령·곰·성물 */
@@ -143,13 +144,17 @@ const FU44 = {
   engineer: {
     cleave: { cd: 1.5, f(Z) { engTrap(Z, 'blade', T => { for (let i = 0; i < 6; i++) later44(i * 0.25, () => hitC(T.x, T.y, 50 * Z.a, Z.d(12), Z.src, { kb: 60, col: '#e0e0e0', fill: false })); }); } },
     shield: { cd: 1.5, f(Z) { engTrap(Z, 'pad', T => hitC(T.x, T.y, 70 * Z.a, Z.d(30), Z.src, { kb: 400, col: '#c8d8ff' })); } },
-    slam: { cd: 1.6, f(Z) { engTrap(Z, 'press', T => { fx({ kind: 'ring', x: T.x, y: T.y, r0: 70, r1: 8, dur: 0.25, color: Z.col }); later44(0.25, () => hitC(T.x, T.y, 110 * Z.a, Z.d(40), Z.src, { kb: 150, col: '#d8b080' })); }); } },
-    arrow: { cd: 2.5, f(Z) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, r: 0, R: 0, life: 6, max: 3, kind: 'post', col: Z.col, every: 1, tickF: T => { const t = nearestEnemy(T.x, T.y, 260); if (t) boltTo(T.x, T.y, Math.atan2(t.y - T.y, t.x - T.x), { sp: 600, dmg: Z.d(14), life: 0.6, color: Z.col, src: Z.src }); } }); } },
+    slam: { cd: 1.6, f(Z) { engTrap(Z, 'press', T => { fx({ kind: 'ring', x: T.x, y: T.y, r0: 70, r1: 8, dur: 0.25, color: Z.col, engineerArt: 'crush-mine', engineerPress: true }); later44(0.25, () => hitC(T.x, T.y, 110 * Z.a, Z.d(40), Z.src, { kb: 150, col: '#d8b080' })); }); } },
+    arrow: { cd: 2.5, f(Z) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, r: 0, R: 0, life: 6, max: 3, kind: 'post', col: Z.col, every: 1, tickF: T => { const t = nearestEnemy(T.x, T.y, 260); if (t) {
+      const angle = Math.atan2(t.y - T.y, t.x - T.x);
+      boltTo(T.x, T.y, angle, { sp: 600, dmg: Z.d(14), life: 0.6, color: Z.col, src: Z.src });
+      ENGINEER_TURRETS.set(T, { angle, time: G.time });
+    } } }); } },
     shuriken: { cd: 1.5, f(Z) { engTrap(Z, 'saw', (T, e) => boltTo(T.x, T.y, e ? Math.atan2(e.y - T.y, e.x - T.x) : 0, { kind: 'star', sp: 480, r: 7, dmg: Z.d(16), pierce: 4, life: 1.4, color: Z.col, src: Z.src, bounce: true })); } },
     fireball: { cd: 1.5, f(Z) { engTrap(Z, 'mine', T => { hitC(T.x, T.y, 60 * Z.a, Z.d(28), Z.src, { kb: 100, col: '#ff9a4a' }); addPool({ x: T.x, y: T.y, r: 50 * Z.a, dur: 2, every: 0.4, dmg: Z.d(8), src: Z.src, kind: 'fire' }); }); } },
     icering: { cd: 1.5, f(Z) { engTrap(Z, 'cold', T => hitC(T.x, T.y, 80 * Z.a, Z.d(22), Z.src, { slow: 2, col: '#bfe8ff' })); } },
     orb: { cd: 1.5, f(Z) { engTrap(Z, 'drone', T => { for (let i = 0; i < 2; i++) boltTo(T.x, T.y, rand(Math.PI * 2), { kind: 'orb', sp: 300, r: 6, dmg: Z.d(20), life: 2.4, color: Z.col, src: Z.src, home: true }); }); } },
-    beam: { cd: 1.8, f(Z) { const p = G.p, N = F44S().nodes; N.push({ x: p.x, y: p.y, t: 0, life: 8, src: Z.src, dmg: Z.d(6), tk: 0 }); if (N.length > 5) N.shift(); fx({ kind: 'ring', x: p.x, y: p.y, r0: 20, r1: 4, dur: 0.3, color: '#ff5050' }); } },
+    beam: { cd: 1.8, f(Z) { const p = G.p, N = F44S().nodes; N.push({ x: p.x, y: p.y, t: 0, life: 8, src: Z.src, dmg: Z.d(6), tk: 0 }); if (N.length > 5) N.shift(); fx({ kind: 'ring', x: p.x, y: p.y, r0: 20, r1: 4, dur: 0.3, color: '#ff5050', engineerArt: 'laser-pylon' }); } },
   },
   chrono: {
     cleave: { cd: 1.4, f(Z) { const p = G.p, R = chronoRing(Z); later44(0.3, () => fan44(p.x, p.y, angTo(p.x, p.y, R + 60), 1.6, R + 40, Z.d(24), Z.src, 80, '#c8b0ff')); } },
@@ -220,7 +225,7 @@ hurtPlayer = function (dmg, src) {
 const _playerAvoid44 = playerAvoid;
 playerAvoid = function () { if (G.tm.smoke44 > 0 && Math.random() < 0.5) { fx({ kind: 'pop', x: G.p.x, y: G.p.y, r: 14, color: '#8a96a8', dur: 0.2 }); return true; } return _playerAvoid44(); };
 /* 기술자 덫 설치 */
-function engTrap(Z, kind, on) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, R: 0, max: 8, kind, col: Z.col, on: T => on(T, T.who) }); }
+function engTrap(Z, kind, on) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, R: 0, max: 8, kind, col: Z.col, on: T => { on(T, T.who); engineerTrapTrigger(T); } }); }
 /* 시간술사 기본 고리 */
 function chronoRing(Z) { const p = G.p, R = 80 * Z.a; hitC(p.x, p.y, R, Z.d(8), Z.src, { slow: 1, col: '#bfe8ff', fill: false }); return R; }
 /* 마법사 화염구 (착탄 콜백 선택) */
@@ -328,7 +333,7 @@ function fuseTick44(dt) {
   S.nodes = S.nodes.filter(n => n.t < n.life);
   for (let i = 0; i < S.nodes.length; i++) {
     const A = S.nodes[i]; A.tk -= dt; if (A.tk > 0) continue; A.tk = 0.1;
-    for (let k = i + 1; k < S.nodes.length; k++) { const B = S.nodes[k], L = Math.sqrt(dist2(A.x, A.y, B.x, B.y)); if (L > 4 && L < 240) lineHit(A.x, A.y, Math.atan2(B.y - A.y, B.x - A.x), L, 6, e => damageEnemy(e, A.dmg, { src: A.src })); }
+    for (let k = i + 1; k < S.nodes.length; k++) { const B = S.nodes[k], L = engineerNodeLength(A, B); if (engineerNodesConnect(L)) lineHit(A.x, A.y, Math.atan2(B.y - A.y, B.x - A.x), L, 6, e => damageEnemy(e, A.dmg, { src: A.src })); }
   }
 }
 /* 임시 도형 (최종본 아님) */
@@ -340,14 +345,14 @@ drawJobAura = function (c) {
   for (const L of S.lines) { if ((L.src === 'fu_warrior_beam' && warriorArtReady('beam')) || (L.src === 'fu_rogue_beam' && rogueArtReady('beam')) || archerUsesLineArt(L)) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
   c.globalAlpha = 1;
   for (const T of S.traps) {
-    if ((T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) || (T.tag === 'fu_rogue_trap' && rogueArtReady('trap')) || archerUsesTrapArt(T)) continue;
+    if ((T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) || (T.tag === 'fu_rogue_trap' && rogueArtReady('trap')) || archerUsesTrapArt(T) || engineerUsesTrapArt(T)) continue;
     const s = T.kind === 'wall' ? 12 : 8, ready = T.t >= T.arm; c.strokeStyle = T.col; c.fillStyle = ready ? T.col : '#555'; c.lineWidth = 2; c.globalAlpha = ready ? 0.85 : 0.5;
     if (T.kind === 'wall') { c.fillRect(T.x - s, T.y - 4, s * 2, 8); for (let i = -1; i <= 1; i++) c.fillRect(T.x + i * 9 - 2, T.y - 12, 4, 16); }
     else if (T.kind === 'post') { c.fillRect(T.x - 7, T.y - 7, 14, 14); c.beginPath(); c.moveTo(T.x, T.y); c.lineTo(T.x + 10, T.y - 10); c.stroke(); }
     else if (T.kind === 'mark' || T.kind === 'rune' || T.kind === 'sign' || T.kind === 'rift') { c.beginPath(); c.arc(T.x, T.y, s + 2, 0, 7); c.stroke(); c.beginPath(); c.moveTo(T.x - s, T.y); c.lineTo(T.x + s, T.y); c.moveTo(T.x, T.y - s); c.lineTo(T.x, T.y + s); c.stroke(); }
     else { c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? s * 0.5 : s; c[i ? 'lineTo' : 'moveTo'](T.x + Math.cos(a) * r, T.y + Math.sin(a) * r); } c.closePath(); c.fill(); }
   }
-  if (S.nodes.length) { c.globalAlpha = 0.8; c.strokeStyle = '#ff5050'; c.lineWidth = 2; for (let i = 0; i < S.nodes.length; i++) { const A = S.nodes[i]; c.fillStyle = '#5a4630'; c.fillRect(A.x - 5, A.y - 5, 10, 10); for (let k = i + 1; k < S.nodes.length; k++) { const B = S.nodes[k]; if (dist2(A.x, A.y, B.x, B.y) < 240 * 240) { c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke(); } } } }
+  if (S.nodes.length) { c.globalAlpha = 0.8; c.strokeStyle = '#ff5050'; c.lineWidth = 2; for (let i = 0; i < S.nodes.length; i++) { const A = S.nodes[i]; if (engineerUsesNodeArt(A)) continue; c.fillStyle = '#5a4630'; c.fillRect(A.x - 5, A.y - 5, 10, 10); for (let k = i + 1; k < S.nodes.length; k++) { const B = S.nodes[k]; if (engineerNodesConnect(engineerNodeLength(A, B))) { c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke(); } } } }
   c.restore();
 };
 /* 판 시작 시 초기화 */
