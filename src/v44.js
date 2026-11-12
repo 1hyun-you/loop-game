@@ -45,8 +45,8 @@ function hitC(x, y, R, dmg, src, o = {}) {
     if (o.on) o.on(e);
     damageEnemy(e, d, { src, kb: o.kb || 0, fx: x, fy: y }); n++;
   });
-  const rogueArt = ROGUE_RINGS[src];
-  fx({ kind: 'ring', x, y, ...(rogueArt ? { rogueArt } : {}), r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
+  const rogueArt = ROGUE_RINGS[src], archerArt = ARCHER_RINGS[src];
+  fx({ kind: 'ring', x, y, ...(rogueArt ? { rogueArt } : {}), ...(archerArt ? { archerArt } : {}), r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
   return n;
 }
 function fan44(x, y, a0, arc, R, dmg, src, kb, col, rogueCut) {
@@ -71,7 +71,13 @@ const boltTo = (x, y, a, o) => pr44(Object.assign({ x, y, ang: a }, o));
 const _fireBurst44 = fireBurst;
 fireBurst = function (pr) { if (pr.on44) return pr.on44(pr); return _fireBurst44(pr); };
 const _bounceProj44 = bounceProj;
-bounceProj = function (pr, e) { if (pr.on44b && !pr.dead) pr.on44b(pr, e); return _bounceProj44(pr, e); };
+bounceProj = function (pr, e) {
+  if (pr.on44b && !pr.dead) pr.on44b(pr, e);
+  if (pr.src !== 'fu_archer_shuriken') return _bounceProj44(pr, e);
+  const angle = Math.atan2(pr.vy, pr.vx), result = _bounceProj44(pr, e);
+  archerBounceArt(pr, angle);
+  return result;
+};
 /* 기준점: 근위병·망령·곰·성물 */
 const gdPts = () => { const J = J41(); return G.banner && J.gd.length ? J.gd.map(g => ({ x: g.x, y: g.y })) : formation(); };
 const ghostPts = () => { const f = F43(); return f.wr.length ? f.wr : [G.p]; };
@@ -125,7 +131,7 @@ const FU44 = {
     cleave: { cd: 1.0, f(Z) { const a = angTo(G.p.x, G.p.y, 300); for (let i = 0; i < 5; i++) pr44({ ang: a + (i - 2) * 0.22, sp: 560, r: 5, dmg: Z.d(12), life: 0.45, color: Z.col, src: Z.src }); } },
     shield: { cd: 1.1, f(Z) { pr44({ kind: 'shell', ang: angTo(G.p.x, G.p.y), sp: 520, r: 6, dmg: Z.d(22), life: 0.9, src: Z.src, on44: pr => hitC(pr.x, pr.y, 60 * Z.a, pr.dmg, Z.src, { kb: 300, near: 0.5, col: Z.col }) }); } },
     slam: { cd: 1.6, f(Z) { const p = G.p; let t = null, m = -1; gridQuery(p.x, p.y, 480, e => { if ((e.mk || 0) > m) { m = e.mk || 0; t = e; } }); if (!t) return false; const x = t.x, y = t.y;
-      pr44({ ang: Math.atan2(y - p.y, x - p.x), sp: 600, dmg: Z.d(15), life: 0.8, color: Z.col, src: Z.src }); fx({ kind: 'ring', x, y, r0: 60, r1: 8, dur: 0.45, color: Z.col }); later44(0.5, () => hitC(x, y, 100 * Z.a, Z.d(36), Z.src, { kb: 150, col: Z.col })); } },
+      pr44({ ang: Math.atan2(y - p.y, x - p.x), sp: 600, dmg: Z.d(15), life: 0.8, color: Z.col, src: Z.src }); fx({ kind: 'ring', x, y, r0: 60, r1: 8, dur: 0.45, color: Z.col, archerArt: 'falling-arrow', archerAim: true, archerRadius: 100 * Z.a }); later44(0.5, () => hitC(x, y, 100 * Z.a, Z.d(36), Z.src, { kb: 150, col: Z.col })); } },
     trap: { cd: 1.3, f(Z) { const p = G.p, t = nearestEnemy(p.x, p.y, 420); if (!t) return false; const a = Math.atan2(t.y - p.y, t.x - p.x), d = Math.min(80, Math.sqrt(dist2(t.x, t.y, p.x, p.y)) * 0.5);
       pr44({ ang: a, sp: 600, dmg: Z.d(15), life: 0.8, color: Z.col, src: Z.src }); trap44({ tag: Z.src, x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, R: 50, max: 6, kind: 'jaw', col: Z.col, on: T => hitC(T.x, T.y, T.R, Z.d(22), Z.src, { frz: 1, col: Z.col, on: e => { e.mk = (e.mk || 0) + 2; } }) }); } },
     shuriken: { cd: 1.0, f(Z) { pr44({ ang: angTo(G.p.x, G.p.y), sp: 600, r: 5, dmg: Z.d(15), pierce: 3, life: 1.2, color: Z.col, src: Z.src, bounce: true }); } },
@@ -331,10 +337,10 @@ drawJobAura = function (c) {
   _drawJobAura44(c);
   const S = G.f44; if (!S) return;
   c.save();
-  for (const L of S.lines) { if ((L.src === 'fu_warrior_beam' && warriorArtReady('beam')) || (L.src === 'fu_rogue_beam' && rogueArtReady('beam'))) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
+  for (const L of S.lines) { if ((L.src === 'fu_warrior_beam' && warriorArtReady('beam')) || (L.src === 'fu_rogue_beam' && rogueArtReady('beam')) || archerUsesLineArt(L)) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
   c.globalAlpha = 1;
   for (const T of S.traps) {
-    if ((T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) || (T.tag === 'fu_rogue_trap' && rogueArtReady('trap'))) continue;
+    if ((T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) || (T.tag === 'fu_rogue_trap' && rogueArtReady('trap')) || archerUsesTrapArt(T)) continue;
     const s = T.kind === 'wall' ? 12 : 8, ready = T.t >= T.arm; c.strokeStyle = T.col; c.fillStyle = ready ? T.col : '#555'; c.lineWidth = 2; c.globalAlpha = ready ? 0.85 : 0.5;
     if (T.kind === 'wall') { c.fillRect(T.x - s, T.y - 4, s * 2, 8); for (let i = -1; i <= 1; i++) c.fillRect(T.x + i * 9 - 2, T.y - 12, 4, 16); }
     else if (T.kind === 'post') { c.fillRect(T.x - 7, T.y - 7, 14, 14); c.beginPath(); c.moveTo(T.x, T.y); c.lineTo(T.x + 10, T.y - 10); c.stroke(); }
