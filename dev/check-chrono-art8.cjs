@@ -60,6 +60,11 @@ async function frame(page, scene, time, art) {
         gridBuild(G.enemies);
         window.triggeredRift = true;
       }
+      // Keep targets in place for repeatable screenshots while their status timers run.
+      for (const enemy of G.enemies) {
+        if (enemy.flash > 0) enemy.flash -= dt;
+        if (enemy.frz > 0) enemy.frz -= dt;
+      }
       fuseTick44(dt);
       for (const task of G.later) {
         task.t -= dt;
@@ -114,7 +119,7 @@ async function frame(page, scene, time, art) {
           if (scene === 'arrow' && i === 0) assert.equal(result.cueCount, 8);
           if (scene === 'arrow' && i === 2) assert.ok(result.projectiles > 0);
           if (scene === 'shuriken' && i === 2) assert.ok(result.rewinding);
-          if (scene === 'slam' && i === 0 || scene === 'trap' && i === 2) assert.ok(result.frozen);
+          if ((scene === 'slam' && i === 0) || (scene === 'trap' && i === 2)) assert.ok(result.frozen);
           if (scene === 'orb' && i === 0) assert.equal(result.projectiles, 3);
           shots.push(await page.screenshot({ path: output + '/' + width + '-' + scene + '-' + (i + 1) + '.png' }));
         }

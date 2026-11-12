@@ -27,9 +27,22 @@ jobs:
         run: |
           node dev/vfuse44.js --out chrono-fusions.json
           node -e "const r=require('./chrono-fusions.json');if(r.errs.length||r.res.fatal||r.res.fails.length||r.res.combos.length!==90)process.exit(1)"
-      - name: Capture chronomancer at both mobile widths
+      - name: Verify public deployment and capture both mobile widths
         if: ${{ !cancelled() }}
-        run: node dev/check-chrono-art8.cjs
+        env:
+          GAME_URL: https://1hyun-you.github.io/field/?v=0.46-art8
+        run: |
+          for attempt in {1..24}; do
+            LIVE="$GAME_URL&check=$GITHUB_RUN_ID-$attempt"
+            if curl --fail --silent --show-error --max-time 10 "$LIVE" -o /tmp/chrono-public.html &&
+              cmp -s /tmp/chrono-public.html index.html; then
+              GAME_URL="$LIVE" node dev/check-chrono-art8.cjs
+              exit
+            fi
+            sleep 10
+          done
+          echo 'The public game did not match the verified build' >&2
+          exit 1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
