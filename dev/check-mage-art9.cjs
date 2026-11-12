@@ -143,6 +143,7 @@ async function assertFallback(page, scene, art, time) {
           assert.ok(result.draws, scene + ': missing sprite at ' + time);
           assert.ok(result.warned && !result.late && result.readOnly, scene + ': render order or state');
           if (scene === 'orb' && i === 0) assert.equal(result.projectiles, 3);
+          if (scene === 'shuriken' && i === 2) assert.equal(result.kinds.filter(kind => kind === 'bounce').length, 3);
           if (scene === 'trap' && i === 2) assert.ok(result.runeTriggered);
           if (scene === 'slam' && i === 2) assert.ok(result.kinds.includes('meteor-hit'));
           if (scene === 'icering') assert.ok(result.kinds.includes('chill') && !result.steam);

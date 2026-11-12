@@ -223,8 +223,8 @@ killEnemy = function (e) {
   if ((e.ls === 'bomb' || e.ls === 'bomb_c') && wAw('bomb') === 'chain') { const x = e.x, y = e.y, d = wStats(wObj('bomb')).dmg * 0.5; G.later.push({ t: 0.12, f: () => explode(x, y, 40, d, 'bomb_aw', '#ffc070') }); }
 };
 const _explode = explode;
-explode = function (x, y, R, dmg, src, color, engineerArt) {
-  _explode(x, y, R, dmg, src, color, engineerArt);
+explode = function (x, y, R, dmg, src, color, engineerArt, mageArt) {
+  _explode(x, y, R, dmg, src, color, engineerArt, mageArt);
   if (src === 'fireball' && wAw('fireball') === 'shard') { const a0 = rand(Math.PI); for (let i = 0; i < 6; i++) shoot({ kind: 'arrow', x, y, ang: a0 + i * Math.PI / 3, sp: 380, r: 5, dmg: dmg * 0.5, pierce: 1, life: 0.45, color: '#ffb060', src: 'fireball_aw' }); }
   if (src === 'trap' && wAw('trap') === 'chain') for (const t of G.traps) if (!t.dead && t.arm <= 0.4 && dist2(t.x, t.y, x, y) < R * R) { t.dead = true; G.later.push({ t: 0.08, f: () => explode(t.x, t.y, t.R, t.dmg, 'trap', '#e0c070') }); }
 };
