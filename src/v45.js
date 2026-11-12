@@ -105,13 +105,20 @@ drawHUD = function (c) {
   c.fillText(p.job ? 'Lv ' + p.level + status : '전직 전', tx, L.y + 35, Math.min(92, px - tx - 4));
   uiPanel(c, px, py, pwid, 15, ph.ambush ? 'rgba(90,40,30,.7)' : 'rgba(40,46,40,.7)', ph.ambush ? '#e6a58d66' : '#cdb57c55', 7);
   uiText(c, pn, px + 7, py + 8, 11, ph.ambush ? '#f0b8a0' : '#efdcaa', 'left', 110, 600);
-  if (cnt) { uiPanel(c, px + pwid - cw2 - 3, py + 2, cw2, 11, 'rgba(205,181,124,.85)', 'rgba(0,0,0,0)', 5); uiText(c, cnt, px + pwid - cw2 / 2 - 3, py + 8, 9, '#1c1a14', 'center', cw2, 700); }
+  let phaseTextRight = px + pwid - 7;
+  if (cnt) {
+    const badgeCenter = px + pwid - cw2 / 2 - 3;
+    uiPanel(c, px + pwid - cw2 - 3, py + 2, cw2, 11, 'rgba(205,181,124,.85)', 'rgba(0,0,0,0)', 5);
+    uiText(c, cnt, badgeCenter, py + 8, 9, '#1c1a14', 'center', cw2, 700);
+    phaseTextRight = badgeCenter + c.measureText(cnt).actualBoundingBoxRight;
+  }
   if (P) uiBar(c, px + 4, py + 16, pwid - 8, 2, phaseProgress(), ph.accT > 0 ? '#f1e6bc' : '#cdb57c', 'rgba(0,0,0,.35)');
   /* 오른쪽: 처치 + 체력 */
   const kills = G.kills >= 10000 ? (G.kills / 10000).toFixed(1) + '만' : G.kills, rx = L.x + L.contentW - 4;
   uiText(c, '처치 ' + kills, rx, L.y + 17, 12, '#d9cbb3', 'right', 80, 600);
   const hp = clamp(p.hp / p.maxHp, 0, 1); uiBar(c, rx - 56, L.y + 33, 56, 5, hp, hp > 0.3 ? '#9fc19d' : '#d58c86');
-  uiText(c, Math.ceil(p.hp), rx - 60, L.y + 35, 11, '#d7e1d8', 'right', 34);
+  c.font = `500 11px ${UI_ART.font}`; c.textAlign = 'right'; c.fillStyle = '#d7e1d8';
+  c.fillText(String(Math.ceil(p.hp)), rx - 60, L.y + 35, clamp(rx - 62 - phaseTextRight, 1, 34));
   drawSlots(c); drawBossBar(c);
   const below = L.y + L.h + 4;
   if (STATE.dev.fps && STATE.mode !== 'result') uiText(c, Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount(), L.x + L.w - 2, below + 10, 10, '#d1d8d9', 'right', L.w - 8);

@@ -37,8 +37,8 @@ const output = process.env.HUD_ART_OUTPUT || path.join(root, 'dev/hud-art1-captu
         G.p.weapons[0].base = true;
         slotWs().slice(0, 2).forEach(w => { w.fu = { job: 'druid', nm: w.id }; });
         G.p.passives = ['vit','magnet','haste','might','regen'].map(id => ({ id, lvl: 3 }));
-        recalc(); G.p.hp = 87; G.kills = 12345; G.time = 725;
-        G.ph.id = 'surge'; G.ph.i = 3; G.ph.t = 75;
+        recalc(); G.p.hp = 117; G.kills = 12345; G.time = 725;
+        G.ph.id = 'surge'; G.ph.i = 3; G.ph.order = Array(9).fill('surge'); G.ph.t = 75;
         STATE.dev.fps = false; STATE.dev.speed = 0; STATE.dev.auto = false;
         STATE.mode = 'play'; hideUI(); syncPauseBtn();
       });
