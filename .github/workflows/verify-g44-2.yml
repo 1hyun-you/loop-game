@@ -1,0 +1,39 @@
+name: G44-2 visual verification
+on:
+  push:
+    branches: [verify-g44-2]
+    paths-ignore: [g44-2-verification.json]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
+      - run: node dev/build.cjs && node dev/check-build.cjs
+      - run: |
+          node dev/vfuse44.js --out g44-2-vfuse.json
+          node -e 'const r=require("./g44-2-vfuse.json");if(r.errs.length||r.res.fatal||r.res.fails.length||r.res.combos.length!==90)process.exit(1)'
+      - run: node dev/check-rogue-art4.cjs
+      - uses: actions/upload-artifact@v4
+        id: captures
+        with:
+          name: G44-2-320px-390px
+          path: |
+            rogue-captures
+            g44-2-vfuse.json
+      - name: Record verification
+        env:
+          CAPTURE_URL: ${{ steps.captures.outputs.artifact-url }}
+        run: |
+          node -e 'const fs=require("fs");fs.writeFileSync("g44-2-verification.json",JSON.stringify({sha:process.env.GITHUB_SHA,run:process.env.GITHUB_RUN_ID,captures:process.env.CAPTURE_URL,combos:90,frames:54},null,2)+"\n")'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add g44-2-verification.json
+          git commit -m 'Record G44-2 visual verification [skip ci]'
+          git push
