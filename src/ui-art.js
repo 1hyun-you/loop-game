@@ -176,6 +176,16 @@ function uiTile(c,r,art,color,level,progress,mark) {
   }
   if(level!=null){uiPanel(c,r.x+r.w-11,r.y+r.h-11,12,12,'#1a2330','#7f806d',3);uiText(c,level,r.x+r.w-5,r.y+r.h-5,10,'#fff4db','center',11,700);}
 }
+function uiWeaponTile(c, r, weapon, frame) {
+  uiTile(c, r, iconCanvas(weapon.id, 2), frame || 'transparent', weapon.lvl);
+}
+function uiBaseWeaponMark(c, r, job, color) {
+  const x = r.x + 1, y = r.y + 1, size = 14;
+  uiPanel(c, x, y, size, size, '#241e31', '#62536a', 3);
+  const crest = UI_ART.images['crest_' + job];
+  if (crest) c.drawImage(crest, x + 1, y + 1, size - 2, size - 2);
+  else uiText(c, JOBS[job].ic, x + size / 2, y + size / 2, 9, color, 'center', size, 700);
+}
 const UI_EXW_ICON={
   first:{warrior:'boomerang',rogue:'knife',archer:'arrow',engineer:'lightning',mage:'fireball',summoner:'orb',sovereign:'shield',chrono:'hourglass',priest:'regen',druid:'trap'},
   second:{warrior:'slam',rogue:'knife',archer:'arrow',engineer:'bomb',mage:'icering',summoner:'orb',sovereign:'cleave',chrono:'hourglass',priest:'beam',druid:'trap'}
