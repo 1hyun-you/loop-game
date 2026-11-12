@@ -25,7 +25,7 @@ function killSouls(x, y, R) {
   for (const b of G.eb) if (b.life > 0 && b.src === '마왕 혼령' && dist2(b.x, b.y, x, y) < (R + b.r) ** 2) { b.life = 0; fx({ kind: 'pop', x: b.x, y: b.y, r: 8, color: '#c9a8ff', dur: 0.2 }); G.stats.souls = (G.stats.souls || 0) + 1; }
 }
 const _explode39 = explode;
-explode = function (x, y, R, dmg, src, color) { _explode39(x, y, R, dmg, src, color); killSouls(x, y, R); };
+explode = function (x, y, R, dmg, src, color, engineerArt) { _explode39(x, y, R, dmg, src, color, engineerArt); killSouls(x, y, R); };
 const _shieldBash39 = shieldBash;
 shieldBash = function (x, y, R, dmg, kb) {
   // 방패 중심 피해: 가까운 적일수록 피해 증가 (중심 최대 +60%)
