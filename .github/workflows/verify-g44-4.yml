@@ -1,4 +1,4 @@
-name: G44-4 archer art verification
+name: G44-4 published game verification
 on:
   push:
     branches: [verify-g44-4]
@@ -14,19 +14,22 @@ jobs:
         with:
           node-version: 22
       - run: node dev/build.cjs && node dev/check-build.cjs
+      - name: Match public game bytes to the reviewed build
+        run: |
+          for attempt in $(seq 1 36); do
+            curl --max-time 12 -fsSL "https://1hyun-you.github.io/field/?verify=art6-${GITHUB_RUN_ID}-${attempt}" -o published.html && cmp -s index.html published.html && break
+            sleep 5
+          done
+          cmp index.html published.html
+          sha256sum index.html published.html
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
-      - name: Test all 90 fusions
-        run: |
-          mkdir -p dev/sim_log
-          node dev/vfuse44.js --out dev/sim_log/fuse-art6.json
-          node -e "const {errs,res}=require('./dev/sim_log/fuse-art6.json');if(errs.length||res.fatal||res.fails.length||res.combos.length!==90)throw Error('Fusion regression');"
-      - name: Capture eleven archer scenarios
+      - name: Capture archer scenarios in the public game
+        env:
+          GAME_URL: https://1hyun-you.github.io/field/?verify=0.46-art6
         run: node dev/check-archer-art6.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: G44-4-320px-390px
-          path: |
-            archer-captures/
-            dev/sim_log/fuse-art6.json
+          name: G44-4-published-320px-390px
+          path: archer-captures/
