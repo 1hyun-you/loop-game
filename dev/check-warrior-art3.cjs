@@ -65,7 +65,7 @@ async function check() {
           const target = makeEnemy('slime', 25, -63);
           if (target) target.hp = target.maxHp = 8000;
           if (id === 'trap') {
-            const e = makeEnemy('slime', 0, 9);
+            const e = makeEnemy('slime', 21, 1);
             if (e) e.hp = e.maxHp = 8000;
           }
           if (danger) G.hz.push({ k: 'line', x: -84, y: 25, dx: 1, dy: -.25, len: 175, w: 27, t: .45, warn: 1 });
@@ -75,7 +75,7 @@ async function check() {
           if (id === 'slam' || id === 'beam') w.c44 = 2;
           if (id === 'cleave') WEAPON_FIRE[id](w, wStats(w));
           else fuseFire44(w, wStats(w));
-          if (id === 'trap') { G.p.x = -18; G.p.y = 18; }
+          if (id === 'trap') { G.p.x = -38; G.p.y = 26; }
           for (let tick = 0; tick < elapsed; tick++) {
             const dt = 1 / 120;
             G.time += dt;
@@ -94,7 +94,7 @@ async function check() {
       for (const id of ids) {
         await page.evaluate(id => {
           const frames = { cleave: [2, 8], shield: [2, 23], slam: [2, 13], arrow: [2, 9], trap: [10, 49], shuriken: [3, 10], fireball: [2, 12], icering: [3, 32], orb: [2, 14], beam: [3, 25] };
-          const capture = { cleave: 7, shield: 22, slam: 8, arrow: 9, trap: 10, shuriken: 10, fireball: 8, icering: 12, orb: 14, beam: 12 };
+          const capture = { cleave: 7, shield: 7, slam: 8, arrow: 9, trap: 40, shuriken: 10, fireball: 8, icering: 12, orb: 14, beam: 12 };
           const canvas = document.createElement('canvas');
           canvas.width = 420; canvas.height = 420;
           const c = canvas.getContext('2d'), img = WARRIOR_ART.images[id];
