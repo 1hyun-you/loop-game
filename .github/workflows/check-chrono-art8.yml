@@ -1,0 +1,39 @@
+name: Validate chronomancer artwork
+on:
+  push:
+    branches: ['art/g44-6-check']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Check both build entry points
+        run: |
+          node dev/build.cjs
+          cp index.html /tmp/chrono-build.html
+          sh build.sh
+          cmp index.html /tmp/chrono-build.html
+          node dev/check-build.cjs
+      - name: Verify 90 fusions
+        run: |
+          node dev/vfuse44.js --out chrono-fusions.json
+          node -e "const r=require('./chrono-fusions.json');if(r.errs.length||r.res.fatal||r.res.fails.length||r.res.combos.length!==90)process.exit(1)"
+      - name: Capture chronomancer at both mobile widths
+        if: ${{ !cancelled() }}
+        run: node dev/check-chrono-art8.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chrono-art8-verification
+          path: |
+            chrono-fusions.json
+            chrono-captures/

@@ -30,6 +30,7 @@ function render() {
   drawRogueArtWorld(c, inView);
   drawArcherArtWorld(c, inView);
   drawEngineerArtWorld(c, inView);
+  drawChronoArtWorld(c, inView);
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -151,7 +152,7 @@ function drawGrowthGround(c, inView) {
   if(G.banner){const b=G.banner;paintedAura(c,'blessing',b.x,b.y,b.r*ultBannerR(),.45);drawSpriteC(c,'flag',0,b.x,b.y);}
   if(G.sanct){const S=G.sanct;paintedAura(c,'holy',S.x,S.y,S.r,.5);effectBoundary(c,S.x,S.y,S.r,'#fff2a8',.35);}
   const ice = p.weapons.find(w => w.id === 'icering');
-  if(ice&&ice.R){paintedAura(c,'frost',p.x,p.y,ice.R,.24);effectBoundary(c,p.x,p.y,ice.R,'#bee6ff',.22);}
+  if(ice&&ice.R&&!(ice.base&&p.job==='chrono'&&chronoArtReady('base-ice-ring'))){paintedAura(c,'frost',p.x,p.y,ice.R,.24);effectBoundary(c,p.x,p.y,ice.R,'#bee6ff',.22);}
   for (const t of G.traps) { if (!inView(t.x, t.y, 14) || (t.engineerBase && engineerArtReady('base-trap'))) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
   for(const m of G.mines){if(inView(m.x,m.y,10))drawSpriteC(c,'bomb',0,m.x,m.y);}
   for (const ch of G.chests) {
@@ -210,7 +211,7 @@ function drawWeapons(c, inView) {
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
-    if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr)) || archerUsesProjectileArt(pr) || engineerUsesProjectileArt(pr)) continue;
+    if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr)) || archerUsesProjectileArt(pr) || engineerUsesProjectileArt(pr) || chronoUsesProjectileArt(pr)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
     if(pr.jt)paintedAura(c,effectKey(pr.jt),pr.x,pr.y,pr.r+5,.3);
     const ps = pjSprite(pr);                                  // 0.29 전용 무기·신규 투사체 도트

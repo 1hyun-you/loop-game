@@ -46,7 +46,7 @@ function hitC(x, y, R, dmg, src, o = {}) {
     damageEnemy(e, d, { src, kb: o.kb || 0, fx: x, fy: y }); n++;
   });
   const rogueArt = ROGUE_RINGS[src], archerArt = ARCHER_RINGS[src];
-  fx({ kind: 'ring', x, y, ...(rogueArt ? { rogueArt } : {}), ...(archerArt ? { archerArt } : {}), engineerArt: ENGINEER_IMPACT_ART[src], r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
+  fx({ kind: 'ring', x, y, ...(rogueArt ? { rogueArt } : {}), ...(archerArt ? { archerArt } : {}), engineerArt: ENGINEER_IMPACT_ART[src], ...(o.chronoArt ? { chronoArt: o.chronoArt, chronoKind: o.chronoKind } : {}), r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
   return n;
 }
 function fan44(x, y, a0, arc, R, dmg, src, kb, col, rogueCut) {
@@ -54,9 +54,10 @@ function fan44(x, y, a0, arc, R, dmg, src, kb, col, rogueCut) {
   const warArt = src === 'fu_warrior_slam' ? 'slam' : src === 'fu_warrior_beam' ? 'beam' : null;
   const warSweep = warArt && (!G.afx || G.afx.length < 120);
   const rogueSweep = src === 'fu_rogue_cleave' && (!G.afx || G.afx.length < 120);
+  const chronoArt = src === 'fu_chrono_cleave' ? 'frozen-blade' : null;
   afx({ k: 'thrust', x, y, a: a0, L: R * 0.9, wd: R * 0.35, dur: 0.18, col,
-    ...(warSweep ? { warArt, arc, r: R } : {}), ...(rogueSweep ? { rogueArt: 'cleave', arc, r: R, rogueCut } : {}) });
-  fx({ kind: 'ring', x, y, r0: R * 0.6, r1: R, dur: 0.16, color: col, ...(warSweep ? { warArt, warSweep: true } : {}), ...(rogueSweep ? { rogueArt: 'cleave' } : {}) });
+    ...(warSweep ? { warArt, arc, r: R } : {}), ...(rogueSweep ? { rogueArt: 'cleave', arc, r: R, rogueCut } : {}), ...(chronoArt ? { chronoArt } : {}) });
+  fx({ kind: 'ring', x, y, r0: R * 0.6, r1: R, dur: 0.16, color: col, ...(warSweep ? { warArt, warSweep: true } : {}), ...(rogueSweep ? { rogueArt: 'cleave' } : {}), ...(chronoArt ? { chronoArt, chronoKind: 'cleave', chronoAngle: a0, chronoArc: arc } : {}) });
 }
 const angTo = (x, y, R = 420) => { const t = nearestEnemy(x, y, R); return t ? Math.atan2(t.y - y, t.x - x) : Math.atan2(G.p.face.y, G.p.face.x); };
 function line44(o) { const L = F44S().lines; if (L.length < 40) L.push(Object.assign({ t: 0, tk: 0, wd: 10, tick: 0.1, rot: 0 }, o)); }
@@ -157,14 +158,14 @@ const FU44 = {
     beam: { cd: 1.8, f(Z) { const p = G.p, N = F44S().nodes; N.push({ x: p.x, y: p.y, t: 0, life: 8, src: Z.src, dmg: Z.d(6), tk: 0 }); if (N.length > 5) N.shift(); fx({ kind: 'ring', x: p.x, y: p.y, r0: 20, r1: 4, dur: 0.3, color: '#ff5050', engineerArt: 'laser-pylon' }); } },
   },
   chrono: {
-    cleave: { cd: 1.4, f(Z) { const p = G.p, R = chronoRing(Z); later44(0.3, () => fan44(p.x, p.y, angTo(p.x, p.y, R + 60), 1.6, R + 40, Z.d(24), Z.src, 80, '#c8b0ff')); } },
-    shield: { cd: 1.6, f(Z) { const p = G.p; hitC(p.x, p.y, 90 * Z.a, Z.d(20), Z.src, { kb: 220, slow: 1, col: '#c8b0ff' }); } },
-    slam: { cd: 2.0, f(Z) { const p = G.p, R = chronoRing(Z), ps = []; gridQuery(p.x, p.y, R, e => { if (nonBoss(e)) e.frz = Math.max(e.frz || 0, 0.8); if (ps.length < 4) ps.push({ x: e.x, y: e.y }); });
-      later44(1.0, () => { for (const q of ps) hitC(q.x, q.y, 80 * Z.a, Z.d(36), Z.src, { kb: 80, col: '#c8b0ff' }); }); } },
-    arrow: { cd: 1.8, f(Z) { const p = G.p, R = chronoRing(Z) + 40, x = p.x, y = p.y; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, ex = x + Math.cos(a) * R, ey = y + Math.sin(a) * R; fx({ kind: 'pop', x: ex, y: ey, r: 6, color: '#c8b0ff', dur: 1 }); later44(1, () => boltTo(ex, ey, a + Math.PI, { sp: 520, dmg: Z.d(12), pierce: 2, life: R * 2 / 520, color: '#c8b0ff', src: Z.src })); } } },
-    trap: { cd: 1.8, f(Z) { const p = G.p, R = chronoRing(Z); for (let i = 0; i < 3; i++) { const a = rand(Math.PI * 2); trap44({ tag: Z.src, x: p.x + Math.cos(a) * R, y: p.y + Math.sin(a) * R, R: 40, max: 9, kind: 'rift', col: '#c8b0ff', on: T => hitC(T.x, T.y, T.R, Z.d(18), Z.src, { frz: 1.5, col: '#c8b0ff' }) }); } } },
-    shuriken: { cd: 1.3, f(Z) { const a = angTo(G.p.x, G.p.y); const q = pr44({ kind: 'star', ang: a, sp: 500, r: 6, dmg: Z.d(14), pierce: 3, life: 1.2, color: '#c8b0ff', src: Z.src, bounce: true }); later44(0.7, () => boltTo(q.x, q.y, Math.atan2(G.p.y - q.y, G.p.x - q.x), { kind: 'star', sp: 520, r: 6, dmg: Z.d(14), pierce: 99, life: 0.8, color: '#8a70d0', src: Z.src })); } },
-    fireball: { cd: 1.8, f(Z) { const p = G.p, R = chronoRing(Z), es = enemiesInRange(p.x, p.y, R).slice(0, 5); for (const e of es) { fx({ kind: 'pop', x: e.x, y: e.y, r: 9, color: '#ffb060', dur: 1.5 }); later44(1.5, () => hitC(e.dead ? e.x : e.x, e.y, 50 * Z.a, Z.d(30), Z.src, { kb: 80, col: '#ffb060' })); } } },
+    cleave: { cd: 1.4, f(Z) { const p = G.p, R = chronoRing(Z); chronoCue('frozen-blade', 'blade', 0.3, p.x, p.y, R + 40, angTo(p.x, p.y, R + 60)); later44(0.3, () => fan44(p.x, p.y, angTo(p.x, p.y, R + 60), 1.6, R + 40, Z.d(24), Z.src, 80, '#c8b0ff')); } },
+    shield: { cd: 1.6, f(Z) { const p = G.p; hitC(p.x, p.y, 90 * Z.a, Z.d(20), Z.src, { kb: 220, slow: 1, col: '#c8b0ff', chronoArt: 'time-backflow', chronoKind: 'backflow' }); } },
+    slam: { cd: 2.0, f(Z) { const p = G.p, R = chronoRing(Z), ps = []; gridQuery(p.x, p.y, R, e => { if (nonBoss(e)) e.frz = Math.max(e.frz || 0, 0.8); if (ps.length < 4) { ps.push({ x: e.x, y: e.y }); chronoCue('time-collapse', 'collapse', 1, e.x, e.y, 80 * Z.a); } });
+      later44(1.0, () => { for (const q of ps) hitC(q.x, q.y, 80 * Z.a, Z.d(36), Z.src, { kb: 80, col: '#c8b0ff', chronoArt: 'time-collapse', chronoKind: 'collapse' }); }); } },
+    arrow: { cd: 1.8, f(Z) { const p = G.p, R = chronoRing(Z) + 40, x = p.x, y = p.y; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, ex = x + Math.cos(a) * R, ey = y + Math.sin(a) * R; fx({ kind: 'pop', x: ex, y: ey, r: 6, color: '#c8b0ff', dur: 1, chronoArt: 'stasis-arrow', chronoKind: 'arrow', chronoAngle: a + Math.PI }); later44(1, () => boltTo(ex, ey, a + Math.PI, { sp: 520, dmg: Z.d(12), pierce: 2, life: R * 2 / 520, color: '#c8b0ff', src: Z.src })); } } },
+    trap: { cd: 1.8, f(Z) { const p = G.p, R = chronoRing(Z); for (let i = 0; i < 3; i++) { const a = rand(Math.PI * 2); trap44({ tag: Z.src, x: p.x + Math.cos(a) * R, y: p.y + Math.sin(a) * R, R: 40, max: 9, kind: 'rift', col: '#c8b0ff', on: T => hitC(T.x, T.y, T.R, Z.d(18), Z.src, { frz: 1.5, col: '#c8b0ff', chronoArt: 'time-rift', chronoKind: 'rift' }) }); } } },
+    shuriken: { cd: 1.3, f(Z) { const a = angTo(G.p.x, G.p.y); const q = pr44({ kind: 'star', ang: a, sp: 500, r: 6, dmg: Z.d(14), pierce: 3, life: 1.2, color: '#c8b0ff', src: Z.src, bounce: true, on44b: pr => chronoCue('rewind-star', 'echo', .20, pr.x, pr.y, 13, Math.atan2(pr.vy, pr.vx)) }); later44(0.7, () => boltTo(q.x, q.y, Math.atan2(G.p.y - q.y, G.p.x - q.x), { kind: 'star', sp: 520, r: 6, dmg: Z.d(14), pierce: 99, life: 0.8, color: '#8a70d0', src: Z.src })); } },
+    fireball: { cd: 1.8, f(Z) { const p = G.p, R = chronoRing(Z), es = enemiesInRange(p.x, p.y, R).slice(0, 5); for (const e of es) { fx({ kind: 'pop', x: e.x, y: e.y, r: 9, color: '#ffb060', dur: 1.5, chronoArt: 'delayed-burst', chronoKind: 'timer', chronoTarget: e }); later44(1.5, () => hitC(e.dead ? e.x : e.x, e.y, 50 * Z.a, Z.d(30), Z.src, { kb: 80, col: '#ffb060', chronoArt: 'delayed-burst', chronoKind: 'burst' })); } } },
     orb: { cd: 1.5, f(Z) { chronoRing(Z); for (let i = 0; i < 3; i++) pr44({ kind: 'orb', ang: i * 2.1, sp: 280, r: 6, dmg: Z.d(16), life: 2.4, color: '#c8b0ff', src: Z.src, home: true }); } },
     beam: { cd: 1.6, f(Z) { const p = G.p; chronoRing(Z); line44({ x: p.x, y: p.y, a: rand(Math.PI * 2), L: 130 * Z.a, wd: 8, dur: 1.0, rot: Math.PI * 2, follow: true, slow: 1, dmg: Z.d(7), src: Z.src, col: '#c8b0ff' }); } },
   },
@@ -227,7 +228,7 @@ playerAvoid = function () { if (G.tm.smoke44 > 0 && Math.random() < 0.5) { fx({ 
 /* 기술자 덫 설치 */
 function engTrap(Z, kind, on) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, R: 0, max: 8, kind, col: Z.col, on: T => { on(T, T.who); engineerTrapTrigger(T); } }); }
 /* 시간술사 기본 고리 */
-function chronoRing(Z) { const p = G.p, R = 80 * Z.a; hitC(p.x, p.y, R, Z.d(8), Z.src, { slow: 1, col: '#bfe8ff', fill: false }); return R; }
+function chronoRing(Z) { const p = G.p, R = 80 * Z.a; hitC(p.x, p.y, R, Z.d(8), Z.src, { slow: 1, col: '#bfe8ff', fill: false, chronoArt: 'base-ice-ring', chronoKind: 'ice' }); return R; }
 /* 마법사 화염구 (착탄 콜백 선택) */
 function magFb(Z, a, dm, cb) { pr44({ kind: 'shell', ang: a, sp: 320, r: 8, dmg: Z.d(dm), life: 1, src: Z.src, on44: pr => { if (cb) cb(pr); else hitC(pr.x, pr.y, 54 * Z.a, pr.dmg, Z.src, { kb: 60, col: '#ff9a4a' }); } }); }
 
@@ -342,10 +343,10 @@ drawJobAura = function (c) {
   _drawJobAura44(c);
   const S = G.f44; if (!S) return;
   c.save();
-  for (const L of S.lines) { if ((L.src === 'fu_warrior_beam' && warriorArtReady('beam')) || (L.src === 'fu_rogue_beam' && rogueArtReady('beam')) || archerUsesLineArt(L)) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
+  for (const L of S.lines) { if ((L.src === 'fu_warrior_beam' && warriorArtReady('beam')) || (L.src === 'fu_rogue_beam' && rogueArtReady('beam')) || archerUsesLineArt(L) || chronoUsesLineArt(L)) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
   c.globalAlpha = 1;
   for (const T of S.traps) {
-    if ((T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) || (T.tag === 'fu_rogue_trap' && rogueArtReady('trap')) || archerUsesTrapArt(T) || engineerUsesTrapArt(T)) continue;
+    if ((T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) || (T.tag === 'fu_rogue_trap' && rogueArtReady('trap')) || archerUsesTrapArt(T) || engineerUsesTrapArt(T) || chronoUsesTrapArt(T)) continue;
     const s = T.kind === 'wall' ? 12 : 8, ready = T.t >= T.arm; c.strokeStyle = T.col; c.fillStyle = ready ? T.col : '#555'; c.lineWidth = 2; c.globalAlpha = ready ? 0.85 : 0.5;
     if (T.kind === 'wall') { c.fillRect(T.x - s, T.y - 4, s * 2, 8); for (let i = -1; i <= 1; i++) c.fillRect(T.x + i * 9 - 2, T.y - 12, 4, 16); }
     else if (T.kind === 'post') { c.fillRect(T.x - 7, T.y - 7, 14, 14); c.beginPath(); c.moveTo(T.x, T.y); c.lineTo(T.x + 10, T.y - 10); c.stroke(); }
