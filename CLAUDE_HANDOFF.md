@@ -334,3 +334,12 @@
 - `dev/check-hud-art1.cjs`로 320px·390px에서 기본 직업 10종·페이즈 14종의 글자 경계와 렌더링 전후 게임 상태 검사. 연성 카드 모서리 문장·맥동·동작 줄이기·이미지 실패 대체, 일시정지, 기본 무기 비활성 표시, 보스 전환과 화면 오류 검사. [배포 전 검사](https://github.com/1hyun-you/loop-game/actions/runs/43127626389)
 - 실제 서비스의 Chromium 320px·390px 검사 재실행 통과. 연성 카드·일반 HUD·보스 HUD 캡처 6장. [공개 서비스 검사](https://github.com/1hyun-you/loop-game/actions/runs/43127971297) · [캡처 ZIP](https://github.com/1hyun-you/loop-game/actions/runs/43127971297/artifacts/13903553248)
 - 남은 항목은 `GPT_REQUESTS.md` 제공 목록 참조. 다음 아트 묶음은 새 대화에서 최신 main·인계 문서·요청서를 확인한 후 사용자 지정 범위로 진행.
+
+## 0.46-art2
+
+- 2026-11-12 한국시간. G43-4 직업별 연성 순간 연출 10종 완료. 시작 main `b1bfeb6ad2e296ea5755abd7349450f64f6ce6a7`. `assets/fuse-art2/` 투명 WebP 10종(88,864바이트)을 그림 파일만 포함한 커밋 `89047e960d3a6f09986e4cf08c0d25f56d883d1a`로 선등록. 메시지에 `[skip deploy]` 표기. 마법사 WebP는 원소 4종을 담은 2×2 시트.
+- `node dev/pack-fuse-art.cjs`로 `src/fuse-art-data.js`를 생성하고 `build.sh`에서 `src/fuse-art.js`와 함께 결합. `src/v43.js fuseMoment(j, w)`에 연결하며, 현재 적용 함수인 `src/v44.js applyFuse`에서 연성한 무기 객체를 전달. 이미지 미준비·실패 시 기존 직업별 도형 연출 사용.
+- `src/render.js`의 전장 연출은 적 공격 예고·개체보다 먼저 그리며, `src/v45.js drawSlots`의 연출은 해당 무기 칸 안에 배치. 0.9초 동안 준비·실행·여운을 표시. 동작 줄이기 설정에서는 전장 장식을 생략하고 해당 칸에 정적인 색 표시 적용. 전사 대검·불꽃, 도적 분리·합류, 군주 군기·각인, 궁수 화살촉·바람, 기술자 톱니 조립, 시간술사 문자판·초침 정지, 마법사 원소 4종 수렴, 소환사 영혼 흡수, 프리스트 빛기둥·성물, 드루이드 덩굴 성장.
+- `src/config.js` 버전 `0.46-art2`. 배포 소스 `efdf7c2bbd8cd11db9c7f060ae9e2ad2bcb4db2c`, 게임 HTML 자동 빌드 `951e8848527d341bd4f7efd7197105d3cceb334d`, 서비스 source-ref `3a8f6ea37442b334f838d8d296e3da7f257345c5`, 서비스 HTML `fc618b22a6a902b7bdd4645e5f81339b2869ffc6`. 공개 HTML과 검증 빌드 바이트 일치. SHA-256 `ef5110b8111579a4059235047f2e2d41282d63f76e74b0c6f246bade6f1d52c2`. [실제 서비스](https://1hyun-you.github.io/field/)
+- `dev/check-fuse-art2.cjs`로 320px·390px에서 각 직업 카드 2회 클릭 확정, 대상 슬롯, 단계별 프레임, 슬롯 경계, 이미지 실패 대체, 동작 줄이기 및 렌더링 전후 게임·저장 상태 일치 검사. `dev/vfuse44.js`의 기존 연성 90조합 발동·피해·이름 검사 실패 0건, 브라우저 오류 0건. [배포 전 검사](https://github.com/1hyun-you/loop-game/actions/runs/43151055228) · [공개 서비스 검사](https://github.com/1hyun-you/loop-game/actions/runs/43151243442) · [320px·390px 캡처 ZIP](https://github.com/1hyun-you/loop-game/actions/runs/43151243442/artifacts/13913951646)
+- 남은 작업: 실제 폴드8에서 시인성 확인. 연성 무기 90종의 상시 외형·공격 동작은 `GPT_REQUESTS.md` G44-1~10. 다음 요청 접수 시 최신 main과 인계 기록 확인 후 사용자 지정 묶음부터 진행.
