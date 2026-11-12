@@ -70,7 +70,9 @@ async function captureFrame(page, time, art) {
       updatePools(dt);
       updateMisc(dt);
     }
-    const read = () => JSON.stringify([G.p, G.proj, G.f44, G.traps, G.pools, G.enemies, G.hz, G.stats, { ...localStorage }]);
+    // The legacy projectile renderer caches its sprite lookup on _s.
+    const read = () => JSON.stringify([G.p, G.proj, G.f44, G.traps, G.pools, G.enemies, G.hz, G.stats, { ...localStorage }],
+      (key, value) => key === '_s' ? undefined : value);
     const original = ctx.drawImage;
     const before = read();
     let draws = 0;
