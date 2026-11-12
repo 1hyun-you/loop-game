@@ -372,3 +372,13 @@
 - 다음 첫 작업: 최신 main의 기존 WebP 6종을 확인하고 얼음 성벽·전령 매·군기 광휘·기본 방패 충격 원화 제작 및 선등록. 등록한 원화는 후속 적용에 재사용.
 - 남은 적용: `src/v44.js`의 `FU44.sovereign`과 `drawJobAura`의 lines·traps·nodes에 준비·실행·여운 연결. 기존 판정 좌표·범위·시간, 적 공격 예고 및 이미지 실패 대체 유지. `src/config.js`의 VERSION을 `0.46-art5`로 변경하고 `dev/vfuse44.js` 연성 90종 검사, 320px·390px 군주 9종 화면 캡처, 실제 서비스 버전 확인 후 본 항목 및 `GPT_REQUESTS.md`의 완료 상태 갱신.
 - 현재 상태: 그림 6종 선등록 완료. 코드 연결·동작·브라우저 검사·배포는 미착수. G44-3 요청은 제공 상태 유지.
+
+## 0.46-art6
+
+- 2026-11-12 한국시간. G44-4 궁수 기본 화살 및 연성 무기 9종 외형·동작 적용·배포 완료. 시작 main `7e698e4566a1c0620a593895bbcc957efbb1243f`. G44-3 군주 진행 기록과 선등록 원화 보존.
+- `assets/archer-art6/` 투명 WebP 10종, 합계 29,208바이트. 그림 전용 선등록 커밋은 갈래·충격·낙하 `834d0eeb7edac00aacc01bc7c41ef49be4efd30f`, 사냥 덫·도탄·화염 `8e932389933cc089386bcccea641a334c27dc3f7`, 서리·사냥 매·충전·기본 `e88efef7ad1dd8fb460d8240b470c8495cc61d58`. 모두 `[skip deploy]`, 원격 WebP 10종 바이트 일치 확인. 잎색 깃, 짙은 자주색 외곽선, 왼쪽 위 조명 기준.
+- `dev/pack-archer-art.cjs`로 원화를 `src/archer-art-data.js`에 내장. `build.sh`에서 `src/archer-art.js`와 함께 결합. `src/v44.js`의 FU44.archer 낙하 표식, 공통 착탄과 도탄 시점, drawJobAura의 궁수 광선·덫을 연결. `src/render.js`에서 적 예고와 개체보다 먼저 신규 그림을 표시하고 `src/vfx.js`에서 동일 효과의 기존 표시를 제어. 궁수 말뚝 노드 정의 없음. 이미지 누락 시 기존 투사체·고리·광선·육각 덫으로 대체.
+- 갈래 5발, 방패촉 충격파, 표식 수렴과 낙하, 덫 설치·닫힘, 실제 도탄점의 꺾인 잔상, 불씨 폭발, 결정 냉기, 매의 날갯짓·급강하, 집중 5단계 직선 관통을 표현. 미충전 일격은 기본 화살 표시. 게임의 좌표·판정·재사용·자동 플레이·저장 데이터 변경 없음.
+- `src/config.js` 버전 `0.46-art6`. 배포 소스 `06e2c76d823ae1b02f271106a7bac27a0799549b`, 게임 HTML `050e7e7fd011a5ced56f7ef2a7a4d1b8c4c0f332`, 서비스 source-ref `75f9a1254b4dc8d6bd9dd37f2b3b8b4501c50349`, 서비스 HTML `1064e1c01534252eb54ad13d8dc61c8de61ed6e1`. 공개 HTML과 검증 빌드 SHA-256 일치 `eb17ff5a41efd995e436df8ae19dfa4cd2af29f0871b04e0793b19cfc1dd29a7`. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 배포](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43189610821).
+- `dev/vfuse44.js` 연성 90종 발동·피해·이름 실패 0건, 브라우저 오류 0건. `dev/check-archer-art6.cjs` 320px·390px Chromium에서 11상황 3시점 캡처, 이미지 대체 표시, 렌더링 전후 전투·저장 상태, 동작 줄이기 렌더 확인. [배포 전 검사](https://github.com/1hyun-you/loop-game/actions/runs/43189337820) · [공개 게임 검사](https://github.com/1hyun-you/loop-game/actions/runs/43189655426) · [공개 게임 캡처 66장](https://github.com/1hyun-you/loop-game/actions/runs/43189655426/artifacts/13930950678).
+- 궁수 G44-4의 남은 제작 항목 없음. 실제 폴드8과 장시간 성능 미검증. 다음 작업은 사용자 지정 범위의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
