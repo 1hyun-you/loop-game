@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
+  <defs>
+    <linearGradient id="steel" x2="1" y2="1">
+      <stop stop-color="#394754"/>
+      <stop offset=".42" stop-color="#252d3e"/>
+      <stop offset="1" stop-color="#181e2e"/>
+    </linearGradient>
+    <linearGradient id="bevel" x2="1" y2="1">
+      <stop stop-color="#b4a07c"/>
+      <stop offset="1" stop-color="#625869"/>
+    </linearGradient>
+  </defs>
+  <path d="M8 1H34Q39 1 43 7V35Q42 41 36 43H8Q2 43 1 37V9Q2 3 8 1Z" fill="url(#steel)" fill-opacity=".94" stroke="#291f32" stroke-width="2"/>
+  <path d="M8 2H34Q39 2 42 8M2 33V9Q3 4 8 2M31 42H36Q40 41 42 36" fill="none" stroke="url(#bevel)" stroke-linecap="round"/>
+  <path d="m3 36 3 2-1 2-2-2zm36-32 3 3-2 2-3-3z" fill="#bfa279" fill-opacity=".55"/>
+</svg>
