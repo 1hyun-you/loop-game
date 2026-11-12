@@ -27,7 +27,6 @@
 | G42-7 | 예고·보조 | 정예 돌진 화살표, 폭탄 착탄 표식, 사슬 마디, 제단 진행 문양 | src/render.js, src/arsenal.js | 0.42 ART42_PLAN 7번 (폭탄·사슬은 제외 무기 관련, 우선순위 낮음) |
 | G42-13 | 직업 외형 | 10직업 의상·무기 외형 구분 (동작 유지) | src/sprite.js, src/art-theme.js | 0.42 ART42_PLAN 13번 |
 | G44-3 | 연성 무기 / 군주 | 군주 연성 무기 9종 외형·동작 (조합표 F44.sovereign: 이름·효과는 게임 시스템 대시보드 연성 탭, 무기 결합·직업 변화 구분 살림, 직업 정체성 강조) · 현재 선·고리·육각 임시 도형 | src/v44.js FU44.sovereign·drawJobAura 감싸기(lines·traps·nodes) | 0.44 vfuse44 90종 발동·피해 점검 통과 |
-| G44-8 | 연성 무기 / 소환사 | 소환사 연성 무기 9종 외형·동작 (조합표 F44.summoner: 이름·효과는 게임 시스템 대시보드 연성 탭, 무기 결합·직업 변화 구분 살림, 직업 정체성 강조) · 현재 선·고리·육각 임시 도형 | src/v44.js FU44.summoner·drawJobAura 감싸기(lines·traps·nodes) | 0.44 vfuse44 90종 발동·피해 점검 통과 |
 | G44-9 | 연성 무기 / 사제 | 사제 연성 무기 9종 외형·동작 (조합표 F44.priest: 이름·효과는 게임 시스템 대시보드 연성 탭, 무기 결합·직업 변화 구분 살림, 직업 정체성 강조) · 현재 선·고리·육각 임시 도형 | src/v44.js FU44.priest·drawJobAura 감싸기(lines·traps·nodes) | 0.44 vfuse44 90종 발동·피해 점검 통과 |
 | G44-10 | 연성 무기 / 드루이드 | 드루이드 연성 무기 9종 외형·동작 (조합표 F44.druid: 이름·효과는 게임 시스템 대시보드 연성 탭, 무기 결합·직업 변화 구분 살림, 직업 정체성 강조) · 현재 선·고리·육각 임시 도형 | src/v44.js FU44.druid·drawJobAura 감싸기(lines·traps·nodes) | 0.44 vfuse44 90종 발동·피해 점검 통과 |
 
@@ -55,3 +54,4 @@
 | G44-5 | 기술자 기본 덫 및 연성 무기 9종 외형·동작 | CLAUDE_HANDOFF.md 0.46-art7 |
 | G44-6 | 시간술사 기본 얼음 고리 및 연성 무기 9종 외형·동작 | CLAUDE_HANDOFF.md 0.46-art8 |
 | G44-7 | 마법사 기본 화염구 및 연성 무기 9종 외형·동작 | CLAUDE_HANDOFF.md 0.46-art9 |
+| G44-8 | 소환사 기본 빛줄기 및 연성 무기 9종 외형·동작 | CLAUDE_HANDOFF.md 0.46-art10 |
