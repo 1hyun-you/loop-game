@@ -277,7 +277,7 @@ function drawArsenal(c, inView) {
     drawSpriteRot(c, 'bomb', (G.time * 12) & 1, x, y - h, k * 6);   // 0.29 도트 폭탄 (회전 비행, 심지 깜빡임)
   }
   if (G.afx) for (const f of G.afx) {
-    if (warriorArtReady(f.warArt) || rogueArtReady(f.rogueArt) || chronoArtReady(f.chronoArt) || mageArtReady(f.mageArt) || summonerArtReady(f.summonerArt)) continue;
+    if (warriorArtReady(f.warArt) || rogueArtReady(f.rogueArt) || chronoArtReady(f.chronoArt) || mageArtReady(f.mageArt) || summonerArtReady(f.summonerArt) || priestArtReady(f.priestArt)) continue;
     const k = f.t / f.dur;
     if (f.k === 'thrust') {                                         // 창 찌르기: 뻗었다 사라지는 창날 궤적
       const ext = Math.min(1, k * 4), L = f.L * ext, ux = Math.cos(f.a), uy = Math.sin(f.a), nx = -uy, ny = ux, x = p.x, y = p.y, fade = 1 - Math.max(0, (k - 0.3) / 0.7);

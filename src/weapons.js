@@ -146,7 +146,7 @@ Object.assign(WEAPON_FIRE, {
   /* 마력 구체: 추적 구체 · 군집 분기: 구체 +2·피해 -20% · 신성 폭발 분기: 명중 시 작은 폭발 */
   orb(w, S) {
     const D = WEAPONS.orb.base, p = G.p;
-    for (let i = 0; i < S.n; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: rand(Math.PI * 2), sp: D.sp, r: hasRelic('bigorb') ? 12 : 6, dmg: S.dmg, pierce: 0, life: D.life, color: '#9fb8ff', src: 'mbolt', home: true, nova: w.br === 'nova' });
+    for (let i = 0; i < S.n; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: rand(Math.PI * 2), sp: D.sp, r: hasRelic('bigorb') ? 12 : 6, dmg: S.dmg, pierce: 0, life: D.life, color: '#9fb8ff', src: 'mbolt', home: true, nova: w.br === 'nova', ...(w.base && p.job === 'priest' ? { priestBase: true } : {}) });
   },
 });
 function shieldBash(x, y, R, dmg, kb) {
@@ -244,6 +244,8 @@ function updateProjectiles(dt) {
       pr.hits.add(e.id);
       if (pr.kind === 'fire' || pr.kind === 'shell') { fireBurst(pr); pr.dead = true; return false; }
       damageEnemy(e, pr.dmg, { kb: 40, fx: pr.x - pr.vx * 0.05, fy: pr.y - pr.vy * 0.05, src: pr.src });
+      if (pr.src === 'fu_priest_arrow') priestProjectileEcho(pr, 'arrow');
+      if (pr.priestBase) priestProjectileEcho(pr, 'orb');
       if (pr.bleed && !e.dead) { e.bl = 3; e.blD = pr.dmg * 0.25; }
       if (pr.nova) explode(pr.x, pr.y, 42, pr.dmg * 0.6, 'nova', '#b8c8ff');
       if (pr.split) { pr.split = false; const a = Math.atan2(pr.vy, pr.vx); for (const da of [-0.5, 0, 0.5]) { const s2 = shoot({ kind: 'arrow', x: pr.x, y: pr.y, ang: a + da, sp: 480, r: 4, dmg: pr.dmg * 0.5, pierce: 0, life: 0.5, color: '#d8ffc8', src: 'split' }); s2.hits.add(e.id); } }

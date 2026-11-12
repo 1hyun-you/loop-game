@@ -33,6 +33,7 @@ function render() {
   drawChronoArtWorld(c, inView);
   drawMageArtWorld(c, inView);
   drawSummonerArtWorld(c, inView);
+  drawPriestArtWorld(c, inView);
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -214,7 +215,7 @@ function drawWeapons(c, inView) {
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
-    if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr)) || archerUsesProjectileArt(pr) || engineerUsesProjectileArt(pr) || chronoUsesProjectileArt(pr) || mageUsesProjectileArt(pr) || summonerUsesProjectileArt(pr)) continue;
+    if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr)) || archerUsesProjectileArt(pr) || engineerUsesProjectileArt(pr) || chronoUsesProjectileArt(pr) || mageUsesProjectileArt(pr) || summonerUsesProjectileArt(pr) || priestUsesProjectileArt(pr)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
     if(pr.jt)paintedAura(c,effectKey(pr.jt),pr.x,pr.y,pr.r+5,.3);
     const ps = pjSprite(pr);                                  // 0.29 전용 무기·신규 투사체 도트
