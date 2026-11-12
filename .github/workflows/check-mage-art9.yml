@@ -1,0 +1,36 @@
+name: Validate mage artwork
+on:
+  push:
+    branches: ['art/g44-7-check']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Compare game builds and validate fusion mechanics
+        run: |
+          node dev/build.cjs
+          cp index.html /tmp/mage-build.html
+          sh build.sh
+          cmp index.html /tmp/mage-build.html
+          node dev/check-build.cjs
+          node dev/vfuse44.js --out mage-fusions.json
+          node -e "const r=require('./mage-fusions.json');if(r.errs.length||r.res.fatal||r.res.fails.length||r.res.combos.length!==90)process.exit(1)"
+      - name: Capture mobile battle scenes
+        run: node dev/check-mage-art9.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mage-art9-verification
+          path: |
+            mage-fusions.json
+            mage-captures/
