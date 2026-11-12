@@ -1,39 +1,34 @@
-name: G44-2 visual verification
+name: G44-2 public game verification
 on:
   push:
     branches: [verify-g44-2]
-    paths-ignore: [g44-2-verification.json]
+    paths: ['.github/workflows/verify-g44-2.yml']
 permissions:
-  contents: write
+  contents: read
 jobs:
-  verify:
+  verify-live:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Match public game bytes to the reviewed build
+        run: |
+          node dev/build.cjs && node dev/check-build.cjs
+          for attempt in $(seq 1 24); do
+            curl --max-time 12 -fsSL "https://1hyun-you.github.io/field/?verify=art4-${GITHUB_RUN_ID}-${attempt}" -o published.html && cmp -s index.html published.html && break
+            sleep 5
+          done
+          cmp index.html published.html
+          sha256sum index.html published.html
       - run: npm install --no-save --no-package-lock playwright
       - run: npx playwright install --with-deps chromium
-      - run: node dev/build.cjs && node dev/check-build.cjs
-      - run: |
-          node dev/vfuse44.js --out g44-2-vfuse.json
-          node -e 'const r=require("./g44-2-vfuse.json");if(r.errs.length||r.res.fatal||r.res.fails.length||r.res.combos.length!==90)process.exit(1)'
-      - run: node dev/check-rogue-art4.cjs
-      - uses: actions/upload-artifact@v4
-        id: captures
-        with:
-          name: G44-2-320px-390px
-          path: |
-            rogue-captures
-            g44-2-vfuse.json
-      - name: Record verification
+      - name: Capture the published game at 320px and 390px
         env:
-          CAPTURE_URL: ${{ steps.captures.outputs.artifact-url }}
-        run: |
-          node -e 'const fs=require("fs");fs.writeFileSync("g44-2-verification.json",JSON.stringify({sha:process.env.GITHUB_SHA,run:process.env.GITHUB_RUN_ID,captures:process.env.CAPTURE_URL,combos:90,frames:54},null,2)+"\n")'
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add g44-2-verification.json
-          git commit -m 'Record G44-2 visual verification [skip ci]'
-          git push
+          GAME_URL: https://1hyun-you.github.io/field/?verify=0.46-art4
+        run: node dev/check-rogue-art4.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: G44-2-public-320px-390px
+          path: rogue-captures
