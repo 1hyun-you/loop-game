@@ -91,6 +91,7 @@ const output = process.env.HUD_ART_OUTPUT || path.join(root, 'dev/hud-art1-captu
         renderSelect();
       });
       await page.locator('.k-fuse img[data-job-crest]').evaluate(img => img.decode());
+      await page.locator('.cards').evaluate(e => Promise.all(e.getAnimations().map(a => a.finished)));
       const card = await page.locator('.k-fuse').evaluate(e => {
         const r = e.getBoundingClientRect(), crest = e.querySelector('.fuse-corner').getBoundingClientRect();
         const text = e.querySelector('.choice-copy-head'), range = document.createRange();
