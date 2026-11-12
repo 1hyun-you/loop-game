@@ -61,9 +61,9 @@ function shoot(o) {
   if (G.proj.length < 400) G.proj.push(pr);
   return pr;
 }
-function explode(x, y, R, dmg, src, color = '#ff9a4a') {
+function explode(x, y, R, dmg, src, color = '#ff9a4a', engineerArt) {
   gridQuery(x, y, R, e => damageEnemy(e, dmg, { src, kb: 80, fx: x, fy: y }));
-  fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.28, color, fill: true, art: /fire|flame|bomb/.test(src)?'explosion':/ice|frost|shatter/.test(src)?'shatter':undefined });
+  fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.28, color, fill: true, engineerArt, art: /fire|flame|bomb/.test(src)?'explosion':/ice|frost|shatter/.test(src)?'shatter':undefined });
 }
 
 const WEAPON_FIRE = {
@@ -133,7 +133,7 @@ Object.assign(WEAPON_FIRE, {
     for (let i = 0; i < S.n; i++) {
       if (G.traps.length >= max) G.traps.shift();
       const a = rand(Math.PI * 2), d = i ? 18 : 0;
-      G.traps.push({ x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: 12, arm: 0.4, dmg: S.dmg, R: D.R * S.area, snare: w.br === 'snare', cluster: w.br === 'cluster' });
+      G.traps.push({ x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: 12, arm: 0.4, engineerBase: w.base && p.job === 'engineer', dmg: S.dmg, R: D.R * S.area, snare: w.br === 'snare', cluster: w.br === 'cluster' });
     }
   },
   /* 얼음 고리: 주변 냉기 (0.5초마다 둔화·피해) · 빙결 분기: 6% 확률 1초 빙결 · 파쇄 분기: 둔화된 적 처치 시 냉기 폭발 */
@@ -164,10 +164,10 @@ function updateTraps(dt) {
     let hit = false; gridQuery(t.x, t.y, t.r, () => { hit = true; return false; });
     if (!hit) continue;
     t.dead = true;
-    explode(t.x, t.y, t.R, t.dmg, 'trap', '#e0c070');
+    explode(t.x, t.y, t.R, t.dmg, 'trap', '#e0c070', t.engineerBase ? 'base-trap' : undefined);
     if (t.snare) gridQuery(t.x, t.y, t.R, e => { if (!e.cmd && !e.boss) e.frz = 1.5; });
     if (hasRelic('firetrap')) addPool({ x: t.x, y: t.y, r: t.R * 0.8, dur: 2, every: 0.4, dmg: t.dmg * 0.2, src: 'firetrap', kind: 'fire' });
-    if (t.cluster && !t.mini) for (let i = 0; i < 2; i++) { const a = rand(Math.PI * 2); G.later.push({ t: 0.05, f: () => G.traps.push({ x: t.x + Math.cos(a) * 40, y: t.y + Math.sin(a) * 40, r: 10, arm: 0.5, dmg: t.dmg * 0.5, R: t.R * 0.7, mini: true }) }); }
+    if (t.cluster && !t.mini) for (let i = 0; i < 2; i++) { const a = rand(Math.PI * 2); G.later.push({ t: 0.05, f: () => G.traps.push({ x: t.x + Math.cos(a) * 40, y: t.y + Math.sin(a) * 40, r: 10, arm: 0.5, engineerBase: t.engineerBase, dmg: t.dmg * 0.5, R: t.R * 0.7, mini: true }) }); }
   }
   G.traps = G.traps.filter(t => !t.dead);
 }
