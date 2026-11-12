@@ -25,7 +25,9 @@ jobs:
           node dev/check-build.cjs
           node dev/vfuse44.js --out dev/fuse-art3-verification.json
           node -e "const r=require('./dev/fuse-art3-verification.json');if(r.errs.length||r.res.fatal||r.res.fails.length||r.res.combos.length!==90) process.exit(1)"
-      - name: Check mobile rendering and capture attacks
+      - name: Check mobile rendering on the published game and capture attacks
+        env:
+          WARRIOR_ART_URL: https://1hyun-you.github.io/field/?v=0.46-art3
         run: node dev/check-warrior-art3.cjs
       - uses: actions/upload-artifact@v4
         if: always()
