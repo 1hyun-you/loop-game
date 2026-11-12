@@ -395,3 +395,10 @@
 - `dev/vfuse44.js`의 90종 발동·피해·이름 검사 실패 0건. `dev/check-engineer-art7.cjs`의 320px·390px Chromium 전투 화면 10상황×3시점, 이미지 누락 대체, 동작 줄이기, 레이저 연결 거리 경계, 렌더링 전후 전투·저장 상태 검사 통과. 브라우저 오류 0건. [검사 실행](https://github.com/1hyun-you/loop-game/actions/runs/43225823961) · [전투 화면 캡처 60장](https://github.com/1hyun-you/loop-game/actions/runs/43225823961/artifacts/13947617977)
 - 배포 소스 `ac5eb6fb7f9cb7b5bfc307f0d84437c680b01714`, 게임 HTML `9e5029c9708f3e6e7da2553e8326e7295c30b134`, 서비스 source-ref `26feba9e35e0b2ac739732f1e26130f31e3214da`, 서비스 HTML `cd3bcc4321eed233afd9fe2bcd0cd9100c54ba32`, 서비스 버전 기록 `8c6e3540556b7da4b121996faf472c42d1bf97ab`. 공개 HTML `0.46-art7` 및 로컬 검증 빌드 2,393,670바이트 일치. SHA-256 `e98f0687dee1f65d1341fe6f35a1e05f5f17d93f7a0950530dd5d328eef9078b`. [실제 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43226171311)
 - G44-5 작업 완료. 폴드8 실기기 및 장시간 성능 미검증. 이후 새 대화에서 사용자가 지정한 묶음의 최신 main·아트 기준·인계·요청 목록을 확인한 뒤 재개.
+
+## 0.46-art8 — 진행 중
+
+- 2026-11-12 한국시간. G44-6 시간술사 기본 얼음 고리·연성 무기 9종 외형과 동작. 시작 main `7e2096889a04d73e4aee92da6becc67f49e68753`. `ART_DIRECTION.md`, 최신 인계, `GPT_REQUESTS.md`의 G44-6 및 `FU44.chrono` 확인.
+- `assets/chrono-art8/`에 투명 WebP 10종, 54,422바이트 선등록 완료. 멈춘 칼날·시간 역류·시간 붕괴 `f8d4b20ae8f5d70344516deb5bb8beddffb9363c`, 정지 화살·시간 균열·지연 폭발 `9cac140582f39806d3fc0ccbd60941f12e852cfc`, 기본 얼음 고리·되감기 칼날·시계추 구체·시간 바늘 `5ede04acfdffea8ea81c928007aeecbe17a795db`. 세 커밋 모두 그림 파일만 포함하며 `[skip deploy]` 적용. 45px 축소판과 원격 WebP 바이트 일치 확인.
+- 코드 초안 및 브라우저 검사 실행용 브랜치 `art/g44-6-check`. Node·셸 통합 빌드 일치 및 구문 검사 완료. 브라우저 검증, main 코드 반영, 서비스 공개 버전 확인, G44-6 완료 표시가 남음.
+- 재개 시 이 항목과 시험 브랜치 최신 커밋을 확인. `dev/vfuse44.js` 90종 및 `dev/check-chrono-art8.cjs`의 320px·390px 검증을 완료한 뒤 `src/config.js`의 `0.46-art8` 코드 반영 및 배포. 기존 수치·판정·저장·자동 플레이 유지. 그림 재생성 불필요.
