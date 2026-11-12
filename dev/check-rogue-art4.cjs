@@ -17,7 +17,7 @@ const frames = {
       await page.addInitScript(() => { window.requestAnimationFrame = () => 0; });
       page.on('pageerror', e => errors.push(e.message));
       await page.goto(target);
-      await page.waitForFunction(() => Object.keys(ROGUE_ART_IMAGES).length === 10);
+      await page.waitForFunction(() => Object.keys(ROGUE_ART_IMAGES).length === 10, null, { polling: 40 });
       assert.equal(await page.evaluate(() => CFG.VERSION), '0.46-art4');
       for (const [id, stages] of Object.entries(frames)) {
         const before = await page.evaluate(id => {
@@ -36,7 +36,7 @@ const frames = {
           const w = G.p.weapons.find(w => w.id === id);
           applyFuse(id);
           fuseFire44(w, wStats(w));
-          FUSE_ART.runs.delete(G);
+          FUSE_ART.runs.delete(G); JC().bn = null; G.toasts.length = 0;
           window.captureTime = 0;
           return !!w.fu;
         }, id);
