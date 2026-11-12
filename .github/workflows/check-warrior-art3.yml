@@ -1,0 +1,36 @@
+name: Validate G44-1 warrior art
+on:
+  push:
+    branches: ['art/046-warrior-*']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Check game build and all 90 fusions
+        run: |
+          node dev/pack-warrior-art.cjs
+          git diff --exit-code -- src/warrior-art-data.js
+          node dev/build.cjs
+          node dev/check-build.cjs
+          node dev/vfuse44.js --out dev/fuse-art3-verification.json
+          node -e "const r=require('./dev/fuse-art3-verification.json');if(r.errs.length||r.res.fatal||r.res.fails.length||r.res.combos.length!==90) process.exit(1)"
+      - name: Check mobile rendering and capture attacks
+        run: node dev/check-warrior-art3.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: warrior-art3-verification
+          path: |
+            dev/fuse-art3-verification.json
+            dev/warrior-art3-captures/*.png
