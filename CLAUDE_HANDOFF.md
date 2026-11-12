@@ -396,9 +396,12 @@
 - 배포 소스 `ac5eb6fb7f9cb7b5bfc307f0d84437c680b01714`, 게임 HTML `9e5029c9708f3e6e7da2553e8326e7295c30b134`, 서비스 source-ref `26feba9e35e0b2ac739732f1e26130f31e3214da`, 서비스 HTML `cd3bcc4321eed233afd9fe2bcd0cd9100c54ba32`, 서비스 버전 기록 `8c6e3540556b7da4b121996faf472c42d1bf97ab`. 공개 HTML `0.46-art7` 및 로컬 검증 빌드 2,393,670바이트 일치. SHA-256 `e98f0687dee1f65d1341fe6f35a1e05f5f17d93f7a0950530dd5d328eef9078b`. [실제 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43226171311)
 - G44-5 작업 완료. 폴드8 실기기 및 장시간 성능 미검증. 이후 새 대화에서 사용자가 지정한 묶음의 최신 main·아트 기준·인계·요청 목록을 확인한 뒤 재개.
 
-## 0.46-art8 — 진행 중
+## 0.46-art8
 
 - 2026-11-12 한국시간. G44-6 시간술사 기본 얼음 고리·연성 무기 9종 외형과 동작. 시작 main `7e2096889a04d73e4aee92da6becc67f49e68753`. `ART_DIRECTION.md`, 최신 인계, `GPT_REQUESTS.md`의 G44-6 및 `FU44.chrono` 확인.
 - `assets/chrono-art8/`에 투명 WebP 10종, 54,422바이트 선등록 완료. 멈춘 칼날·시간 역류·시간 붕괴 `f8d4b20ae8f5d70344516deb5bb8beddffb9363c`, 정지 화살·시간 균열·지연 폭발 `9cac140582f39806d3fc0ccbd60941f12e852cfc`, 기본 얼음 고리·되감기 칼날·시계추 구체·시간 바늘 `5ede04acfdffea8ea81c928007aeecbe17a795db`. 세 커밋 모두 그림 파일만 포함하며 `[skip deploy]` 적용. 45px 축소판과 원격 WebP 바이트 일치 확인.
-- 코드 초안 및 브라우저 검사 실행용 브랜치 `art/g44-6-check`. Node·셸 통합 빌드 일치 및 구문 검사 완료. 브라우저 검증, main 코드 반영, 서비스 공개 버전 확인, G44-6 완료 표시가 남음.
-- 재개 시 이 항목과 시험 브랜치 최신 커밋을 확인. `dev/vfuse44.js` 90종 및 `dev/check-chrono-art8.cjs`의 320px·390px 검증을 완료한 뒤 `src/config.js`의 `0.46-art8` 코드 반영 및 배포. 기존 수치·판정·저장·자동 플레이 유지. 그림 재생성 불필요.
+- `dev/pack-chrono-art.cjs`와 `build.sh`·`dev/build.cjs`에서 선등록 원화를 내장. `src/chrono-art.js`의 전장 표시를 `src/render.js`에서 적 공격 예고와 개체 이전에 호출. `src/v44.js`의 `FU44.chrono` 발동 지점 및 `drawJobAura`의 시간 균열과 시간 바늘 연결. 시간술사 조합에 말뚝 노드 정의 없음. `src/weapons.js`의 기본 얼음 고리 발동 시점 및 `src/arsenal.js`·`src/vfx.js`의 기존 효과 대체 처리 연결.
+- 기본 얼음 고리 맥동, 멈춘 칼날의 부채꼴 재생, 시간 역류 방패편 확산, 시간 붕괴 모래시계 낙하, 정지 화살 8발 대기·사출, 시간 균열 설치·발동, 되감기 칼날 도탄·역회전, 지연 폭발 시한 표시·폭발, 시계추 구체 3개의 진자 흔들림과 추적, 시간 바늘 1초 1회전 표시. 기존 반경·좌표·지속시간과 판정 기준 사용. 되감기 칼날은 기존 복귀 경로를 따라 역회전 잔상 표시. 이미지 미로딩 시 기존 효과와 도형 사용.
+- `src/config.js` 버전 `0.46-art8`. 배포 소스 `4425ee57b03d3191225e00dde95021d6ef8d4d3a`, 게임 HTML `cd7471f4e7218c4122a747f3942e69301c7eec4d`, 서비스 source-ref `4cc3c11f96e9d0f2abf4a6fc37952cf624422591`, 서비스 HTML `288572d55662dda4007b837c9cf20c8e452a8d7b`, 서비스 버전 기록 `4d1754bef7648cd7dcd31d41ef4357bb5b6623a0`. Node·셸 및 공개 HTML 2,475,666바이트 일치. SHA-256 `fd88752e7cedd4ae0ff7d114fe8e0458184baa65ffa2fcbf66a71ba966a903e9`. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 배포](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43236728868).
+- `dev/vfuse44.js` 연성 90종 발동·피해·이름 검사 실패 0건, 브라우저 오류 0건. `dev/check-chrono-art8.cjs`의 공개 게임 Chromium 320px·390px에서 기본 1종·연성 9종 각 3시점, 예고 표시 순서, 이미지 누락 대체, 동작 줄이기, 렌더링 전후 전투·저장 상태 검사 통과. [배포 전 검사](https://github.com/1hyun-you/loop-game/actions/runs/43236263914) · [공개 게임 검사](https://github.com/1hyun-you/loop-game/actions/runs/43236694655) · [공개 게임 캡처 60장](https://github.com/1hyun-you/loop-game/actions/runs/43236694655/artifacts/13952237705).
+- G44-6 제작·검사·배포 완료. 폴드8 실기기 및 장시간 성능 미검증. 다음 작업은 사용자 지정 범위의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
