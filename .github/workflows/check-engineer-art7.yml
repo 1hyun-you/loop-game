@@ -1,0 +1,36 @@
+name: Validate G44-5 engineer art
+on:
+  push:
+    branches: ['art/g44-5-check']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+      - name: Verify bundled sprites and build
+        run: |
+          node dev/build.cjs
+          node dev/check-build.cjs
+      - name: Verify all 90 fusions
+        run: |
+          node dev/vfuse44.js --out /tmp/g44-5-fusions.json
+          node -e 'const {errs,res}=require("/tmp/g44-5-fusions.json"); if (errs.length || res.fatal || res.fails.length || res.combos.length!==90) process.exit(1);'
+      - name: Verify engineer art in mobile Chromium
+        run: node dev/check-engineer-art7.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: engineer-art7-captures
+          path: |
+            engineer-captures/
+            /tmp/g44-5-fusions.json
