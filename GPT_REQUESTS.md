@@ -26,7 +26,7 @@
 | G42-6 | 상태 표시 | 전사 저장·격노 오라, 궁수 집중 5단계·표식, 시간술사 감속 영역·초침, 2차 전직 발밑 문양 | src/v41.js drawJob41, src/jobplus.js drawJobAura | 0.42 ART42_PLAN 6번 |
 | G42-7 | 예고·보조 | 정예 돌진 화살표, 폭탄 착탄 표식, 사슬 마디, 제단 진행 문양 | src/render.js, src/arsenal.js | 0.42 ART42_PLAN 7번 (폭탄·사슬은 제외 무기 관련, 우선순위 낮음) |
 | G42-13 | 직업 외형 | 10직업 의상·무기 외형 구분 (동작 유지) | src/sprite.js, src/art-theme.js | 0.42 ART42_PLAN 13번 |
-| G43-1 | 연성 카드 | 연성 전용 카드 틀 최종본: 이중 테두리 + 빛남 + 직업 색 하이라이트 + 모서리 직업 문양 (현재 CSS 임시) | src/v43.js choiceCard 감싸기·style 블록, src/select-art.js | 0.43 vfuse 10직업 카드 등장·화면 점검 통과 |
+| G43-1 | 연성 카드 | 연성 전용 카드 틀 최종본: 직업 색 단일 테두리(2026-11-12 사용자 변경, 이중 테두리 미사용) + 빛남 + 직업 색 하이라이트 + 모서리 직업 문양 (현재 CSS 임시) | src/v43.js choiceCard 감싸기·style 블록, src/select-art.js | 0.43 vfuse 10직업 카드 등장·화면 점검 통과 |
 | G43-4 | 연성 순간 연출 | 직업별 연성 순간 연출 10종 (현재 고리·점·선 임시 도형) | src/v43.js fuseMoment | 0.43 vfuse 적용 점검 통과 |
 | G43-5 | HUD (G45-1과 함께 처리) | 기본 무기 칸 직업 표식, 연성 칸 직업 색 단일 테두리(2026-11-12 사용자 변경), 기본 무기 단독 발동 종료 시 어둡게 처리 (현재 임시 도형) | src/v43.js drawSlots 감싸기, src/ui-art.js drawSlots | 0.43 가상 시험 통과 |
 | G44-1 | 연성 무기 / 전사 | 전사 연성 무기 9종 외형·동작 (조합표 F44.warrior: 이름·효과는 게임 시스템 대시보드 연성 탭, 무기 결합·직업 변화 구분 살림, 직업 정체성 강조) · 현재 선·고리·육각 임시 도형 | src/v44.js FU44.warrior·drawJobAura 감싸기(lines·traps·nodes) | 0.44 vfuse44 90종 발동·피해 점검 통과 |
