@@ -141,6 +141,7 @@ Object.assign(WEAPON_FIRE, {
     const R = WEAPONS.icering.base.R * S.area, p = G.p, frz = w.br === 'freeze';
     gridQuery(p.x, p.y, R, e => { e.slowT = 0.7; if (frz && !e.cmd && !e.boss && Math.random() < 0.06) e.frz = 1; damageEnemy(e, S.dmg, { src: 'icering' }); });
     w.R = R;
+    if (w.base && p.job === 'chrono') CHRONO_BASE_FIRES.set(w, G.time);
   },
   /* 마력 구체: 추적 구체 · 군집 분기: 구체 +2·피해 -20% · 신성 폭발 분기: 명중 시 작은 폭발 */
   orb(w, S) {
