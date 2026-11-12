@@ -19,7 +19,16 @@ jobs:
       - run: |
           node dev/build.cjs
           node dev/check-build.cjs
-          node dev/check-fuse-art2.cjs
+          for attempt in {1..16}; do
+            if curl -fsSL "https://1hyun-you.github.io/field/?art2=$attempt" -o /tmp/field-live.html && cmp -s index.html /tmp/field-live.html; then
+              break
+            fi
+            sleep 10
+          done
+          cmp index.html /tmp/field-live.html
+          FUSE_ART_URL='https://1hyun-you.github.io/field/?verify=efdf7c2' node dev/check-fuse-art2.cjs
+          node dev/vfuse44.js --out /tmp/fusion-gameplay.json
+          node -e "const r=require('/tmp/fusion-gameplay.json'); if(r.fails?.length || r.errs?.length) process.exit(1);"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
