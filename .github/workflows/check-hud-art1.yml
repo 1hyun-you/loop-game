@@ -1,0 +1,27 @@
+name: Verify 0.46 HUD art
+on:
+  push:
+    branches: ['art/042-hud-046-art1']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --package-lock=false playwright && npx playwright install --with-deps chromium
+      - run: |
+          node dev/pack-hud-art.cjs
+          git diff --exit-code src/hud-art-data.js
+          node dev/build.cjs
+          node dev/check-build.cjs
+          node dev/check-hud-art1.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hud-art1-320-390
+          path: dev/hud-art1-captures/

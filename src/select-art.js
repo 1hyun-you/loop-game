@@ -35,6 +35,22 @@ const choiceStyle=document.createElement('style');choiceStyle.textContent=`
 @media(min-width:600px){#ui>.layer.sel{gap:12px;padding-left:24px;padding-right:24px}.sel .card{grid-template-columns:54px minmax(0,1fr);padding:12px 14px;gap:11px}.sel .card .nm{font-size:18px}.sel .card .ds{font-size:var(--choice-body,14px)}.sel .card.choice-detailed{row-gap:6px}.sel .sel-head h2{font-size:25px}}
 @media(max-height:650px){#ui>.layer.sel{gap:7px;padding-top:calc(var(--sat) + 8px);padding-bottom:calc(var(--sab) + 8px)}.sel .card{padding:8px 10px;gap:7px}.sel .cards{gap:6px}.sel .card .ic{width:40px;min-width:40px;height:40px}.sel .card .ic.px img,.sel .card .choice-symbol img{width:38px;height:38px}.sel .sel-head h2{font-size:20px}.sel .card .nm{font-size:16px}.sel .sel-tools{margin-top:5px}.sel .sel-tools button{min-height:36px;padding:5px 12px}}
 @media(prefers-reduced-motion:reduce){.sel *{animation:none!important;transition:none!important}}
+/* Fusion shares the single job-colour frame used by the HUD tile. */
+.sel .card.k-fuse{position:relative;border:2px solid var(--choice-color);background:
+  url("${HUD_ART['fusion-foil']}") top left/56px 32px no-repeat,
+  linear-gradient(128deg,color-mix(in srgb,var(--choice-color) 22%,#30303f),#252d3c 65%);
+  box-shadow:0 0 9px color-mix(in srgb,var(--choice-color) 24%,transparent)}
+.sel .card.k-fuse::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:0 0 14px color-mix(in srgb,var(--choice-color) 46%,transparent);animation:choiceFuseGlow 2.4s ease-in-out infinite}
+.sel .card.k-fuse .nm{color:color-mix(in srgb,var(--choice-color) 76%,#fff1d9)}
+.sel .card.k-fuse .choice-copy-head{padding-right:25px}
+.sel .card .fuse-corner{position:absolute;top:4px;right:4px;pointer-events:none;color:#f7e8c4;font-size:12px}
+.sel .card .fuse-corner .ic{display:grid;place-items:center;width:24px;height:24px;min-width:0;flex-basis:auto}
+.sel .card.k-fuse.armed{background-color:#403b3c;background-blend-mode:normal,screen}
+.sel .card.k-fuse.armed:not(:focus-visible){outline:none}
+.sel .card.k-fuse.armed::after,.sel .card.k-fuse:disabled::after{animation:none;opacity:0}
+@keyframes choiceFuseGlow{0%,100%{opacity:.12}50%{opacity:.85}}
+@media(prefers-reduced-motion:reduce){.sel .card.k-fuse::after{animation:none;opacity:.22}}
 `;document.head.appendChild(choiceStyle);
 function fitChoices(){
  const layer=UI.querySelector('.sel'),cards=layer?.querySelector('.cards');if(!cards)return;
@@ -72,6 +88,7 @@ function choiceCard(c,f,i,{off=false,banish=false,offer=false}={}) {
   const action=off?'제외 불가':offer?'봉헌':banish?'제외':'선택';
   const detailed=f.k==='k-job'||f.k==='k-branch'||f.ds.length>90;
   return `<button class="card ${f.k}${detailed?' choice-detailed':''}${banish?' banish':''}" ${offer?`data-w="${esc(c.id)}"`:`data-i="${i}"`} style="--choice-color:${esc(f.col)};--i:${i}" ${f.full?`data-full="${esc(f.full)}"`:''} ${off?'disabled':''}>
+    ${c.t === 'fuse' ? `<span class="fuse-corner" aria-hidden="true">${uiJobCrest(f.job)}</span>` : ''}
     <span class="choice-art"><span class="choice-number" aria-hidden="true">${String(i+1).padStart(2,'0')}</span>${choiceIcon(c,f)}</span>
     <span class="tx"><span class="choice-copy-head"><span class="choice-type">${choiceType(c,f)}</span><span class="nm">${esc(f.nm)}</span><span class="tag">${esc(f.tag)}</span></span><span class="ds">${esc(f.ds)}</span><span class="choice-foot" aria-hidden="true"><span class="choice-cta" data-action="${action}"></span><span class="choice-arrow">↗</span></span></span>
   </button>`;

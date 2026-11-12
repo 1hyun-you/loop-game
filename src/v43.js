@@ -106,23 +106,6 @@ const _applyCard43 = applyCard;
 applyCard = function (c) { if (c.t !== 'fuse') return _applyCard43(c); if (G.sel && G.sel.kind === 'chest') (G.stats.chestPicks = G.stats.chestPicks || []).push('fuse:' + c.id); else G.stats.picks.push(G.p.level - G.pendingLv + ':fuse:' + c.id); applyFuse(c.id); };
 const _choiceType43 = choiceType;
 choiceType = (c, f) => f.k === 'k-fuse' ? '연성' : _choiceType43(c, f);
-const _choiceCard43 = choiceCard;
-choiceCard = function (c, f, i, o) {
-  const h = _choiceCard43(c, f, i, o);
-  if (c.t !== 'fuse') return h;
-  return h.replace('<span class="choice-art">', `<span class="fuse-corner" aria-hidden="true">${uiJobCrest(f.job, 'sm')}</span><span class="choice-art">`);
-};
-(function () {
-  if (typeof document === 'undefined') return;
-  const st = document.createElement('style');
-  st.textContent = `.card.k-fuse{position:relative;border:4px double var(--choice-color)!important;box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 16px var(--choice-color);background-image:linear-gradient(160deg,color-mix(in srgb,var(--choice-color) 26%,transparent),transparent 60%)!important;animation:fuseGlow 1.6s ease-in-out infinite}
-.card.k-fuse .nm{color:var(--choice-color)}
-.card .fuse-corner{position:absolute;top:6px;right:6px;width:26px;height:26px;z-index:2;pointer-events:none}
-.card .fuse-corner .ic{width:26px!important;height:26px!important;min-width:0}
-@keyframes fuseGlow{50%{box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 28px var(--choice-color)}}
-@media (prefers-reduced-motion:reduce){.card.k-fuse{animation:none}}`;
-  document.head.appendChild(st);
-})();
 function applyFuse(id) {
   const p = G.p, w = slotWs().find(x => x.id === id && !x.fu); if (!w || !p.job) return;
   const j = p.job; w.fu = { job: j, nm: fuseName(j, id) }; w.t = 0.3;
@@ -277,20 +260,6 @@ drawJobAura = function (c) {
   if (p.job === 'summoner') for (const m of f.wr) { c.globalAlpha = 0.6; c.fillStyle = col; c.beginPath(); c.moveTo(m.x, m.y - 10); c.lineTo(m.x + 8, m.y + 8); c.lineTo(m.x - 8, m.y + 8); c.closePath(); c.fill(); c.globalAlpha = 1; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(m.x, m.y); c.lineTo(m.x + 11, m.y - 6); c.stroke(); }
   if (p.job === 'priest') { const q = relicPos(); c.fillStyle = col; c.strokeStyle = '#8a7020'; c.lineWidth = 2; c.beginPath(); c.moveTo(q.x, q.y - 9); c.lineTo(q.x + 7, q.y); c.lineTo(q.x, q.y + 9); c.lineTo(q.x - 7, q.y); c.closePath(); c.fill(); c.stroke(); }
   if (p.job === 'sovereign' && !(G.banner && J41().gd.length)) { c.globalAlpha = 0.3; c.fillStyle = col; for (const q of formation()) c.fillRect(q.x - 4, q.y - 4, 8, 8); }
-  c.restore();
-};
-/* HUD: 기본 무기 칸 직업 표시 · 연성 칸 이중 테두리 */
-const _drawSlots43 = drawSlots;
-drawSlots = function (c, u) {
-  _drawSlots43(c, u);
-  const p = G.p; if (!p.job) return;
-  const L = hudLayout(), col = JOB_COL[p.job], ret = baseRetired();
-  c.save();
-  for (let i = 0; i < slotW(); i++) {
-    const w = p.weapons[i]; if (!w) continue; const r = L.tile(i, 0);
-    if (w.fu) { c.strokeStyle = col; c.lineWidth = 1.5; c.strokeRect(r.x - 1.5, r.y - 1.5, r.w + 3, r.h + 3); c.strokeRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6); }
-    if (w.base) { if (ret) { c.globalAlpha = 0.55; c.fillStyle = '#0e1725'; c.fillRect(r.x, r.y, r.w, r.h); c.globalAlpha = 1; } c.fillStyle = col; c.fillRect(r.x, r.y, 11, 11); c.fillStyle = '#1b1b1b'; c.font = '700 8px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(JOBS[p.job].ic, r.x + 5.5, r.y + 6); }
-  }
   c.restore();
 };
 /* 무기 이름: 연성 무기는 연성 이름 */
