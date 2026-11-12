@@ -436,3 +436,13 @@
 - `src/config.js` 버전 `0.46-art11`. 배포 소스 `50a246bd68cf3d604608d5a226aa1630356db4e2`, 게임 HTML `5b3079de0916a92a758e07b62523690172b94191`, 서비스 source-ref `524ec24fff61477d370a463a4745c6347a812ee4`, 서비스 HTML `4cde14f8fac46b950929766005fba22f6da21f8e`. Node·셸·공개 HTML 2,766,734바이트 일치, SHA-256 `d87987ebe925cdca17258d87f3f2873aaa76dd721386fc92d261096b7abaf380`. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43273028440).
 - `dev/vfuse44.js` 연성 90종 발동·피해·이름 검사 실패 0건, 브라우저 오류 0건. 동일 난수 시드로 0.46-art10과 재실행한 결과 JSON 일치. `dev/check-priest-art11.cjs`로 공개 게임의 Chromium 320px·390px에서 기본 1종·연성 9종의 각 3시점, 이미지 누락 대체, 위험 예고 그리기 순서, 동작 줄이기, 렌더링 전후 전투·저장 상태 확인. 전투 캡처 60장.
 - G44-9 제작·적용 잔여 항목 없음. 폴드8 실기기 및 장시간 성능 미검증. 다음 작업은 사용자 지정 묶음의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
+
+## 0.46-art12
+
+- 2026-11-13 한국시간. G44-10 드루이드 기본 대지 강타 및 연성 무기 9종 외형·동작 적용 및 배포 완료. 시작 main `7c1d63f4bc6c76202e7dc8ba65063abac5f554c3`. `ART_DIRECTION.md`, 인계 0.46-art11, `GPT_REQUESTS.md`의 G44-10, `FU44.druid` 확인.
+- `assets/druid-art12/`에 투명 WebP 10종(103,250바이트) 선등록. 사선 탑다운, 왼쪽 위 조명, 어두운 자주색 외곽선, 40px 축소 확인. 그림 전용 `[skip deploy]` 커밋은 곰발톱·바위 껍질·가시 `486213694fdeaed6dbdc6b5dcbfc95ccae1ca4b4`, 덩굴 올무·늑대·용암 `a6b45a9dcf2357e61f617acddffcb975315ec2a5`, 서리·반딧불·균열·기본 대지 강타 `59799c01b5dcdee5af617eb5fc8337fa77eff343`.
+- `src/druid-art.js`는 `src/render.js`에서 위험 예고 및 개체보다 먼저 렌더링. `src/v44.js`의 `FU44.druid`·`hitC`·`fan44`에 표시용 정보를 연결하고 `drawJobAura`의 균열선·덩굴 덫과 `src/arsenal.js`·`src/vfx.js`·`src/render.js`의 기존 표시를 이미지 준비 상태로 전환. 드루이드 연성에 노드 정의 없음. 기본 대지 강타는 기존 흙·서리 충격파에 연결. `dev/pack-druid-art.cjs`, `dev/build.cjs`, `build.sh`로 그림 내장. `src/config.js` 버전 `0.46-art12`.
+- 곰의 교차 할퀴기 2회와 3타 내려찍기, 바위 껍질 솟음, 가시 6방향 발사, 덩굴 4개 설치·속박·파열, 늑대 도약과 물기, 용암 비행과 착탄, 서리 2겹 확산, 반딧불 3기 추적, 지면 균열 전개·소멸 표시. 소환수 대기·공격 자리와 이동, 공격 판정·피해·재사용, 자동 플레이·저장 데이터 보존.
+- `dev/vfuse44.js` 연성 90종 실패·브라우저 오류 0건. 동일 난수 및 수동 프레임 진행 조건의 0.46-art11 비교 결과 JSON 일치. `dev/check-druid-art12.cjs`로 320px·390px에서 기본 1종·연성 9종의 3시점, 곰발톱 3타 순서, 위험 예고 순서, 이미지 누락 대체, 동작 줄이기, 렌더링 전후 전투·저장 상태 확인. 캡처 60장.
+- 소스 `9493c9ef88fada3be256e13ad2191b7499376a59`, 서비스 source-ref `fb2c7b0be0cb089527e64e38802daed05f84dd77`, 서비스 HTML `28b206b50c418585c8c0becd5139797c70e447cd`. Node·셸·공개 HTML 2,914,222바이트, SHA-256 `0800a29a98a50b225241c19c98984f6ddaf7896aa1a784309da1073b9cf7a656` 일치. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43283473280).
+- G44-10 제작·적용 잔여 항목 없음. 폴드8 실기기 및 장시간 성능 미검증. 다음 작업은 사용자가 지정한 범위의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
