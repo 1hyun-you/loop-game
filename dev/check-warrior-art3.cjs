@@ -54,6 +54,9 @@ async function check() {
           G.later.length = 0;
           WARRIOR_ART.shield.delete(G);
           G.banner = null;
+          JC().bn = null;
+          G.toasts.length = 0;
+          FUSE_ART.runs.delete(G);
           for (let i = 0; i < 18; i++) {
             const a = i * 2.4 + .2, r = 85 + i % 5 * 16;
             const e = makeEnemy(ENEMY_ORDER[i % 4], Math.cos(a) * r, Math.sin(a) * r);
@@ -72,6 +75,7 @@ async function check() {
           if (id === 'slam' || id === 'beam') w.c44 = 2;
           if (id === 'cleave') WEAPON_FIRE[id](w, wStats(w));
           else fuseFire44(w, wStats(w));
+          if (id === 'trap') { G.p.x = -18; G.p.y = 18; }
           for (let tick = 0; tick < elapsed; tick++) {
             const dt = 1 / 120;
             G.time += dt;
@@ -89,7 +93,8 @@ async function check() {
       });
       for (const id of ids) {
         await page.evaluate(id => {
-          const frames = { cleave: [2, 10], shield: [2, 23], slam: [2, 18], arrow: [2, 9], trap: [10, 49], shuriken: [3, 13], fireball: [2, 15], icering: [3, 17], orb: [2, 14], beam: [3, 25] };
+          const frames = { cleave: [2, 8], shield: [2, 23], slam: [2, 13], arrow: [2, 9], trap: [10, 49], shuriken: [3, 10], fireball: [2, 12], icering: [3, 32], orb: [2, 14], beam: [3, 25] };
+          const capture = { cleave: 7, shield: 22, slam: 8, arrow: 9, trap: 10, shuriken: 10, fireball: 8, icering: 12, orb: 14, beam: 12 };
           const canvas = document.createElement('canvas');
           canvas.width = 420; canvas.height = 420;
           const c = canvas.getContext('2d'), img = WARRIOR_ART.images[id];
@@ -120,6 +125,9 @@ async function check() {
           drawWarriorArtWorld = warriorWorld;
           if (warnings.join(',') !== 'warrior,warning') throw Error('Warrior art overlays enemy warning');
           if (window.__errShown) throw Error('Game render reported an error');
+          warriorScene(id, capture[id], id === 'beam');
+          G.toasts.length = 0;
+          render();
         }, id);
         await page.screenshot({ path: path.join(output, width + '-' + id + '.png') });
         await page.evaluate(id => {
