@@ -426,3 +426,13 @@
 - `src/config.js` 버전 `0.46-art10`. 배포 소스 `279b8e262d3eac214fd13f74c85e77048dfdf790`, 게임 HTML `68a02f412775da8b31bfa18104c25126060619b3`, 서비스 source-ref `e068e0b8b2e701b8adf3e97a5caba285453ad5ec`, 서비스 HTML `d564fb132116f0ddf9eff291993fb39dbbfcb303`, 서비스 버전 기록 `4e1d106618bb807983c2a1182b7a8662417b0734`. Node·셸 빌드와 공개 HTML 2,671,464바이트 일치, SHA-256 `e18c74eb808cdf64e337ed8a01ee5bec324ba65c6e828db477bf32bec9ebbc6a`. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43264084193).
 - `dev/vfuse44.js` 연성 90종 발동·피해·이름 실패 0건, 브라우저 오류 0건. `dev/check-summoner-art10.cjs`로 공개 HTML의 Chromium 320px·390px 기본 1종·연성 9종 각 3시점, 이미지 실패 대체, 위험 예고 순서, 렌더링 전후 전투·저장 상태 확인. 전투 캡처 60장.
 - G44-8 제작·적용 잔여 항목 없음. 폴드8 실기기 및 장시간 성능 미검증. 다음 작업은 사용자 지정 범위의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
+
+## 0.46-art11
+
+- 2026-11-13 한국시간. G44-9 프리스트 기본 마력 구체와 연성 무기 9종 외형·동작 제작, 적용 및 배포 완료. 시작 main `63af50b7d6d727a0308ad5d6e20fb818ba50272f`. `ART_DIRECTION.md`, 인계 0.46-art10, `GPT_REQUESTS.md` G44-9와 `FU44.priest` 확인.
+- `assets/priest-art11/`의 투명 WebP 10종, 64,586바이트. 왼쪽 위 조명, 어두운 자주색 외곽선, 사선 탑다운. 축소판과 원격 WebP 바이트 일치 확인. 그림만 선등록한 세 커밋에 `[skip deploy]` 적용. 성검 심판·성역 결계·심판 낙하 `1ed40f628b754db56fdf2b4f6a33393b80af618e`, 빛의 화살·축복 표지·기본 마력 구체 `020fd224a83ba0b29865a9927f80de6a8243e31a`, 순례 구체·정화의 불·고요의 후광·천상 광선 `63be90aa5e9c8e2840df120e34fe82cce92d84c9`.
+- `dev/pack-priest-art.cjs`, `build.sh`, `dev/build.cjs`에서 그림 내장. `src/priest-art.js`를 `src/render.js`에서 적 공격 예고보다 먼저 호출. `src/v44.js`의 `FU44.priest`·`fan44`·`hitC`·`bounceProj`·`drawJobAura`의 광선·덫 표시 연결. 프리스트 연성에 노드 정의 없음. `src/v43.js`는 머리 위 성물, `src/weapons.js`는 기본 마력 구체와 명중 잔상, `src/render.js`·`src/vfx.js`·`src/arsenal.js`는 이미지 실패 시 기존 투사체·효과·도형 표시 연결.
+- 마력 구체 비행·착탄, 성물의 성검 변형·부채꼴 베기, 결계 방패편의 확산, 망치형 성물 낙하·원형 충격, 빛의 화살 3발과 명중 잔상, 축복 표지 설치·발동 및 회복 표시, 순례 구체 회전·도탄 잔상, 추적 성화 폭발, 얼음 결정 후광 확산, 천상 광선 관통·소멸 구현. 기존 판정 좌표·범위·피해·회복·재사용·자동 플레이·저장 로직 보존.
+- `src/config.js` 버전 `0.46-art11`. 배포 소스 `50a246bd68cf3d604608d5a226aa1630356db4e2`, 게임 HTML `5b3079de0916a92a758e07b62523690172b94191`, 서비스 source-ref `524ec24fff61477d370a463a4745c6347a812ee4`, 서비스 HTML `4cde14f8fac46b950929766005fba22f6da21f8e`. Node·셸·공개 HTML 2,766,734바이트 일치, SHA-256 `d87987ebe925cdca17258d87f3f2873aaa76dd721386fc92d261096b7abaf380`. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43273028440).
+- `dev/vfuse44.js` 연성 90종 발동·피해·이름 검사 실패 0건, 브라우저 오류 0건. 동일 난수 시드로 0.46-art10과 재실행한 결과 JSON 일치. `dev/check-priest-art11.cjs`로 공개 게임의 Chromium 320px·390px에서 기본 1종·연성 9종의 각 3시점, 이미지 누락 대체, 위험 예고 그리기 순서, 동작 줄이기, 렌더링 전후 전투·저장 상태 확인. 전투 캡처 60장.
+- G44-9 제작·적용 잔여 항목 없음. 폴드8 실기기 및 장시간 성능 미검증. 다음 작업은 사용자 지정 묶음의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
