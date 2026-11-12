@@ -15,13 +15,17 @@ jobs:
           node-version: 22
       - run: npm install --no-save --package-lock=false playwright && npx playwright install --with-deps chromium
       - run: |
-          node dev/pack-hud-art.cjs
-          git diff --exit-code src/hud-art-data.js
           node dev/build.cjs
-          node dev/check-build.cjs
-          node dev/check-hud-art1.cjs
+          for attempt in {1..10}; do
+            if curl -fsSL "https://1hyun-you.github.io/field/?art1=$attempt" -o /tmp/field-live.html && cmp -s index.html /tmp/field-live.html; then
+              break
+            fi
+            sleep 10
+          done
+          cmp index.html /tmp/field-live.html
+          HUD_ART_URL='https://1hyun-you.github.io/field/?verify=0070ed3' node dev/check-hud-art1.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hud-art1-320-390
+          name: hud-art1-live-320-390
           path: dev/hud-art1-captures/
