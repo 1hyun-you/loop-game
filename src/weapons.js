@@ -178,7 +178,7 @@ function slash(a0, arc, range, dmg, kb) {
     let da = Math.atan2(e.y - p.y, e.x - p.x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da));
     if (Math.abs(da) <= arc / 2 + 0.15) damageEnemy(e, dmg, { kb, fx: p.x, fy: p.y, src: 'cleave' });
   });
-  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: jobTint('melee') || '#ffe0d0' });
+  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: jobTint('melee') || '#ffe0d0', ...(p.job === 'warrior' ? { warArt: 'cleave', x: p.x, y: p.y } : {}) });
 }
 /* 회전검: 상시 회전, 적별 타격 간격 0.35초 · 투척 궤도 분기: 2.4초마다 0.8초간 반경 확장 (피해 130%) */
 function updateSpin(w, S, dt) {

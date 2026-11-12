@@ -45,13 +45,16 @@ function hitC(x, y, R, dmg, src, o = {}) {
     if (o.on) o.on(e);
     damageEnemy(e, d, { src, kb: o.kb || 0, fx: x, fy: y }); n++;
   });
-  fx({ kind: 'ring', x, y, r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false });
+  fx({ kind: 'ring', x, y, r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
   return n;
 }
 function fan44(x, y, a0, arc, R, dmg, src, kb, col) {
   gridQuery(x, y, R, e => { let da = Math.atan2(e.y - y, e.x - x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= arc / 2 + 0.15) damageEnemy(e, dmg, { src, kb, fx: x, fy: y }); });
-  afx({ k: 'thrust', x, y, a: a0, L: R * 0.9, wd: R * 0.35, dur: 0.18, col });
-  fx({ kind: 'ring', x, y, r0: R * 0.6, r1: R, dur: 0.16, color: col });
+  const warArt = src === 'fu_warrior_slam' ? 'slam' : src === 'fu_warrior_beam' ? 'beam' : null;
+  const warSweep = warArt && (!G.afx || G.afx.length < 120);
+  afx({ k: 'thrust', x, y, a: a0, L: R * 0.9, wd: R * 0.35, dur: 0.18, col,
+    ...(warSweep ? { warArt, arc, r: R } : {}) });
+  fx({ kind: 'ring', x, y, r0: R * 0.6, r1: R, dur: 0.16, color: col, ...(warSweep ? { warArt, warSweep: true } : {}) });
 }
 const angTo = (x, y, R = 420) => { const t = nearestEnemy(x, y, R); return t ? Math.atan2(t.y - y, t.x - x) : Math.atan2(G.p.face.y, G.p.face.x); };
 function line44(o) { const L = F44S().lines; if (L.length < 40) L.push(Object.assign({ t: 0, tk: 0, wd: 10, tick: 0.1, rot: 0 }, o)); }
@@ -76,15 +79,15 @@ const combo = (w, n = 3) => (w.c44 = (w.c44 || 0) % n + 1);
 /* ---------- 연성 무기 90종 ---------- */
 const FU44 = {
   warrior: {
-    shield: { cd: 2.5, f(Z) { const p = G.p, a = angTo(p.x, p.y, 260); for (let i = 1; i <= 4; i++) later44(i * 0.035, () => { p.x += Math.cos(a) * 20; p.y += Math.sin(a) * 20; }); later44(0.16, () => { if (hitC(p.x + Math.cos(a) * 30, p.y + Math.sin(a) * 30, 70 * Z.a, Z.d(32), Z.src, { kb: 300, col: Z.col })) p.fury = Math.min(100, (p.fury || 0) + 8); G.tm.wall = Math.max(G.tm.wall || 0, 0.8); }); } },
-    slam: { cd: 0.9, f(Z) { const p = G.p; if (combo(Z.w) < 3) return fan44(p.x, p.y, angTo(p.x, p.y, 200), 1.9, 86 * Z.a, Z.d(22), Z.src, 180, Z.col); hitC(p.x, p.y, 130 * Z.a, Z.d(45), Z.src, { kb: 220, col: '#d8b080' }); shake(3, 0.2); } },
+    shield: { cd: 2.5, f(Z) { const p = G.p, a = angTo(p.x, p.y, 260); startWarriorShieldArt(a); for (let i = 1; i <= 4; i++) later44(i * 0.035, () => { p.x += Math.cos(a) * 20; p.y += Math.sin(a) * 20; }); later44(0.16, () => { if (hitC(p.x + Math.cos(a) * 30, p.y + Math.sin(a) * 30, 70 * Z.a, Z.d(32), Z.src, { kb: 300, col: Z.col, warArt: 'shield', warAngle: a })) p.fury = Math.min(100, (p.fury || 0) + 8); G.tm.wall = Math.max(G.tm.wall || 0, 0.8); }); } },
+    slam: { cd: 0.9, f(Z) { const p = G.p; if (combo(Z.w) < 3) return fan44(p.x, p.y, angTo(p.x, p.y, 200), 1.9, 86 * Z.a, Z.d(22), Z.src, 180, Z.col); hitC(p.x, p.y, 130 * Z.a, Z.d(45), Z.src, { kb: 220, col: '#d8b080', warArt: 'slam' }); shake(3, 0.2); } },
     arrow: { cd: 1.6, f(Z) { const a = angTo(G.p.x, G.p.y, 520), n = G.p.fury >= 100 ? 2 : 1; for (let i = 0; i < n; i++) pr44({ ang: a + (i - (n - 1) / 2) * 0.16, sp: 620, r: 9, dmg: Z.d(30), pierce: 4, life: 0.9, color: Z.col, src: Z.src }); } },
     trap: { cd: 2.0, f(Z) { warMark(Z); } },
     shuriken: { cd: 1.3, f(Z) { pr44({ kind: 'star', ang: angTo(G.p.x, G.p.y), sp: 500, r: 9, dmg: Z.d(26), pierce: 4, life: 1.6, color: Z.col, src: Z.src, bounce: true }); } },
     fireball: { cd: 0.3, f(Z) { const p = G.p, S = F44S(), g = Math.max(0, (p.fury || 0) - S.fury); S.fury = p.fury || 0; S.fGain = (S.fGain || 0) + g; const rage = G.tm.rage > 0;
       if (rage) { if (G.time < S.rageT) return false; S.rageT = G.time + 1.5; } else if (S.fGain < 25) return false; S.fGain = 0;
-      hitC(p.x, p.y, 90 * Z.a * (rage ? 2 : 1), Z.d(40), Z.src, { kb: 160, col: '#ff7a3a' }); } },
-    icering: { cd: 2.4, f(Z) { const p = G.p, R = 110 * Z.a; hitC(p.x, p.y, R, Z.d(24), Z.src, { slow: 2, col: '#bfe8ff' }); later44(0.25, () => gridQuery(p.x, p.y, R * 1.15, e => { if (e.slowT > 0 && dist2(e.x, e.y, p.x, p.y) > R * R * 0.45) { damageEnemy(e, Z.d(35), { src: Z.src }); fx({ kind: 'pop', x: e.x, y: e.y, r: 10, color: '#dff4ff', dur: 0.2 }); } })); } },
+      hitC(p.x, p.y, 90 * Z.a * (rage ? 2 : 1), Z.d(40), Z.src, { kb: 160, col: '#ff7a3a', warArt: 'fireball' }); } },
+    icering: { cd: 2.4, f(Z) { const p = G.p, R = 110 * Z.a; hitC(p.x, p.y, R, Z.d(24), Z.src, { slow: 2, col: '#bfe8ff', warArt: 'icering' }); later44(0.25, () => gridQuery(p.x, p.y, R * 1.15, e => { if (e.slowT > 0 && dist2(e.x, e.y, p.x, p.y) > R * R * 0.45) { damageEnemy(e, Z.d(35), { src: Z.src }); fx({ kind: 'pop', x: e.x, y: e.y, r: 10, color: '#dff4ff', dur: 0.2, warArt: 'icering', warAngle: Math.atan2(e.y - p.y, e.x - p.x) }); } })); } },
     orb: { cd: 1.4, f(Z) { const n = Math.max(1, Math.min(3, Math.floor((G.p.fury || 0) / 30))); for (let i = 0; i < n; i++) pr44({ kind: 'orb', ang: rand(Math.PI * 2), sp: 300, r: 8, dmg: Z.d(26), life: 2.4, color: Z.col, src: Z.src, home: true }); } },
     beam: { cd: 0.9, f(Z) { const p = G.p, a = angTo(p.x, p.y, 260); if (combo(Z.w) < 3) return fan44(p.x, p.y, a, 1.9, 86 * Z.a, Z.d(22), Z.src, 180, Z.col); line44({ x: p.x, y: p.y, a, L: 240 * Z.a, wd: 14, dur: 0.5, dmg: Z.d(9), src: Z.src, col: '#ffe8c0' }); } },
   },
@@ -199,7 +202,7 @@ const FU44 = {
   },
 };
 /* 전사 · 투지 각인 */
-function warMark(Z) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, R: 60 * Z.a, max: 4, life: 12, kind: 'mark', col: Z.col, on: T => hitC(T.x, T.y, T.R, Z.d(30) + (J41().store || 0) * 0.3 * p.mod.dmg, Z.src, { kb: 160, col: '#ff8a5a' }) }); }
+function warMark(Z) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, R: 60 * Z.a, max: 4, life: 12, kind: 'mark', col: Z.col, on: T => hitC(T.x, T.y, T.R, Z.d(30) + (J41().store || 0) * 0.3 * p.mod.dmg, Z.src, { kb: 160, col: '#ff8a5a', warArt: 'trap' }) }); }
 const _hurtPlayer44 = hurtPlayer;
 hurtPlayer = function (dmg, src) {
   const p = G.p, h0 = p.hp; const r = _hurtPlayer44(dmg, src);
@@ -326,9 +329,10 @@ drawJobAura = function (c) {
   _drawJobAura44(c);
   const S = G.f44; if (!S) return;
   c.save();
-  for (const L of S.lines) { const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
+  for (const L of S.lines) { if (L.src === 'fu_warrior_beam' && warriorArtReady('beam')) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
   c.globalAlpha = 1;
   for (const T of S.traps) {
+    if (T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) continue;
     const s = T.kind === 'wall' ? 12 : 8, ready = T.t >= T.arm; c.strokeStyle = T.col; c.fillStyle = ready ? T.col : '#555'; c.lineWidth = 2; c.globalAlpha = ready ? 0.85 : 0.5;
     if (T.kind === 'wall') { c.fillRect(T.x - s, T.y - 4, s * 2, 8); for (let i = -1; i <= 1; i++) c.fillRect(T.x + i * 9 - 2, T.y - 12, 4, 16); }
     else if (T.kind === 'post') { c.fillRect(T.x - 7, T.y - 7, 14, 14); c.beginPath(); c.moveTo(T.x, T.y); c.lineTo(T.x + 10, T.y - 10); c.stroke(); }
