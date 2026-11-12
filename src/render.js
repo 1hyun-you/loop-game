@@ -27,6 +27,7 @@ function render() {
   drawFieldScenery(c, camX, camY);
   drawFuseArtWorld(c);  // All danger warnings and units draw above the decorative art.
   drawWarriorArtWorld(c, inView);
+  drawRogueArtWorld(c, inView);
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -206,7 +207,7 @@ function drawWeapons(c, inView) {
   }
   for (const pr of G.proj) {
     if (!inView(pr.x, pr.y, pr.r + 10)) continue;
-    if (warriorArtReady(warriorProjectileArt(pr))) continue;
+    if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr))) continue;
     const a = Math.atan2(pr.vy, pr.vx);
     if(pr.jt)paintedAura(c,effectKey(pr.jt),pr.x,pr.y,pr.r+5,.3);
     const ps = pjSprite(pr);                                  // 0.29 전용 무기·신규 투사체 도트

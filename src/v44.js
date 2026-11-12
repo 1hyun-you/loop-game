@@ -45,16 +45,18 @@ function hitC(x, y, R, dmg, src, o = {}) {
     if (o.on) o.on(e);
     damageEnemy(e, d, { src, kb: o.kb || 0, fx: x, fy: y }); n++;
   });
-  fx({ kind: 'ring', x, y, r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
+  const rogueArt = ROGUE_RINGS[src];
+  fx({ kind: 'ring', x, y, ...(rogueArt ? { rogueArt } : {}), r0: R * (o.r0 || 0.3), r1: R, dur: o.dur || 0.3, color: o.col || '#fff', fill: o.fill !== false, ...(o.warArt ? { warArt: o.warArt, warAngle: o.warAngle } : {}) });
   return n;
 }
-function fan44(x, y, a0, arc, R, dmg, src, kb, col) {
+function fan44(x, y, a0, arc, R, dmg, src, kb, col, rogueCut) {
   gridQuery(x, y, R, e => { let da = Math.atan2(e.y - y, e.x - x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= arc / 2 + 0.15) damageEnemy(e, dmg, { src, kb, fx: x, fy: y }); });
   const warArt = src === 'fu_warrior_slam' ? 'slam' : src === 'fu_warrior_beam' ? 'beam' : null;
   const warSweep = warArt && (!G.afx || G.afx.length < 120);
+  const rogueSweep = src === 'fu_rogue_cleave' && (!G.afx || G.afx.length < 120);
   afx({ k: 'thrust', x, y, a: a0, L: R * 0.9, wd: R * 0.35, dur: 0.18, col,
-    ...(warSweep ? { warArt, arc, r: R } : {}) });
-  fx({ kind: 'ring', x, y, r0: R * 0.6, r1: R, dur: 0.16, color: col, ...(warSweep ? { warArt, warSweep: true } : {}) });
+    ...(warSweep ? { warArt, arc, r: R } : {}), ...(rogueSweep ? { rogueArt: 'cleave', arc, r: R, rogueCut } : {}) });
+  fx({ kind: 'ring', x, y, r0: R * 0.6, r1: R, dur: 0.16, color: col, ...(warSweep ? { warArt, warSweep: true } : {}), ...(rogueSweep ? { rogueArt: 'cleave' } : {}) });
 }
 const angTo = (x, y, R = 420) => { const t = nearestEnemy(x, y, R); return t ? Math.atan2(t.y - y, t.x - x) : Math.atan2(G.p.face.y, G.p.face.x); };
 function line44(o) { const L = F44S().lines; if (L.length < 40) L.push(Object.assign({ t: 0, tk: 0, wd: 10, tick: 0.1, rot: 0 }, o)); }
@@ -93,9 +95,9 @@ const FU44 = {
   },
   rogue: {
     cleave: { cd: 1.4, f(Z) { const p = G.p, t = nearestEnemy(p.x, p.y, 300); if (!t) return false; const a = Math.atan2(t.y - p.y, t.x - p.x), bx = t.x + Math.cos(a) * 30, by = t.y + Math.sin(a) * 30;
-      fx({ kind: 'pop', x: bx, y: by, r: 14, color: '#203040', dur: 0.3 }); for (let i = 0; i < 2; i++) later44(i * 0.12, () => { fan44(bx, by, a + Math.PI, 2.4, 70, Z.d(18), Z.src, 60, Z.col); fan44(p.x, p.y, a, 1.6, 70, Z.d(18) * 0.6, Z.src, 60, '#203040'); }); } },
+      fx({ kind: 'pop', x: bx, y: by, r: 14, color: '#203040', dur: 0.3, rogueArt: 'cleave', rogueAngle: a + Math.PI }); for (let i = 0; i < 2; i++) later44(i * 0.12, () => { fan44(bx, by, a + Math.PI, 2.4, 70, Z.d(18), Z.src, 60, Z.col, i ? -1 : 1); fan44(p.x, p.y, a, 1.6, 70, Z.d(18) * 0.6, Z.src, 60, '#203040', i ? 1 : -1); }); } },
     shield: { cd: 2.2, f(Z) { const p = G.p; hitC(p.x, p.y, 90 * Z.a, Z.d(22), Z.src, { kb: 260, col: '#8a96a8' }); G.tm.smoke44 = 1; } },
-    slam: { cd: 1.3, f(Z) { const q = pr44({ kind: 'star', ang: angTo(G.p.x, G.p.y), sp: 520, r: 6, dmg: Z.d(12), pierce: 3, life: 1.4, color: Z.col, src: Z.src, bounce: true }); later44(0.7, () => hitC(q.x, q.y, 90 * Z.a, Z.d(34), Z.src, { kb: 120, col: Z.col })); } },
+    slam: { cd: 1.3, f(Z) { const q = pr44({ kind: 'star', ang: angTo(G.p.x, G.p.y), sp: 520, r: 6, dmg: Z.d(12), pierce: 3, life: 1.4, color: Z.col, src: Z.src, bounce: true }); startRogueSlamArt(q); later44(0.7, () => hitC(q.x, q.y, 90 * Z.a, Z.d(34), Z.src, { kb: 120, col: Z.col })); } },
     arrow: { cd: 1.0, f(Z) { const f = F43(), c = f.trail[Math.min(f.trail.length - 1, 6)] || G.p; for (const o of [G.p, c]) { const a = angTo(o.x, o.y); for (let i = -1; i <= 1; i++) boltTo(o.x, o.y, a + i * 0.1, { kind: 'star', sp: 680, r: 5, dmg: Z.d(14), pierce: 3, life: 0.8, color: o === G.p ? Z.col : '#506078', src: Z.src }); } } },
     trap: { cd: 1.1, f(Z) { const q = pr44({ kind: 'star', ang: angTo(G.p.x, G.p.y), sp: 500, r: 6, dmg: Z.d(12), pierce: 3, life: 1.2, color: Z.col, src: Z.src, bounce: true });
       for (const t of [0.2, 0.45, 0.7]) later44(t, () => { if (q.dead && t > 0.2) return; trap44({ tag: Z.src, x: q.x, y: q.y, R: 40, max: 10, kind: 'spike', col: '#8a96a8', on: T => hitC(T.x, T.y, T.R, Z.d(16), Z.src, { col: '#c03040', on: e => { e.bl = 3; e.blD = Z.d(16) * 0.25; } }) }); }); } },
@@ -329,10 +331,10 @@ drawJobAura = function (c) {
   _drawJobAura44(c);
   const S = G.f44; if (!S) return;
   c.save();
-  for (const L of S.lines) { if (L.src === 'fu_warrior_beam' && warriorArtReady('beam')) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
+  for (const L of S.lines) { if ((L.src === 'fu_warrior_beam' && warriorArtReady('beam')) || (L.src === 'fu_rogue_beam' && rogueArtReady('beam'))) continue; const k = 1 - L.t / L.dur; c.globalAlpha = 0.35 + 0.5 * k; c.strokeStyle = L.col; c.lineWidth = L.wd * (L.crack ? 0.8 : 1.4); c.lineCap = 'round'; if (L.crack) c.setLineDash([10, 6]); c.beginPath(); c.moveTo(L.x, L.y); c.lineTo(L.x + Math.cos(L.a) * L.L, L.y + Math.sin(L.a) * L.L); c.stroke(); c.setLineDash([]); c.globalAlpha = 0.9 * k; c.strokeStyle = '#fff'; c.lineWidth = Math.max(1, L.wd * 0.3); c.stroke(); }
   c.globalAlpha = 1;
   for (const T of S.traps) {
-    if (T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) continue;
+    if ((T.tag === 'fu_warrior_trap' && warriorArtReady('trap')) || (T.tag === 'fu_rogue_trap' && rogueArtReady('trap'))) continue;
     const s = T.kind === 'wall' ? 12 : 8, ready = T.t >= T.arm; c.strokeStyle = T.col; c.fillStyle = ready ? T.col : '#555'; c.lineWidth = 2; c.globalAlpha = ready ? 0.85 : 0.5;
     if (T.kind === 'wall') { c.fillRect(T.x - s, T.y - 4, s * 2, 8); for (let i = -1; i <= 1; i++) c.fillRect(T.x + i * 9 - 2, T.y - 12, 4, 16); }
     else if (T.kind === 'post') { c.fillRect(T.x - 7, T.y - 7, 14, 14); c.beginPath(); c.moveTo(T.x, T.y); c.lineTo(T.x + 10, T.y - 10); c.stroke(); }
