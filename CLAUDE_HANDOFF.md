@@ -464,3 +464,12 @@
 - `dev/pack-summon-unit-art.cjs`와 `build.sh`·`dev/build.cjs`에서 WebP 내장. `src/config.js` 버전 `0.46-art14`. 배포 소스 `30c6ee24caa4ab5d82157ac792cd94e4da6685ff`, 게임 HTML `c1759846278625341b801a5c76fb35f4ffeb7202`, 서비스 HTML `6ac60f127d591986cc7557edb654809f6bac3977`. Node·셸 빌드와 공개 HTML 3,195,832바이트, SHA-256 `8bca1dc00283dc1ad0d1fdc21e7c5d691a6e04301c27de8269a4ec257c43dd2f` 일치. 공개 버전 응답 확인. [공개 게임](https://1hyun-you.github.io/field/).
 - 공개 응답 HTML의 Chromium 320px·390px 각 7개 장면에서 이동·공격 프레임, 원화 누락 대체, 위험 예고 순서, 렌더링 전후 전투·저장 상태 확인. 동일 난수 `dev/vfuse44.js` 연성 90종 검사에서 0.46-art13과 결과 일치, 실패·브라우저 오류 0건. 폴드8 실기기·장시간 성능 미검증.
 - G42-5 잔여 제작·적용 항목 없음. 다음 작업은 사용자 지정 묶음 확인부터 시작.
+
+## 0.46-art15
+
+- 2026-11-13 한국시간. G42-6 직업 상태 표시 제작·적용·배포 완료. 기준 main `ce7cd43ef9351ab042ad0ffdb5ab53cfa1d11773`. 아트 기준, 인계 0.46-art14, GPT 요청 목록 및 ART42_PLAN 6번 확인.
+- `assets/job-status-art15/`에 판금·불꽃·집중 화살·표식 화살촉·시계판·초침과 기존 승인 문장을 사선 지면용으로 변형한 2차 전직 문양 20종 시트 등 투명 WebP 7개 선등록. 그림 전용 커밋 `d85a3bf0d434cf8ffaea082591d62dd4977cab4f`에 `[skip deploy]` 적용.
+- `src/v41.js drawJob41`에 피해 저장량에 따른 판금 누적·소멸, 격노 불꽃의 점화·흔들림·소멸, 집중 5단계 배열 및 적 표식 중첩, 기존 반경 150의 시계판·초침 연결. `src/jobplus.js drawJobAura`에 2차 전직 발밑 문양과 기존 표시 대체 연결. `src/render.js`에서 신규 상태 표시를 적 공격 예고보다 먼저 그림. `src/job-status-art.js`, `dev/pack-job-status-art.cjs`, `dev/build.cjs`, `build.sh`로 이미지 내장. `src/config.js` 버전 `0.46-art15`. 게임 규칙·피해·판정·재사용·자동 플레이·저장 데이터 수정 없음.
+- 배포 소스 `ce3d0a98559225036f7add98b40dc076850e5f02`, 게임 HTML `d5dd0209d2bfab52d29d3dfe4ae2f8445adf11c5`, 서비스 source-ref `58b089b2b2aa2a3e84d4d1c950d7835766bf3418`, 서비스 HTML `d21b41ddff9201b2566bf50b7d8ca70b18b42486`, 서비스 버전 기록 `3a0b6c982656946533e496d2e86aa386d7448f1f`. Node·셸·서비스·공개 HTML 3,289,681바이트, SHA-256 `e5f566ddfcf16408db9e2d3b5878f91d5fdff134d476e125b5c1314fc7f3423a` 일치. [공개 게임](https://1hyun-you.github.io/field/).
+- Canvas 호출 검사로 집중 5단계, 적 표식 중첩, 전사 판금 누적·해제와 격노, 감속 반경 150, 전직 문양 20개 셀, 이미지 누락 대체, 위험 예고 순서, 동작 줄이기, 렌더링 전후 게임 상태 확인. 공개 Chrome에서 버전·시작·전투 진입·일시정지 확인. 로컬 Chromium 실행 제한으로 320/390px 전투 화면 및 전체 연성 회귀 검사는 미수행. 폴드8 실기기·장시간 성능 미검증.
+- G42-6 잔여 제작·적용 항목 없음. 다음 작업은 사용자 지정 묶음의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
