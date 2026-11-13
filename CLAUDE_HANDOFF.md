@@ -473,3 +473,12 @@
 - 배포 소스 `ce3d0a98559225036f7add98b40dc076850e5f02`, 게임 HTML `d5dd0209d2bfab52d29d3dfe4ae2f8445adf11c5`, 서비스 source-ref `58b089b2b2aa2a3e84d4d1c950d7835766bf3418`, 서비스 HTML `d21b41ddff9201b2566bf50b7d8ca70b18b42486`, 서비스 버전 기록 `3a0b6c982656946533e496d2e86aa386d7448f1f`. Node·셸·서비스·공개 HTML 3,289,681바이트, SHA-256 `e5f566ddfcf16408db9e2d3b5878f91d5fdff134d476e125b5c1314fc7f3423a` 일치. [공개 게임](https://1hyun-you.github.io/field/).
 - Canvas 호출 검사로 집중 5단계, 적 표식 중첩, 전사 판금 누적·해제와 격노, 감속 반경 150, 전직 문양 20개 셀, 이미지 누락 대체, 위험 예고 순서, 동작 줄이기, 렌더링 전후 게임 상태 확인. 공개 Chrome에서 버전·시작·전투 진입·일시정지 확인. 로컬 Chromium 실행 제한으로 320/390px 전투 화면 및 전체 연성 회귀 검사는 미수행. 폴드8 실기기·장시간 성능 미검증.
 - G42-6 잔여 제작·적용 항목 없음. 다음 작업은 사용자 지정 묶음의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
+
+## 0.46-art16
+
+- 2026-11-13 한국시간. G42-4 설치물 원화 제작·적용·공개 게임 배포 완료. 시작 main `0228f47798b57ac02f0dbcb83bf943cee1c5f2cb`. ART_DIRECTION.md, 0.46-art15 인계, GPT_REQUESTS.md G42-4, ART42_PLAN 4번 확인.
+- `assets/installation-art16/`에 투명 WebP 4종(35,308바이트) 선등록. 덫 설치·대기·폭발, 반매립 지뢰, 포탑 몸체·포신, 소형 미사일·착탄. 그림 전용 `36ad9ce290834319d02f76da99baed9352433213`에 [skip deploy] 적용.
+- `src/installation-art.js`에서 기존 설치 시간·개체 반경에 맞춰 덫의 하강·전개·폭발, 지뢰 점멸, 포신 방향·반동, 미사일 궤적·착탄 표시. `src/render.js`의 drawGrowthGround·drawJobUnits와 위험 예고 앞 렌더 경로, `src/job.js`의 실제 포탑 발사, `src/v41.js`의 missileVolley, `src/weapons.js`의 explode 표시에 연결. `src/engineer-art.js`·`src/vfx.js`에서 이미지 실패 시 기존 표시 적용. 기존 보행 포탑 및 기술자 연성 전용 에셋 유지. 판정·피해·재사용·자동 플레이·저장 로직 수정 없음.
+- `dev/pack-installation-art.cjs`, `dev/build.cjs`, `build.sh`로 WebP 내장. `src/config.js` 버전 `0.46-art16`. 소스 `05da7be48a43addf1dd8b84de2c612f5b4ec718d`, 게임 HTML `cfd47575210e4ae2b13a9cd3155eb37c5822f46c`, 서비스 source-ref `8a3df14e3a2e96c493d3fedf7254166b8803f6a2`, 서비스 HTML `b5877f363b14f7825a0ac9bf830522a95c0d225b`. Node·셸·공개 HTML 3,342,570바이트, SHA-256 `0f24b3941cd3d83a67ff71e6225cff3b40d4883872ede6fb480ead5b480d624c` 일치. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43348886374).
+- Canvas 호출 검사로 덫 상태·지뢰 점멸·포신 방향/반동·미사일 비행/착탄, 기존 피해·범위·시간, 위험 예고 순서, 이미지 누락, 동작 줄이기, 렌더링 전후 상태 확인. 공개 Chrome에서 버전·시작·전투 진입·일시정지 확인. 40px 원화 축소판 검토. 로컬 Chromium 실행 제한으로 320·390px 설치물 전투 화면 및 연성 90종 회귀, 폴드8 실기기·장시간 성능 미검증.
+- G42-4 잔여 제작·적용 항목 없음. 공개 게임은 art16이며 별도 서비스 버전 메타데이터 `field/version.json`은 자동 승인 검토 차단으로 art15 상태.
