@@ -498,3 +498,10 @@
 - 그림 전용 커밋 `63a4cf6a2c77574b3f850a40aa74ad51834bf7e1` ([skip deploy]). `ice-wall.webp` 얼음 방패 성벽(112×74), `messenger-falcon.webp` 전령 매(105×112), `banner-radiance.webp` 왕실 문장의 금빛 광휘(112×37), `base-shield.webp` 왕관 방패(88×112). 신규 4종 합계 17,212바이트. 투명 알파 범위 0–255, 34px 축소 시 식별 및 main 원격 Git blob 일치 확인.
 - 다음 첫 작업: 최신 main에서 선등록 10종을 읽고 `FU44.sovereign`·`drawJobAura`의 lines·traps·nodes 및 기존 투사체·기본 방패 충격 렌더링을 연결. 적 공격 예고보다 먼저 표시하며 원화 실패 시 기존 표시 대체. 실제 발동 위치·시점·범위에 맞춰 준비·실행·여운을 구현.
 - 원요청 배포 버전은 `0.46-art5`. 현 main과 서비스 버전 기록은 `0.46-art17`이므로 배포 버전 지정 확인 필요. 이번 묶음은 그림 선등록과 인계까지만 진행. 코드 연결, 연성 90종 발동 점검, 320px·390px 군주 9종 캡처 및 공개 배포 확인은 후속 작업. `GPT_REQUESTS.md`의 G44-3은 제공 상태.
+
+## 0.46-art5 — 진행 중 (G44-3 코드 검증)
+
+- 2026-11-13 한국시간. 선등록 그림 10종의 코드 연결 완료. 검토 브랜치 `art/g44-3-sovereign`, 커밋 `840865598af0b9bae9874d443be2302dd70b2bb6`. [검토용 PR #1](https://github.com/1hyun-you/loop-game/pull/1).
+- `src/v44.js` FU44.sovereign과 drawJobAura의 선·방책, `src/weapons.js`·`src/bal39.js`의 기본 방패 충격, `src/arsenal.js`·`src/vfx.js`·`src/render.js`의 대체 표시와 그리기 순서에 연결. `src/sovereign-art.js`가 적 공격 예고 아래에 원화를 표시. `dev/pack-sovereign-art.cjs`·`dev/build.cjs`·`build.sh`에서 그림 내장. `src/config.js`의 검토 빌드 버전은 원요청의 0.46-art5.
+- Node·셸 빌드 일치 및 check-build 통과. dev/vfuse44.js의 평가 본문을 Node VM에서 실행해 동일 난수의 0.46-art17과 연성 90종 발동·피해·이름 비교 결과 일치, 실패 0건. 320·390px Canvas 호출 20개 상황 및 렌더 전후 상태 확인. Chromium은 socket 실행 권한 오류로 실제 캡처 미확보.
+- 자동 승인 검토가 전투 코드 변경 위험을 이유로 main 갱신을 거부함. 공개 게임 HTML은 0.46-art17 확인. 다음 작업은 PR에서 변경 범위와 배포 버전 검토 후 브라우저 캡처·main 병합·공개 배포 확인 및 GPT_REQUESTS.md 완료 처리. 현재 G44-3 상태는 제공.
