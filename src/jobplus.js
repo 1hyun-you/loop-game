@@ -57,9 +57,11 @@ function jobCeremony(id, second) {
   const n = p.weapons.filter(w => wxOn(WEAPONS[w.id].cat)).length;
   if (!second && n) toast(`공용 무기 ${n}종 ${JOB_WX[id].pre} 무기로 변환`, col);
 }
-/* 발밑 직업 문양 (그림자 위, 주인공 아래) */
-function drawJobAura(c) {
+/* 2차 전직 문양은 지면층에서 그려 적 공격 예고가 위에 표시되도록 함 */
+function drawJobAura(c, ground = false) {
   const p = G.p; if (!p.job) return;
+  if (ground !== !!p.job2) return;
+  if (p.job2 && drawJobFootCrest(c, p)) return;
   if(EFFECT_ART.image){
     const key={warrior:'earth',rogue:'arcane',archer:'wind',engineer:'lightning',mage:'frost',summoner:'summon',sovereign:'blessing',chrono:'time',priest:'holy',druid:'vine'}[p.job];
     paintedEffect(c,key,p.x,p.y+p.r*.85,p.r+12,.48,0,.38);return;
@@ -73,6 +75,8 @@ function drawJobAura(c) {
   }
   c.globalAlpha = 1;
 }
+const drawJobAuraBase = drawJobAura;
+function drawJobAuraGround(c) { drawJobAuraBase(c, true); }
 /* 주인공 옷 색: 기본 색일 때만 직업 색 적용 (칭호 색상 변형 우선) */
 function heroTint() { const base = playerColor(); return G.p.job && base === COLORS[0].c ? JOB_COL[G.p.job] : base; }
 

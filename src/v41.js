@@ -345,6 +345,27 @@ applyJob2 = function (k) { _applyJob2_41(k); if (k === 'lord') G.minions = []; }
 function drawJob41(c, inView) {
   const p = G.p, J = G.j41; if (!p.job) return;
   if (inView) {
+    c.save();
+    c.imageSmoothingEnabled = true;
+    const charge = Math.min(1, (J?.store || 0) / (p.maxHp * 0.5));
+    if (p.job === 'archer' && J?.focus && !drawFocusArrows(c, p, J)) {
+      c.fillStyle = '#b8ff9a';
+      for (let i = 0; i < J.focus; i++) c.fillRect(p.x - 13 + i * 6, p.y - p.r - 16, 4, 4);
+    }
+    if (p.job === 'warrior' && !drawStoredPlates(c, p, charge) && charge > 0) {
+      c.strokeStyle = '#ff8a5a'; c.lineWidth = 3; c.beginPath();
+      c.arc(p.x, p.y, p.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * charge); c.stroke();
+    }
+    if (p.job === 'warrior' && G.tm.rage > 0 && !drawRageFlames(c, p, G.tm.rage)) {
+      c.globalAlpha = 0.25 + 0.15 * Math.sin(G.time * 12);
+      c.strokeStyle = '#ff3a2a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 11, 0, 7); c.stroke();
+    }
+    if (p.job === 'chrono' && !drawChronoDial(c, p)) {
+      c.globalAlpha = 0.18; c.strokeStyle = '#c8c0ff'; c.lineWidth = 2; c.setLineDash([6, 8]);
+      c.beginPath(); c.arc(p.x, p.y, V41.chr.R, 0, 7); c.stroke();
+    }
+    c.restore();
+    drawArcherMarks(c, inView);
     if (J) {
       J.gd.forEach((g, i) => {
         const angle = i * Math.PI * 2 / J.gd.length + G.time * 0.6;
@@ -377,10 +398,6 @@ function drawJob41(c, inView) {
   c.save();
   if (!summonUnitReady('guard')) for (const g of J.gd) { c.fillStyle = '#ffd24a'; c.strokeStyle = '#5a4210'; c.lineWidth = 2; c.beginPath(); c.arc(g.x, g.y, 7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.fillRect(g.x + Math.cos(g.a) * 6 - 1.5, g.y + Math.sin(g.a) * 6 - 1.5, 3, 3); }
   if (J.clone && !summonUnitReady('clone')) { c.globalAlpha = 0.45; c.fillStyle = '#203040'; c.beginPath(); c.arc(J.clone.x, J.clone.y, p.r, 0, 7); c.fill(); c.globalAlpha = 1; }
-  if (p.job === 'archer' && J.focus) { for (let i = 0; i < J.focus; i++) { c.fillStyle = '#b8ff9a'; c.fillRect(p.x - 13 + i * 6, p.y - p.r - 16, 4, 4); } }
-  if (p.job === 'warrior' && J.store > 0) { const k = Math.min(1, J.store / (p.maxHp * 0.5)); c.strokeStyle = '#ff8a5a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); c.stroke(); }
-  if (p.job === 'warrior' && G.tm.rage > 0) { c.globalAlpha = 0.25 + 0.15 * Math.sin(G.time * 12); c.strokeStyle = '#ff3a2a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 11, 0, 7); c.stroke(); c.globalAlpha = 1; }
-  if (p.job === 'chrono') { c.globalAlpha = 0.18; c.strokeStyle = '#c8c0ff'; c.lineWidth = 2; c.setLineDash([6, 8]); c.beginPath(); c.arc(p.x, p.y, V41.chr.R, 0, 7); c.stroke(); c.setLineDash([]); c.globalAlpha = 1; }
   if (!summonUnitReady('wraith')) for (const m of G.minions) if (m.giant) { c.globalAlpha = 0.35; c.fillStyle = '#b89cff'; c.beginPath(); c.arc(m.x, m.y, m.r + 4, 0, 7); c.fill(); c.globalAlpha = 1; }
   c.restore();
 }

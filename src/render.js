@@ -36,6 +36,7 @@ function render() {
   drawPriestArtWorld(c, inView);
   drawDruidArtWorld(c, inView);
   drawJob41(c, inView);
+  drawJobAuraGround(c);
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -128,7 +129,6 @@ function drawEnemies(c, inView) {
     const w = e.r * 2, y = e.y - e.r - 9; uiBar(c, e.x - w / 2, y, w, 4, e.hp / e.maxHp, '#cfb476');
   }
   for(const e of G.enemies)if(!e.dead&&e.frz>0&&inView(e.x,e.y,e.r))paintedAura(c,'frost',e.x,e.y,e.r+5,.65);
-  if (G.p.job === 'archer') { c.fillStyle = '#b8ff9a'; for (const e of G.enemies) if (!e.dead && e.mk && inView(e.x, e.y, e.r)) for (let i = 0; i < e.mk; i++) c.fillRect(e.x - 8 + i * 4, e.y - e.r - 6, 3, 3); }
 }
 /* 도트 적 그리기: 그림자 → (엘리트 금색 외곽선) → 본체/피격 반짝임, 플레이어 방향으로 좌우 반전 */
 function drawEnemySprites(c, list) {
