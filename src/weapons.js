@@ -111,9 +111,10 @@ Object.assign(WEAPON_FIRE, {
   /* 방패 충격: 주변 적 강하게 밀쳐내기 · 방벽 분기: 1.5초간 받는 피해 -40% · 이중 충격 분기: 0.4초 뒤 넓은 2차 충격 */
   shield(w, S) {
     const D = WEAPONS.shield.base, p = G.p, R = D.R * S.area;
-    shieldBash(p.x, p.y, R, S.dmg, D.kb);
+    const sovereignBase = w.base && p.job === 'sovereign';
+    shieldBash(p.x, p.y, R, S.dmg, D.kb, sovereignBase);
     if (w.br === 'wall') G.tm.wall = 1.5;
-    if (w.br === 'twin') G.later.push({ t: 0.4, f: () => shieldBash(G.p.x, G.p.y, R * 1.4, S.dmg * 0.9, D.kb * 0.6) });
+    if (w.br === 'twin') G.later.push({ t: 0.4, f: () => shieldBash(G.p.x, G.p.y, R * 1.4, S.dmg * 0.9, D.kb * 0.6, sovereignBase) });
     if (hasRelic('bulwark')) heal(p.maxHp * 0.01, '수호 방패');   // 0.35 3% → 1%
   },
   /* 대지 강타: 원형 충격파 · 여진 분기: 1초 뒤 같은 자리 재충격 · 균열 분기: 네 방향 균열 장판 */
@@ -150,9 +151,9 @@ Object.assign(WEAPON_FIRE, {
     for (let i = 0; i < S.n; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: rand(Math.PI * 2), sp: D.sp, r: hasRelic('bigorb') ? 12 : 6, dmg: S.dmg, pierce: 0, life: D.life, color: '#9fb8ff', src: 'mbolt', home: true, nova: w.br === 'nova', ...(w.base && p.job === 'priest' ? { priestBase: true } : {}) });
   },
 });
-function shieldBash(x, y, R, dmg, kb) {
+function shieldBash(x, y, R, dmg, kb, sovereignBase) {
   gridQuery(x, y, R, e => damageEnemy(e, dmg, { src: 'shield', kb, fx: x, fy: y }));
-  fx({ kind: 'ring', x, y, r0: R * 0.4, r1: R, dur: 0.22, color: '#c8d8ff', fill: true });
+  fx({ kind: 'ring', x, y, r0: R * 0.4, r1: R, dur: 0.22, color: '#c8d8ff', fill: true, ...(sovereignBase ? { sovereignArt: 'base-shield', sovereignAngle: Math.atan2(G.p.face.y, G.p.face.x) } : {}) });
 }
 function slamWave(x, y, R, dmg, kb) {
   const frost = hasRelic('frostrift');
