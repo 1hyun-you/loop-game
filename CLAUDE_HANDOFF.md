@@ -446,3 +446,12 @@
 - `dev/vfuse44.js` 연성 90종 실패·브라우저 오류 0건. 동일 난수 및 수동 프레임 진행 조건의 0.46-art11 비교 결과 JSON 일치. `dev/check-druid-art12.cjs`로 320px·390px에서 기본 1종·연성 9종의 3시점, 곰발톱 3타 순서, 위험 예고 순서, 이미지 누락 대체, 동작 줄이기, 렌더링 전후 전투·저장 상태 확인. 캡처 60장.
 - 소스 `9493c9ef88fada3be256e13ad2191b7499376a59`, 서비스 source-ref `fb2c7b0be0cb089527e64e38802daed05f84dd77`, 서비스 HTML `28b206b50c418585c8c0becd5139797c70e447cd`. Node·셸·공개 HTML 2,914,222바이트, SHA-256 `0800a29a98a50b225241c19c98984f6ddaf7896aa1a784309da1073b9cf7a656` 일치. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43283473280).
 - G44-10 제작·적용 잔여 항목 없음. 폴드8 실기기 및 장시간 성능 미검증. 다음 작업은 사용자가 지정한 범위의 최신 main·아트 기준·인계·요청 목록 확인부터 시작.
+
+## 0.46-art13
+
+- 2026-11-13 한국시간. G42-13 전직 후 주인공 10직업 의상·소지품 외형 제작·적용·배포 완료. 기준 main `24a80e012c5dbd367a42d98eca46a818ab9e3656`. `ART_DIRECTION.md`, 이전 인계, G42-13, `ART42_PLAN.md` 13번, `UI_JOB_CREST` 확인.
+- `assets/hero-art13/` 투명 WebP 10종(256×128, 2프레임, 총 111,972바이트). 전사 대검·판금, 도적 단검·목가리개, 군주 왕관·방패, 궁수 활·화살통, 기술자 고글·공구, 시간술사 모래시계·코트, 마법사 모자·결정 지팡이, 소환사 랜턴·너덜한 옷, 프리스트 성직복·십자가 철퇴, 드루이드 잎갑옷·나무 지팡이. 금발, 기본 파란 망토, 왼쪽 위 빛, 자주색 외곽선, 발밑 기준 유지. 그림 전용 선등록 `17d287e1373c0da4a7a2b12c2b5213cad269bcb2`, `0c2d0496a2798f5adbf63bdb0a3b08ea08084a29`. [원본 PNG 10종과 제작 기준](https://chatgpt.com/library?file_id=libfile_84d071f385748191bc0a58e747c76a76&account_id=personal).
+- `src/art-theme.js`에서 원화를 로드하고 `src/sprite.js`의 기존 2프레임 캐시에 연결. `src/motion.js`의 주인공 렌더 경로에만 직업 전달. 기존 걷기·공격 반동·좌우 반전·피격 섬광과 해금 망토 색상 적용. 원화 실패 시 기존 색상 변형 원화, 기본 원화까지 실패 시 기존 도트 대체. 판정·수치·공격·저장·자동 플레이 변경 없음. `dev/pack-hero-outfits.cjs`, `dev/build.cjs`, `build.sh`에서 WebP 내장. `src/config.js` 버전 `0.46-art13`.
+- 배포 소스 `4a0f1e6eccaed1b86bf35deee7d194f946211458`, 게임 HTML `6380e41f06fe207314aa31938fc54d671c3de22b`, 서비스 source-ref `63205806ec5e853215d8f7bb38c549ebf04d2aa8`, 서비스 HTML `5714482c79676ed1b4eefc7435fff113eb76a8a2`, 서비스 버전 기록 `a450e7a7540f2e4f76f72c0bc12ae218141e5203`. Node·셸·공개 응답 HTML 3,064,305바이트, SHA-256 `b6b2e18fcefa0fd6c10e47c4a481550b0c2c2223ada1020b42c0a464d01f89d2` 일치. [공개 게임](https://1hyun-you.github.io/field/).
+- 공개 응답과 동일한 HTML로 Chromium 320px·390px에서 10직업 총 160개 프레임·반전·섬광 조합과 다수 적·위험 예고가 포함된 전투 장면 20건 확인. 기본 파란 망토·해금 색상·발밑 정렬·이미지 누락 대체·렌더링 전후 상태 및 저장 검증. 동일 난수와 수동 프레임 진행으로 0.46-art12와 연성 90종 비교 결과 일치, 발동·피해·이름 실패와 브라우저 오류 0건.
+- G42-13 제작·적용 잔여 항목 없음. 폴드8 실기기와 장시간 성능 미검증.
