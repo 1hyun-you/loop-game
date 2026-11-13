@@ -130,7 +130,7 @@ function updateArsenal(dt) {
       s.t += dt; const k = Math.min(1, s.t / D.dur), n = w.br === 'twin' ? 2 : 1;
       for (let i = 0; i < n; i++) {
         const a = s.a0 + Math.PI * 2 * k + i * Math.PI, bx = p.x + Math.cos(a) * R, by = p.y + Math.sin(a) * R;
-        gridQuery(bx, by, bs, e => { const key = 'fl' + s.id; if (!e.ht[key]) { e.ht[key] = 1; damageEnemy(e, S.dmg, { src: 'flail', kb: D.kb, fx: p.x, fy: p.y }); } });
+        gridQuery(bx, by, bs, e => { const key = 'fl' + s.id + '_' + i; if (!e.ht[key]) { e.ht[key] = 1; damageEnemy(e, S.dmg, { src: 'flail', kb: D.kb, fx: p.x, fy: p.y }); } });
       }
       s.a = s.a0 + Math.PI * 2 * k; s.R = R; s.bs = bs; s.n = n;
       if (k >= 1) {

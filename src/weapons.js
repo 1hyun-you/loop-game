@@ -191,7 +191,7 @@ function updateSpin(w, S, dt) {
   w.a = (w.a || 0) + S.rot * storm * dt; w.n = S.n; w.R = R; w.bs = bsz;
   for (let i = 0; i < S.n; i++) {
     const a = w.a + i * Math.PI * 2 / S.n, bx = p.x + Math.cos(a) * R, by = p.y + Math.sin(a) * R;
-    gridQuery(bx, by, bsz, e => { if ((e.ht.spin || 0) <= G.time) { e.ht.spin = G.time + D.hitCd; damageEnemy(e, dm, { kb: D.kb, fx: p.x, fy: p.y, src: 'spin' }); } });
+    const hk = 'spin' + i; gridQuery(bx, by, bsz, e => { if ((e.ht[hk] || 0) <= G.time) { e.ht[hk] = G.time + D.hitCd; damageEnemy(e, dm, { kb: D.kb, fx: p.x, fy: p.y, src: 'spin' }); } });
   }
 }
 

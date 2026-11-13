@@ -97,8 +97,7 @@ function fragUnlock(id) {
   toast(`기록 조각 · ${F.nm} (${s.frags.length}/${FRAG_N})`, '#e8d8ff');
 }
 /* 보스 등장 대사 — 수문장은 첫 대면만, 마왕은 첫 대면·해제 판 */
-function storyBoss(k) {
-  vibe(80);
+function storyBoss(k) {   // 0.48 보스 등장 진동 폐지
   const s = storyRead();
   if (k === 'demon') {
     fragUnlock('castle');

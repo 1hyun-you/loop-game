@@ -373,7 +373,9 @@ function drawJob41(c, inView) {
       J.gd.forEach((g, i) => {
         const angle = i * Math.PI * 2 / J.gd.length + G.time * 0.6;
         const flip = G.banner ? G.banner.x + Math.cos(angle) * G.banner.r * 0.55 < g.x : Math.cos(g.a) < 0;
-        drawSummonUnit(c, inView, 'guard', g, 7, flip, 1, i * 0.4);
+        const gr = p.r * 1.55;                                 // 0.48 근위병 화면상 플레이어 1.2배(그림 여백 보정) + 외곽 강조
+        if (inView(g.x, g.y, gr * 2)) { c.save(); c.globalAlpha = 0.32; c.fillStyle = '#1a1208'; c.beginPath(); c.ellipse(g.x, g.y + gr * 0.85, gr * 0.9, gr * 0.32, 0, 0, 7); c.fill(); vfxGlow(c, g.x, g.y, gr * 1.55, '#ffd24a', 0.3); c.restore(); }
+        drawSummonUnit(c, inView, 'guard', g, gr, flip, 1, i * 0.4);
       });
       if (J.clone) drawSummonUnit(c, inView, 'clone', J.clone, p.r, p.face.x < 0, 0.68);
     }
@@ -399,7 +401,7 @@ function drawJob41(c, inView) {
   }
   if (!J) return;
   c.save();
-  if (!summonUnitReady('guard')) for (const g of J.gd) { c.fillStyle = '#ffd24a'; c.strokeStyle = '#5a4210'; c.lineWidth = 2; c.beginPath(); c.arc(g.x, g.y, 7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.fillRect(g.x + Math.cos(g.a) * 6 - 1.5, g.y + Math.sin(g.a) * 6 - 1.5, 3, 3); }
+  if (!summonUnitReady('guard')) for (const g of J.gd) { const gr = G.p.r * 1.2; vfxGlow(c, g.x, g.y, gr * 1.55, '#ffd24a', 0.3); c.fillStyle = '#ffd24a'; c.strokeStyle = '#5a4210'; c.lineWidth = 2.5; c.beginPath(); c.arc(g.x, g.y, gr, 0, 7); c.fill(); c.stroke(); c.strokeStyle = '#fff6d0'; c.lineWidth = 2; c.beginPath(); c.moveTo(g.x, g.y); c.lineTo(g.x + Math.cos(g.a) * gr * 1.7, g.y + Math.sin(g.a) * gr * 1.7); c.stroke(); }   // 0.48 1.2배·창 표시
   if (J.clone && !summonUnitReady('clone')) { c.globalAlpha = 0.45; c.fillStyle = '#203040'; c.beginPath(); c.arc(J.clone.x, J.clone.y, p.r, 0, 7); c.fill(); c.globalAlpha = 1; }
   if (!summonUnitReady('wraith')) for (const m of G.minions) if (m.giant) { c.globalAlpha = 0.35; c.fillStyle = '#b89cff'; c.beginPath(); c.arc(m.x, m.y, m.r + 4, 0, 7); c.fill(); c.globalAlpha = 1; }
   c.restore();

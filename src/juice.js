@@ -42,7 +42,7 @@ function jKill(e) {
   const S = JUICE.shard, n = e.gk && !e.clone ? S.boss : e.elite ? S.elite : S.n;
   burst(e.x, e.y, n, e.color || '#ddd', e.gk ? 200 : 120, e.gk ? 0.8 : 0.45, e.gk ? 4 : 3);
   if (e.elite) burst(e.x, e.y, 4, '#ffd24a', 150, 0.5, 3);
-  if (e.gk && !e.clone) { shake(6, 0.6); vibe(60); fx({ kind: 'ring', x: e.x, y: e.y, r0: e.r, r1: e.r + 140, dur: 0.7, color: '#fff2c8' }); }
+  if (e.gk && !e.clone) { shake(6, 0.6); fx({ kind: 'ring', x: e.x, y: e.y, r0: e.r, r1: e.r + 140, dur: 0.7, color: '#fff2c8' }); }
   rcKill(e);                                                 // 2~4등급 반응·회복 고기 (0.28)
 }
 
@@ -61,7 +61,7 @@ function banner(text, sub, color = '#ffe08a', dur = 1.8) { JC().bn = { text, sub
 /* 레벨업·상자 개봉·보스 등장 */
 function jLevel() { const p = G.p; sparkUp(p.x, p.y, 14, ['#7fe0ff', '#fff6c8', '#b8f0ff']); fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 40, dur: 0.3, color: '#fff6c8', follow: true }); }
 function jChest() { const p = G.p; burst(p.x, p.y, 18, '#ffd24a', 170, 0.6, 3); sparkUp(p.x, p.y, 8, ['#fff2a0', '#ffd24a']); shake(2, 0.2); }
-function jBoss(name, sub) { banner(name, sub, '#ff8a6a', 2.2); shake(5, 0.7); vibe(80); }
+function jBoss(name, sub) { banner(name, sub, '#ff8a6a', 2.2); shake(5, 0.7); }   // 0.48 보스 등장 진동 폐지
 
 function updateJuice(dt) {
   const j = G.jc; if (!j) return;

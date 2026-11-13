@@ -79,11 +79,8 @@ function drawFx(c) {
         vfxGlow(c, x, y, r, col, 0.35 * fade);
         if (k < 0.22) vfxGlow(c, x, y, Math.min(r * 0.4, 24), '#fff2d5', 0.75 * (1 - k / 0.22));
       }
-      c.globalAlpha = 0.8 * fade; c.strokeStyle = col; c.lineWidth = f.fill ? 1.5 + 2 * fade : 1.6;
-      c.beginPath(); c.arc(x, y, r, 0, tau); c.stroke();
+      rangeEdge48(c, x, y, r, col, (f.fill ? 0.95 : 0.8) * fade, f.k48 || (f.element === 'ice' ? 'dot' : null), f);   // 0.48 테두리 선 → 가장자리 그라데이션
       if (!lite) {
-        c.globalAlpha = 0.38 * fade; c.strokeStyle = '#fff0cf'; c.lineWidth = 1;
-        c.beginPath(); c.arc(x, y, r * 0.82, 0, tau); c.stroke();
         // Frost rings retain original radius, with six small crystalline facets.
         if (f.element === 'ice') for (let i = 0; i < 6; i++) {
           const a = i * tau / 6, px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.9;

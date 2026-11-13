@@ -157,7 +157,7 @@ function drawGrowthGround(c, inView) {
     const k = 1 - z.t / z.dur;
     c.fillStyle = z.kind === 'trail' ? `rgba(200,255,220,${0.25 * k})` : z.kind === 'vine' ? `rgba(90,190,90,${0.32 * k})` : z.kind === 'crack' ? `rgba(150,110,70,${0.4 * k})` : `rgba(255,120,40,${0.28 * k})`;
     c.beginPath(); c.arc(z.x, z.y, z.r, 0, 7); c.fill();
-    if (z.kind === 'fire' || !z.kind) { c.strokeStyle = `rgba(255,220,140,${0.55 * k})`; c.lineWidth = 1.5; c.stroke(); }   // 0.25 아군 장판 금색 테두리
+    rangeEdge48(c, z.x, z.y, z.r, z.kind === 'trail' ? '#c8ffdc' : z.kind === 'vine' ? '#6ac86a' : z.kind === 'crack' ? '#a07850' : '#ffc88a', 0.6 * k, z.kind ? POOLK48[z.kind] : 'blast', z);   // 0.48 테두리 선 → 가장자리 그라데이션
   }
   const p = G.p;
   if(p.exw&&p.exw.id==='mage')paintedAura(c,'frost',p.x,p.y,EXW.mage.R,.3);
