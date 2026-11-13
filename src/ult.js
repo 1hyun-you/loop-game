@@ -196,7 +196,13 @@ function updateUltFx(dt) {
   if (U.dance > 0) {
     U.dance -= dt; U.bladeT -= dt;
     U.clones.forEach((c, i) => { c.a += dt * 3; const tx = p.x + Math.cos(c.a) * 46, ty = p.y + Math.sin(c.a) * 46; c.x += (tx - c.x) * Math.min(1, dt * 8); c.y += (ty - c.y) * Math.min(1, dt * 8); });
-    if (U.bladeT <= 0) { U.bladeT = 0.08; for (const s of [p, ...U.clones]) if (U.blades.length < 160) U.blades.push({ x: s.x, y: s.y, t: 0.7, a: rand(7) }); }
+    if (U.bladeT <= 0) {
+      U.bladeT = 0.08;
+      for (const s of [p, ...U.clones]) if (U.blades.length < 160) {
+        U.blades.push({ x: s.x, y: s.y, t: 0.7, a: rand(7) });
+        if (s !== p && !(U.tk > dt)) markSummonAttack(s, s.a + Math.PI / 2);
+      }
+    }
   }
   if (U.blades.length) {
     U.tk = (U.tk || 0) - dt; const hit = U.tk <= 0; if (hit) U.tk = 0.2;
@@ -224,7 +230,7 @@ function updateUltFx(dt) {
     g.t -= dt; g.hit -= dt; const e = nearestEnemy(g.x, g.y, 340), tx = e ? e.x : p.x + 30, ty = e ? e.y : p.y - 30, dx = tx - g.x, dy = ty - g.y, d = Math.hypot(dx, dy) || 1;
     if (d > g.r + 6) { g.x += dx / d * 150 * dt; g.y += dy / d * 150 * dt; g.vx = dx; }
     if (dist2(g.x, g.y, p.x, p.y) > 360 * 360) { g.x = p.x; g.y = p.y - 30; }
-    if (g.hit <= 0 && e && d < 90) { g.hit = 0.8; uBlast(g.x + dx / d * 30, g.y + dy / d * 30, 75, g.d, 220, '#c9a8ff'); }
+    if (g.hit <= 0 && e && d < 90) { g.hit = 0.8; markSummonAttack(g, Math.atan2(dy, dx)); uBlast(g.x + dx / d * 30, g.y + dy / d * 30, 75, g.d, 220, '#c9a8ff'); }
   }
   if (U.giants.length) U.giants = U.giants.filter(g => g.t > 0);
   if (U.judge > 0) { U.judge -= dt; U.jt -= dt; if (U.jt <= 0) { U.jt = 0.22; const L = onScreen(); const e = L[Math.floor(Math.random() * L.length)]; if (e) { fx({ kind: 'bolt', x: e.x, y: e.y, dur: 0.22 }); fx({ kind: 'ring', x: e.x, y: e.y, r0: 6, r1: 45, dur: 0.25, color: '#fff2a8' }); gridQuery(e.x, e.y, 45, t => damageEnemy(t, U.jd, { src: 'ult' })); } } }
@@ -289,10 +295,10 @@ function drawUlt(c) {
   if(U.wall){const W=U.wall,k=Math.min(1,W.t);paintedAura(c,'shield',W.x,W.y,W.r,.6*k);effectBoundary(c,W.x,W.y,W.r,'#ffd0a0',.4*k);}
   if(U.rage>0)paintedAura(c,'fire',p.x,p.y,p.r+12,.6);
   for(const b of U.blades){c.save();c.globalAlpha=Math.min(1,b.t*2)*.8;drawSpriteRot(c,'knife',0,b.x,b.y,b.a);c.restore();}
-  if (U.dance > 0) for (const s of U.clones) { c.globalAlpha = 0.45; drawSprite(c, 'hero', Math.floor(G.time * 8) & 1, s.x, s.y + p.r * 1.1, { tint: '#6a5aa0' }); }
+  if (U.dance > 0 && (!p.job || !summonUnitReady('clone'))) for (const s of U.clones) { c.globalAlpha = 0.45; drawSprite(c, 'hero', Math.floor(G.time * 8) & 1, s.x, s.y + p.r * 1.1, { tint: '#6a5aa0' }); }
   if (U.mech) { const M = U.mech; c.globalAlpha = 1;
     if(EFFECT_ART.image){drawSpriteC(c,'turret',0,M.x,M.y,{mul:2});paintedAura(c,'lightning',M.x,M.y,28,.35);}else{ c.fillStyle = '#3a4a5a'; c.fillRect(M.x - 14, M.y - 10, 28, 20); c.save(); c.translate(M.x, M.y - 4); c.rotate(M.a || 0); c.fillStyle = '#9ad8ff'; c.fillRect(0, -4, 22, 8); c.restore(); c.strokeStyle = '#9ad8ff'; c.lineWidth = 2; c.strokeRect(M.x - 14, M.y - 10, 28, 20); }}
-  for (const g of U.giants) { const a = Math.min(1, g.t); paintedAura(c,'summon',g.x,g.y,g.r+10,.6*a); c.globalAlpha = 0.85 * a; c.save(); c.translate(g.x, g.y); c.scale(2.4, 2.4); drawSprite(c, 'hero', Math.floor(G.time * 6) & 1, 0, 8, { flip: (g.vx || 0) < 0, tint: '#b89cff', mode: 'white' }); c.restore(); }
+  if (!p.job || !summonUnitReady('wraith')) for (const g of U.giants) { const a = Math.min(1, g.t); paintedAura(c,'summon',g.x,g.y,g.r+10,.6*a); c.globalAlpha = 0.85 * a; c.save(); c.translate(g.x, g.y); c.scale(2.4, 2.4); drawSprite(c, 'hero', Math.floor(G.time * 6) & 1, 0, 8, { flip: (g.vx || 0) < 0, tint: '#b89cff', mode: 'white' }); c.restore(); }
   if(U.bigBear&&U.bigBear.m){const m=U.bigBear.m;paintedAura(c,'earth',m.x,m.y,34,.65);}
   if(U.bigPets>0)for(const m of G.pets)paintedAura(c,'heal',m.x,m.y,26,.55);
   if(U.rally>0&&U.banners.length)for(const b of U.banners){paintedAura(c,'blessing',b.x,b.y,b.r,.5);effectBoundary(c,b.x,b.y,b.r,'#ffd24a',.3);drawSpriteC(c,'flag',0,b.x,b.y);}

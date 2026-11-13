@@ -94,7 +94,7 @@ updateWeapons = function (dt) {
 function rogueEcho(w, S) {
   const C = V41.rog, p = G.p;
   G.later.push({ t: C.echoT, f: () => { if (G.result || !p.weapons.includes(w)) return; fx({ kind: 'pop', x: p.x, y: p.y, r: 14, color: '#203040', dur: 0.2 }); WEAPON_FIRE[w.id](w, scaleS(S, C.echo)); } });
-  if (p.job2 === 'dancer') G.later.push({ t: C.cloneT, f: () => { const c = J41().clone; if (G.result || !c || !p.weapons.includes(w)) return; atPos(c.x, c.y, () => WEAPON_FIRE[w.id](w, scaleS(S, C.clone))); fx({ kind: 'pop', x: c.x, y: c.y, r: 12, color: '#7fe0c0', dur: 0.2 }); } });
+  if (p.job2 === 'dancer') G.later.push({ t: C.cloneT, f: () => { const c = J41().clone; if (G.result || !c || !p.weapons.includes(w)) return; atPos(c.x, c.y, () => WEAPON_FIRE[w.id](w, scaleS(S, C.clone))); markSummonAttack(c, Math.atan2(p.face.y, p.face.x)); fx({ kind: 'pop', x: c.x, y: c.y, r: 12, color: '#7fe0c0', dur: 0.2 }); } });
 }
 function mageVolley(dt, J) {
   const C = V41.mag, p = G.p;
@@ -246,7 +246,7 @@ updateTurrets = function (dt) {
   const n0 = G.proj.length;
   _updateTurrets41(dt);
   if (p.job !== 'engineer') return;
-  for (let i = n0; i < G.proj.length; i++) { const pr = G.proj[i]; if (pr.src !== 'turret') continue; const t = G.turrets.find(q => Math.abs(q.x - pr.x) < 1 && Math.abs(q.y - pr.y) < 1); if (t) { t.n = (t.n || 0) + 1; if (t.n >= C.every) { t.n = 0; missileVolley(t, C.n); } } }   // 포탑 발사 집계 → 5발마다 미사일
+  for (let i = n0; i < G.proj.length; i++) { const pr = G.proj[i]; if (pr.src !== 'turret') continue; const t = G.turrets.find(q => Math.abs(q.x - pr.x) < 1 && Math.abs(q.y - pr.y) < 1); if (t) { if (p.job2 === 'mechanic' && !t.temp) markSummonAttack(t, pr.ang); t.n = (t.n || 0) + 1; if (t.n >= C.every) { t.n = 0; missileVolley(t, C.n); } } }   // 포탑 발사 집계 → 5발마다 미사일
   for (const t of G.turrets) {
     if (p.job2 === 'mechanic' && !t.temp) {
       const i = G.turrets.indexOf(t), a = i * 2.1 + G.time * 0.3, tx = p.x + Math.cos(a) * 70, ty = p.y + Math.sin(a) * 70, dx = tx - t.x, dy = ty - t.y, d = Math.hypot(dx, dy) || 1;
@@ -270,6 +270,7 @@ function minionWeapons(dt) {
     m.wt = lord ? C.gCd : C.mCd;
     const w = pick(ws), S = _wStats41(w), k = lord ? C.gDmg : C.mDmg;
     atPos(m.x, m.y, () => WEAPON_FIRE[w.id](w, scaleS(S, k)));
+    if (m.giant) markSummonAttack(m, (m.vx || 0) < 0 ? Math.PI : 0);
     fx({ kind: 'pop', x: m.x, y: m.y, r: m.r + 4, color: '#b89cff', dur: 0.2 });
   }
 }
@@ -287,6 +288,7 @@ function sovTick(dt) {
     g.t -= dt; if (g.t > 0) return;
     const e = _nearestEnemy41(g.x, g.y, C.gR); if (!e) return;
     g.t = C.gAtk; g.a = Math.atan2(e.y - g.y, e.x - g.x);
+    markSummonAttack(g, g.a);
     fx({ kind: 'slash', x: e.x, y: e.y, a: g.a, dur: 0.2, color: '#ffd24a' });
     damageEnemy(e, (C.gDmg + C.gDmgLv * p.level) * p.mod.dmg, { src: 'guardian', kb: 90, fx: g.x, fy: g.y });
   });
@@ -304,7 +306,7 @@ function arcTick(dt) {
   }
   if (p.job2 === 'hunter') {
     J.hawkT -= dt;
-    if (J.hawkT <= 0) { J.hawkT = C.hawkCd; const e = nearestEnemy(p.x, p.y, 340); if (e) { fx({ kind: 'slash', x: e.x, y: e.y, a: rand(Math.PI * 2), dur: 0.25, color: '#e0c890' }); damageEnemy(e, (C.hawk + C.hawkLv * p.level) * p.mod.dmg, { src: 'hawk' }); if (!e.dead) e.mk = (e.mk || 0) + 2; } }
+    if (J.hawkT <= 0) { J.hawkT = C.hawkCd; const e = nearestEnemy(p.x, p.y, 340); if (e) { markHawkDive(p, e); fx({ kind: 'slash', x: e.x, y: e.y, a: rand(Math.PI * 2), dur: 0.25, color: '#e0c890' }); damageEnemy(e, (C.hawk + C.hawkLv * p.level) * p.mod.dmg, { src: 'hawk' }); if (!e.dead) e.mk = (e.mk || 0) + 2; } }
   }
 }
 
@@ -339,17 +341,47 @@ applyJob = function (id) {
 const _applyJob2_41 = applyJob2;
 applyJob2 = function (k) { _applyJob2_41(k); if (k === 'lord') G.minions = []; };
 
-/* ---------- 그리기: 근위병 · 분신 · 집중 · 저장 (임시 도형, 원화는 GPT 요청) ---------- */
-function drawJob41(c) {
-  const p = G.p, J = G.j41; if (!p.job || !J) return;
+/* 소환물 원화는 위험 예고보다 먼저 그린다. 기존 문양·대체 표시는 원래 순서를 유지한다. */
+function drawJob41(c, inView) {
+  const p = G.p, J = G.j41; if (!p.job) return;
+  if (inView) {
+    if (J) {
+      J.gd.forEach((g, i) => {
+        const angle = i * Math.PI * 2 / J.gd.length + G.time * 0.6;
+        const flip = G.banner ? G.banner.x + Math.cos(angle) * G.banner.r * 0.55 < g.x : Math.cos(g.a) < 0;
+        drawSummonUnit(c, inView, 'guard', g, 7, flip, 1, i * 0.4);
+      });
+      if (J.clone) drawSummonUnit(c, inView, 'clone', J.clone, p.r, p.face.x < 0, 0.68);
+    }
+    if (p.job === 'archer' && p.job2 === 'hunter') drawSummonHawk(c, inView, p);
+    if (p.job === 'engineer' && p.job2 === 'mechanic') {
+      G.turrets.forEach((t, i) => {
+        if (!t.temp) drawSummonUnit(c, inView, 'walker', t, 13, Math.cos(t.a || 0) < 0, 1, i * 0.4);
+      });
+    }
+    for (const m of G.minions) {
+      if (m.giant) drawSummonUnit(c, inView, 'wraith', m, m.r, (m.vx || 0) < 0, 0.89);
+    }
+    const U = G.U;
+    if (U) {
+      for (const g of U.giants) {
+        drawSummonUnit(c, inView, 'wraith', g, g.r, (g.vx || 0) < 0, 0.85 * Math.min(1, g.t));
+      }
+      if (U.dance > 0) {
+        U.clones.forEach((s, i) => drawSummonUnit(c, inView, 'clone', s, p.r, Math.sin(s.a) > 0, 0.55, i));
+      }
+    }
+    return;
+  }
+  if (!J) return;
   c.save();
-  for (const g of J.gd) { c.fillStyle = '#ffd24a'; c.strokeStyle = '#5a4210'; c.lineWidth = 2; c.beginPath(); c.arc(g.x, g.y, 7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.fillRect(g.x + Math.cos(g.a) * 6 - 1.5, g.y + Math.sin(g.a) * 6 - 1.5, 3, 3); }
-  if (J.clone) { c.globalAlpha = 0.45; c.fillStyle = '#203040'; c.beginPath(); c.arc(J.clone.x, J.clone.y, p.r, 0, 7); c.fill(); c.globalAlpha = 1; }
+  if (!summonUnitReady('guard')) for (const g of J.gd) { c.fillStyle = '#ffd24a'; c.strokeStyle = '#5a4210'; c.lineWidth = 2; c.beginPath(); c.arc(g.x, g.y, 7, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.fillRect(g.x + Math.cos(g.a) * 6 - 1.5, g.y + Math.sin(g.a) * 6 - 1.5, 3, 3); }
+  if (J.clone && !summonUnitReady('clone')) { c.globalAlpha = 0.45; c.fillStyle = '#203040'; c.beginPath(); c.arc(J.clone.x, J.clone.y, p.r, 0, 7); c.fill(); c.globalAlpha = 1; }
   if (p.job === 'archer' && J.focus) { for (let i = 0; i < J.focus; i++) { c.fillStyle = '#b8ff9a'; c.fillRect(p.x - 13 + i * 6, p.y - p.r - 16, 4, 4); } }
   if (p.job === 'warrior' && J.store > 0) { const k = Math.min(1, J.store / (p.maxHp * 0.5)); c.strokeStyle = '#ff8a5a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); c.stroke(); }
   if (p.job === 'warrior' && G.tm.rage > 0) { c.globalAlpha = 0.25 + 0.15 * Math.sin(G.time * 12); c.strokeStyle = '#ff3a2a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 11, 0, 7); c.stroke(); c.globalAlpha = 1; }
   if (p.job === 'chrono') { c.globalAlpha = 0.18; c.strokeStyle = '#c8c0ff'; c.lineWidth = 2; c.setLineDash([6, 8]); c.beginPath(); c.arc(p.x, p.y, V41.chr.R, 0, 7); c.stroke(); c.setLineDash([]); c.globalAlpha = 1; }
-  for (const m of G.minions) if (m.giant) { c.globalAlpha = 0.35; c.fillStyle = '#b89cff'; c.beginPath(); c.arc(m.x, m.y, m.r + 4, 0, 7); c.fill(); c.globalAlpha = 1; }
+  if (!summonUnitReady('wraith')) for (const m of G.minions) if (m.giant) { c.globalAlpha = 0.35; c.fillStyle = '#b89cff'; c.beginPath(); c.arc(m.x, m.y, m.r + 4, 0, 7); c.fill(); c.globalAlpha = 1; }
   c.restore();
 }
 const _drawJobAura41 = drawJobAura;

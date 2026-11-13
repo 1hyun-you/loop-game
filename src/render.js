@@ -35,6 +35,7 @@ function render() {
   drawSummonerArtWorld(c, inView);
   drawPriestArtWorld(c, inView);
   drawDruidArtWorld(c, inView);
+  drawJob41(c, inView);
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -176,14 +177,14 @@ function drawGrowthGround(c, inView) {
 /* 포탑·망령 */
 function drawJobUnits(c, inView) {
   for (const t of G.turrets) {
-    if (!inView(t.x, t.y, 12)) continue;
+    if (!inView(t.x, t.y, 12) || (G.p.job === 'engineer' && G.p.job2 === 'mechanic' && !t.temp && summonUnitReady('walker'))) continue;
     drawSpriteC(c, 'turret', 0, t.x, t.y);
     c.strokeStyle = '#1b1626'; c.lineWidth = 5; c.beginPath(); c.moveTo(t.x, t.y - 2); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y - 2 + Math.sin(t.a || 0) * 13); c.stroke();
     c.strokeStyle = t.temp ? '#ffd24a' : '#b4c2d4'; c.lineWidth = 2.5; c.stroke();
   }
   drawPets(c, inView); drawRewind(c); drawUlt(c);                      // 0.26 야수 동료·과거의 나
   c.globalAlpha = 0.9;
-  for (const m of G.minions) { if (!inView(m.x, m.y, m.r)) continue; drawSprite(c, 'ghost', (Math.floor(G.time * 5) + (m.id || 0)) & 1, m.x, m.y + m.r, { flip: (m.vx || 0) < 0 }); }
+  for (const m of G.minions) { if (!inView(m.x, m.y, m.r) || (G.p.job && m.giant && summonUnitReady('wraith'))) continue; drawSprite(c, 'ghost', (Math.floor(G.time * 5) + (m.id || 0)) & 1, m.x, m.y + m.r, { flip: (m.vx || 0) < 0 }); }
   c.globalAlpha = 1;
 }
 function drawPlayer(c) {

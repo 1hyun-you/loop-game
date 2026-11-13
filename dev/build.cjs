@@ -8,6 +8,7 @@ const { packSummonerArt } = require('./pack-summoner-art.cjs');
 const { packPriestArt } = require('./pack-priest-art.cjs');
 const { packDruidArt } = require('./pack-druid-art.cjs');
 const { packHeroOutfits } = require('./pack-hero-outfits.cjs');
+const { packSummonUnitArt } = require('./pack-summon-unit-art.cjs');
 const files=[...sh.matchAll(/src\/[\w-]+\.(?:html|js)/g)].map(x=>x[0]);
 fs.writeFileSync(path.join(root,'index.html'),files.map(file => {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
@@ -18,6 +19,7 @@ fs.writeFileSync(path.join(root,'index.html'),files.map(file => {
   if (file === 'src/summoner-art.js') return packSummonerArt() + source;
   if (file === 'src/priest-art.js') return packPriestArt() + source;
   if (file === 'src/druid-art.js') return packDruidArt() + source;
+  if (file === 'src/summon-unit-art.js') return packSummonUnitArt() + source;
   return source;
 }).join('')+'\n</script>\n');
 console.log('Built '+files.length+' sources.');

@@ -108,7 +108,7 @@ updateMinions = function (dt) {
     m.life -= dt; m.hitT -= dt;
     moveUnit46(m, 170, dt, U);
     const e = m.tg;
-    if (e && m.hitT <= 0 && Math.hypot(e.x - m.x, e.y - m.y) < e.r + m.r + 6) { m.hitT = 0.5; m.vx = e.x - m.x; damageEnemy(e, dmg, { src: 'minion' }); }
+    if (e && m.hitT <= 0 && Math.hypot(e.x - m.x, e.y - m.y) < e.r + m.r + 6) { m.hitT = 0.5; m.vx = e.x - m.x; if (m.giant) markSummonAttack(m, Math.atan2(e.y - m.y, m.vx)); damageEnemy(e, dmg, { src: 'minion' }); }
   }
   G.minions = G.minions.filter(m => m.life > 0);
 };
