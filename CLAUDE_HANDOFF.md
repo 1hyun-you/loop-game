@@ -505,3 +505,9 @@
 - `src/v44.js` FU44.sovereign과 drawJobAura의 선·방책, `src/weapons.js`·`src/bal39.js`의 기본 방패 충격, `src/arsenal.js`·`src/vfx.js`·`src/render.js`의 대체 표시와 그리기 순서에 연결. `src/sovereign-art.js`가 적 공격 예고 아래에 원화를 표시. `dev/pack-sovereign-art.cjs`·`dev/build.cjs`·`build.sh`에서 그림 내장. `src/config.js`의 검토 빌드 버전은 원요청의 0.46-art5.
 - Node·셸 빌드 일치 및 check-build 통과. dev/vfuse44.js의 평가 본문을 Node VM에서 실행해 동일 난수의 0.46-art17과 연성 90종 발동·피해·이름 비교 결과 일치, 실패 0건. 320·390px Canvas 호출 20개 상황 및 렌더 전후 상태 확인. Chromium은 socket 실행 권한 오류로 실제 캡처 미확보.
 - 자동 승인 검토가 전투 코드 변경 위험을 이유로 main 갱신을 거부함. 공개 게임 HTML은 0.46-art17 확인. 다음 작업은 PR에서 변경 범위와 배포 버전 검토 후 브라우저 캡처·main 병합·공개 배포 확인 및 GPT_REQUESTS.md 완료 처리. 현재 G44-3 상태는 제공.
+
+## 0.46-art18 — 군주 G44-3 병합 (Claude, 2026-11-13 한국시간)
+
+- GPT PR #1(art/g44-3-sovereign, 0.46-art5 작업분)을 main에 병합. GPT 환경에서 main 갱신이 차단되어 PR로 제출된 건.
+- 버전 표기 0.46-art5 → 0.46-art18 (art17 이후 반영이므로 역행 방지). 0.46-art5 항목의 '진행 중'은 본 항목으로 완료 처리.
+- Claude 검증: 빌드 정상, 연성 90종 점검 오류 0(군주 9종 발동), 군주 지정 6판·일반 6판 오류 0. 피해·범위·재사용 수치 변경 없음 확인. 실제 전투 화면 캡처는 미확보 → 실기기 확인 대상.
