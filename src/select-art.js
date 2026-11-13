@@ -23,6 +23,7 @@ const choiceStyle=document.createElement('style');choiceStyle.textContent=`
 .choice-art{display:flex;align-items:center;justify-content:center;min-height:0;align-self:center}
 .sel .card .ic{width:48px;min-width:48px;height:48px;flex-basis:48px;border:0!important;background:transparent!important;box-shadow:none;filter:none}
 .sel .card .ic.px img,.sel .card .choice-symbol img{width:46px;height:46px;max-width:100%;object-fit:contain;image-rendering:auto}
+.ic.misc-icon>img{object-fit:contain;image-rendering:auto}.ic.misc-icon>img[hidden]{display:none}.sel .card .misc-icon .ic{color:inherit}
 .sel .card .tx,.choice-copy-head{display:flex;flex-direction:column;min-width:0;gap:3px}
 .sel .card .nm{display:block;font-size:17px;line-height:1.25;color:#f2e9d5;overflow-wrap:anywhere;letter-spacing:-.3px}
 .sel .card .tag{font-size:11px;line-height:1.3;align-self:flex-start;max-width:100%;padding:0;border:0;background:transparent;color:#c5c7bd;white-space:normal;overflow-wrap:anywhere;animation:none!important}
@@ -82,7 +83,8 @@ function choiceIcon(c,f) {
   if(c.t==='job2'&&UI_JOB2_CREST[c.k]&&UI_JOB2_CREST[c.k].job===c.id)return uiJob2Crest(c.id,c.k);
   // Category symbols rather than pretending a shared weapon is unique job art.
   const key=c.t==='job'||c.t==='job2'?'crest':c.t==='doorYes'?'skull':c.t==='doorNo'?'back':c.t==='heal'||c.t==='campRest'?'heart':c.t==='campSupply'?'book':c.t==='bond'?'crest':'spark';
-  return `<span class="ic choice-symbol" aria-hidden="true"><img src="${uiIcon(key)}" alt=""></span>`;
+  const symbol = `<span class="ic choice-symbol" aria-hidden="true"><img src="${uiIcon(key)}" alt=""></span>`;
+  return f.portrait ? miscIcon(f.portrait, symbol) : symbol;
 }
 function choiceCard(c,f,i,{off=false,banish=false,offer=false}={}) {
   const action=off?'제외 불가':offer?'봉헌':banish?'제외':'선택';

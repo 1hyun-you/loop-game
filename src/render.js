@@ -38,6 +38,10 @@ function render() {
   drawJob41(c, inView);
   drawInstallationWorld(c, inView);
   drawJobAuraGround(c);
+  drawAltar(c);
+  for (const e of G.enemies) {
+    if (!e.dead && e.elite && e.tele > 0 && inView(e.x, e.y, e.r)) drawEliteChargeArt(c, e, p);
+  }
   drawPhaseGround(c);
   drawBossGround(c);
   drawEventGround(c); drawCrisisGround(c);
@@ -167,12 +171,14 @@ function drawGrowthGround(c, inView) {
     paintedAura(c,'blessing',ch.x,ch.y,20,.5);
     drawSpriteC(c, 'chest', 0, ch.x, ch.y + b);
   }
+}
+function drawAltar(c) {
   const a = G.altar;
   if (a) {
     const pulse = 0.5 + 0.5 * Math.sin(G.time * 3);
     paintedAura(c,'summon',a.x,a.y,a.r+14,.35+pulse*.15);
     drawSprite(c, 'altar', Math.floor(G.time * 3) & 1, a.x, a.y + 14);
-    if (a.stay > 0) { c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(a.x, a.y, a.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * a.stay / JOB_CFG.altarStay); c.stroke(); }
+    if (!drawAltarProgressArt(c, a) && a.stay > 0) { c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(a.x, a.y, a.r + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * a.stay / JOB_CFG.altarStay); c.stroke(); }
   }
 }
 /* 포탑·망령 */

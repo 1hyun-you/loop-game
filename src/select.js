@@ -47,7 +47,7 @@ function openStart() {
 }
 /* 0.25 보유 능력 목록 (선택 화면·일시정지 화면) */
 function abilityHTML() {
-  const p = G.p, row = (col, ic, nm, lv, ds, cls = '', id = '', trial = '', fuse = '', trait = '') => `<div class="ab ${cls}">${fuse ? uiFuseCrest(fuse) : trial ? uiTrialCrest(trial) : trait ? uiTraitIcon(trait, col) : icBox(col, ic, id)}<span><b>${esc(nm)}</b><span class="lv">${esc(lv)}</span><p>${esc(ds)}</p></span></div>`;
+  const p = G.p, row = (col, ic, nm, lv, ds, cls = '', id = '', trial = '', fuse = '', trait = '', icon = '') => `<div class="ab ${cls}">${fuse ? uiFuseCrest(fuse) : trial ? uiTrialCrest(trial) : trait ? uiTraitIcon(trait, col) : icon || icBox(col, ic, id)}<span><b>${esc(nm)}</b><span class="lv">${esc(lv)}</span><p>${esc(ds)}</p></span></div>`;
   const brNm = (id, k) => { const o = k && BRANCHES[id] && BRANCHES[id].find(x => x.k === k); return o ? `\n분기 · ${o.nm}: ${o.ds}` : ''; };
   let h = '';
   if (p.job) { const J = JOBS[p.job], J2 = p.job2 && JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2);
@@ -60,7 +60,7 @@ function abilityHTML() {
   if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br), '', x.id); }).join('');
   if (p.job && FZ_TRIAL[p.job]) { const T = FZ_TRIAL[p.job], b = baseW(), n = fusedWs().length; h += '<h3>시련 · 연성</h3>' + row(JOB_COL[p.job], '시', T.nm, F42().done ? '완수' : p.job2 ? '2차 전직 완료' : '진행 중', trialTxt() + '\n완수 시 2차 전직 개방', '', '', p.job) + row(JOB_COL[p.job], '연', '연성', `${n}/${slotCount()}`, '무기 칸 무기마다 직업 고유 연성 무기 (무기 결합 또는 직업 변화)' + (b ? `\n조건 · 무기 칸 무기와 기본 무기 ${WEAPONS[b.id].name} 모두 Lv 5·각성` : ''), '', '', '', '', ''); }   // 0.43
   const tk = Object.keys(p.tr || {}); if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => row('#c8b0ff', TRAITS[k].ic, TRAITS[k].nm, '', TRAITS[k].ds, '', '', '', '', k)).join('');
-  if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => row('#8a6aa0', '저', CURSES[k].name, '', CURSES[k].ds)).join('');
+  if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => row('#8a6aa0', '저', CURSES[k].name, '', CURSES[k].ds, '', '', '', '', '', miscIcon(k, icBox('#8a6aa0', '저')))).join('');
   return `<div class="abil">${h || '<p class="sub">보유 능력 없음</p>'}</div>`;
 }
 function toggleAbil() { const s = G.sel; if (!s) return; s.abil = !s.abil; renderSelect(); }
@@ -68,7 +68,7 @@ function autoLater() { if (STATE.dev.auto && !STATE.dev.semi) { const s = G.sel;
 function cardInfo(c) {
   const p = G.p;
   switch (c.t) {
-    case 'bond': { const o = bondPerk(c.k); return { k: 'k-relic', col: '#7fd07a', ic: PET[c.id].ic, nm: o.nm, tag: PET[c.id].name + ' 전용', ds: o.ds }; }
+    case 'bond': { const o = bondPerk(c.k); return { portrait: c.id, k: 'k-relic', col: '#7fd07a', ic: PET[c.id].ic, nm: o.nm, tag: PET[c.id].name + ' 전용', ds: o.ds }; }
     case 'wnew': { const d = WEAPONS[c.id]; return { id: c.id, k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: wName(c.id), tag: '신규 · ' + CAT_NAME[d.cat] + ' 무기', ds: d.desc }; }
     case 'wup': { const d = WEAPONS[c.id], w = p.weapons.find(x => x.id === c.id); return { id: c.id, k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: wName(c.id), tag: `Lv ${w.lvl} → ${w.lvl + 1}`, ds: upText(c.id, d.ups[w.lvl - 1]) }; }
     case 'pnew': { const d = PASSIVES[c.id]; return { id: c.id, k: 'k-passive', col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: '신규 · 보조 효과', ds: d.desc(1) }; }
