@@ -100,6 +100,6 @@ function motionTransform(c,x,by,p) {
 drawHeroReact = function(c,fr,flip,tint) {
   const p=G.p,pose=motionPose(p,true),by=p.y+p.r*1.1;
   c.save();motionTransform(c,p.x,by,pose);
-  drawSprite(c,'hero',pose.frame,p.x,by,{flip:pose.flip,tint,mode:p.flash>.12?'white':'n'});
+  drawSprite(c,'hero',pose.frame,p.x,by,{job:p.job,flip:pose.flip,tint,mode:p.flash>.12?'white':'n'});
   c.restore();
 };

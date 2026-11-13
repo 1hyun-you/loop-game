@@ -295,11 +295,15 @@ function loadFieldArt(name, src) {
 }
 for (const name of Object.keys(FIELD_ART.sources)) loadFieldArt(name, FIELD_ART.sources[name]);
 function getSprite(name, frame, opt) {
-  const art = FIELD_ART.ready[name];
+  const o = opt || {};
+  const outfit = name === 'hero' && o.job && FIELD_ART.ready['hero_' + o.job];
+  const art = outfit || FIELD_ART.ready[name];
   if (!art) return getPixelSprite(name, frame, opt);
-  const o = opt || {}, D = SPR[name], t = texelPx(D.px * (o.mul || 1));
-  const mode = o.mode || 'n', tint = o.tint || '', fr = ((frame % 2) + 2) % 2;
-  const key = [name,fr,t,!!o.flip,mode,tint].join('|');
+  const D = SPR[name], t = texelPx(D.px * (o.mul || 1));
+  // Job outfits keep the original blue cape unless the player selected a cape color.
+  const mode = o.mode || 'n', tint = outfit ? playerColor() : o.tint || '';
+  const fr = ((frame % 2) + 2) % 2;
+  const key = [outfit ? 'hero_' + o.job : name,fr,t,!!o.flip,mode,tint].join('|');
   if (FIELD_ART.cache.has(key)) return FIELD_ART.cache.get(key);
   const w = Math.max(...D.frames[0].map(row => row.length)), h = D.frames[0].length;
   const silhouette=name==='hero'||!!ENEMIES[name]||['bargan','igna','morden','seren','demon','wolf','bear','ghost'].includes(name);

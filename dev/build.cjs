@@ -7,9 +7,11 @@ const { packMageArt } = require('./pack-mage-art.cjs');
 const { packSummonerArt } = require('./pack-summoner-art.cjs');
 const { packPriestArt } = require('./pack-priest-art.cjs');
 const { packDruidArt } = require('./pack-druid-art.cjs');
+const { packHeroOutfits } = require('./pack-hero-outfits.cjs');
 const files=[...sh.matchAll(/src\/[\w-]+\.(?:html|js)/g)].map(x=>x[0]);
 fs.writeFileSync(path.join(root,'index.html'),files.map(file => {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
+  if (file === 'src/art-theme.js') return packHeroOutfits() + source;
   if (file === 'src/engineer-art.js') return packEngineerArt() + source;
   if (file === 'src/chrono-art.js') return packChronoArt() + source;
   if (file === 'src/mage-art.js') return packMageArt() + source;

@@ -13,6 +13,9 @@ for (const name of Object.keys(ART2_DATA)) {
   if (name === 'ground' || name === 'title' || name === 'icons') continue;
   FIELD_ART.sources[name] = ART2_DATA[name]; loadFieldArt(name, ART2_DATA[name]);
 }
+for (const [job, src] of Object.entries(HERO_OUTFIT_DATA)) {
+  loadFieldArt('hero_' + job, src);
+}
 function art2Image(src, done) {
   const img=new Image(); img.onload=()=>{try{done(img);}catch(err){console.warn('ART2 fallback:',err.message);}};
   img.onerror=()=>console.warn('ART2 image unavailable; original rendering retained'); img.src=src;
