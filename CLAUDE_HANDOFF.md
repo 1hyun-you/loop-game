@@ -482,3 +482,12 @@
 - `dev/pack-installation-art.cjs`, `dev/build.cjs`, `build.sh`로 WebP 내장. `src/config.js` 버전 `0.46-art16`. 소스 `05da7be48a43addf1dd8b84de2c612f5b4ec718d`, 게임 HTML `cfd47575210e4ae2b13a9cd3155eb37c5822f46c`, 서비스 source-ref `8a3df14e3a2e96c493d3fedf7254166b8803f6a2`, 서비스 HTML `b5877f363b14f7825a0ac9bf830522a95c0d225b`. Node·셸·공개 HTML 3,342,570바이트, SHA-256 `0f24b3941cd3d83a67ff71e6225cff3b40d4883872ede6fb480ead5b480d624c` 일치. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43348886374).
 - Canvas 호출 검사로 덫 상태·지뢰 점멸·포신 방향/반동·미사일 비행/착탄, 기존 피해·범위·시간, 위험 예고 순서, 이미지 누락, 동작 줄이기, 렌더링 전후 상태 확인. 공개 Chrome에서 버전·시작·전투 진입·일시정지 확인. 40px 원화 축소판 검토. 로컬 Chromium 실행 제한으로 320·390px 설치물 전투 화면 및 연성 90종 회귀, 폴드8 실기기·장시간 성능 미검증.
 - G42-4 잔여 제작·적용 항목 없음. 공개 게임은 art16이며 별도 서비스 버전 메타데이터 `field/version.json`은 자동 승인 검토 차단으로 art15 상태.
+
+## 0.46-art17
+
+- 2026-11-13 한국시간. G42-3b 저주 4종·유대 카드 초상 2종 및 G42-7 정예 돌진·제단 진행 표시 제작·적용·공개 배포 완료. 기준 main `a0f33165649d47612b3c00cc6381f14c8250b1e1`. ART_DIRECTION.md, art16 인계, GPT_REQUESTS.md 해당 항목 확인.
+- `assets/misc-art17/`에 투명 SVG 6종과 투명 WebP 초상 2종(96×96) 선등록. 그림 전용 `c61e15f8e0f7e3dd21a892a329ec6c2ca58e8272`에 [skip deploy] 적용. 저주는 갈라진 방패·추·무리·금 간 물방울로 구분. 초상은 왼쪽 위 조명과 사선 구도의 늑대·곰으로 구분.
+- `src/select.js` abilityHTML·cardInfo('bond'), `src/select-art.js` choiceIcon에 연결. 누락 시 저주 글자 및 기존 유대 문장 표시. `src/render.js`에 예고 방향의 점등 화살표와 제단 진행 문양 연결. 기존 적색 돌진선은 그대로 사용하며 추가 그림은 적 공격 예고보다 먼저 그림. 제단 이미지 실패 시 기존 흰색 진행호 표시. `src/misc-art.js`, `dev/pack-misc-art.cjs`, `dev/build.cjs`, `build.sh`로 이미지 내장. `src/config.js` 버전 0.46-art17.
+- 소스 `6bf7d7a67b0fcefa089d8279fbbc017e5f69491e`, 게임 HTML `46bc8d0aa808cf492a1290c34504c5381d4cfde7`, 서비스 source-ref `053ed9e2a30ccdd00caf4c3e0c4f59f82b6b3b68`, 서비스 HTML `bbe1b24335da61adadac4ac1a2d52afc77e9685d`, 버전 메타데이터 `138d9f65b72afbab7570d0713bf532e2367bb0f1`. Node·셸·공개 HTML 3,361,272바이트, SHA-256 `2e136356c103ee2f1f338c60b3e133250a4b4cf22b4010ed0729e765c33c075e` 일치. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43352891786).
+- 23px 저주 및 38px 초상 축소 검토. Canvas 호출 검사로 돌진 방향·점등 변화·동작 줄이기·기존 경고선, 제단 0·25·50·100% 채움, 이미지 누락 대체·위험 예고 그리기 순서·표시 전후 게임 상태 확인. 공개 Chrome에서 버전·시작·전투·일시정지 확인. 전투·판정·피해·자동 플레이·저장 로직 수정 없음.
+- 이번 범위 내 남은 제작·적용 없음. 폭탄 착탄 표식·사슬 마디는 요청 범위 제외. 로컬 Chromium 실행 제한으로 320·390px 실제 전투 화면 및 폴드8 실기기 미검증.
