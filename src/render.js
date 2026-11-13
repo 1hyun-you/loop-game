@@ -36,6 +36,7 @@ function render() {
   drawPriestArtWorld(c, inView);
   drawDruidArtWorld(c, inView);
   drawJob41(c, inView);
+  drawInstallationWorld(c, inView);
   drawJobAuraGround(c);
   drawPhaseGround(c);
   drawBossGround(c);
@@ -159,8 +160,8 @@ function drawGrowthGround(c, inView) {
   if(G.sanct){const S=G.sanct;paintedAura(c,'holy',S.x,S.y,S.r,.5);effectBoundary(c,S.x,S.y,S.r,'#fff2a8',.35);}
   const ice = p.weapons.find(w => w.id === 'icering');
   if(ice&&ice.R&&!(ice.base&&p.job==='chrono'&&chronoArtReady('base-ice-ring'))){paintedAura(c,'frost',p.x,p.y,ice.R,.24);effectBoundary(c,p.x,p.y,ice.R,'#bee6ff',.22);}
-  for (const t of G.traps) { if (!inView(t.x, t.y, 14) || (t.engineerBase && engineerArtReady('base-trap'))) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
-  for(const m of G.mines){if(inView(m.x,m.y,10))drawSpriteC(c,'bomb',0,m.x,m.y);}
+  for (const t of G.traps) { if (installationArtReady('trap') || !inView(t.x, t.y, 14) || (t.engineerBase && engineerArtReady('base-trap'))) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
+  if (!installationArtReady('mine')) for (const m of G.mines) { if (inView(m.x, m.y, 10)) drawSpriteC(c, 'bomb', 0, m.x, m.y); }
   for (const ch of G.chests) {
     const b = Math.round(Math.sin(G.time * 5) * 1.5);
     paintedAura(c,'blessing',ch.x,ch.y,20,.5);
@@ -177,7 +178,7 @@ function drawGrowthGround(c, inView) {
 /* 포탑·망령 */
 function drawJobUnits(c, inView) {
   for (const t of G.turrets) {
-    if (!inView(t.x, t.y, 12) || (G.p.job === 'engineer' && G.p.job2 === 'mechanic' && !t.temp && summonUnitReady('walker'))) continue;
+    if (installationArtReady('turret') || !inView(t.x, t.y, 12) || installationWalker(t)) continue;
     drawSpriteC(c, 'turret', 0, t.x, t.y);
     c.strokeStyle = '#1b1626'; c.lineWidth = 5; c.beginPath(); c.moveTo(t.x, t.y - 2); c.lineTo(t.x + Math.cos(t.a || 0) * 13, t.y - 2 + Math.sin(t.a || 0) * 13); c.stroke();
     c.strokeStyle = t.temp ? '#ffd24a' : '#b4c2d4'; c.lineWidth = 2.5; c.stroke();

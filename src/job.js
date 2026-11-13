@@ -272,7 +272,12 @@ function updateTurrets(dt) {
     t.life -= dt; t.t -= dt * rate;
     if (t.t <= 0) {
       t.t = 0.8; const e = nearestEnemy(t.x, t.y, 360);
-      if (e) { const a = Math.atan2(e.y - t.y, e.x - t.x); t.a = a; shoot({ kind: p.job2 === 'artillery' ? 'shell' : 'arrow', x: t.x, y: t.y, ang: a, sp: 520, r: 4, dmg: turretDmg(), pierce: 0, life: 0.8, R: 30, color: '#ffd890', src: 'turret' }); }
+      if (e) {
+        const a = Math.atan2(e.y - t.y, e.x - t.x);
+        t.a = a;
+        const projectile = shoot({ kind: p.job2 === 'artillery' ? 'shell' : 'arrow', x: t.x, y: t.y, ang: a, sp: 520, r: 4, dmg: turretDmg(), pierce: 0, life: 0.8, R: 30, color: '#ffd890', src: 'turret' });
+        if (G.proj[G.proj.length - 1] === projectile) markInstallationShot(t, a);
+      }
     }
   }
   G.turrets = G.turrets.filter(t => t.life > 0);

@@ -70,7 +70,7 @@ function drawFx(c) {
   c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.imageSmoothingEnabled = true;
   for (const f of G.fx) {
     const k = clamp(f.t / f.dur, 0, 1), fade = (1 - k) * (1 - k), x = f.follow ? G.p.x : f.x, y = f.follow ? G.p.y : f.y;
-    if (k >= 1 || warriorArtReady(f.warArt) || rogueArtReady(f.rogueArt) || archerArtReady(f.archerArt) || engineerArtReady(f.engineerArt) || chronoArtReady(f.chronoArt) || mageArtReady(f.mageArt) || summonerArtReady(f.summonerArt) || priestArtReady(f.priestArt) || druidArtReady(druidImpactArt(f))) continue;
+    if (k >= 1 || installationArtReady(f.installationArt) || warriorArtReady(f.warArt) || rogueArtReady(f.rogueArt) || archerArtReady(f.archerArt) || engineerArtReady(f.engineerArt) || chronoArtReady(f.chronoArt) || mageArtReady(f.mageArt) || summonerArtReady(f.summonerArt) || priestArtReady(f.priestArt) || druidArtReady(druidImpactArt(f))) continue;
     if (Number.isFinite(x) && Number.isFinite(y) && (Math.abs(x - G.p.x) > VIEW.cameraW / 2 + (f.r1 || f.r || 0) + 200 || Math.abs(y - G.p.y) > VIEW.cameraH / 2 + (f.r1 || f.r || 0) + 200)) continue;
     if(paintedRing(c,f,k,x,y))continue;
     if (f.kind === 'ring') {

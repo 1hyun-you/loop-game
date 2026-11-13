@@ -165,13 +165,13 @@ function drawEngineerArtWorld(c, inView) {
   for (const trap of G.f44?.traps || []) {
     if (!trap.dead && engineerUsesTrapArt(trap) && inView(trap.x, trap.y, 36)) drawEngineerTrap(c, trap, reduced);
   }
-  if (engineerArtReady('base-trap')) {
+  if (!installationArtReady('trap') && engineerArtReady('base-trap')) {
     for (const trap of G.traps) {
       if (!trap.dead && trap.engineerBase && inView(trap.x, trap.y, 34)) drawEngineerTrap(c, trap, reduced, true);
     }
   }
   for (const f of G.fx) {
-    if (engineerArtReady(f.engineerArt) && inView(f.x, f.y, Math.max(f.r1 || 0, 48))) drawEngineerImpact(c, f, reduced);
+    if (!installationArtReady(f.installationArt) && engineerArtReady(f.engineerArt) && inView(f.x, f.y, Math.max(f.r1 || 0, 48))) drawEngineerImpact(c, f, reduced);
   }
   for (const pr of G.proj) {
     if (pr.dead || !inView(pr.x, pr.y, pr.r + 26)) continue;

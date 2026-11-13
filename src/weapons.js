@@ -63,7 +63,8 @@ function shoot(o) {
 }
 function explode(x, y, R, dmg, src, color = '#ff9a4a', engineerArt, mageArt) {
   gridQuery(x, y, R, e => damageEnemy(e, dmg, { src, kb: 80, fx: x, fy: y }));
-  fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.28, color, fill: true, engineerArt, ...(mageArt ? { mageArt, mageKind: 'fireball' } : {}), art: /fire|flame|bomb/.test(src)?'explosion':/ice|frost|shatter/.test(src)?'shatter':undefined });
+  const installationArt = src === 'trap' ? 'trap' : src === 'missile' ? 'missile' : undefined;
+  fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.28, color, fill: true, engineerArt, installationArt, ...(mageArt ? { mageArt, mageKind: 'fireball' } : {}), art: /fire|flame|bomb/.test(src)?'explosion':/ice|frost|shatter/.test(src)?'shatter':undefined });
 }
 
 const WEAPON_FIRE = {

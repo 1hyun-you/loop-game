@@ -233,10 +233,13 @@ cardScore = function (c) { return c.t === 'pet' ? 4.6 : _cardScore41(c); };
 function missileVolley(t, n) {
   const p = G.p, C = V41.eng, R = C.mR * (p.job2 === 'artillery' ? C.mRA : 1), d = turretDmg() * C.mDmg;
   const ts = shuffle(enemiesInRange(t.x, t.y, 380)).slice(0, n);
+  if (ts.length) markInstallationShot(t, Math.atan2(ts[0].y - t.y, ts[0].x - t.x));
   for (const e of ts) {
-    const x = e.x, y = e.y;
-    fx({ kind: 'zap', x: t.x, y: t.y, x2: x, y2: y, dur: 0.2 });
-    G.later.push({ t: 0.3, f: () => { if (!G.result) explode(x, y, R, d, 'missile', '#ffb060'); } });
+    const x = e.x, y = e.y, duration = 0.3;
+    fx({ kind: 'zap', x: t.x, y: t.y, x2: x, y2: y, dur: 0.2, installationArt: 'missile' });
+    const delay = { t: duration, f: () => { if (!G.result) explode(x, y, R, d, 'missile', '#ffb060'); } };
+    INSTALLATION_FLIGHTS.set(delay, { x: t.x, y: t.y, x2: x, y2: y, duration });
+    G.later.push(delay);
   }
   if (ts.length) G.stats.missiles = (G.stats.missiles || 0) + ts.length;
 }
