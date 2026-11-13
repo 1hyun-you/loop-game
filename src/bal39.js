@@ -27,10 +27,10 @@ function killSouls(x, y, R) {
 const _explode39 = explode;
 explode = function (x, y, R, dmg, src, color, engineerArt, mageArt) { _explode39(x, y, R, dmg, src, color, engineerArt, mageArt); killSouls(x, y, R); };
 const _shieldBash39 = shieldBash;
-shieldBash = function (x, y, R, dmg, kb) {
+shieldBash = function (x, y, R, dmg, kb, sovereignBase) {
   // 방패 중심 피해: 가까운 적일수록 피해 증가 (중심 최대 +60%)
   gridQuery(x, y, R, e => { const d = Math.sqrt(dist2(e.x, e.y, x, y)); e._sc = 1 + BAL.shieldCore * Math.max(0, 1 - d / R); });
-  G._shieldCore = true; try { _shieldBash39(x, y, R, dmg, kb); } finally { G._shieldCore = false; }
+  G._shieldCore = true; try { _shieldBash39(x, y, R, dmg, kb, sovereignBase); } finally { G._shieldCore = false; }
   killSouls(x, y, R);
 };
 const _slamWave39 = slamWave;

@@ -12,6 +12,7 @@ const { packSummonUnitArt } = require('./pack-summon-unit-art.cjs');
 const { packJobStatusArt } = require('./pack-job-status-art.cjs');
 const { packInstallationArt } = require('./pack-installation-art.cjs');
 const { packMiscArt } = require('./pack-misc-art.cjs');
+const { packSovereignArt } = require('./pack-sovereign-art.cjs');
 const files=[...sh.matchAll(/src\/[\w-]+\.(?:html|js)/g)].map(x=>x[0]);
 fs.writeFileSync(path.join(root,'index.html'),files.map(file => {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
@@ -26,6 +27,7 @@ fs.writeFileSync(path.join(root,'index.html'),files.map(file => {
   if (file === 'src/job-status-art.js') return packJobStatusArt() + source;
   if (file === 'src/installation-art.js') return packInstallationArt() + source;
   if (file === 'src/misc-art.js') return packMiscArt() + source;
+  if (file === 'src/sovereign-art.js') return packSovereignArt() + source;
   return source;
 }).join('')+'\n</script>\n');
 console.log('Built '+files.length+' sources.');
