@@ -491,3 +491,10 @@
 - 소스 `6bf7d7a67b0fcefa089d8279fbbc017e5f69491e`, 게임 HTML `46bc8d0aa808cf492a1290c34504c5381d4cfde7`, 서비스 source-ref `053ed9e2a30ccdd00caf4c3e0c4f59f82b6b3b68`, 서비스 HTML `bbe1b24335da61adadac4ac1a2d52afc77e9685d`, 버전 메타데이터 `138d9f65b72afbab7570d0713bf532e2367bb0f1`. Node·셸·공개 HTML 3,361,272바이트, SHA-256 `2e136356c103ee2f1f338c60b3e133250a4b4cf22b4010ed0729e765c33c075e` 일치. [공개 게임](https://1hyun-you.github.io/field/) · [Pages 게시](https://github.com/1hyun-you/1hyun-you.github.io/actions/runs/43352891786).
 - 23px 저주 및 38px 초상 축소 검토. Canvas 호출 검사로 돌진 방향·점등 변화·동작 줄이기·기존 경고선, 제단 0·25·50·100% 채움, 이미지 누락 대체·위험 예고 그리기 순서·표시 전후 게임 상태 확인. 공개 Chrome에서 버전·시작·전투·일시정지 확인. 전투·판정·피해·자동 플레이·저장 로직 수정 없음.
 - 이번 범위 내 남은 제작·적용 없음. 폭탄 착탄 표식·사슬 마디는 요청 범위 제외. 로컬 Chromium 실행 제한으로 320·390px 실제 전투 화면 및 폴드8 실기기 미검증.
+
+## 0.46-art5 — 진행 중 (G44-3 선등록 완료)
+
+- 2026-11-13 한국시간. 최신 main 0.46-art17 기준으로 G44-3 재개. 기존 6종과 신규 4종을 합해 `assets/sovereign-art5/`에 기본 방패 충격 및 연성 9종 그림 전부 선등록 완료.
+- 그림 전용 커밋 `63a4cf6a2c77574b3f850a40aa74ad51834bf7e1` ([skip deploy]). `ice-wall.webp` 얼음 방패 성벽(112×74), `messenger-falcon.webp` 전령 매(105×112), `banner-radiance.webp` 왕실 문장의 금빛 광휘(112×37), `base-shield.webp` 왕관 방패(88×112). 신규 4종 합계 17,212바이트. 투명 알파 범위 0–255, 34px 축소 시 식별 및 main 원격 Git blob 일치 확인.
+- 다음 첫 작업: 최신 main에서 선등록 10종을 읽고 `FU44.sovereign`·`drawJobAura`의 lines·traps·nodes 및 기존 투사체·기본 방패 충격 렌더링을 연결. 적 공격 예고보다 먼저 표시하며 원화 실패 시 기존 표시 대체. 실제 발동 위치·시점·범위에 맞춰 준비·실행·여운을 구현.
+- 원요청 배포 버전은 `0.46-art5`. 현 main과 서비스 버전 기록은 `0.46-art17`이므로 배포 버전 지정 확인 필요. 이번 묶음은 그림 선등록과 인계까지만 진행. 코드 연결, 연성 90종 발동 점검, 320px·390px 군주 9종 캡처 및 공개 배포 확인은 후속 작업. `GPT_REQUESTS.md`의 G44-3은 제공 상태.
