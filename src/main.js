@@ -180,6 +180,7 @@ function perfStat() {
   return { avg: Math.min(60, Math.round(PERF.n / PERF.sum)), low1: f(at(0.01)), low5: f(at(0.05)), sec: Math.round(PERF.sum), slow: Math.round(PERF.bins.slice(21).reduce((s, x) => s + x, 0) / PERF.n * 1000) / 10 };
 }
 function frame(now) {
+  if (fpsSkip(now)) { requestAnimationFrame(frame); return; }   // 0.47 프레임 제한 (기본 60, 설정 120)
   const raw = Math.min(0.05, Math.max(0, (now - lastT) / 1000)); lastT = now;
   if (raw > 0) STATE.fps = STATE.fps * 0.92 + (1 / raw) * 0.08;
   if (raw > 0 && STATE.mode === 'play' && !document.hidden) perfAdd(raw);

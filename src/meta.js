@@ -4,7 +4,7 @@
    보상은 성능 영향 없음(판 점수 배율·칭호·주인공 색상), 배율·강화 수치는 초기값 (5단계 시험으로 확정)
    ============================================================ */
 /* ---------- 설정 (기기 저장) ---------- */
-const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false };
+const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false, fps: 60, hitstop: true };   // 0.47 프레임 60/120·타격 멈춤
 const SETTINGS = (() => { try { return Object.assign({}, SET_DEF, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return Object.assign({}, SET_DEF); } })();
 function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
 /* 0.27f 전체 화면 옵션 삭제: 상태 표시줄 표시형 확정 (웹 전체 화면은 뒤로가기 시 해제·재적용 버벅임 발생) */
@@ -92,8 +92,10 @@ function showSettings(back) {
     ${T('autoUlt', '궁극기 자동 발동', '꺼짐: 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동')}
     ${T('confirm2', '두 번 눌러 확정', '선택 카드를 한 번 더 눌러야 선택')}
     ${T('dlgAuto', '대사 자동 넘김', '대사가 끝나면 잠시 후 다음 줄로')}
-    ${T('vibe', '진동', '피격·보스 등장 시 짧은 진동')}
+    ${T('vibe', '진동', '피격·보스 등장·직업별 결정적 순간에 짧은 진동')}
     ${T('shake', '화면 흔들림', '피격·보스 등장 시 화면 흔들림')}
+    ${T('hitstop', '타격 멈춤', '묵직한 큰 한 방·정예·보스 타격 시 아주 짧게 멈춤')}
+    <div class="row"><div class="rt"><b>프레임</b><span>${SETTINGS.fps === 120 ? '120: 화면 주사율 그대로 (발열·배터리 소모 큼)' : '60: 발열·배터리 절약 (권장)'}</span></div><button class="tg" id="s_fps">${SETTINGS.fps === 120 ? '120' : '60'}</button></div>
     ${T('dmgNum', '피해 숫자', '적에게 준 피해를 숫자로 표시')}
     ${V('sfx', '효과음 음량')}${V('bgm', '배경음 음량')}
     <div class="row"><div class="rt"><b>첫 판 안내</b><span>조작·목표 안내를 처음부터 다시 표시</span></div><button class="tg" id="s_guide">다시 보기</button></div>
@@ -102,6 +104,7 @@ function showSettings(back) {
   UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); b.classList.toggle('on', SETTINGS[k]); b.setAttribute('aria-checked', SETTINGS[k]); sfx('ui'); }));   // 0.37 제자리 전환 (손잡이 이동)
   UI.querySelectorAll('input[data-v]').forEach(i => i.addEventListener('input', () => { SETTINGS[i.dataset.v] = +i.value; i.nextElementSibling.textContent = i.value; saveSettings(); auVol(); if (i.dataset.v === 'sfx') sfx('ui'); }));
   on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); keepScroll(() => showSettings(back)); });
+  on('s_fps', () => { SETTINGS.fps = SETTINGS.fps === 120 ? 60 : 120; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_back', back);
 }
 
