@@ -104,7 +104,7 @@ function drawSovereignArtWorld(c, inView) {
   const reduced = VFX.reduced.matches;
   c.save(); c.imageSmoothingEnabled = true;
   for (const f of G.fx) {
-    if (f.t < f.dur && sovereignArtReady(f.sovereignArt) && inView(f.x, f.y, (f.r1 || 0) + 68)) {
+    if (f.t < f.dur && !basicWeaponImage(f.basicArt) && sovereignArtReady(f.sovereignArt) && inView(f.x, f.y, (f.r1 || 0) + 68)) {
       c.save(); drawSovereignImpact(c, f, f.t / f.dur, reduced); c.restore();
     }
   }

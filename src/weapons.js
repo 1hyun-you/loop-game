@@ -73,8 +73,8 @@ const WEAPON_FIRE = {
     const D = WEAPONS.cleave.base, p = G.p, range = D.range * S.area, arc = D.arc * (w.br === 'wide' ? 1.45 : 1);
     const tg = nearestEnemy(p.x, p.y, range * 1.4);
     const a0 = tg ? Math.atan2(tg.y - p.y, tg.x - p.x) : Math.atan2(p.face.y, p.face.x);
-    slash(a0, arc, range, S.dmg, D.kb);
-    if (w.br === 'double') G.later.push({ t: 0.18, f: () => slash(a0 + Math.PI, arc, range, S.dmg * 0.7, D.kb) });
+    slash(a0, arc, range, S.dmg, D.kb, true);
+    if (w.br === 'double') G.later.push({ t: 0.18, f: () => slash(a0 + Math.PI, arc, range, S.dmg * 0.7, D.kb, true) });
     if (hasRelic('bladestorm')) G.tm.storm = 1.5;
   },
   /* 화살: 가까운 적 방향 직선, 다발 시 좁은 부채꼴 */
@@ -153,7 +153,7 @@ Object.assign(WEAPON_FIRE, {
 });
 function shieldBash(x, y, R, dmg, kb, sovereignBase) {
   gridQuery(x, y, R, e => damageEnemy(e, dmg, { src: 'shield', kb, fx: x, fy: y }));
-  fx({ kind: 'ring', x, y, r0: R * 0.4, r1: R, dur: 0.22, color: '#c8d8ff', fill: true, ...(sovereignBase ? { sovereignArt: 'base-shield', sovereignAngle: Math.atan2(G.p.face.y, G.p.face.x) } : {}) });
+  fx({ kind: 'ring', x, y, r0: R * 0.4, r1: R, dur: 0.22, color: '#c8d8ff', fill: true, basicArt: 'shield', ...(sovereignBase ? { sovereignArt: 'base-shield', sovereignAngle: Math.atan2(G.p.face.y, G.p.face.x) } : {}) });
 }
 function slamWave(x, y, R, dmg, kb) {
   const frost = hasRelic('frostrift');
@@ -175,13 +175,13 @@ function updateTraps(dt) {
   G.traps = G.traps.filter(t => !t.dead);
 }
 
-function slash(a0, arc, range, dmg, kb) {
+function slash(a0, arc, range, dmg, kb, basicWeapon = false) {
   const p = G.p;
   gridQuery(p.x, p.y, range, e => {
     let da = Math.atan2(e.y - p.y, e.x - p.x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da));
     if (Math.abs(da) <= arc / 2 + 0.15) damageEnemy(e, dmg, { kb, fx: p.x, fy: p.y, src: 'cleave' });
   });
-  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: jobTint('melee') || '#ffe0d0', ...(p.job === 'warrior' ? { warArt: 'cleave', x: p.x, y: p.y } : {}) });
+  fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: jobTint('melee') || '#ffe0d0', ...(basicWeapon ? { basicArt: 'cleave', artX: p.x, artY: p.y } : {}), ...(p.job === 'warrior' ? { warArt: 'cleave', x: p.x, y: p.y } : {}) });
 }
 /* 회전검: 상시 회전, 적별 타격 간격 0.35초 · 투척 궤도 분기: 2.4초마다 0.8초간 반경 확장 (피해 130%) */
 function updateSpin(w, S, dt) {

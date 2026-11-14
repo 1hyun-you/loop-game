@@ -29,6 +29,7 @@ for (const [id, data] of Object.entries(ARCHER_ART_DATA)) {
 
 function archerArtReady(id) { return !!ARCHER_IMAGES[id]?.naturalWidth; }
 function archerProjectileArt(pr) {
+  if (basicWeaponProjectile(pr)) return null;
   if (G.p.job === 'archer' && pr.kind === 'arrow' && (pr.src === 'arrow' || pr.src === 'split')) return ARCHER_BASE_PROJECTILE;
   return ARCHER_PROJECTILES[pr.src];
 }

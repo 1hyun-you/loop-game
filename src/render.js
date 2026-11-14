@@ -26,6 +26,7 @@ function render() {
   drawGround(c, camX, camY);
   drawFieldScenery(c, camX, camY);
   drawFuseArtWorld(c);  // All danger warnings and units draw above the decorative art.
+  drawBasicWeaponWorld(c, inView);
   drawWarriorArtWorld(c, inView);
   drawRogueArtWorld(c, inView);
   drawArcherArtWorld(c, inView);
@@ -224,7 +225,7 @@ function drawWeapons(c, inView) {
     for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; drawSpriteRot(c, 'blade', 0, p.x + Math.cos(a) * w.R, p.y + Math.sin(a) * w.R, a + Math.PI / 2, { mul }); }
   }
   for (const pr of G.proj) {
-    if (!inView(pr.x, pr.y, pr.r + 10)) continue;
+    if (!inView(pr.x, pr.y, pr.r + 10) || basicWeaponProjectile(pr)) continue;
     if (warriorArtReady(warriorProjectileArt(pr)) || rogueProjectileReady(rogueProjectileArt(pr)) || sovereignUsesProjectileArt(pr) || archerUsesProjectileArt(pr) || engineerUsesProjectileArt(pr) || chronoUsesProjectileArt(pr) || mageUsesProjectileArt(pr) || summonerUsesProjectileArt(pr) || priestUsesProjectileArt(pr) || druidUsesProjectileArt(pr)) continue;
     const a = Math.atan2(pr.vy, pr.vx);
     if(pr.jt)paintedAura(c,effectKey(pr.jt),pr.x,pr.y,pr.r+5,.3);

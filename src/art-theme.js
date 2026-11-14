@@ -39,20 +39,25 @@ function art2IconCell(id) {
   return {x:(i%5)*64,y:Math.floor(i/5)*64};
 }
 function iconURL(id) {
-  const cell=art2IconCell(id);if(!cell)return pixelIconURL(id);
+  const basic = basicWeaponIcon(id), cell = art2IconCell(id);
+  if (!basic && !cell) return pixelIconURL(id);
   if(!ART2.iconCache.has(id)){
     const cv=document.createElement('canvas');cv.width=cv.height=64;
-    cv.getContext('2d').drawImage(ART2.icons,cell.x,cell.y,64,64,0,0,64,64);
+    const c = cv.getContext('2d');
+    if (basic) drawBasicWeaponIcon(c, id, basic, 64);
+    else c.drawImage(ART2.icons,cell.x,cell.y,64,64,0,0,64,64);
     ART2.iconCache.set(id,cv.toDataURL('image/png'));
   }
   return ART2.iconCache.get(id);
 }
 function iconCanvas(id,t) {
-  const cell=art2IconCell(id);if(!cell)return pixelIconCanvas(id,t);
+  const basic = basicWeaponIcon(id), cell = art2IconCell(id);
+  if (!basic && !cell) return pixelIconCanvas(id,t);
   const key=id+'|'+t;if(!ART2.iconCanvasCache.has(key)){
     const cv=document.createElement('canvas');cv.width=cv.height=14*t;
     const c=cv.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
-    c.drawImage(ART2.icons,cell.x,cell.y,64,64,0,0,cv.width,cv.height);
+    if (basic) drawBasicWeaponIcon(c, id, basic, cv.width);
+    else c.drawImage(ART2.icons,cell.x,cell.y,64,64,0,0,cv.width,cv.height);
     ART2.iconCanvasCache.set(key,cv);
     if(ART2.iconCanvasCache.size>160)ART2.iconCanvasCache.delete(ART2.iconCanvasCache.keys().next().value);
   }

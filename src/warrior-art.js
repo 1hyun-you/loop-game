@@ -162,7 +162,7 @@ function drawWarriorArtWorld(c, inView) {
   c.lineCap = 'round';
   for (const f of G.fx) {
     const id = f.warArt, k = f.t / f.dur;
-    if (!id || k >= 1 || !warriorArtReady(id) || !inView(f.x, f.y, f.r1 || f.r)) continue;
+    if (!id || k >= 1 || basicWeaponImage(f.basicArt) || !warriorArtReady(id) || !inView(f.x, f.y, f.r1 || f.r)) continue;
     if (f.kind === 'arc') warriorDrawSweep(c, f, k, reduced);
     else if (f.kind === 'ring' && !f.warSweep) warriorDrawRing(c, f, k, reduced);
     else if (f.warSweep) continue;

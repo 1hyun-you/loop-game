@@ -28,6 +28,7 @@ function rogueArtReady(id) {
 }
 
 function rogueProjectileArt(pr) {
+  if (basicWeaponProjectile(pr)) return null;
   if (pr.kind === 'star' && pr.src === 'shuriken' && G.p.job === 'rogue') return 'base';
   return ROGUE_PROJECTILES[pr.src];
 }

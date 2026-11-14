@@ -12,10 +12,12 @@ const { packSummonUnitArt } = require('./pack-summon-unit-art.cjs');
 const { packJobStatusArt } = require('./pack-job-status-art.cjs');
 const { packInstallationArt } = require('./pack-installation-art.cjs');
 const { packMiscArt } = require('./pack-misc-art.cjs');
+const { packBasicWeaponArt } = require('./pack-basic-weapon-art.cjs');
 const { packSovereignArt } = require('./pack-sovereign-art.cjs');
 const files=[...sh.matchAll(/src\/[\w-]+\.(?:html|js)/g)].map(x=>x[0]);
 fs.writeFileSync(path.join(root,'index.html'),files.map(file => {
   const source = fs.readFileSync(path.join(root, file), 'utf8');
+  if (file === 'src/effect-art.js') return packBasicWeaponArt() + source;
   if (file === 'src/art-theme.js') return packHeroOutfits() + source;
   if (file === 'src/engineer-art.js') return packEngineerArt() + source;
   if (file === 'src/chrono-art.js') return packChronoArt() + source;
