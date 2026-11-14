@@ -586,3 +586,12 @@
 - 연결: `assets/basic-weapons-art2/`, `dev/pack-basic-weapon-art.cjs`, `src/config.js`, `src/effect-art.js`, `src/vfx.js`, `src/render.js` 및 `installation-art.js`, `engineer-art.js`, `chrono-art.js`, `mage-art.js`, `priest-art.js`, `summoner-art.js`. 도감·선택 카드·장비 칸은 기존 `iconURL`·`iconCanvas` 경로 사용. 새 그림 미로딩 시 기존 표시 또는 임시 광선 도형 사용.
 - 확인: Node·셸 빌드 일치, 공개 HTML과 최종 빌드 일치. 공개 브라우저에서 버전·화염구 전투 진입·일시정지·도감 확인. 320px·390px Canvas 재현 장면에서 5종과 장비 칸, 적 예고 표시 순서, 광선 길이·폭, 얼음 고리 소멸, 그림 누락 시 대체 확인. 이전 빌드와 비교한 고정 난수 전투 검사에서 피해·판정·재사용·저장 키 동일. 320px·390px 브라우저 선택 카드 실화면과 폴드8 실기기 확인 미실시.
 - 다음 첫 작업: 03번 기본 무기 분기 형태 전반. 후속 분기·각성과 발동 장면은 요청문 번호순으로 진행.
+
+## 0.51-art3 — 진행 중
+
+- G48-6 03번 중 대검 베기·방패 충격 2종 4분기 제작·적용·배포. 원화 선등록 `7530618` ([skip deploy]), 소스 `314cacd`. 투명 WebP 4종: `assets/basic-weapons-art3/`. [공개 게임](https://1hyun-you.github.io/field/).
+- 대검 베기 — 광역은 넓은 단일 칼날과 기존 판정 안의 긴 호, 연속은 쌍날과 기존 0.18초 후 반대 방향 베기 사용. 미분기 대검 유지.
+- 방패 충격 — 방벽은 두꺼운 나무·철제 탑 방패, 이중 충격은 어긋나 겹친 두 장의 방패와 기존 0.4초 후 재충격 사용. 미분기 원형 방패 및 기존 투명 충격파 유지.
+- 연결: `dev/pack-basic-weapon-art.cjs`의 이미지 내장, `src/art-theme.js`·`effect-art.js`의 분기 원화와 기본 외형 대체, `select-art.js`(선택 카드), `ui-art.js`(장비 칸), `codex.js`·`head.html`(도감 분기 상세), `v48.js`(발동·지연 효과 표시 정보), `config.js`(버전). 무기·밸런스 파일 수정 없음.
+- 검사: Node·셸 빌드 일치 및 check-build 통과. 고정 난수 4분기 비교에서 피해·효과 반경·지속시간·지연 간격·무기 수치·저장 키 동일. 320px·390px에서 선택 카드·도감 이미지 연결과 하단 칸·전투 Canvas 렌더 호출 및 이미지 누락 대체 확인. 공개 v0.51-art3 화면과 도감 4분기 확인, 공개 HTML SHA-256 `12efef746dc6c2c95b03c993a26c03ab426e9cccaba2a23490b28e1ab74aa278` 일치. 해당 폭의 브라우저 캡처 및 폴드8 실기기 확인 미실시.
+- 다음 첫 작업: 03번 대지 강타(여진·균열), 이후 화살(관통·분열)과 수리검(연쇄·분산). 03번 10분기 전량 적용·검증 후 완료 기록. GPT_REQUESTS.md의 G48-6은 03번 잔여 및 04·05번 범위가 있어 현재 제공 상태 유지.
