@@ -149,34 +149,26 @@ function drawBasicWeaponWorld(c, inView) {
   c.restore();
 }
 
+function basicIceWave(f) {
+  return f.kind === 'ring' && f.element === 'ice' && f.trk48 && f.follow && !f.fill && basicWeaponImage('icering');
+}
+
 function drawBasicIce(c) {
-  const p = G.p;
-  const weapon = p.weapons.find(w => w.id === 'icering' && !w.fu);
-  if (!weapon?.R) return;
-  const chronoFire = CHRONO_BASE_FIRES.get(weapon);
-  const age = chronoFire === undefined ? wStats(weapon).cd - weapon.t : G.time - chronoFire;
-  if (age < 0 || age >= .25) return;
-  const k = age / .25, r = Math.max(1, weapon.R * (.24 + .76 * ease51(Math.min(1, k / .8))));
-  const opacity = .5 * Math.min(1, (1 - k) / .3);
-  const image = basicWeaponImage('icering');
-  c.save();
-  c.beginPath();
-  c.arc(p.x, p.y, r, 0, Math.PI * 2);
-  c.clip();
-  if (image) {
-    c.globalAlpha *= opacity;
-    c.drawImage(image, p.x - r, p.y - r, r * 2, r * 2);
-  } else {
-    const inner = Math.max(0, r - weapon.R * .28);
+  const { x, y } = G.p;
+  for (const f of G.fx) {
+    const image = basicIceWave(f);
+    if (!image || f.t >= f.dur) continue;
+    const k = remap48(f, f.t / f.dur);
+    const r = Math.max(4, lerp(f.r0, f.r1, ease51(Math.min(1, k / .8))));
+    const alpha = .5 * Math.min(1, (1 - k) / .3);
+    c.save();
     c.beginPath();
-    c.arc(p.x, p.y, r, 0, Math.PI * 2);
-    if (inner > 0) c.arc(p.x, p.y, inner, 0, Math.PI * 2, true);
-    c.clip('evenodd');
-    if (!paintedEffect(c, 'frost', p.x, p.y, r, opacity)) {
-      effectBoundary(c, p.x, p.y, (inner + r) / 2, '#bee6ff', opacity);
-    }
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.clip();
+    c.globalAlpha *= alpha;
+    c.drawImage(image, x - r, y - r, r * 2, r * 2);
+    c.restore();
   }
-  c.restore();
 }
 
 function drawBasicBeams(c, reduced) {

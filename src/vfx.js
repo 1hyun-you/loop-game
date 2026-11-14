@@ -73,7 +73,7 @@ function drawFx(c) {
     const basic = basicWeaponImage(f.basicArt);
     if (k >= 1 || (basic && f.basicArt === 'cleave') || installationArtReady(f.installationArt) || warriorArtReady(f.warArt) || rogueArtReady(f.rogueArt) || (!basic && sovereignArtReady(f.sovereignArt)) || archerArtReady(f.archerArt) || engineerArtReady(f.engineerArt) || chronoArtReady(f.chronoArt) || mageArtReady(f.mageArt) || summonerArtReady(f.summonerArt) || priestArtReady(f.priestArt) || druidArtReady(druidImpactArt(f))) continue;
     if (Number.isFinite(x) && Number.isFinite(y) && (Math.abs(x - G.p.x) > VIEW.cameraW / 2 + (f.r1 || f.r || 0) + 200 || Math.abs(y - G.p.y) > VIEW.cameraH / 2 + (f.r1 || f.r || 0) + 200)) continue;
-    if(paintedRing(c,f,k,x,y))continue;
+    if (basicIceWave(f) || paintedRing(c, f, k, x, y)) continue;
     if (f.kind === 'ring') {
       const r = Math.max(1, lerp(f.r0, f.r1, 1 - (1 - k) ** 2)), col = f.color || '#e8d8af';
       if (f.fill) {
