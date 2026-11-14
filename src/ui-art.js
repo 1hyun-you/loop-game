@@ -177,7 +177,7 @@ function uiTile(c,r,art,color,level,progress,mark) {
   if(level!=null){uiPanel(c,r.x+r.w-11,r.y+r.h-11,12,12,'#1a2330','#7f806d',3);uiText(c,level,r.x+r.w-5,r.y+r.h-5,10,'#fff4db','center',11,700);}
 }
 function uiWeaponTile(c, r, weapon, frame) {
-  uiTile(c, r, iconCanvas(weapon.id, 2), frame || 'transparent', weapon.lvl);
+  uiTile(c, r, iconCanvas(branchWeaponArt(weapon.id, weapon.br), 2), frame || 'transparent', weapon.lvl);
 }
 function uiBaseWeaponMark(c, r, job, color) {
   const x = r.x + 1, y = r.y + 1, size = 14;
@@ -193,7 +193,7 @@ const UI_EXW_ICON={
 function uiAbilityArt(id,first){const key=UI_EXW_ICON[first?'first':'second'][id];return UI_ART.images[key]||iconCanvas(key,2)||UI_ART.images.crest;}
 function drawSlots(c,unused) {
   const L=hudLayout(),p=G.p,T=G.tm; c.save();c.imageSmoothingEnabled=true;
-  for(let i=0;i<slotW();i++){const it=p.weapons[i];if(!it)continue;uiTile(c,L.tile(i,0),it&&iconCanvas(it.id,2),it?CFG.colors[WEAPONS[it.id].cat]:'#414c58',it&&it.lvl,undefined,it&&jobTint(WEAPONS[it.id].cat));}
+  for(let i=0;i<slotW();i++){const it=p.weapons[i];if(!it)continue;uiTile(c,L.tile(i,0),it&&iconCanvas(branchWeaponArt(it.id, it.br),2),it?CFG.colors[WEAPONS[it.id].cat]:'#414c58',it&&it.lvl,undefined,it&&jobTint(WEAPONS[it.id].cat));}
   const pcd={magnet:['vacuum',()=>1-(T.vac==null?30:T.vac)/30],vit:['shield',()=>p.shield?1:1-T.shield/12],haste:['charge',()=>1-T.charge/8]};
   for(let i=0;i<CFG.slots.passive;i++){const it=p.passives[i],q=it&&pcd[it.id];if(!it)continue;uiTile(c,L.tile(i,1),it&&iconCanvas(it.id,2),CFG.colors.passive,it&&it.lvl,q&&it.br===q[0]?q[1]():undefined);}
   const specials=[[p.exw1,EXW1],[p.exw,EXW]].filter(([s])=>s);

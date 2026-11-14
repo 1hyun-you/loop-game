@@ -45,7 +45,7 @@ const cxL = (k, v) => `<i>${esc(k)}</i> ${esc(v)}`;
 /* 0.36 압축 표기: 수치 칩(1레벨→5레벨, 0.43) · 분기 2칸 상자 */
 const cxChips = a => `<div class="cxs">${a.filter(Boolean).map(([k, v]) => `<span><i>${esc(k)}</i>${v}</span>`).join('')}</div>`;
 const cxArrow = (a, b, u = '') => a === b ? `${a}${u}` : `${a}<em>→${b}${u}</em>`;
-const cxBr = (list, head) => list && list.length ? `<details class="acc"><summary>${esc(head || '분기')} ${list.length}종</summary><div class="cxg">${list.map(o => `<div><b>${esc(o.nm)}</b><span>${esc(o.ds).replace(' · 궁극기: ', '</span><span class="u">궁극기 · ')}</span></div>`).join('')}</div></details>` : '';
+const cxBr = (list, head, art) => list && list.length ? `<details class="acc"><summary>${esc(head || '분기')} ${list.length}종</summary><div class="cxg">${list.map(o => `<div>${art ? art(o) : ''}<b>${esc(o.nm)}</b><span>${esc(o.ds).replace(' · 궁극기: ', '</span><span class="u">궁극기 · ')}</span></div>`).join('')}</div></details>` : '';
 const cxRound = v => Math.round(v * 100) / 100;
 
 function cxWeapon(id, seen) {
@@ -61,7 +61,11 @@ function cxWeapon(id, seen) {
     B.dur ? ['지속', B.dur + '초'] : null,
     ...Object.keys(etc).map(k => { const t = upText(id, { [k]: etc[k] }); const m = t.match(/^(.*?) ([+-].*)$/); return m ? [m[1], `<em>${esc(m[2])}</em>`] : null; }),
   ];
-  return cxCard({ dim: !seen, id, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxChips(chips), cxBr(BRANCHES[id], '3렙 분기'), cxBr(AWAKEN[id], '5렙 각성')] });
+  const branchIcon = o => {
+    const art = branchWeaponArt(id, o.k);
+    return art === id ? '' : icBox(CFG.colors[D.cat], D.ic, art, 'cx-branch-icon');
+  };
+  return cxCard({ dim: !seen, id, col: CFG.colors[D.cat], ic: D.ic, nm: D.name, tag: CAT_NAME[D.cat], lines: [esc(D.desc), cxChips(chips), cxBr(BRANCHES[id], '3렙 분기', branchIcon), cxBr(AWAKEN[id], '5렙 각성')] });
 }
 /* 보조 효과: 1단계·5단계 문구의 수치만 화살표로 병합 */
 function cxRange(a, b) {

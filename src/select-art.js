@@ -77,7 +77,7 @@ function choiceType(c,f) {
   return {'k-melee':'근접 무기','k-ranged':'원거리 무기','k-magic':'마법 무기','k-passive':'보조 효과'}[f.k]||'여정의 선택';
 }
 function choiceIcon(c,f) {
-  if(f.id)return icBox(f.col,f.ic,f.id);
+  if(f.id)return icBox(f.col,f.ic,c.t === 'branch' && !c.aw ? branchWeaponArt(f.id, c.k) : f.id);
   if(c.t==='trait')return uiTraitIcon(c.id,f.col);
   if(c.t==='job'&&UI_JOB_CREST[c.id])return uiJobCrest(c.id);
   if(c.t==='job2'&&UI_JOB2_CREST[c.k]&&UI_JOB2_CREST[c.k].job===c.id)return uiJob2Crest(c.id,c.k);

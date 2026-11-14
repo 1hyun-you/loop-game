@@ -55,7 +55,7 @@ let CUR48 = null, DMG48 = 0;
 function kind48(w) {
   if (!w) return null;
   if (w.fu) { const sym = FZ_SYMBOL[w.fu.job]; return sym && HIT_KIND[sym] ? { k: HIT_KIND[sym], id: sym } : null; }
-  return HIT_KIND[w.id] ? { k: HIT_KIND[w.id], id: w.id } : null;
+  return HIT_KIND[w.id] ? { k: HIT_KIND[w.id], id: w.id, branchArt: branchWeaponArt(w.id, w.br) } : null;
 }
 /* 발동 함수 실행 중 표지 유지 + 그 사이 예약된 지연 동작(G.later)에도 표지 승계 */
 function run48(K, fn, self, args) {
@@ -89,6 +89,7 @@ fx = function (o) {
   if (G.fx.length >= (tag ? V48.fxCap : 220)) return;
   if (tag) {
     o.k48 = CUR48.k; o.w48 = CUR48.id;
+    if (o.basicArt && o.basicArt === CUR48.id && CUR48.branchArt !== CUR48.id) o.branchArt = CUR48.branchArt;
     if (o.dur > 0) o.dur *= V48.durMul;
     const p = G.p;
     o.ang48 = Number.isFinite(o.a) ? o.a : Number.isFinite(o.warAngle) ? o.warAngle : Number.isFinite(o.sovereignAngle) ? o.sovereignAngle : Number.isFinite(o.rogueAngle) ? o.rogueAngle : Math.atan2(p.face.y, p.face.x);

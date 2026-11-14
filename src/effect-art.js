@@ -66,17 +66,34 @@ function basicWeaponImage(id) {
   return BASIC_WEAPON_IMAGES[id];
 }
 
+function branchWeaponArt(id, branch) {
+  const key = id + '_' + branch;
+  return Object.hasOwn(BASIC_WEAPON_ART_DATA, key) ? key : id;
+}
+
+function branchWeaponBase(id) {
+  const base = id && id.split('_', 1)[0];
+  return base && base !== id && Object.hasOwn(BASIC_WEAPON_ART_DATA, id) ? base : null;
+}
+
+function basicAttackImage(f) {
+  return basicWeaponImage(f.branchArt) || basicWeaponImage(f.basicArt);
+}
+
 function basicWeaponIcon(id) {
   return id === 'arrow' || id === 'shuriken' ? null : basicWeaponImage(id);
 }
 
 function drawBasicWeaponIcon(c, id, image, size) {
-  const w = size * (id === 'cleave' ? 1.04 : .89);
-  const h = id === 'beam' ? size * .20 : w * image.naturalHeight / image.naturalWidth;
+  const sword = id === 'cleave' || branchWeaponBase(id) === 'cleave';
+  const ratio = image.naturalWidth / image.naturalHeight;
+  const maxSize = size * (sword ? 1.04 : .89);
+  const w = maxSize * (!sword && branchWeaponBase(id) ? Math.min(1, ratio) : 1);
+  const h = id === 'beam' ? size * .20 : w / ratio;
   c.save();
   c.imageSmoothingEnabled = true;
   c.translate(size / 2, size / 2);
-  if (id === 'cleave' || id === 'beam') c.rotate(-Math.PI / 4);
+  if (sword || id === 'beam') c.rotate(-Math.PI / 4);
   c.drawImage(image, -w / 2, -h / 2, w, h);
   c.restore();
 }
@@ -94,7 +111,7 @@ function drawBasicCleave(c, f, image, k, reduced) {
   const start = f.a - f.arc / 2, end = f.a + f.arc / 2;
   const sweep = reduced ? 1 : clamp(k / .42, 0, 1);
   const angle = lerp(start, end, .08 + .84 * sweep);
-  const tail = reduced ? start : Math.max(start, angle - f.arc * .7);
+  const tail = reduced ? start : Math.max(start, angle - f.arc * (image === BASIC_WEAPON_IMAGES.cleave_wide ? .88 : .7));
   const opacity = Math.min(1, (1 - k) / .48);
   const length = f.r * .77, thickness = length * image.naturalHeight / image.naturalWidth;
   c.globalAlpha = .37 * opacity;
@@ -116,7 +133,7 @@ function drawBasicWeaponWorld(c, inView) {
   drawBasicIce(c);
   drawBasicBeams(c, reduced);
   for (const f of G.fx) {
-    const image = basicWeaponImage(f.basicArt);
+    const image = basicAttackImage(f);
     if (!image || f.t >= f.dur || !inView(f.artX ?? f.x, f.artY ?? f.y, f.r || f.r1)) continue;
     const k = remap48(f, f.t / f.dur);
     c.save();
@@ -124,10 +141,14 @@ function drawBasicWeaponWorld(c, inView) {
     else {
       const drop = reduced ? 1 : clamp(k / .29, 0, 1);
       const size = Math.min(33, f.r1 * .62);
-      c.translate(f.x, f.y - 7 - (1 - drop) ** 2 * 23);
+      const variant = image !== basicWeaponImage('shield');
+      const height = variant ? Math.min(f.r1 * .62, image === BASIC_WEAPON_IMAGES.shield_wall ? 46 : 39) : size;
+      const width = variant ? height * image.naturalWidth / image.naturalHeight : size;
+      const strike = !reduced && image === BASIC_WEAPON_IMAGES.shield_twin ? -5 * (1 - drop) : 0;
+      c.translate(f.x + strike, f.y - 7 - (1 - drop) ** 2 * 23);
       c.scale(1, .76 + .22 * drop);
       c.globalAlpha = Math.min(1, (1 - k) / .58);
-      c.drawImage(image, -size / 2, -size, size, size);
+      c.drawImage(image, -width / 2, -height, width, height);
     }
     c.restore();
   }

@@ -40,7 +40,7 @@ function art2IconCell(id) {
 }
 function iconURL(id) {
   const basic = basicWeaponIcon(id), cell = art2IconCell(id);
-  if (!basic && !cell) return pixelIconURL(id);
+  if (!basic && !cell) return branchWeaponBase(id) ? iconURL(branchWeaponBase(id)) : pixelIconURL(id);
   if(!ART2.iconCache.has(id)){
     const cv=document.createElement('canvas');cv.width=cv.height=64;
     const c = cv.getContext('2d');
@@ -52,7 +52,7 @@ function iconURL(id) {
 }
 function iconCanvas(id,t) {
   const basic = basicWeaponIcon(id), cell = art2IconCell(id);
-  if (!basic && !cell) return pixelIconCanvas(id,t);
+  if (!basic && !cell) return branchWeaponBase(id) ? iconCanvas(branchWeaponBase(id),t) : pixelIconCanvas(id,t);
   const key=id+'|'+t;if(!ART2.iconCanvasCache.has(key)){
     const cv=document.createElement('canvas');cv.width=cv.height=14*t;
     const c=cv.getContext('2d');c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
