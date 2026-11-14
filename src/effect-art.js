@@ -126,6 +126,28 @@ function drawBasicCleave(c, f, image, k, reduced) {
   c.drawImage(image, f.r * .22, -thickness / 2, length, thickness);
 }
 
+function drawBasicSlam(c, f, image, k, reduced) {
+  const after = f.branchArt === 'slam_after';
+  const drop = reduced ? 1 : clamp(k / .18, 0, 1);
+  const settle = reduced ? 0 : clamp((k - .18) / .24, 0, 1);
+  const height = Math.min(65, f.r1 * .54);
+  const width = height * image.naturalWidth / image.naturalHeight;
+  const headX = width * (after ? .66 : .77);
+  const headY = height * (after ? .31 : .27);
+  const impactX = f.x + Math.min(23, f.r1 * .18);
+  const impactY = f.y - 10;
+  const recoil = Math.sin(settle * Math.PI);
+
+  c.beginPath();
+  c.arc(f.x, f.y, f.r1, 0, Math.PI * 2);
+  c.clip();
+  c.translate(impactX, impactY - (1 - drop) ** 2 * 25 - 6 * recoil);
+  c.rotate((1 - drop) * (after ? -.56 : .32) + recoil * (after ? .22 : -.12));
+  c.scale(1, 1 - .13 * recoil);
+  c.globalAlpha = Math.min(1, (1 - k) / .58);
+  c.drawImage(image, -headX, -headY, width, height);
+}
+
 function drawBasicWeaponWorld(c, inView) {
   const reduced = VFX.reduced.matches;
   c.save();
@@ -138,6 +160,7 @@ function drawBasicWeaponWorld(c, inView) {
     const k = remap48(f, f.t / f.dur);
     c.save();
     if (f.basicArt === 'cleave') drawBasicCleave(c, f, image, k, reduced);
+    else if (f.basicArt === 'slam') drawBasicSlam(c, f, image, k, reduced);
     else {
       const drop = reduced ? 1 : clamp(k / .29, 0, 1);
       const size = Math.min(33, f.r1 * .62);

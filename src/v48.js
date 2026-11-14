@@ -90,6 +90,11 @@ fx = function (o) {
   if (tag) {
     o.k48 = CUR48.k; o.w48 = CUR48.id;
     if (o.basicArt && o.basicArt === CUR48.id && CUR48.branchArt !== CUR48.id) o.branchArt = CUR48.branchArt;
+    if (CUR48.id === 'slam' && CUR48.branchArt && CUR48.branchArt !== 'slam' && o.kind === 'ring' &&
+        o.r0 === 12 && (o.element === 'earth' || o.element === 'ice')) {
+      o.basicArt = 'slam';
+      o.branchArt = CUR48.branchArt;
+    }
     if (o.dur > 0) o.dur *= V48.durMul;
     const p = G.p;
     o.ang48 = Number.isFinite(o.a) ? o.a : Number.isFinite(o.warAngle) ? o.warAngle : Number.isFinite(o.sovereignAngle) ? o.sovereignAngle : Number.isFinite(o.rogueAngle) ? o.rogueAngle : Math.atan2(p.face.y, p.face.x);
