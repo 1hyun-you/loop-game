@@ -371,11 +371,13 @@ function drawJob41(c, inView) {
     drawArcherMarks(c, inView);
     if (J) {
       J.gd.forEach((g, i) => {
-        const angle = i * Math.PI * 2 / J.gd.length + G.time * 0.6;
-        const flip = G.banner ? G.banner.x + Math.cos(angle) * G.banner.r * 0.55 < g.x : Math.cos(g.a) < 0;
-        const gr = p.r * 1.55;                                 // 0.48 근위병 화면상 플레이어 1.2배(그림 여백 보정) + 외곽 강조
+        const flip = Math.cos(g.a) < 0;                       // 0.49 바라보는 방향 기준
+        const gr = p.r * 1.55;
+        const lunge = g.stab > 0 ? Math.sin((1 - g.stab / 0.18) * Math.PI) * 7 : g.bash > 0 ? Math.sin((1 - g.bash / 0.28) * Math.PI) * 10 : 0;   // 0.49 찌르기·밀치기 내딛기
+        const ox = g.x, oy = g.y; g.x += Math.cos(g.a) * lunge; g.y += Math.sin(g.a) * lunge;                                 // 0.48 근위병 화면상 플레이어 1.2배(그림 여백 보정) + 외곽 강조
         if (inView(g.x, g.y, gr * 2)) { c.save(); c.globalAlpha = 0.32; c.fillStyle = '#1a1208'; c.beginPath(); c.ellipse(g.x, g.y + gr * 0.85, gr * 0.9, gr * 0.32, 0, 0, 7); c.fill(); vfxGlow(c, g.x, g.y, gr * 1.55, '#ffd24a', 0.3); c.restore(); }
         drawSummonUnit(c, inView, 'guard', g, gr, flip, 1, i * 0.4);
+        g.x = ox; g.y = oy;
       });
       if (J.clone) drawSummonUnit(c, inView, 'clone', J.clone, p.r, p.face.x < 0, 0.68);
     }

@@ -10,7 +10,7 @@ function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON
 /* 0.27f 전체 화면 옵션 삭제: 상태 표시줄 표시형 확정 (웹 전체 화면은 뒤로가기 시 해제·재적용 버벅임 발생) */
 let vibeAt = 0;
 function vibe(ms) {
-  if (!SETTINGS.vibe || STATE.dev.auto || !navigator.vibrate) return;
+  if (!SETTINGS.vibe || navigator.webdriver || !navigator.vibrate) return;   // 0.49 자동 플레이 허용, 가상 시험만 차단
   const t = performance.now(); if (t - vibeAt < 220) return; vibeAt = t;
   try { navigator.vibrate(ms); } catch (e) { }
 }
