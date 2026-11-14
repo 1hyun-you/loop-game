@@ -91,7 +91,7 @@ const WEAPON_FIRE = {
   /* 화염구: 착탄 또는 사거리 끝에서 폭발 */
   fireball(w, S) {
     const D = WEAPONS.fireball.base, a0 = aimAng(420), R = D.R * S.area;
-    for (let i = 0; i < S.n; i++) shoot({ kind: 'fire', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.25, sp: D.sp, r: 8, dmg: S.dmg, R, life: 1.0, color: '#ff8a3a', src: 'fireball', pool: w.br === 'pool', ...(w.base && G.p.job === 'mage' ? { mageBaseFireball: true } : {}) });
+    for (let i = 0; i < S.n; i++) shootBasicBranch(w, { kind: 'fire', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.25, sp: D.sp, r: 8, dmg: S.dmg, R, life: 1.0, color: '#ff8a3a', src: 'fireball', pool: w.br === 'pool', ...(w.base && G.p.job === 'mage' ? { mageBaseFireball: true } : {}) });
   },
   /* 번개: 사거리 안 무작위 적 낙뢰, 대상 없으면 0.25초 후 재시도 */
   lightning(w, S) {

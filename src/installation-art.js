@@ -27,22 +27,28 @@ function installationSprite(c, name, frame, x, y, size, angle = 0, alpha = 1, an
   c.restore();
 }
 
+function basicTrapImage(t) {
+  const branch = t.snare ? 'snare' : t.cluster ? 'cluster' : null;
+  return basicWeaponImage(branchWeaponArt('trap', branch)) || basicWeaponImage('trap');
+}
+
 function drawInstallationTrap(c, t, reduced) {
   const arming = t.arm > 0;
   const k = clamp(1 - t.arm / (t.mini ? 0.5 : 0.4), 0, 1);
   const lift = reduced || !arming ? 0 : 5 * (1 - k) ** 2;
   const y = t.y - lift - 2 * t.r / 12;
   const size = t.r * 2 * 96 / 92;
-  const image = basicWeaponImage('trap');
+  const image = basicTrapImage(t);
   if (!image) {
     installationSprite(c, 'trap', arming ? 0 : 1, t.x, y, size);
     return;
   }
-  const h = t.r * 2 * image.naturalHeight / image.naturalWidth;
+  const width = t.r * (image === basicWeaponImage('trap') ? 2 : 2.45);
+  const h = width * image.naturalHeight / image.naturalWidth;
   c.save();
   c.imageSmoothingEnabled = true;
   c.globalAlpha *= arming ? .68 + .32 * k : 1;
-  c.drawImage(image, t.x - t.r, y - h / 2, t.r * 2, h);
+  c.drawImage(image, t.x - width / 2, y - h / 2, width, h);
   c.restore();
 }
 
@@ -109,9 +115,9 @@ function drawInstallationImpact(c, f, reduced) {
 
 function drawInstallationWorld(c, inView) {
   const reduced = VFX.reduced.matches;
-  const trap = basicWeaponImage('trap') || installationArtReady('trap'), mine = installationArtReady('mine');
+  const trap = installationArtReady('trap'), mine = installationArtReady('mine');
   const turret = installationArtReady('turret'), missile = installationArtReady('missile');
-  if (trap) for (const t of G.traps) if (!t.dead && inView(t.x, t.y, t.r + 9)) drawInstallationTrap(c, t, reduced);
+  for (const t of G.traps) if (!t.dead && (trap || basicTrapImage(t)) && inView(t.x, t.y, t.r + 9)) drawInstallationTrap(c, t, reduced);
   if (mine) for (const m of G.mines) if (!m.dead && inView(m.x, m.y, m.r)) drawInstallationMine(c, m, reduced);
   if (turret) for (const t of G.turrets) if (!installationWalker(t) && inView(t.x, t.y, 22)) drawInstallationTurret(c, t, reduced);
   if (missile) for (const delay of G.later) {

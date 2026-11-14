@@ -195,9 +195,10 @@ function drawBasicWeaponWorld(c, inView) {
     const angle = arrow || fire ? Math.atan2(pr.vy, pr.vx) : pr.kind === 'star' && !reduced ? pr.t * 16 : 0;
     const ratio = image.naturalWidth / image.naturalHeight;
     const variant = image === basicWeaponImage(BASIC_PROJECTILE_BRANCH.get(pr));
-    const w = pr.r * (arrow ? variant ? 7.2 : 4.8 : fire ? 2 * ratio : variant ? 3.3 : 2);
+    const fireHeight = image === basicWeaponImage('fireball_big') ? 2.3 : 2;
+    const w = pr.r * (arrow ? variant ? 7.2 : 4.8 : fire ? fireHeight * ratio : variant ? 3.3 : 2);
     const h = w / ratio;
-    const anchor = arrow ? variant ? .87 : .77 : fire ? .65 : .5;
+    const anchor = arrow ? variant ? .87 : .77 : fire ? (variant ? .79 : .65) : .5;
     c.save();
     c.translate(pr.x, pr.y);
     c.rotate(angle);
