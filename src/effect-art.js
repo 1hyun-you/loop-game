@@ -85,20 +85,33 @@ function basicWeaponIcon(id) {
 }
 
 function drawBasicWeaponIcon(c, id, image, size) {
-  const sword = id === 'cleave' || branchWeaponBase(id) === 'cleave';
+  const base = branchWeaponBase(id);
+  const sword = id === 'cleave' || base === 'cleave';
   const ratio = image.naturalWidth / image.naturalHeight;
   const maxSize = size * (sword ? 1.04 : .89);
-  const w = maxSize * (!sword && branchWeaponBase(id) ? Math.min(1, ratio) : 1);
+  const w = maxSize * (!sword && base ? Math.min(1, ratio) : 1);
   const h = id === 'beam' ? size * .20 : w / ratio;
   c.save();
   c.imageSmoothingEnabled = true;
   c.translate(size / 2, size / 2);
-  if (sword || id === 'beam') c.rotate(-Math.PI / 4);
+  if (sword || id === 'beam' || base === 'arrow') c.rotate(-Math.PI / 4);
   c.drawImage(image, -w / 2, -h / 2, w, h);
   c.restore();
 }
 
+// Keep the display identity after the first hit consumes split or scatter.
+const BASIC_PROJECTILE_BRANCH = new WeakMap();
+
+function shootBasicBranch(w, spec) {
+  const pr = shoot(spec);
+  const id = branchWeaponArt(w.id, w.br);
+  if (id !== w.id) BASIC_PROJECTILE_BRANCH.set(pr, id);
+  return pr;
+}
+
 function basicWeaponProjectile(pr) {
+  const variant = basicWeaponImage(BASIC_PROJECTILE_BRANCH.get(pr));
+  if (variant) return variant;
   if (pr.kind === 'arrow' && (pr.src === 'arrow' || pr.src === 'split')) return basicWeaponImage('arrow');
   if (pr.kind === 'star' && pr.src === 'shuriken') return basicWeaponImage('shuriken');
   if (pr.kind === 'fire' && pr.src === 'fireball') return basicWeaponImage('fireball');
@@ -181,9 +194,10 @@ function drawBasicWeaponWorld(c, inView) {
     const arrow = pr.kind === 'arrow', fire = pr.kind === 'fire';
     const angle = arrow || fire ? Math.atan2(pr.vy, pr.vx) : pr.kind === 'star' && !reduced ? pr.t * 16 : 0;
     const ratio = image.naturalWidth / image.naturalHeight;
-    const w = pr.r * (arrow ? 4.8 : fire ? 2 * ratio : 2);
+    const variant = image === basicWeaponImage(BASIC_PROJECTILE_BRANCH.get(pr));
+    const w = pr.r * (arrow ? variant ? 7.2 : 4.8 : fire ? 2 * ratio : variant ? 3.3 : 2);
     const h = w / ratio;
-    const anchor = arrow ? .77 : fire ? .65 : .5;
+    const anchor = arrow ? variant ? .87 : .77 : fire ? .65 : .5;
     c.save();
     c.translate(pr.x, pr.y);
     c.rotate(angle);

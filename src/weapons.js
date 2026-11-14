@@ -80,7 +80,7 @@ const WEAPON_FIRE = {
   /* 화살: 가까운 적 방향 직선, 다발 시 좁은 부채꼴 */
   arrow(w, S) {
     const D = WEAPONS.arrow.base, a0 = aimAng();
-    for (let i = 0; i < S.n; i++) shoot({ kind: 'arrow', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.12, sp: D.sp, r: 5, dmg: S.dmg, pierce: S.pierce, life: D.life, color: '#d8ffc8', src: 'arrow', split: w.br === 'split' });
+    for (let i = 0; i < S.n; i++) shootBasicBranch(w, { kind: 'arrow', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.12, sp: D.sp, r: 5, dmg: S.dmg, pierce: S.pierce, life: D.life, color: '#d8ffc8', src: 'arrow', split: w.br === 'split' });
   },
   /* 부메랑 도끼: 0.45초 후 되돌아오며 왕복 타격, 관통 무제한, 적별 왕·복 각 1회 */
   boomerang(w, S) {

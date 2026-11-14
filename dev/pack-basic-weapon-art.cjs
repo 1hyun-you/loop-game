@@ -6,7 +6,8 @@ function packBasicWeaponArt() {
   const files = {
     ...Object.fromEntries(['cleave', 'shield', 'arrow', 'shuriken'].map(id => [id, 'basic-weapons-art1/' + id])),
     ...Object.fromEntries(['trap', 'fireball', 'orb', 'beam'].map(id => [id, 'basic-weapons-art2/' + id])),
-    ...Object.fromEntries(['cleave_wide', 'cleave_double', 'shield_wall', 'shield_twin', 'slam_after', 'slam_fissure'].map(id => [id, 'basic-weapons-art3/' + id])),
+    ...Object.fromEntries(['cleave_wide', 'cleave_double', 'shield_wall', 'shield_twin', 'slam_after', 'slam_fissure',
+      'arrow_pierce', 'arrow_split', 'shuriken_ricochet', 'shuriken_scatter'].map(id => [id, 'basic-weapons-art3/' + id])),
     icering: 'chrono-art8/base-ice-ring',
   };
   const sources = Object.fromEntries(Object.entries(files).map(([id, file]) => [

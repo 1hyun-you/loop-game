@@ -82,7 +82,7 @@ Object.assign(WEAPON_FIRE, {
   /* 수리검: 명중 시 다음 적으로 튕김 */
   shuriken(w, S) {
     const D = WEAPONS.shuriken.base, a0 = aimAng(), b = S.pierce + (hasRelic('chainstar') ? 2 : 0);
-    for (let i = 0; i < S.n; i++) shoot({ kind: 'star', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.3, sp: D.sp, r: 6, dmg: S.dmg, pierce: b, life: D.life, color: '#e8ecff', src: 'shuriken', bounce: true, ric: w.br === 'ricochet', scat: w.br === 'scatter' });
+    for (let i = 0; i < S.n; i++) shootBasicBranch(w, { kind: 'star', x: G.p.x, y: G.p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.3, sp: D.sp, r: 6, dmg: S.dmg, pierce: b, life: D.life, color: '#e8ecff', src: 'shuriken', bounce: true, ric: w.br === 'ricochet', scat: w.br === 'scatter' });
   },
   /* 폭탄 투척: 밀집 지점 착탄 */
   bomb(w, S) {
