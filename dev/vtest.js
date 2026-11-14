@@ -113,6 +113,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
     v49: runG.stats.v49 || null,
     v50: runG.stats.v50 || null,
     v51: runG.stats.v51 || null,
+    v52: runG.stats.v52 || null,
     j41: (S => ({ job2: S.job2, volleys: S.volleys, rages: S.rages, missiles: S.missiles, overheal: S.overheal, focusMax: S.focusMax, tps: S.tps, rewound: S.rewound, minions: runG.minions.length, turrets: runG.turrets.length, guards: runG.j41 ? runG.j41.gd.length : 0 }))(runG.stats),   // 0.41 직업 핵심 규칙 발동 집계
     cost: { wallSec: Math.round((VT.realNow() - wall0) / 100) / 10, stepMs: H.steps ? +(H.stepMs / H.steps).toFixed(3) : 0, renMs: H.renders ? +(H.renMs / H.renders).toFixed(2) : 0 },
     diag: { enemiesArr: runG.enemies.length, gems: runG.gems.length, fx: runG.fx.length, dom: document.getElementsByTagName('*').length },
