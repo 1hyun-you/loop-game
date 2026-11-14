@@ -281,7 +281,7 @@ applyFuse = function (id) {
   (G.stats.fuses = G.stats.fuses || []).push(`${id}:${j}:${Math.round(G.time)}`);
   if (fusedWs().length === 1) F43().kills0 = G.kills;
   banner('연성 · ' + w.fu.nm, F ? (F.mode === '직업' ? '직업 변화' : '무기 결합') + ` · ${WEAPONS[id].name} + ${WEAPONS[baseW().id].name}` : '', JOB_COL[j], 2.4);
-  toast(baseRetired() ? '모든 칸 연성 · 기본 무기 단독 발동 종료' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
+  toast(fusedWs().length >= slotCount() ? '모든 칸 연성 완료 · 기본 무기 계속 발동' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
   fuseMoment(j, w); sfx('ult'); shake(3, 0.3); recalc();
 };
 const _cardInfo44 = cardInfo;
@@ -396,5 +396,5 @@ cxFuse = function () {
   const jobs = JOB_ORDER.map(id => { const W = WEAPONS[FZ_SYMBOL[id]], T = FZ_TRIAL[id];
     const rows = F44[id].map(r => `<div><b>${esc(r[1])}</b><span>${esc(WEAPONS[r[0]].name)} · ${r[4] === '직업' ? '직업 변화' : '무기 결합'} · ${esc(r[2])} · ${esc(r[3])}</span></div>`).join('');
     return cxCard({ job: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name + ' · 연성 9종', tag: '기본 무기 ' + W.name, lines: [`<details class="acc"><summary>연성 무기 9종</summary><div class="cxg">${rows}</div></details>`, cxChips([['2차 전직 시련', esc(T.nm)]])] }); }).join('');
-  return '<p class="hint">전직 시 상징 무기가 기본 무기 칸으로 이동 · 무기 칸 무기와 기본 무기가 모두 Lv 5(각성 완료)면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 고유 연성 무기로 변신 (무기 결합 또는 직업 변화) · 모든 칸 연성 시 기본 무기 단독 발동 종료</p>' + jobs;
+  return '<p class="hint">전직 시 상징 무기가 기본 무기 칸으로 이동 · 무기 칸 무기와 기본 무기가 모두 Lv 5(각성 완료)면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 고유 연성 무기로 변신 (무기 결합 또는 직업 변화) · 모든 칸 연성 후에도 기본 무기 계속 발동</p>' + jobs;
 };

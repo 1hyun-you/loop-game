@@ -41,7 +41,7 @@ const baseW = () => G.p.weapons.find(w => w.base);
 const slotWs = () => G.p.weapons.filter(w => !w.base);
 const fusedWs = () => G.p.weapons.filter(w => w.fu);
 const slotCount = () => slotW() - (baseW() ? 1 : 0);
-const baseRetired = () => !!baseW() && fusedWs().length >= slotCount();
+const baseRetired = () => false;   // 0.50: 모든 칸 연성 후에도 기본 무기 계속 발동 (구: fusedWs().length >= slotCount())
 const awDone = w => !AWAKEN[w.id] || !!w.aw;
 function fuseCands() {
   const p = G.p, b = baseW(); if (!p.job || !b || b.lvl < AW43 || !awDone(b)) return [];
@@ -112,7 +112,7 @@ function applyFuse(id) {
   (G.stats.fuses = G.stats.fuses || []).push(`${id}:${j}:${Math.round(G.time)}`);
   if (fusedWs().length === 1) F43().kills0 = G.kills;
   banner('연성 · ' + w.fu.nm, `${JOB43[j].nm} · ${WEAPONS[id].name} + ${WEAPONS[baseW().id].name}`, JOB_COL[j], 2.4);
-  toast(baseRetired() ? '모든 칸 연성 · 기본 무기 단독 발동 종료' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
+  toast(fusedWs().length >= slotCount() ? '모든 칸 연성 완료 · 기본 무기 계속 발동' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
   fuseMoment(j, w); sfx('ult'); shake(3, 0.3); recalc();
 }
 /* 직업별 연성 순간 연출. 아트 로딩 실패 시 기존 연출 사용. */
@@ -295,5 +295,5 @@ const trialTxt = () => { const p = G.p, T = FZ_TRIAL[p.job], f = F42(), k = T.k 
 cxFuse = function () {
   const jobs = JOB_ORDER.map(id => { const X = JOB43[id], W = WEAPONS[FZ_SYMBOL[id]], T = FZ_TRIAL[id];
     return cxCard({ job: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name + ' · ' + X.nm, tag: '기본 무기 ' + W.name, lines: [`<b>${esc(X.ds)}</b>`, cxChips([['이름', esc(X.pre + ' + 무기 이름')], ['2차 전직 시련', esc(T.nm)]]), `<details class="acc"><summary>시련 조건</summary><div class="cxg"><div><b>${esc(T.nm)}</b><span>${esc(T.ds)} · 미달 시 전직 후 3페이즈 돌파로 개방</span></div></div></details>`] }); }).join('');
-  return '<p class="hint">전직 시 상징 무기가 기본 무기 칸으로 이동 · 무기 칸 무기와 기본 무기가 모두 Lv 5(각성 완료)면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 특화 연성 무기로 변신 (분기·각성 계승) · 모든 칸 연성 시 기본 무기 단독 발동 종료</p>' + jobs;
+  return '<p class="hint">전직 시 상징 무기가 기본 무기 칸으로 이동 · 무기 칸 무기와 기본 무기가 모두 Lv 5(각성 완료)면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 특화 연성 무기로 변신 (분기·각성 계승) · 모든 칸 연성 후에도 기본 무기 계속 발동</p>' + jobs;
 };
