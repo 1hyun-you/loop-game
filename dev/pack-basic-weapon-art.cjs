@@ -2,10 +2,14 @@ const fs = require('fs');
 const path = require('path');
 
 function packBasicWeaponArt() {
-  const dir = path.join(__dirname, '../assets/basic-weapons-art1');
-  const ids = ['cleave', 'shield', 'arrow', 'shuriken'];
-  const sources = Object.fromEntries(ids.map(id => [
-    id, 'data:image/webp;base64,' + fs.readFileSync(path.join(dir, id + '.webp')).toString('base64'),
+  const assets = path.join(__dirname, '../assets');
+  const files = {
+    ...Object.fromEntries(['cleave', 'shield', 'arrow', 'shuriken'].map(id => [id, 'basic-weapons-art1/' + id])),
+    ...Object.fromEntries(['trap', 'fireball', 'orb', 'beam'].map(id => [id, 'basic-weapons-art2/' + id])),
+    icering: 'chrono-art8/base-ice-ring',
+  };
+  const sources = Object.fromEntries(Object.entries(files).map(([id, file]) => [
+    id, 'data:image/webp;base64,' + fs.readFileSync(path.join(assets, file + '.webp')).toString('base64'),
   ]));
   return 'const BASIC_WEAPON_ART_DATA = ' + JSON.stringify(sources) + ';\n';
 }

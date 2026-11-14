@@ -165,7 +165,7 @@ function drawEngineerArtWorld(c, inView) {
   for (const trap of G.f44?.traps || []) {
     if (!trap.dead && engineerUsesTrapArt(trap) && inView(trap.x, trap.y, 36)) drawEngineerTrap(c, trap, reduced);
   }
-  if (!installationArtReady('trap') && engineerArtReady('base-trap')) {
+  if (!basicWeaponImage('trap') && !installationArtReady('trap') && engineerArtReady('base-trap')) {
     for (const trap of G.traps) {
       if (!trap.dead && trap.engineerBase && inView(trap.x, trap.y, 34)) drawEngineerTrap(c, trap, reduced, true);
     }

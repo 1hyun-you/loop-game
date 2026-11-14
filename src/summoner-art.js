@@ -20,9 +20,10 @@ const SUMMONER_LINE_SOURCES = new Set([
 ]);
 const summonerArtReady = id => !!SUMMONER_IMAGES[id]?.naturalWidth;
 const summonerUsesLineArt = line => line.L > 0 && SUMMONER_LINE_SOURCES.has(line.src) && summonerArtReady('base-beam');
+// drawArsenal's legacy beam guard. Player beams are painted below enemy warnings.
+const summonerUsesBaseArt = w => Boolean(w.bm);
 const summonerUsesTrapArt = trap => trap.tag === 'fu_summoner_trap' && summonerArtReady('grave');
 const summonerUsesProjectileArt = pr => summonerArtReady(SUMMONER_PROJECTILE_ART[pr.src]);
-const summonerUsesBaseArt = w => w.base && G.p.job === 'summoner' && summonerArtReady('base-beam');
 const summonerUsesArmedGhost = () => !!FIELD_ART.ready.ghost;
 
 const summonerDescents = new WeakMap();
@@ -118,14 +119,6 @@ function drawSummonerArtWorld(c, inView) {
   if (G.p.job !== 'summoner') return;
   const reduced = VFX.reduced.matches;
   c.save(); c.imageSmoothingEnabled = true;
-  for (const w of G.p.weapons) {
-    const b = w.bm;
-    if (!b || !summonerUsesBaseArt(w)) continue;
-    const fade = sumClamp(Math.min((b.dur - b.t) * 6, b.t * 18 + .15));
-    const reach = reduced ? 1 : sumClamp(.14 + b.t * 19);
-    for (const a of w.br === 'prism' ? [b.a - .3, b.a, b.a + .3] : [b.a])
-      summonerBeam(c, G.p.x, G.p.y, a, b.L, b.wd, reach, fade);
-  }
   for (const line of G.f44?.lines || []) {
     if (!SUMMONER_LINE_SOURCES.has(line.src) || !inView(line.x, line.y, line.L)) continue;
     const t = sumClamp(line.t / line.dur);

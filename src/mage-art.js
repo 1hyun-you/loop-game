@@ -104,7 +104,7 @@ function mageSpiritFilter(color) {
 function drawMageProjectiles(c, inView, reduced) {
   for (const pr of G.proj) {
     const id = mageProjectileArt(pr);
-    if (pr.dead || !mageArtReady(id) || !inView(pr.x, pr.y, pr.r + 40)) continue;
+    if (pr.dead || basicWeaponProjectile(pr) || !mageArtReady(id) || !inView(pr.x, pr.y, pr.r + 40)) continue;
     const a = Math.atan2(pr.vy, pr.vx), r = pr.r;
     const spin = id === 'ricochet-fireball', spirit = id === 'elemental-spirit';
     const spear = id === 'flame-spear';

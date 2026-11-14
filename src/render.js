@@ -164,9 +164,7 @@ function drawGrowthGround(c, inView) {
   if(p.exw&&p.exw.id==='mage')paintedAura(c,'frost',p.x,p.y,EXW.mage.R,.3);
   if(G.banner){const b=G.banner;paintedAura(c,'blessing',b.x,b.y,b.r*ultBannerR(),.45);drawSpriteC(c,'flag',0,b.x,b.y);}
   if(G.sanct){const S=G.sanct;paintedAura(c,'holy',S.x,S.y,S.r,.5);effectBoundary(c,S.x,S.y,S.r,'#fff2a8',.35);}
-  const ice = p.weapons.find(w => w.id === 'icering');   // 0.51: 상시 냉기 원판·경계선 표시 폐지 → 파동 발동 장면만(v51.js)
-  if(false&&ice&&ice.R&&!(ice.base&&p.job==='chrono'&&chronoArtReady('base-ice-ring'))){paintedAura(c,'frost',p.x,p.y,ice.R,.24);effectBoundary(c,p.x,p.y,ice.R,'#bee6ff',.22);}
-  for (const t of G.traps) { if (installationArtReady('trap') || !inView(t.x, t.y, 14) || (t.engineerBase && engineerArtReady('base-trap'))) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
+  for (const t of G.traps) { if (basicWeaponImage('trap') || installationArtReady('trap') || !inView(t.x, t.y, 14) || (t.engineerBase && engineerArtReady('base-trap'))) continue; c.fillStyle = t.arm > 0 ? '#6a5a3a' : '#c8a050'; c.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3, r = i % 2 ? t.r * 0.5 : t.r; c.lineTo(t.x + Math.cos(a) * r, t.y + Math.sin(a) * r); } c.closePath(); c.fill(); c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5; c.stroke(); }
   if (!installationArtReady('mine')) for (const m of G.mines) { if (inView(m.x, m.y, 10)) drawSpriteC(c, 'bomb', 0, m.x, m.y); }
   for (const ch of G.chests) {
     const b = Math.round(Math.sin(G.time * 5) * 1.5);

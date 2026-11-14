@@ -130,11 +130,6 @@ function drawChronoProjectiles(c, inView, reduced) {
 function drawChronoArtWorld(c, inView) {
   const reduced = VFX.reduced.matches;
   c.save(); c.imageSmoothingEnabled = true;
-  const p = G.p, base = p.job === 'chrono' && baseW();
-  if (base?.R && !baseRetired() && chronoArtReady('base-ice-ring')) {
-    const age = G.time - (CHRONO_BASE_FIRES.get(base) ?? -Infinity);
-    chronoIceRing(c, p.x, p.y, base.R, .25 + .25 * clamp(1 - age * 4, 0, 1), reduced ? 0 : G.time * .22);
-  }
   drawChronoCues(c, inView, reduced);
   for (const f of G.fx) {
     if (!chronoArtReady(f.chronoArt) || f.t >= f.dur) continue;

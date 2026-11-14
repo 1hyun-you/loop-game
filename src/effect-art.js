@@ -67,16 +67,16 @@ function basicWeaponImage(id) {
 }
 
 function basicWeaponIcon(id) {
-  return id === 'cleave' || id === 'shield' ? basicWeaponImage(id) : null;
+  return id === 'arrow' || id === 'shuriken' ? null : basicWeaponImage(id);
 }
 
 function drawBasicWeaponIcon(c, id, image, size) {
   const w = size * (id === 'cleave' ? 1.04 : .89);
-  const h = w * image.naturalHeight / image.naturalWidth;
+  const h = id === 'beam' ? size * .20 : w * image.naturalHeight / image.naturalWidth;
   c.save();
   c.imageSmoothingEnabled = true;
   c.translate(size / 2, size / 2);
-  if (id === 'cleave') c.rotate(-Math.PI / 4);
+  if (id === 'cleave' || id === 'beam') c.rotate(-Math.PI / 4);
   c.drawImage(image, -w / 2, -h / 2, w, h);
   c.restore();
 }
@@ -84,6 +84,8 @@ function drawBasicWeaponIcon(c, id, image, size) {
 function basicWeaponProjectile(pr) {
   if (pr.kind === 'arrow' && (pr.src === 'arrow' || pr.src === 'split')) return basicWeaponImage('arrow');
   if (pr.kind === 'star' && pr.src === 'shuriken') return basicWeaponImage('shuriken');
+  if (pr.kind === 'fire' && pr.src === 'fireball') return basicWeaponImage('fireball');
+  if (pr.kind === 'orb' && pr.src === 'mbolt') return basicWeaponImage('orb');
   return null;
 }
 
@@ -111,6 +113,8 @@ function drawBasicWeaponWorld(c, inView) {
   const reduced = VFX.reduced.matches;
   c.save();
   c.imageSmoothingEnabled = true;
+  drawBasicIce(c);
+  drawBasicBeams(c, reduced);
   for (const f of G.fx) {
     const image = basicWeaponImage(f.basicArt);
     if (!image || f.t >= f.dur || !inView(f.artX ?? f.x, f.artY ?? f.y, f.r || f.r1)) continue;
@@ -130,15 +134,81 @@ function drawBasicWeaponWorld(c, inView) {
   for (const pr of G.proj) {
     const image = basicWeaponProjectile(pr);
     if (!image || pr.dead || !inView(pr.x, pr.y, pr.r + 20)) continue;
-    const arrow = pr.kind === 'arrow';
-    const angle = arrow ? Math.atan2(pr.vy, pr.vx) : reduced ? 0 : pr.t * 16;
-    const w = pr.r * (arrow ? 4.8 : 2);
-    const h = w * image.naturalHeight / image.naturalWidth;
+    const arrow = pr.kind === 'arrow', fire = pr.kind === 'fire';
+    const angle = arrow || fire ? Math.atan2(pr.vy, pr.vx) : pr.kind === 'star' && !reduced ? pr.t * 16 : 0;
+    const ratio = image.naturalWidth / image.naturalHeight;
+    const w = pr.r * (arrow ? 4.8 : fire ? 2 * ratio : 2);
+    const h = w / ratio;
+    const anchor = arrow ? .77 : fire ? .65 : .5;
     c.save();
     c.translate(pr.x, pr.y);
     c.rotate(angle);
-    c.drawImage(image, -w * (arrow ? .77 : .5), -h / 2, w, h);
+    c.drawImage(image, -w * anchor, -h / 2, w, h);
     c.restore();
   }
   c.restore();
+}
+
+function drawBasicIce(c) {
+  const p = G.p;
+  const weapon = p.weapons.find(w => w.id === 'icering' && !w.fu);
+  if (!weapon?.R) return;
+  const chronoFire = CHRONO_BASE_FIRES.get(weapon);
+  const age = chronoFire === undefined ? wStats(weapon).cd - weapon.t : G.time - chronoFire;
+  if (age < 0 || age >= .25) return;
+  const k = age / .25, r = Math.max(1, weapon.R * (.24 + .76 * ease51(Math.min(1, k / .8))));
+  const opacity = .5 * Math.min(1, (1 - k) / .3);
+  const image = basicWeaponImage('icering');
+  c.save();
+  c.beginPath();
+  c.arc(p.x, p.y, r, 0, Math.PI * 2);
+  c.clip();
+  if (image) {
+    c.globalAlpha *= opacity;
+    c.drawImage(image, p.x - r, p.y - r, r * 2, r * 2);
+  } else {
+    const inner = Math.max(0, r - weapon.R * .28);
+    c.beginPath();
+    c.arc(p.x, p.y, r, 0, Math.PI * 2);
+    if (inner > 0) c.arc(p.x, p.y, inner, 0, Math.PI * 2, true);
+    c.clip('evenodd');
+    if (!paintedEffect(c, 'frost', p.x, p.y, r, opacity)) {
+      effectBoundary(c, p.x, p.y, (inner + r) / 2, '#bee6ff', opacity);
+    }
+  }
+  c.restore();
+}
+
+function drawBasicBeams(c, reduced) {
+  const p = G.p, image = basicWeaponImage('beam');
+  for (const w of p.weapons) {
+    const b = w.bm;
+    if (!b) continue;
+    const summoner = w.base && p.job === 'summoner';
+    const fade = clamp(Math.min((b.dur - b.t) * 6, summoner ? b.t * 18 + .15 : b.t * 12), 0, 1);
+    const reach = summoner && !reduced ? clamp(.14 + b.t * 19, 0, 1) : 1;
+    const angles = w.br === 'prism' ? [b.a - .3, b.a, b.a + .3] : [b.a];
+    for (const angle of angles) {
+      c.save();
+      c.translate(p.x, p.y);
+      c.rotate(angle);
+      if (image) {
+        c.globalAlpha *= fade;
+        if (reach < 1) {
+          c.beginPath();
+          c.rect(0, -b.wd, b.L * reach, b.wd * 2);
+          c.clip();
+        }
+        c.drawImage(image, 0, -b.wd, b.L, b.wd * 2);
+      } else {
+        c.globalAlpha = .55 * fade;
+        c.fillStyle = '#fff0a8';
+        c.fillRect(0, -b.wd, b.L * reach, b.wd * 2);
+        c.globalAlpha = fade;
+        c.fillStyle = '#fff';
+        c.fillRect(0, -b.wd * .25, b.L * reach, b.wd * .5);
+      }
+      c.restore();
+    }
+  }
 }

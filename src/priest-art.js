@@ -165,7 +165,7 @@ function drawPriestArtWorld(c, inView) {
     }
   }
   for (const pr of G.proj) {
-    if (!pr.dead && priestUsesProjectileArt(pr) && inView(pr.x, pr.y, pr.r + 30)) drawPriestProjectile(c, pr, reduced);
+    if (!pr.dead && !basicWeaponProjectile(pr) && priestUsesProjectileArt(pr) && inView(pr.x, pr.y, pr.r + 30)) drawPriestProjectile(c, pr, reduced);
   }
   if (G.p.job === 'priest' && G.f43 && fusedWs().length && priestArtReady('orb') &&
       !G.fx.some(f => f.priestArt === 'sword' && f.t < .12 && priestArtReady('sword'))) {
