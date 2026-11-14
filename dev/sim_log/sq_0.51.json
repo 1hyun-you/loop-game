@@ -1,0 +1,114 @@
+{
+ "v": "0.50",
+ "errs": [],
+ "res": {
+  "cases": [
+   {
+    "tag": "summoner2",
+    "idle": [
+     110,
+     110
+    ],
+    "ring": [
+     110,
+     160
+    ],
+    "spread": "2/2",
+    "elite": "1/2",
+    "eliteGap": null,
+    "near": true,
+    "boss": "2/2",
+    "far": 0
+   },
+   {
+    "tag": "summoner4",
+    "idle": [
+     154,
+     166,
+     135,
+     150
+    ],
+    "ring": [
+     122,
+     172
+    ],
+    "spread": "4/4",
+    "elite": "2/4",
+    "eliteGap": 50,
+    "near": true,
+    "boss": "4/4",
+    "far": 0
+   },
+   {
+    "tag": "summoner6",
+    "idle": [
+     169,
+     149,
+     158,
+     162,
+     163,
+     175
+    ],
+    "ring": [
+     134,
+     184
+    ],
+    "spread": "6/6",
+    "elite": "3/6",
+    "eliteGap": 12,
+    "near": true,
+    "boss": "6/6",
+    "far": 0
+   },
+   {
+    "tag": "druid2",
+    "idle": [
+     162,
+     114
+    ],
+    "ring": [
+     110,
+     160
+    ],
+    "spread": "2/2",
+    "elite": "1/2",
+    "eliteGap": null,
+    "near": true,
+    "boss": "2/2",
+    "far": 0
+   },
+   {
+    "tag": "smallElite10",
+    "on": 10,
+    "inReach": 10,
+    "minGap": 8,
+    "angSpread": 1.56
+   },
+   {
+    "tag": "teleport",
+    "before": 5,
+    "after": 5,
+    "fresh": 3,
+    "farOldStill": 2,
+    "drop": 3
+   },
+   {
+    "j": "summoner",
+    "units": 10,
+    "samples": 731,
+    "outPct": 0,
+    "overlapPct": 4.4,
+    "ringPct": 33.9
+   },
+   {
+    "j": "druid",
+    "units": 2,
+    "samples": 150,
+    "outPct": 0,
+    "overlapPct": 0,
+    "ringPct": 0
+   }
+  ],
+  "fails": []
+ }
+}

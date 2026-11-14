@@ -1,0 +1,771 @@
+{
+ "v": "0.44",
+ "errs": [],
+ "res": {
+  "combos": [
+   {
+    "j": "warrior",
+    "id": "shield",
+    "nm": "방패 돌격",
+    "fires": 6,
+    "dmg": 12536,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "slam",
+    "nm": "대지 가르기",
+    "fires": 16,
+    "dmg": 32138,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "arrow",
+    "nm": "거신 투창",
+    "fires": 8,
+    "dmg": 8219,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "trap",
+    "nm": "투지 각인",
+    "fires": 7,
+    "dmg": 3829,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "shuriken",
+    "nm": "회전 도끼",
+    "fires": 10,
+    "dmg": 6498,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "fireball",
+    "nm": "분노 폭발",
+    "fires": 8,
+    "dmg": 24700,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "icering",
+    "nm": "서릿발 함성",
+    "fires": 5,
+    "dmg": 16485,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "orb",
+    "nm": "전사의 혼",
+    "fires": 10,
+    "dmg": 5329,
+    "named": true
+   },
+   {
+    "j": "warrior",
+    "id": "beam",
+    "nm": "거신 일격선",
+    "fires": 15,
+    "dmg": 13202,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "cleave",
+    "nm": "그림자 습격",
+    "fires": 10,
+    "dmg": 19907,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "shield",
+    "nm": "연막탄",
+    "fires": 6,
+    "dmg": 25556,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "slam",
+    "nm": "낙하 수리검",
+    "fires": 12,
+    "dmg": 60610,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "arrow",
+    "nm": "관통 표창",
+    "fires": 13,
+    "dmg": 32360,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "trap",
+    "nm": "마름쇠 살포",
+    "fires": 12,
+    "dmg": 17166,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "fireball",
+    "nm": "화약 주머니",
+    "fires": 9,
+    "dmg": 32053,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "icering",
+    "nm": "그림자 결계",
+    "fires": 6,
+    "dmg": 15827,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "orb",
+    "nm": "추적 그림자검",
+    "fires": 12,
+    "dmg": 11434,
+    "named": true
+   },
+   {
+    "j": "rogue",
+    "id": "beam",
+    "nm": "그림자 선",
+    "fires": 10,
+    "dmg": 29069,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "cleave",
+    "nm": "근위 검열",
+    "fires": 7,
+    "dmg": 20244,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "slam",
+    "nm": "왕의 진격",
+    "fires": 7,
+    "dmg": 28531,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "arrow",
+    "nm": "궁수대 사격",
+    "fires": 7,
+    "dmg": 8082,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "trap",
+    "nm": "왕실 방책",
+    "fires": 5,
+    "dmg": 11331,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "shuriken",
+    "nm": "방패 투척",
+    "fires": 7,
+    "dmg": 14068,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "fireball",
+    "nm": "왕실 포격",
+    "fires": 5,
+    "dmg": 27069,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "icering",
+    "nm": "얼음 성벽",
+    "fires": 5,
+    "dmg": 22494,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "orb",
+    "nm": "전령 매",
+    "fires": 7,
+    "dmg": 5250,
+    "named": true
+   },
+   {
+    "j": "sovereign",
+    "id": "beam",
+    "nm": "군기 광휘",
+    "fires": 6,
+    "dmg": 15989,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "cleave",
+    "nm": "갈래 화살",
+    "fires": 13,
+    "dmg": 9206,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "shield",
+    "nm": "충격 화살",
+    "fires": 12,
+    "dmg": 17356,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "slam",
+    "nm": "낙하 화살",
+    "fires": 10,
+    "dmg": 51581,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "trap",
+    "nm": "사냥 덫",
+    "fires": 10,
+    "dmg": 19814,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "shuriken",
+    "nm": "도탄 화살",
+    "fires": 13,
+    "dmg": 8041,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "fireball",
+    "nm": "화염 화살",
+    "fires": 10,
+    "dmg": 32626,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "icering",
+    "nm": "서리 화살",
+    "fires": 10,
+    "dmg": 22373,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "orb",
+    "nm": "사냥 매",
+    "fires": 11,
+    "dmg": 4008,
+    "named": true
+   },
+   {
+    "j": "archer",
+    "id": "beam",
+    "nm": "충전 일격",
+    "fires": 11,
+    "dmg": 4417,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "cleave",
+    "nm": "회전 칼날 덫",
+    "fires": 9,
+    "dmg": 17704,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "shield",
+    "nm": "반발판",
+    "fires": 9,
+    "dmg": 18762,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "slam",
+    "nm": "압착 지뢰",
+    "fires": 10,
+    "dmg": 17015,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "arrow",
+    "nm": "석궁 포대",
+    "fires": 6,
+    "dmg": 3699,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "shuriken",
+    "nm": "톱날 덫",
+    "fires": 9,
+    "dmg": 4686,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "fireball",
+    "nm": "소이 지뢰",
+    "fires": 8,
+    "dmg": 29423,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "icering",
+    "nm": "냉각 덫",
+    "fires": 8,
+    "dmg": 13729,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "orb",
+    "nm": "추적 드론",
+    "fires": 9,
+    "dmg": 2304,
+    "named": true
+   },
+   {
+    "j": "engineer",
+    "id": "beam",
+    "nm": "레이저 울타리",
+    "fires": 8,
+    "dmg": 23750,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "cleave",
+    "nm": "멈춘 칼날",
+    "fires": 10,
+    "dmg": 10167,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "shield",
+    "nm": "시간 역류",
+    "fires": 8,
+    "dmg": 8282,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "slam",
+    "nm": "시간 붕괴",
+    "fires": 8,
+    "dmg": 17383,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "arrow",
+    "nm": "정지 화살",
+    "fires": 8,
+    "dmg": 4019,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "trap",
+    "nm": "시간 균열",
+    "fires": 8,
+    "dmg": 5862,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "shuriken",
+    "nm": "되감기 칼날",
+    "fires": 10,
+    "dmg": 5942,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "fireball",
+    "nm": "지연 폭발",
+    "fires": 7,
+    "dmg": 26178,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "orb",
+    "nm": "시계추 구체",
+    "fires": 9,
+    "dmg": 4320,
+    "named": true
+   },
+   {
+    "j": "chrono",
+    "id": "beam",
+    "nm": "시간 바늘",
+    "fires": 8,
+    "dmg": 4828,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "cleave",
+    "nm": "화염 채찍",
+    "fires": 3,
+    "dmg": 30729,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "shield",
+    "nm": "원소 보호막",
+    "fires": 3,
+    "dmg": 13336,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "slam",
+    "nm": "운석 낙하",
+    "fires": 3,
+    "dmg": 46656,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "arrow",
+    "nm": "화염 창",
+    "fires": 3,
+    "dmg": 9439,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "trap",
+    "nm": "화염 룬",
+    "fires": 3,
+    "dmg": 15909,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "shuriken",
+    "nm": "튕기는 불덩이",
+    "fires": 3,
+    "dmg": 18428,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "icering",
+    "nm": "증기 폭발",
+    "fires": 3,
+    "dmg": 10515,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "orb",
+    "nm": "원소 정령",
+    "fires": 3,
+    "dmg": 11655,
+    "named": true
+   },
+   {
+    "j": "mage",
+    "id": "beam",
+    "nm": "화염 광선",
+    "fires": 3,
+    "dmg": 21544,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "cleave",
+    "nm": "망령 낫",
+    "fires": 10,
+    "dmg": 5624,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "shield",
+    "nm": "영혼 결계",
+    "fires": 8,
+    "dmg": 7859,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "slam",
+    "nm": "망령 강림",
+    "fires": 9,
+    "dmg": 7514,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "arrow",
+    "nm": "영혼 화살",
+    "fires": 12,
+    "dmg": 5429,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "trap",
+    "nm": "원혼 무덤",
+    "fires": 8,
+    "dmg": 9221,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "shuriken",
+    "nm": "떠도는 영혼",
+    "fires": 9,
+    "dmg": 6968,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "fireball",
+    "nm": "도깨비불",
+    "fires": 8,
+    "dmg": 3520,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "icering",
+    "nm": "냉혼 파동",
+    "fires": 7,
+    "dmg": 10775,
+    "named": true
+   },
+   {
+    "j": "summoner",
+    "id": "orb",
+    "nm": "영혼 추적광",
+    "fires": 9,
+    "dmg": 7436,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "cleave",
+    "nm": "성검 심판",
+    "fires": 11,
+    "dmg": 12622,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "shield",
+    "nm": "성역 결계",
+    "fires": 10,
+    "dmg": 11635,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "slam",
+    "nm": "심판 낙하",
+    "fires": 10,
+    "dmg": 28479,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "arrow",
+    "nm": "빛의 화살",
+    "fires": 12,
+    "dmg": 7671,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "trap",
+    "nm": "축복 표지",
+    "fires": 9,
+    "dmg": 11849,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "shuriken",
+    "nm": "순례 구체",
+    "fires": 11,
+    "dmg": 5332,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "fireball",
+    "nm": "정화의 불",
+    "fires": 9,
+    "dmg": 17000,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "icering",
+    "nm": "고요의 후광",
+    "fires": 10,
+    "dmg": 14323,
+    "named": true
+   },
+   {
+    "j": "priest",
+    "id": "beam",
+    "nm": "천상 광선",
+    "fires": 9,
+    "dmg": 21841,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "cleave",
+    "nm": "곰발톱 강타",
+    "fires": 15,
+    "dmg": 18490,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "shield",
+    "nm": "바위 껍질",
+    "fires": 6,
+    "dmg": 14101,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "arrow",
+    "nm": "가시 분출",
+    "fires": 8,
+    "dmg": 13755,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "trap",
+    "nm": "덩굴 올무",
+    "fires": 6,
+    "dmg": 7493,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "shuriken",
+    "nm": "사냥 무리 도약",
+    "fires": 7,
+    "dmg": 5856,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "fireball",
+    "nm": "화산 강타",
+    "fires": 6,
+    "dmg": 16171,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "icering",
+    "nm": "서리 대지",
+    "fires": 6,
+    "dmg": 16878,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "orb",
+    "nm": "정령 반딧불",
+    "fires": 8,
+    "dmg": 11171,
+    "named": true
+   },
+   {
+    "j": "druid",
+    "id": "beam",
+    "nm": "대지 균열선",
+    "fires": 8,
+    "dmg": 13315,
+    "named": true
+   }
+  ],
+  "jobs": [
+   {
+    "j": "warrior",
+    "ratio": 0.97
+   },
+   {
+    "j": "rogue",
+    "ratio": 1.28
+   },
+   {
+    "j": "sovereign",
+    "ratio": 1.16
+   },
+   {
+    "j": "archer",
+    "ratio": 1.33
+   },
+   {
+    "j": "engineer",
+    "ratio": 1.39
+   },
+   {
+    "j": "chrono",
+    "ratio": 1
+   },
+   {
+    "j": "mage",
+    "ratio": 1.23
+   },
+   {
+    "j": "summoner",
+    "ratio": 1.31
+   },
+   {
+    "j": "priest",
+    "ratio": 1.25
+   },
+   {
+    "j": "druid",
+    "ratio": 1.01
+   }
+  ],
+  "fails": []
+ }
+}

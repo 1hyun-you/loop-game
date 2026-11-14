@@ -206,13 +206,16 @@ autoVec = function () {
     if (!inHz || ((J === 'warrior' || J === 'rogue') && hz > 0.9)) { S.ultStop++; return (AUTO.out = { x: 0, y: 0, m: 0 }); }
   }
   // 군주: 군기 안 유지 (회피·보석·목표 지점 이동 시 제외)
-  const b = J === 'sovereign' && G.banner ? G.banner : null, bR = b ? bannerR49() : 0, bOff = !b || inHz || (tg && (tg.k === 'goal' || (tg.k === 'gem' && dist2(tg.x, tg.y, b.x, b.y) < (bR + 80) ** 2)));   // 보석은 군기 근처(반경+80)만 예외
-  const hm = inHz ? null : home50(p, tg);
-  const melee = J === 'warrior' || J === 'rogue', god = STATE.dev.god, dk = inHz && !god ? 1.2 : melee && p.hp > p.maxHp * 0.5 ? 0.75 : 1, tk = inHz && !god ? 0.3 : 1;   // 무적 시험은 회피 가중 미적용(판 길이 측정 기준 유지)
+  // 0.51: 안전할 때(예고 없음·주변 위험 낮음·체력 50% 이상) 보석 수집 우선 — 위치 규칙 해제, 보석 끌림 2배, 위험 0.8배
+  const safe = !inHz && here < 3 && p.hp > p.maxHp * 0.5 && tg && tg.k === 'gem' && td < 220;   // 근처(220 안) 보석만 if (safe) S.safeGem = (S.safeGem || 0) + 1;
+  // 군주: 안전 수집은 군기 반경+140 안 보석만 (군기 안 경험치 1.3배 유지)
+  const b = J === 'sovereign' && G.banner ? G.banner : null, bR = b ? bannerR49() : 0, bOff = !b || inHz || (safe && dist2(tg.x, tg.y, b.x, b.y) < (bR + 140) ** 2) || (tg && (tg.k === 'goal' || (tg.k === 'gem' && dist2(tg.x, tg.y, b.x, b.y) < (bR + 80) ** 2)));   // 보석은 군기 근처(반경+80)만 예외
+  const hm = inHz || safe ? null : home50(p, tg);
+  const melee = J === 'warrior' || J === 'rogue', god = STATE.dev.god, dk = inHz && !god ? 1.2 : melee && p.hp > p.maxHp * 0.5 ? 0.75 : 1, tk = inHz && !god ? 0.3 : safe ? 2 : 1, dk2 = safe ? 0.8 : 1;   // 무적 시험은 회피 가중 미적용(판 길이 측정 기준 유지)
   let best = AUTO_DIRS[0], bs = -1e9;
   for (const dv of AUTO_DIRS) {
     const dg = autoDanger(p.x + dv.x * 30, p.y + dv.y * 30) + 0.6 * autoDanger(p.x + dv.x * 70, p.y + dv.y * 70);
-    let s = -dg * (STATE.dev.god ? 0.15 : 1) * dk + (tg ? (dv.x * tx + dv.y * ty) * (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk' ? 26 : 6) * pull * tk : 0) + (dv.x * AUTO.dir.x + dv.y * AUTO.dir.y) * 1.2;
+    let s = -dg * (STATE.dev.god ? 0.15 : 1) * dk * dk2 + (tg ? (dv.x * tx + dv.y * ty) * (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk' ? 26 : 6) * pull * tk : 0) + (dv.x * AUTO.dir.x + dv.y * AUTO.dir.y) * 1.2;
     if (b && !bOff) { const qx = p.x + dv.x * 30, qy = p.y + dv.y * 30, dq = Math.sqrt(dist2(qx, qy, b.x, b.y)); if (dq > bR * 0.85) s -= (tg && (tg.k === 'boss' || tg.k === 'gk') ? 8 : 14) * Math.min(2, 1 + (dq - bR * 0.85) / 40); }
     if (hm) { const hx = hm.x - p.x, hy = hm.y - p.y, hd = Math.hypot(hx, hy) || 1; if (hd > hm.d) s += (dv.x * hx + dv.y * hy) / hd * hm.w; }
     if (s > bs) { bs = s; best = dv; }
