@@ -127,7 +127,6 @@ function pgHead(title, backId, tabs, cur, attr = 'data-tab', extra = '') {
     ${tabs ? `<div class="ptabs" style="--n:${tabs.length};--i:${i}">${tabs.map(([k, nm]) => `<button class="${k === cur ? 'on' : ''}" ${attr}="${k}">${nm}</button>`).join('')}<i class="bar"></i></div>` : ''}</div>`;
 }
 /* 좌우 밀기 (0.37, 0.40부터 미사용·호환용) */
-function uiSwipe() { }
 /* 0.40 좌우 끌기 탭: 탭 화면을 가로로 이어 붙이고 손가락을 따라 이동, 놓으면 가까운 탭에 맞춰 정지
    구조: .layer.pager > .pgh(.ptabs) + .pgv > .pgtr > .pgp[data-pk] (탭마다 개별 세로 스크롤) */
 function uiPager(L, keys, cur, onCh) {
@@ -165,13 +164,6 @@ function uiPager(L, keys, cur, onCh) {
 /* 탭 화면 HTML: panes = [[키, 내용 HTML]] */
 const pgPanes = (panes, cur, wrap) => { const i = Math.max(0, panes.findIndex(p => p[0] === cur)); return `<div class="pgv"><div class="pgtr" style="--i:${i}">${panes.map(([k, h]) => `<div class="pgp${k === cur ? ' on' : ''}" data-pk="${k}"><div class="${wrap}">${h}</div></div>`).join('')}</div></div>`; };
 /* 탭 전환 후 내용 미끄러짐 (dir: 1 = 오른쪽 탭으로) */
-function uiSlide(sel, dir) {
-  if (!dir) return;
-  const b = UI.querySelector(sel); if (b) b.classList.add(dir > 0 ? 'sl-l' : 'sl-r');
-  const P = UI.querySelector('.ptabs'); if (!P) return;                       // 밑줄 표시기: 이전 탭 위치에서 이동
-  const i = +P.style.getPropertyValue('--i'); P.style.setProperty('--i', i - dir); void P.offsetWidth;
-  P.style.setProperty('--i', i);                                             // 강제 배치 후 값 변경 → 전환 발생 (rAF 미사용)
-}
 
 /* ---------- 화면 진입 전환·선택 카드 순차 등장 ---------- */
 const UIX = { sig: '', n: 0 };

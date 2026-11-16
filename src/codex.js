@@ -78,10 +78,6 @@ function cxPassive(id, seen) {
   return cxCard({ dim: !seen, id, col: CFG.colors.passive, ic: D.ic, nm: D.name, tag: '1→5단계', lines: [cxRange(D.desc(1), D.desc(5)), cxBr(BRANCHES[id], '3단계 분기')] });
 }
 const cxMat = id => `<span class="cxm">${icBox(WEAPONS[id] ? CFG.colors[WEAPONS[id].cat] : CFG.colors.passive, (WEAPONS[id] || PASSIVES[id]).ic, id, 'sm')}${esc(itemName(id))}</span>`;
-function cxRelic(id, seen) {
-  const R = RELICS[id];
-  return cxCard({ dim: !seen, col: '#ffd27a', ic: R.ic, nm: R.name, tag: '유물', lines: [`<div class="cxr">${cxMat(R.a)}<b>+</b>${cxMat(R.b)}</div>`, esc(R.ds)] });
-}
 function cxJob2(id) {
   return `<details class="acc"><summary>2차 전직 ${JOB2[id].length}종</summary><div class="cxg">${JOB2[id].map(o => `<div>${uiJob2Crest(id,o.k,'sm')}<b>${esc(o.nm)}</b><span>${esc(o.ds).replace(' · 궁극기: ', '</span><span class="u">궁극기 · ')}</span></div>`).join('')}</div></details>`;
 }
@@ -130,7 +126,7 @@ function showCodex(tab, back) {
     if (t === 'w') return '<p class="hint">수치: 1레벨 → 5레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
     if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', trait: k, ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
     if (t === 'x') return cxFuse();
-    if (t === 'j') return `<p class="hint">2차 전직은 눌러서 펼침 · 공통 선택지 ${esc(JOB2_STAT.nm)}(${esc(JOB2_STAT.ds)})</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
+    if (t === 'j') return `<p class="hint">2차 전직은 눌러서 펼침 · 전직 후 1페이즈 돌파 시 2종 중 선택</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
     if (t === 'e') return cxEnemies(S);
     if (t === 'f') return FRAGS.map((f, i) => { const v = (S.s.frags || []).includes(f.id); return cxCard({ lock: !v, hint: '해금 조건 · ' + f.cond, col: '#e8d8ff', ic: String(i + 1), nm: f.nm, lines: [esc(f.tx)] }); }).join('');
     if (t === 'u') return cxUnlock(S);

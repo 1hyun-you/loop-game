@@ -160,35 +160,6 @@ function drawReactScreen(c) {
 }
 
 /* 경험치 게이지 — 도트 틀(진보라 외곽·칸 눈금·위 밝은 줄), 보간 차오름, 가득 차기 직전 맥동, 레벨업 빛 흐름, 레벨 배지 */
-function pixelDrawXpGauge(c, top) {
-  const p = G.p, r = RC(), W = VIEW.cw, y0 = top - 6, H = 12, k = clamp(r.xpShow, 0, 1);
-  c.fillStyle = '#1b1626'; c.fillRect(0, y0, W, H);
-  c.fillStyle = '#2e2444'; c.fillRect(2, y0 + 2, W - 4, H - 4);
-  const fw = Math.round((W - 4) * k);
-  if (fw > 0) {
-    c.fillStyle = '#3aa0cc'; c.fillRect(2, y0 + 2, fw, H - 4);
-    c.fillStyle = '#6fd6f6'; c.fillRect(2, y0 + 2, fw, 4);
-    c.fillStyle = '#c4f2ff'; c.fillRect(2, y0 + 2, fw, 2);
-    c.fillStyle = 'rgba(27,22,38,0.35)'; for (let x = 18; x < fw + 2; x += 16) c.fillRect(x, y0 + 2, 1, H - 4);   // 칸 눈금
-    if (fw > 3) { c.fillStyle = '#ffffff'; c.fillRect(2 + fw - 2, y0 + 2, 2, H - 4); }                           // 끝 반짝임
-  }
-  if (k >= 0.9 && r.lvT <= 0) { c.globalAlpha = 0.12 + 0.14 * (0.5 + 0.5 * Math.sin(G.time * 12)); c.fillStyle = '#ffffff'; c.fillRect(2, y0 + 2, W - 4, H - 4); c.globalAlpha = 1; }   // 직전 맥동
-  if (r.lvT > 0) {                                                                                          // 레벨업 빛 흐름
-    const t = 1 - r.lvT / 0.6, sx = Math.round(-30 + (W + 60) * t);
-    c.save(); c.beginPath(); c.rect(2, y0 + 2, W - 4, H - 4); c.clip();
-    c.fillStyle = '#ffffff'; c.globalAlpha = 0.85; c.fillRect(sx, y0, 18, H); c.globalAlpha = 0.4; c.fillRect(sx - 14, y0, 14, H);
-    c.restore(); c.globalAlpha = 1;
-  }
-  c.fillStyle = r.lvT > 0 ? '#ffd24a' : '#5e44a0'; c.fillRect(0, y0, W, 1); c.fillRect(0, y0 + H - 1, W, 1);   // 외곽 위·아래 줄
-  /* 레벨 배지 */
-  const bx = 6, by = top + 8, bw = 48, bh = 22, pop = r.lvT > 0 ? Math.round(3 * Math.sin(Math.PI * (1 - r.lvT / 0.6))) : 0;
-  c.fillStyle = '#1b1626'; c.fillRect(bx - pop, by - pop, bw + pop * 2, bh + pop * 2);
-  c.fillStyle = r.lvT > 0 ? '#ffd24a' : '#8a6a2a'; c.fillRect(bx + 2 - pop, by + 2 - pop, bw - 4 + pop * 2, bh - 4 + pop * 2);
-  c.fillStyle = '#3a2e4a'; c.fillRect(bx + 4 - pop, by + 4 - pop, bw - 8 + pop * 2, bh - 8 + pop * 2);
-  c.fillStyle = '#1b1626'; c.fillRect(bx, by, 2, 2); c.fillRect(bx + bw - 2, by, 2, 2); c.fillRect(bx, by + bh - 2, 2, 2); c.fillRect(bx + bw - 2, by + bh - 2, 2, 2);   // 모서리 깎기
-  c.font = 'bold 13px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)';
-  const s = 'Lv ' + p.level; c.strokeText(s, bx + bw / 2, by + bh / 2 + 1); c.fillStyle = '#fff'; c.fillText(s, bx + bw / 2, by + bh / 2 + 1);
-}
 
 /* 회복 고기 그림 (도트) */
 SPR.meat = { px: 2, frames: [[

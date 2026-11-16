@@ -168,6 +168,7 @@ function updateTraps(dt) {
     if (!hit) continue;
     t.dead = true;
     explode(t.x, t.y, t.R, t.dmg, 'trap', '#e0c070', t.engineerBase ? 'base-trap' : undefined);
+    if (t.mine53) mineBlast53(t);                              // 0.53 기술자 지뢰: 폭발 후 감속
     if (t.snare) gridQuery(t.x, t.y, t.R, e => { if (!e.cmd && !e.boss) e.frz = 1.5; });
     if (hasRelic('firetrap')) addPool({ x: t.x, y: t.y, r: t.R * 0.8, dur: 2, every: 0.4, dmg: t.dmg * 0.2, src: 'firetrap', kind: 'fire' });
     if (t.cluster && !t.mini) for (let i = 0; i < 2; i++) { const a = rand(Math.PI * 2); G.later.push({ t: 0.05, f: () => G.traps.push({ x: t.x + Math.cos(a) * 40, y: t.y + Math.sin(a) * 40, r: 10, arm: 0.5, engineerBase: t.engineerBase, dmg: t.dmg * 0.5, R: t.R * 0.7, mini: true }) }); }

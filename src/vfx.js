@@ -133,12 +133,3 @@ function drawFx(c) {
   c.restore();
 }
 
-function drawVfxIce(c, x, y, r) {
-  if (vfxLite()) return;
-  c.save(); c.globalAlpha = 0.38; c.strokeStyle = '#b8d5dd'; c.lineWidth = 1;
-  for (let i = 0; i < 8; i++) {
-    const a = i * Math.PI / 4 + G.time * 0.12, px = x + Math.cos(a) * (r - 5), py = y + Math.sin(a) * (r - 5);
-    c.beginPath(); c.moveTo(px - 2, py); c.lineTo(px, py - 3); c.lineTo(px + 2, py); c.lineTo(px, py + 3); c.closePath(); c.stroke();
-  }
-  c.restore();
-}

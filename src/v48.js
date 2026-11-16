@@ -78,8 +78,6 @@ for (const id of Object.keys(WEAPON_FIRE)) {
 }
 const _fuseFire44_48 = fuseFire44;
 fuseFire44 = function (w) { return run48(kind48(w), _fuseFire44_48, this, arguments); };
-const _fuseFire43_48 = fuseFire43;
-fuseFire43 = function (w) { return run48(kind48(w), _fuseFire43_48, this, arguments); };
 const _damageEnemy48 = damageEnemy;
 damageEnemy = function () { DMG48++; try { return _damageEnemy48.apply(this, arguments); } finally { DMG48--; } };   // 피격·처치 반응 효과는 표지 제외
 

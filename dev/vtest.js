@@ -8,13 +8,14 @@
 // 0.11 확장: 수문장전 기록(gate·gk), --rotate(판마다 수문장 4인 순환 지정)
 // 0.13 확장: 대사창(talk) 자동 넘김 통과·진엔딩 화면 경유, 기록 조각·서사 상태·점수 기록, --preset release|post(저장 상태 주입), --tier n·--cond a,b (도전 옵션)
 // 0.26 확장: --job <직업 id> (전직 제단 후보 고정, 직업별 점검)
+// 0.53 확장: --jobs (판마다 10직업 순환 배정, 직업별 판 수 균등)
 // 0.4 확장: 시작 화면·일시정지(정지 확인·계속)·결과 화면 처음 화면 경유 흐름 점검, --god(무적 완주 시간 판독), --port(동시 실행)
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const PRESET = opt('preset', null), TIER = +opt('tier', 0), COND = opt('cond', ''); 
-const N = +(args[0] || 10), SPEED = +opt('speed', 8), CAP = +opt('cap', 1800), REN_EVERY = +opt('render', 2), GOD = args.includes('--god'), ROT = args.includes('--rotate'), DEMON = opt('demon', null), OFF = +opt('off', 0), PORT = +opt('port', 48232);
+const N = +(args[0] || 10), SPEED = +opt('speed', 8), CAP = +opt('cap', 1800), REN_EVERY = +opt('render', 2), GOD = args.includes('--god'), ROT = args.includes('--rotate'), DEMON = opt('demon', null), JROT = args.includes('--jobs') ? ['warrior', 'rogue', 'sovereign', 'archer', 'engineer', 'chrono', 'mage', 'summoner', 'priest', 'druid'] : null, OFF = +opt('off', 0), PORT = +opt('port', 48232);
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.resolve(ROOT, opt('out', 'dev/sim_log/runs.jsonl'));
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -49,7 +50,8 @@ const INIT = () => {
   };
 };
 
-const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
+const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon, jrot }) => {
+  if (jrot) window.__vtJob = jrot[idx % jrot.length];   // 0.53 --jobs: 판마다 직업 순환 배정 (10직업 균등)
   const VT = window.__VT, H = window.__H || (window.__H = { hooked: false });
   if (!H.hooked) {
     H.hooked = true;
@@ -113,7 +115,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
     v49: runG.stats.v49 || null,
     v50: runG.stats.v50 || null,
     v51: runG.stats.v51 || null,
-    v52: runG.stats.v52 || null,
+    v52: runG.stats.v52 || null, v53: runG.stats.v53 || null,
     j41: (S => ({ job2: S.job2, volleys: S.volleys, rages: S.rages, missiles: S.missiles, overheal: S.overheal, focusMax: S.focusMax, tps: S.tps, rewound: S.rewound, minions: runG.minions.length, turrets: runG.turrets.length, guards: runG.j41 ? runG.j41.gd.length : 0 }))(runG.stats),   // 0.41 직업 핵심 규칙 발동 집계
     cost: { wallSec: Math.round((VT.realNow() - wall0) / 100) / 10, stepMs: H.steps ? +(H.stepMs / H.steps).toFixed(3) : 0, renMs: H.renders ? +(H.renMs / H.renders).toFixed(2) : 0 },
     diag: { enemiesArr: runG.enemies.length, gems: runG.gems.length, fx: runG.fx.length, dom: document.getElementsByTagName('*').length },
@@ -145,7 +147,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon }) => {
   let prevRuns = 0;
   for (let i = 0; i < N; i++) {
     let rec;
-    try { rec = await p.evaluate(RUN_ONE, { cap: CAP, speed: SPEED, renEvery: REN_EVERY, idx: i + OFF, god: GOD, rot: ROT, demon: DEMON }); }
+    try { rec = await p.evaluate(RUN_ONE, { cap: CAP, speed: SPEED, renEvery: REN_EVERY, idx: i + OFF, god: GOD, rot: ROT, demon: DEMON, jrot: JROT }); }
     catch (e) { rec = { fatal: String(e.message).slice(0, 300) }; await p.goto(`http://127.0.0.1:${PORT}/`); }
     rec.idx = i; rec.pageErr = perr.splice(0);
     if (!rec.fatal) { rec.saveOk = rec.saveRuns === prevRuns + 1; prevRuns = rec.saveRuns || prevRuns; }

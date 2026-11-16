@@ -27,14 +27,3 @@ function guideUpdate(dt) {
   const S = guideSeen();
   for (const g of GUIDE) if (!S.has(g.id) && g.when()) { GD.cur = g; GD.t = 0; guideMark(g.id); (G.stats.guide || (G.stats.guide = [])).push(g.id); break; }
 }
-function pixelDrawGuide(c) {
-  const g = GD.cur; if (!g || STATE.mode !== 'play') return; const tx = typeof g.tx === 'function' ? g.tx() : g.tx;
-  const W = VIEW.cw, a = Math.min(1, GD.t * 4, (GD.dur - GD.t) * 3), y = VIEW.ch * 0.7;
-  c.save(); c.globalAlpha = a; c.font = 'bold 13px system-ui, Galmuri11, sans-serif';
-  const tw = Math.min(W - 32, c.measureText(tx).width + 28), h = 34, x = (W - tw) / 2;
-  c.fillStyle = 'rgba(20,16,32,0.86)'; c.fillRect(x, y, tw, h);
-  c.strokeStyle = '#ffe08a'; c.lineWidth = 2; c.strokeRect(x + 1, y + 1, tw - 2, h - 2);
-  c.fillStyle = '#ffe08a'; c.fillRect(x + 4, y + 4, 4, 4); c.fillRect(x + tw - 8, y + 4, 4, 4); c.fillRect(x + 4, y + h - 8, 4, 4); c.fillRect(x + tw - 8, y + h - 8, 4, 4);   // 도트 모서리
-  c.fillStyle = '#fff6d8'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(tx, W / 2, y + h / 2 + 1, tw - 20);
-  c.restore();
-}

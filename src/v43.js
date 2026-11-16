@@ -12,7 +12,6 @@
    • 연성 연출·뼈대 외형은 임시 도형 (최종본 아님, 시험 확인 후 GPT 요청 대상)
    ============================================================ */
 const W43 = ['cleave', 'shield', 'slam', 'arrow', 'shuriken', 'trap', 'fireball', 'icering', 'orb', 'beam'];
-const W43_OUT = WEAPON_ORDER.filter(id => !W43.includes(id));
 WEAPON_ORDER.splice(0, WEAPON_ORDER.length, ...WEAPON_ORDER.filter(id => W43.includes(id)));
 START_POOL.splice(0, START_POOL.length, 'cleave', 'shield', 'arrow', 'shuriken', 'fireball', 'orb');
 CFG.weaponMax = 5;
@@ -136,99 +135,10 @@ function fuseMoment(j, w) {
 
 /* ---------- 연성 무기 발동: 직업 뼈대 × 짝 무기 ---------- */
 const fireAs = (w, S, k, x, y, ex) => { const S2 = Object.assign({}, S, { dmg: S.dmg * k }); if (ex) ex(S2); return x == null ? WEAPON_FIRE[w.id](w, S2) : atPos(x, y, () => WEAPON_FIRE[w.id](w, S2)); };
-function fuseFire43(w, S) {
-  const p = G.p, j = w.fu.job, col = JOB_COL[j], f = F43(); f.fires[j] = (f.fires[j] || 0) + 1; G.stats.fuseFires = (G.stats.fuseFires || 0) + 1;
-  if (j === 'warrior') {
-    const k = 1.8 + 0.4 * (p.fury || 0) / 100;
-    fx({ kind: 'ring', x: p.x, y: p.y, r0: 20, r1: 70 * k, dur: 0.3, color: col, follow: true });
-    return fireAs(w, S, 1.5, null, null, s => { s.area *= k; });
-  }
-  if (j === 'rogue') {
-    const t = f.trail, a = t[Math.min(t.length - 1, 5)] || p, b = t[Math.min(t.length - 1, 12)] || p, B = baseW();
-    fx({ kind: 'pop', x: a.x, y: a.y, r: 13, color: '#203040', dur: 0.22 }); fx({ kind: 'pop', x: b.x, y: b.y, r: 13, color: '#203040', dur: 0.22 });
-    const r = fireAs(w, S, 1.45, a.x, a.y);
-    if (B) G.later.push({ t: 0.1, f: () => { if (!G.result && p.weapons.includes(w)) fireAs(B, wStats(B), 0.9, b.x, b.y); } });
-    return r;
-  }
-  if (j === 'sovereign') {
-    const J = J41(), pts = G.banner && J.gd.length ? J.gd.map(g => ({ x: g.x, y: g.y })) : formation(), k = 1.6 / pts.length;
-    let r = false; for (const q of pts) { fx({ kind: 'pop', x: q.x, y: q.y, r: 10, color: col, dur: 0.25 }); if (fireAs(w, S, k, q.x, q.y) !== false) r = true; }
-    return r;
-  }
-  if (j === 'archer') {
-    let prev = p, ts = []; const seen = new Set();
-    for (let i = 0; i < 3; i++) { let e = null, bs = 1e18; gridQuery(prev.x, prev.y, i ? 260 : 460, q => { if (q.dead || seen.has(q)) return; const s = dist2(prev.x, prev.y, q.x, q.y) / (1 + (q.mk || 0)); if (s < bs) { bs = s; e = q; } }); if (!e) break; seen.add(e); ts.push(e); prev = e; }
-    if (!ts.length) return false;
-    let px = p.x, py = p.y;
-    ts.forEach((e, i) => { const x0 = px, y0 = py; px = e.x; py = e.y; G.later.push({ t: i * 0.07, f: () => { if (G.result || !p.weapons.includes(w)) return; fx({ kind: 'zap', x: x0, y: y0, x2: e.x, y2: e.y, dur: 0.18 }); fireAs(w, S, 0.5, e.x, e.y); if (!e.dead) e.mk = (e.mk || 0) + 1; } }); });
-    return true;
-  }
-  if (j === 'engineer') {
-    let bt = f.bat; if (!bt || dist2(bt.x, bt.y, p.x, p.y) > 300 * 300) { bt = f.bat = { x: p.x + p.face.x * 40, y: p.y + p.face.y * 40, n: 0 }; fx({ kind: 'ring', x: bt.x, y: bt.y, r0: 30, r1: 6, dur: 0.4, color: col }); }
-    const r = fireAs(w, S, 1.25, bt.x, bt.y); if (r !== false) { bt.n++; bt.k = 0.25; if (bt.n % 6 === 0) missileVolley(bt, 3); }
-    return r;
-  }
-  if (j === 'chrono') {
-    const x = p.x, y = p.y, r = fireAs(w, S, 1.2);
-    if (r !== false) G.later.push({ t: 1.0, f: () => { if (G.result || !p.weapons.includes(w)) return; f.echoes++; fx({ kind: 'ring', x, y, r0: 50, r1: 8, dur: 0.35, color: col }); G.echo43 = true; try { fireAs(w, S, 0.85, x, y); } finally { G.echo43 = false; } } });
-    return r;
-  }
-  if (j === 'summoner') {
-    let r = false; for (const m of f.wr) { if (fireAs(w, S, 0.6 / V41.sum.self, m.x, m.y) !== false) { r = true; fx({ kind: 'pop', x: m.x, y: m.y, r: 10, color: col, dur: 0.2 }); } }
-    return r;
-  }
-  if (j === 'priest') { const q = relicPos(); fx({ kind: 'pop', x: q.x, y: q.y, r: 12, color: col, dur: 0.25 }); return fireAs(w, S, 1.45, q.x, q.y); }
-  if (j === 'druid') {
-    const pets = G.pets || [], bear = pets.find(m => m.kind === 'bear'), wolves = pets.filter(m => m.kind === 'wolf');
-    if (!bear && !wolves.length) return fireAs(w, S, 1.4);
-    let r = false;
-    if (bear) { fx({ kind: 'ring', x: bear.x, y: bear.y, r0: 8, r1: 60, dur: 0.3, color: col }); if (fireAs(w, S, 1.05, bear.x, bear.y) !== false) r = true; }
-    for (const m of wolves.slice(0, 2)) { const e = nearestEnemy(m.x, m.y, 260); if (!e) continue; fx({ kind: 'zap', x: m.x, y: m.y, x2: e.x, y2: e.y, dur: 0.2 }); m.x += (e.x - m.x) * 0.7; m.y += (e.y - m.y) * 0.7; if (fireAs(w, S, 0.6, m.x, m.y) !== false) r = true; }
-    return r;
-  }
-  return fireAs(w, S, 1);   // 마법사는 동시 시전에서 처리
-}
 function formation() { const p = G.p, fx0 = p.face.x || 1, fy0 = p.face.y || 0; return [[50, 0], [30, 36], [30, -36]].map(([a, b]) => ({ x: p.x + fx0 * a - fy0 * b, y: p.y + fy0 * a + fx0 * b })); }
 function relicPos() { const p = G.p; return { x: p.x, y: p.y - 46 + Math.sin(G.time * 3) * 4 }; }
 
 /* ---------- 무기 발동 갱신 (v41 기반 + 연성·기본 무기) ---------- */
-updateWeapons = function (dt) {
-  const p = G.p, J = p.job && J41(), mage = p.job === 'mage', eng = p.job === 'engineer' ? engSlots() : null, ret = baseRetired();
-  let ti = 0;
-  for (const w of p.weapons) {
-    const S = wStats(w);
-    if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
-    if (mage) continue;
-    if (w.base && ret) continue;
-    w.t -= dt * ultCdMul();
-    if (w.t <= 0) {
-      let r;
-      if (w.fu) r = fuseFire43(w, S);
-      else if (eng && eng.includes(w) && G.turrets.length) { const t = G.turrets[ti++ % G.turrets.length]; r = atPos(t.x, t.y, () => WEAPON_FIRE[w.id](w, scaleS(S, V41.eng.slotDmg))); if (r !== false) fx({ kind: 'ring', x: t.x, y: t.y, r0: 4, r1: 20, dur: 0.2, color: '#ffd890' }); }
-      else r = WEAPON_FIRE[w.id](w, S);
-      w.t = r === false ? 0.25 : S.cd * (w.fu && JOB43[w.fu.job].cd || 1); if (r !== false) rcFire(w);
-      if (r !== false && p.job === 'rogue' && !DUR41[w.id] && !w.fu) rogueEcho(w, S);
-      if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;
-    }
-  }
-  if (mage) mageVolley(dt, J);
-  updateTraps(dt); updateArsenal(dt); fuseTick(dt);
-  for (const L of G.later) { L.t -= dt; if (L.t <= 0) { L.done = true; L.f(); } }
-  if (G.later.length) G.later = G.later.filter(L => !L.done);
-};
-mageVolley = function (dt, J) {
-  const C = V41.mag, p = G.p;
-  J.vol -= dt * ultCdMul(); if (J.vol > 0) return;
-  J.vol = J.volP = (p.job2 === 'archmage' ? C.cdB : C.cd) * Math.max(C.cdMin, p.mod.cd); J.volN++;
-  const ret = baseRetired(), list = p.weapons.filter(w => w.id !== 'spin' && !(w.base && ret));
-  list.forEach((w, i) => G.later.push({ t: i * C.gap, f: () => {
-    if (G.result || !p.weapons.includes(w)) return;
-    const S = wStats(w), k = Math.max(C.dmg, J.volP / S.cd * C.fair);
-    if (w.fu) { const f = F43(); f.fires.mage = (f.fires.mage || 0) + 1; G.stats.fuseFires = (G.stats.fuseFires || 0) + 1; for (let n = 0; n < 6; n++) G.later.push({ t: 0.12 + n * 0.09, f: () => { if (G.result || !p.weapons.includes(w)) return; const a = G.time * 4 + n * Math.PI / 3, x = p.x + Math.cos(a) * 46, y = p.y + Math.sin(a) * 46; J.volN++; fx({ kind: 'pop', x, y, r: 9, color: ['#ff9a4a', '#bfe8ff', '#fff27a'][n % 3], dur: 0.2 }); fireAs(w, S, k * 0.3, x, y); } }); rcFire(w); return; }
-    const r = WEAPON_FIRE[w.id](w, scaleS(S, k)); if (r !== false) rcFire(w);
-  } }));
-  if (list.length) { fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 70, dur: 0.3, color: '#e8b0ff', follow: true }); G.stats.volleys = (G.stats.volleys || 0) + 1; }
-};
 /* 뼈대 보조 개체 갱신: 도적 궤적 · 소환사 망령 무장 · 기술자 포대 */
 function fuseTick(dt) {
   const p = G.p, f = G.f43; if (!f || !p.job) return;
@@ -289,7 +199,6 @@ altarCheck = function () {
   const was = G.job2Ready; _altarCheck43();
   const p = G.p; if (p.job && !p.job2 && !F42().done && G.ph.i < p.jobAt + 3) G.job2Ready = was;   // 시련 미완수: 전직 후 3페이즈 돌파 시 대체 개방
 };
-const trialTxt = () => { const p = G.p, T = FZ_TRIAL[p.job], f = F42(), k = T.k === 'hurt' ? 100 : 1; return f.done ? '완수 · 2차 전직 개방' : `${T.ds} · 진행 ${Math.min(Math.round(fzProg() * k), Math.round(T.n * k))}/${Math.round(T.n * k)}${T.k === 'hurt' ? '%' : ''}`; };
 
 /* ---------- 도감 연성 탭 ---------- */
 cxFuse = function () {

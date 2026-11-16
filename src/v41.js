@@ -69,41 +69,12 @@ wStats = function (w) {
 };
 
 /* ---------- 무기 발동: 도적 재현 · 기술자 포탑 칸 · 마법사 동시 시전 · 소환사 망령 ---------- */
-updateWeapons = function (dt) {
-  const p = G.p, J = p.job && J41(), mage = p.job === 'mage', eng = p.job === 'engineer' ? engSlots() : null;
-  let ti = 0;
-  for (const w of p.weapons) {
-    const S = wStats(w);
-    if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
-    if (mage) continue;
-    w.t -= dt * ultCdMul();
-    if (w.t <= 0) {
-      let r;
-      if (eng && eng.includes(w) && G.turrets.length) { const t = G.turrets[ti++ % G.turrets.length]; r = atPos(t.x, t.y, () => WEAPON_FIRE[w.id](w, scaleS(S, V41.eng.slotDmg))); if (r !== false) fx({ kind: 'ring', x: t.x, y: t.y, r0: 4, r1: 20, dur: 0.2, color: '#ffd890' }); }
-      else r = WEAPON_FIRE[w.id](w, S);
-      w.t = r === false ? 0.25 : S.cd; if (r !== false) rcFire(w);
-      if (r !== false && p.job === 'rogue' && !DUR41[w.id]) rogueEcho(w, S);
-      if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;
-    }
-  }
-  if (mage) mageVolley(dt, J);
-  updateTraps(dt); updateArsenal(dt);
-  for (const L of G.later) { L.t -= dt; if (L.t <= 0) { L.done = true; L.f(); } }
-  if (G.later.length) G.later = G.later.filter(L => !L.done);
-};
 function rogueEcho(w, S) {
   const C = V41.rog, p = G.p;
   G.later.push({ t: C.echoT, f: () => { if (G.result || !p.weapons.includes(w)) return; fx({ kind: 'pop', x: p.x, y: p.y, r: 14, color: '#203040', dur: 0.2 }); WEAPON_FIRE[w.id](w, scaleS(S, C.echo)); } });
   if (p.job2 === 'dancer') G.later.push({ t: C.cloneT, f: () => { const c = J41().clone; if (G.result || !c || !p.weapons.includes(w)) return; atPos(c.x, c.y, () => WEAPON_FIRE[w.id](w, scaleS(S, C.clone))); markSummonAttack(c, Math.atan2(p.face.y, p.face.x)); fx({ kind: 'pop', x: c.x, y: c.y, r: 12, color: '#7fe0c0', dur: 0.2 }); } });
 }
-function mageVolley(dt, J) {
-  const C = V41.mag, p = G.p;
-  J.vol -= dt * ultCdMul(); if (J.vol > 0) return;
-  J.vol = J.volP = (p.job2 === 'archmage' ? C.cdB : C.cd) * Math.max(C.cdMin, p.mod.cd); J.volN++;
-  const list = p.weapons.filter(w => w.id !== 'spin');
-  list.forEach((w, i) => G.later.push({ t: i * C.gap, f: () => { if (G.result || !p.weapons.includes(w)) return; const S = wStats(w), r = WEAPON_FIRE[w.id](w, scaleS(S, Math.max(C.dmg, J.volP / S.cd * C.fair))); /* 재사용이 짧은 무기는 주기 손실분 보전 */ if (r !== false) rcFire(w); } }));
-  if (list.length) { fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 70, dur: 0.3, color: '#e8b0ff', follow: true }); G.stats.volleys = (G.stats.volleys || 0) + 1; }
-}
+function mageVolley(dt, J) { }   // 0.44 정의가 대체 (0.53 구판 본문 제거)
 /* 마법사 속성: 무기(피해원)마다 다른 속성, 동시 시전마다 순환 → 동시 명중 시 원소 반응 */
 const SRC41 = Object.keys(SRC_CAT);
 const _onEnemyHit41 = onEnemyHit;

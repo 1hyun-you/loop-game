@@ -363,12 +363,6 @@ function spriteMul(e) { const base = ENEMIES[e.type]; if (e.gk || !base || e.sha
 
 /* 지형 타일 */
 const TILE_CACHE = new Map();
-function getTile(i) {
-  const t = texelPx(2), key = i + '|' + t;
-  let s = TILE_CACHE.get(key);
-  if (!s) { s = bakeGrid(TILES[i], Object.assign({}, TILE_PAL, { y: DOT_PAL.y }), t, false, 'n', null); TILE_CACHE.set(key, s); }
-  return s;
-}
 
 /* ============================================================
    0.20 도트 전량 — 수문장 3인·마왕·특수 개체·보석·지면 물체·무기·투사체

@@ -1,7 +1,6 @@
 /* ============================================================
    그리기 — 0.19 도트 적용 시작(주인공·잡몹 4종·바르간·지형), 나머지 도형은 0.20 교체
    ============================================================ */
-const PAL = [GROUND_BASE];   // 들판 바탕 (0.19 도트 타일)
 /* 페이즈별 지형 전환 (0.20): 예고 구간부터 다음 페이즈 지형으로 2초 교차 전환 */
 const TER = { cur: 'field', prev: null, k: 1 };
 function terrainTarget() {
@@ -248,69 +247,8 @@ function drawJoy(c) {
   c.fillStyle = 'rgba(255,255,255,0.45)'; c.beginPath(); c.arc(INPUT.ox + INPUT.dx * INPUT.mag * R, INPUT.oy + INPUT.dy * INPUT.mag * R, 22, 0, 7); c.fill();
 }
 /* 상단 집중형 정보 배치 */
-function pixelDrawHUD(c) {
-  const p = G.p, W = VIEW.cw, top = VIEW.sat + 6;
-  drawXpGauge(c, top);                                      // 도트 틀 경험치 게이지·레벨 배지 (0.28)
-  c.font = 'bold 14px system-ui, Galmuri11, sans-serif'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.fillStyle = '#fff';
-  const txt = (s, x, y, al) => { c.textAlign = al; c.strokeText(s, x, y); c.fillText(s, x, y); };
-  if (p.job) { c.font = 'bold 12px system-ui, Galmuri11, sans-serif'; c.fillStyle = '#d9a8ff'; txt(JOBS[p.job].name + (p.job2 ? ' · ' + JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2).nm : '') + (p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : ''), 12, top + 38, 'left'); c.fillStyle = '#fff'; c.font = 'bold 14px system-ui, Galmuri11, sans-serif'; }
-  c.font = 'bold 18px system-ui, Galmuri11, sans-serif'; txt(fmtTime(G.time), W / 2, top + 20, 'center');
-  const P = curPhase(), ph = G.ph;                          // 페이즈 이름·진행도 (0.3)
-  c.font = 'bold 12px system-ui, Galmuri11, sans-serif'; c.fillStyle = '#ffe08a';
-  if (ph.ambush) c.fillStyle = '#ff9a7a';
-  txt(P ? `${ph.i + 1}/${ph.order.length} ${curPhaseName()}` : (G.result === 'clear' ? '돌파' : '이동 중'), W / 2, top + 38, 'center');
-  if (P) { const bw = 120, acc = ph.accT > 0; c.fillStyle = 'rgba(0,0,0,0.5)'; c.fillRect(W / 2 - bw / 2, top + 47, bw, 4); c.fillStyle = acc ? '#ffffff' : '#ffe08a'; c.fillRect(W / 2 - bw / 2, top + 47, bw * clamp(phaseProgress(), 0, 1), 4);
-    if (acc) { c.font = 'bold 10px system-ui, Galmuri11, sans-serif'; c.fillStyle = '#fff6c8'; txt('▶▶', W / 2 + bw / 2 + 12, top + 49, 'center'); } }   // 처치 가속 표시 (0.24)
-  c.fillStyle = '#fff';
-  c.font = 'bold 14px system-ui, Galmuri11, sans-serif'; txt('처치 ' + G.kills, W - 56, top + 20, 'right');
-  if (STATE.dev.fps && STATE.mode !== 'result') { c.font = '12px ui-monospace,monospace'; txt(Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount() + (() => { const P = perfStat(); return P ? ` · 평균 ${P.avg} · 하위1% ${P.low1}` : ''; })(), W - 12, isBossPhase() ? top + 128 : top + 96, 'right'); }
-  drawSlots(c, top + 58);
-  drawBossBar(c, top + 92, txt);                            // 수문장 체력 (0.11)
-  let ty = VIEW.ch * 0.3;
-  for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); c.font = 'bold 16px system-ui, Galmuri11, sans-serif'; c.fillStyle = t.color; txt(t.text, W / 2, ty, 'center'); ty += 26; c.fillStyle = '#fff'; }
-  c.globalAlpha = 1;
-  drawGuide(c);                                             // 첫 판 안내 (0.31)
-}
 
 /* 상단 아래 아이콘 줄: 무기 5칸 · 보조 효과 5칸 */
-function pixelDrawSlots(c, y) {
-  const p = G.p, S = 24, gap = 4, W = VIEW.cw;
-  const row = (list, n, x0, colorOf, icOf) => {
-    for (let i = 0; i < n; i++) {
-      const x = x0 + i * (S + gap), it = list[i];
-      const icv = it && iconCanvas(it.id, Math.max(1, Math.round(1.4 * VIEW.dpr)));   // 0.36 도트 아이콘
-      c.fillStyle = it ? (icv ? shadeHex(colorOf(it), 0.42) : colorOf(it)) : 'rgba(0,0,0,0.35)'; c.fillRect(x, y, S, S);
-      c.strokeStyle = it && icv ? colorOf(it) : 'rgba(0,0,0,0.55)'; c.lineWidth = 1.5; c.strokeRect(x + 0.75, y + 0.75, S - 1.5, S - 1.5);
-      if (!it) continue;
-      if (icv) { const iw = icv.width / VIEW.dpr, ih = icv.height / VIEW.dpr; c.imageSmoothingEnabled = false; c.drawImage(icv, Math.round(x + (S - iw) / 2), Math.round(y + (S - ih) / 2), iw, ih); }
-      else { c.fillStyle = '#14121c'; c.font = 'bold 13px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(icOf(it), x + S / 2, y + S / 2 - 1); }
-      c.font = 'bold 9px system-ui, Galmuri11, sans-serif'; c.textAlign = 'right'; c.textBaseline = 'alphabetic'; c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,0,0,0.8)';
-      const lv = String(it.lvl); c.strokeText(lv, x + S - 1, y + S - 1); c.fillStyle = '#fff'; c.fillText(lv, x + S - 1, y + S - 1);
-    }
-  };
-  const rowW = 5 * S + 4 * gap, px0 = W - 12 - rowW;
-  row(p.weapons, slotW(), 12, w => CFG.colors[WEAPONS[w.id].cat], w => WEAPONS[w.id].ic);
-  p.weapons.forEach((w, i) => { const jt = jobTint(WEAPONS[w.id].cat); if (!jt) return; const x = 12 + i * (S + gap); c.strokeStyle = jt; c.lineWidth = 2.5; c.strokeRect(x + 1.25, y + 1.25, S - 2.5, S - 2.5); c.fillStyle = jt; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 8, y); c.lineTo(x, y + 8); c.closePath(); c.fill(); });   // 직업 변환 무기 표시 (0.26)
-  row(p.passives, CFG.slots.passive, px0, () => CFG.colors.passive, ps => PASSIVES[ps.id].ic);
-  // 0.25 주기형 효과 재사용 표시: 시계 방향으로 채워지는 원형 (숫자 없음)
-  const T = G.tm, pie = (x, y, r, k) => { c.fillStyle = 'rgba(10,8,16,0.55)'; c.beginPath(); c.moveTo(x, y); c.arc(x, y, r, -Math.PI / 2 + Math.PI * 2 * clamp(k, 0, 1), Math.PI * 1.5); c.closePath(); c.fill(); c.strokeStyle = k >= 1 ? '#fff6c8' : 'rgba(255,255,255,0.75)'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(k, 0, 1)); c.stroke(); };
-  const pcd = { magnet: ['vacuum', () => 1 - (T.vac == null ? 30 : T.vac) / 30], vit: ['shield', () => p.shield ? 1 : 1 - T.shield / 12], haste: ['charge', () => 1 - T.charge / 8] };
-  p.passives.forEach((ps, i) => { const q = pcd[ps.id]; if (q && ps.br === q[0]) pie(px0 + i * (S + gap) + S / 2, y + S / 2, S / 2 - 2, q[1]()); });
-  let dx0 = 12 + slotW() * (S + gap) + 6;
-  for (const [st, TB, fc] of [[p.exw1, EXW1, '#ffe8a0'], [p.exw, EXW, '#ffd24a']]) {   // 0.26 전용 무기 칸: 금색 마름모 틀 + 재사용 원형 (0.27 1차·2차 2칸)
-    if (!st) continue;
-    const X = TB[st.id], cx = dx0 + S / 2, cy = y + S / 2, h = S / 2 + 1;
-    c.fillStyle = fc; c.beginPath(); c.moveTo(cx, cy - h); c.lineTo(cx + h, cy); c.lineTo(cx, cy + h); c.lineTo(cx - h, cy); c.closePath(); c.fill();
-    c.strokeStyle = '#7a5a10'; c.lineWidth = 2; c.stroke();
-    c.fillStyle = '#14121c'; c.font = 'bold 11px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(X.ic, cx, cy);
-    if (X.cd > 0.6) pie(cx, cy, S / 2 - 5, 1 - Math.max(0, st.t) / X.cd);
-    dx0 += S + gap + 2;
-  }
-  const dials = jobDials();
-  dials.forEach((d, i) => { const x = dx0 + i * (S + gap) + S / 2, yy = y + S / 2; if (x + S / 2 > px0 - 4) return;
-    c.fillStyle = d.col; c.beginPath(); c.arc(x, yy, S / 2 - 1, 0, 7); c.fill(); c.fillStyle = '#14121c'; c.font = 'bold 12px system-ui, Galmuri11, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(d.ic, x, yy);
-    pie(x, yy, S / 2 - 1, d.k); });
-}
 /* 직업 주기 효과 목록 (궁극기 충전·군기·포탑·형태 교대) */
 function jobDials() {
   const p = G.p, T = G.tm, out = []; if (!p.job) return out;

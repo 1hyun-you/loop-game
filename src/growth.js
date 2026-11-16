@@ -43,7 +43,6 @@ const RELIC_ORDER = ['bladestorm', 'thunderarrow', 'flameaxe', 'firefield', 'fro
 const ELITE = { size: 1.5, hp: 8, xp: 8, perPhase: [1, 2], chance2: 0.5, ab: ['dash', 'split', 'shield', 'haste'] };
 const ELITE_AB = { dash: '돌진', split: '분열', shield: '보호막', haste: '가속' };
 
-const owns = id => hasW(id) || hasP(id);
 function wBr(id) { const w = G.p.weapons.find(x => x.id === id); return w && w.br; }
 function pBr(id) { const x = G.p.passives.find(q => q.id === id); return x && x.br; }
 function hasRelic(id) { return G.p.relics.includes(id); }

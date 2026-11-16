@@ -221,14 +221,6 @@ function recordTrail(dt) {
   G.tm.trl = (G.tm.trl || 0) - dt; if (G.tm.trl > 0) return; G.tm.trl = RW.every;
   G.trail.push({ x: p.x, y: p.y, hp: p.hp }); if (G.trail.length > RW.keep / RW.every) G.trail.shift();
 }
-function startRewind() {
-  const p = G.p, pts = G.trail.slice().reverse();               // 현재 → 5초 전 순서로 되감기
-  if (pts.length < 2) pts.push({ x: p.x, y: p.y, hp: p.hp });
-  G.rw = { pts, t: 0, tick: 0, hp: pts[pts.length - 1].hp };
-  G.tm.stop = 1.5;
-  fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 360, dur: 0.8, color: '#c8c0ff' });
-  banner('과거의 나', '되감기', '#c8c0ff', 1.2);
-}
 function rwPos(k) { const P = G.rw.pts, f = clamp(k, 0, 1) * (P.length - 1), i = Math.floor(f), j = Math.min(P.length - 1, i + 1), u = f - i; return { x: lerp(P[i].x, P[j].x, u), y: lerp(P[i].y, P[j].y, u) }; }
 function updateRewind(dt) {
   const R = G.rw; if (!R) return;

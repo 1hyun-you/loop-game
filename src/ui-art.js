@@ -151,7 +151,6 @@ function uiText(c,s,x,y,size=12,color='#efe8d9',align='left',max=Infinity,weight
   s=String(s); if(c.measureText(s).width>max){while(s.length&&c.measureText(s+'…').width>max)s=s.slice(0,-1);s+='…';}
   c.fillText(s,x,y);
 }
-function uiImage(c,key,x,y,s=16) { const im=UI_ART.images[key]; if(im)c.drawImage(im,x,y,s,s); }
 function hudLayout(width=VIEW.cw,sat=VIEW.sat) {
   const w=Math.min(600,width-16),x=(width-w)/2,y=sat+6,S=clamp(Math.floor((width-280)/28)+22,22,30),gap=3,contentW=w-56;
   const tile=(i,row,right=false,n=1)=>({x:right?x+contentW-n*S-(n-1)*gap+i*(S+gap):x+4+i*(S+gap),y:y+48+row*(S+gap),w:S,h:S});

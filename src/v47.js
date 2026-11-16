@@ -34,7 +34,6 @@ function fpsSkip(now) {
 const HIT_KIND = { cleave: 'heavy', shield: 'heavy', slam: 'heavy', shuriken: 'multi', orb: 'multi', arrow: 'pierce', beam: 'pierce', fireball: 'blast', trap: 'blast', icering: 'dot',
   shatter: 'dot', fireball_pool: 'blast', fissure: 'heavy', split: 'pierce' };
 const HIT_COL = { heavy: '#ffcf8a', multi: '#d8f4ff', pierce: '#e6ffd0', blast: '#ffa860', dot: '#bfe8ff' };
-const HIT_NM = { heavy: '묵직', multi: '연타', pierce: '관통', blast: '폭발', dot: '지속' };
 /* src → { k: 주 성격, k2: 보조 성격(연성 짝 무기), col, job, wid } */
 const HIT47_CACHE = new Map();
 function hitInfo47(src) {

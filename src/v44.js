@@ -296,7 +296,7 @@ updateWeapons = function (dt) {
   for (const w of p.weapons) {
     const S = wStats(w);
     if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
-    if (mage) continue;
+    if (mage && !w.base) continue;                              // 0.53 마법사: 기본 무기는 평소대로 발동
     if (w.base && ret) continue;
     w.t -= dt * ultCdMul();
     if (w.t <= 0) {
@@ -318,7 +318,7 @@ mageVolley = function (dt, J) {
   const C = V41.mag, p = G.p;
   J.vol -= dt * ultCdMul(); if (J.vol > 0) return;
   J.vol = J.volP = (p.job2 === 'archmage' ? C.cdB : C.cd) * Math.max(C.cdMin, p.mod.cd); J.volN++;
-  const ret = baseRetired(), list = p.weapons.filter(w => w.id !== 'spin' && !(w.base && ret));
+  const ret = baseRetired(), list = p.weapons.filter(w => w.id !== 'spin' && !w.base);   // 0.53 기본 무기는 동시 시전에서 제외
   list.forEach((w, i) => G.later.push({ t: i * C.gap, f: () => {
     if (G.result || !p.weapons.includes(w)) return;
     const S = wStats(w);
@@ -395,6 +395,6 @@ newRun = function () { const r = _newRun44.apply(this, arguments); G.f44 = null;
 cxFuse = function () {
   const jobs = JOB_ORDER.map(id => { const W = WEAPONS[FZ_SYMBOL[id]], T = FZ_TRIAL[id];
     const rows = F44[id].map(r => `<div><b>${esc(r[1])}</b><span>${esc(WEAPONS[r[0]].name)} · ${r[4] === '직업' ? '직업 변화' : '무기 결합'} · ${esc(r[2])} · ${esc(r[3])}</span></div>`).join('');
-    return cxCard({ job: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name + ' · 연성 9종', tag: '기본 무기 ' + W.name, lines: [`<details class="acc"><summary>연성 무기 9종</summary><div class="cxg">${rows}</div></details>`, cxChips([['2차 전직 시련', esc(T.nm)]])] }); }).join('');
+    return cxCard({ job: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name + ' · 연성 9종', tag: '기본 무기 ' + (FORM53[id] ? FORM53[id].nm + ' (' + W.name + ' 변형)' : W.name), lines: [`<details class="acc"><summary>연성 무기 9종</summary><div class="cxg">${rows}</div></details>`, cxChips([['2차 전직 시련', esc(T.nm)]])] }); }).join('');
   return '<p class="hint">전직 시 상징 무기가 기본 무기 칸으로 이동 · 무기 칸 무기와 기본 무기가 모두 Lv 5(각성 완료)면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 고유 연성 무기로 변신 (무기 결합 또는 직업 변화) · 모든 칸 연성 후에도 기본 무기 계속 발동</p>' + jobs;
 };

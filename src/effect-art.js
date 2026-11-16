@@ -239,6 +239,7 @@ function drawBasicBeams(c, reduced) {
     const fade = clamp(Math.min((b.dur - b.t) * 6, summoner ? b.t * 18 + .15 : b.t * 12), 0, 1);
     const reach = summoner && !reduced ? clamp(.14 + b.t * 19, 0, 1) : 1;
     const angles = w.br === 'prism' ? [b.a - .3, b.a, b.a + .3] : [b.a];
+    if (b.chain53) { for (const angle of angles) drawChain53(c, p, b, angle, fade); continue; }   // 0.53 소환사 영혼 사슬 (임시 도형)
     for (const angle of angles) {
       c.save();
       c.translate(p.x, p.y);
