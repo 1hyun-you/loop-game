@@ -19,7 +19,7 @@ const GK_CFG = {
   // 바르간
   bgEvery: [2.6, 1.9], bgTele: [0.75, 0.55], bgDashSp: 560, bgDashT: 0.6, bgSlamR: 120, bgSlamWarn: 0.9, bgSlamDmg: 26, bgAfterR: 62, bgAfterDmg: 20,
   // 이그나
-  igEvery: [2.4, 1.7], igRing: [16, 22], igSp: [150, 175], igDmg: 12, igFan: 5, igPoolN: 3, igPoolR: 55, igPoolWarn: 1.0, igPoolDur: 4, igPoolDmg: 7,
+  igEvery: [2.4, 1.7], igTell: 0.45, igBack: 0.55, igRing: [16, 22], igSp: [150, 175], igDmg: 12, igFan: 5, igPoolN: 3, igPoolR: 55, igPoolWarn: 1.0, igPoolDur: 4, igPoolDmg: 7,
   // 모르덴
   moEvery: [3.2, 2.4], moRaise: [10, 14], moPrison: 12, moPrisonR: 125, moBoltN: 3, moBoltSp: 130, moBoltDmg: 14,
   // 세렌
@@ -132,7 +132,7 @@ function gkIgna(e, ai, dt) {
     const k = { ring: 1, fan: 2, pool: 0 }[K];
     if (K === 'twist') bpTwister(e); else if (K === 'grid') bpGrid(e); else if (K === 'sun') { bpSun(e, ai); return 0; }
     else if (k === 1) { const n = gkLv(GK_CFG.igRing); gkRing(e.x, e.y, n, sp, dmg, '이그나 화염탄', rand(6.28)); if (e.rage) G.later.push({ t: 0.4, f: () => { if (!e.dead) gkRing(e.x, e.y, n, sp, dmg, '이그나 화염탄', rand(6.28)); } }); }
-    else if (k === 2) for (let v = 0; v < (e.rage ? 4 : 3); v++) G.later.push({ t: v * 0.28, f: () => { if (!e.dead && !G.result) gkFan(e, GK_CFG.igFan, 0.55, sp * 1.15, dmg, '이그나 화염탄'); } });
+    else if (k === 2) { const pl = G.p, ta = Math.atan2(pl.y - e.y, pl.x - e.x); G.hz.push({ k: 'line', x: e.x, y: e.y, dx: Math.cos(ta), dy: Math.sin(ta), len: 280, w: 56, warn: GK_CFG.igTell, t: 0, dmg: 0 }); for (let v = 0; v < (e.rage ? 4 : 3); v++) G.later.push({ t: GK_CFG.igTell + v * 0.28, f: () => { if (!e.dead && !G.result) gkFan(e, GK_CFG.igFan, 0.55, sp * 1.15, dmg, '이그나 화염탄'); } }); }
     else for (let i = 0; i < GK_CFG.igPoolN + (e.rage ? 2 : 0); i++) { const p = G.p, a = rand(6.28), R = i ? rand(40, 130) : 0; gkCircle(p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, GK_CFG.igPoolR, GK_CFG.igPoolWarn, gkDmg(GK_CFG.igPoolDmg), '이그나 장판', { pool: GK_CFG.igPoolDur }); }
     return 0.3;
   }
