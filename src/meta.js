@@ -4,7 +4,7 @@
    보상은 성능 영향 없음(판 점수 배율·칭호·주인공 색상), 배율·강화 수치는 초기값 (5단계 시험으로 확정)
    ============================================================ */
 /* ---------- 설정 (기기 저장) ---------- */
-const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false, fps: 60, hitstop: true };   // 0.47 프레임 60/120·타격 멈춤
+const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false, fps: 60, hitstop: true, hud: 'm' };   // 0.47 프레임 60/120·타격 멈춤
 const SETTINGS = (() => { try { return Object.assign({}, SET_DEF, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return Object.assign({}, SET_DEF); } })();
 function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
 /* 0.27f 전체 화면 옵션 삭제: 상태 표시줄 표시형 확정 (웹 전체 화면은 뒤로가기 시 해제·재적용 버벅임 발생) */
@@ -96,6 +96,7 @@ function showSettings(back) {
     ${T('shake', '화면 흔들림', '피격·보스 등장 시 화면 흔들림')}
     ${T('hitstop', '타격 멈춤', '정예 처치 순간 아주 짧게 멈춤')}
     <div class="row"><div class="rt"><b>프레임</b><span>${SETTINGS.fps === 120 ? '120: 화면 주사율 그대로 (발열·배터리 소모 큼)' : '60: 발열·배터리 절약 (권장)'}</span></div><button class="tg" id="s_fps">${SETTINGS.fps === 120 ? '120' : '60'}</button></div>
+    <div class="row"><div class="rt"><b>상단 화면 크기</b><span>전투 중 위쪽 정보 표시 크기</span></div><button class="tg" id="s_hud">${{ s: '작게', m: '보통', l: '크게' }[SETTINGS.hud] || '보통'}</button></div>
     ${T('dmgNum', '피해 숫자', '적에게 준 피해를 숫자로 표시')}
     ${V('sfx', '효과음 음량')}${V('bgm', '배경음 음량')}
     <div class="row"><div class="rt"><b>첫 판 안내</b><span>조작·목표 안내를 처음부터 다시 표시</span></div><button class="tg" id="s_guide">다시 보기</button></div>
@@ -105,6 +106,7 @@ function showSettings(back) {
   UI.querySelectorAll('input[data-v]').forEach(i => i.addEventListener('input', () => { SETTINGS[i.dataset.v] = +i.value; i.nextElementSibling.textContent = i.value; saveSettings(); auVol(); if (i.dataset.v === 'sfx') sfx('ui'); }));
   on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_fps', () => { SETTINGS.fps = SETTINGS.fps === 120 ? 60 : 120; saveSettings(); keepScroll(() => showSettings(back)); });
+  on('s_hud', () => { SETTINGS.hud = { s: 'm', m: 'l', l: 's' }[SETTINGS.hud] || 'l'; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_back', back);
 }
 

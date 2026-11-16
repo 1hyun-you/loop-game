@@ -127,6 +127,14 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     chk(`[${W}x${H}] 회오리 전방 무리 생성·근접 적 미흡인`, vx.d >= 140 && vx.moved === 0, JSON.stringify(vx));
     // 일시정지 화면
     await ev(() => { STATE.mode = 'play'; hideUI(); pauseGame(); }); await wait(60); await audit('일시정지');
+    // 0.55 일시정지 재배치·내 능력 전체 화면
+    chk(`[${W}x${H}] 일시정지 버튼 3단·화면 안 배치`, await ev(() => { const m = document.querySelector('.pz-menu'), q = m && m.getBoundingClientRect(), r = document.getElementById('resume').getBoundingClientRect(), a = document.getElementById('pabil').getBoundingClientRect(), h = document.getElementById('home').getBoundingClientRect(); return !!m && q.height < innerHeight * 0.4 && r.top < a.top && a.top < h.top && h.bottom <= innerHeight; }));
+    await click('pabil'); await wait(60); await audit('일시정지 내 능력');
+    chk(`[${W}x${H}] 내 능력 전체 화면·탭 3종`, await ev(() => !!document.getElementById('ab_back') && document.querySelectorAll('.ptabs button').length === 3 && document.querySelectorAll('.pgp.on .cx').length >= 1));
+    for (const t of ['p', 'j', 'w']) { await click(`[data-atab="${t}"]`); await wait(320); await audit('내 능력 ' + t); }
+    await click('ab_back'); await wait(60); chk(`[${W}x${H}] 내 능력 → 일시정지 복귀`, await ev(() => STATE.mode === 'pause' && !!document.getElementById('pabil')));
+    await click('pbuild'); await wait(60); chk(`[${W}x${H}] 보유 능력 묶음 → 내 능력`, await ev(() => !!document.getElementById('ab_back'))); await click('ab_back'); await wait(60);
+    chk(`[${W}x${H}] 상단 화면 크기 설정 반영`, await ev(() => { const v0 = SETTINGS.hud, a = hudLayout().k; SETTINGS.hud = 'l'; const b = hudLayout().k, L = hudLayout(); SETTINGS.hud = v0; return a === 1 && b > 1 && (L.x + L.w) * L.k <= innerWidth && L.x >= 0; }));
     // 0.34 게임 중 도감: 진행 중 획득분 반영·탭 전환·복귀
     await click('pcodex'); await wait(60); await audit('게임 중 도감');
     const cw = await ev(() => { const id = G.p.weapons[0].id, nm = WEAPONS[id].name; const c = [...document.querySelectorAll('.cx')].find(x => x.querySelector('b').textContent === nm); return !!c && !c.classList.contains('dim'); });

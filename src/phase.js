@@ -383,7 +383,7 @@ function drawPhasePointer(c, camX, camY) {
   const t = ph.zone || (ph.spring && !ph.spring.used ? ph.spring : null) || (ph.cmd && !ph.cmd.dead ? ph.cmd : null) || (G.gkMob && !G.gkMob.dead && isBossPhase() ? G.gkMob : null) || ph.cart || rit || (ph.camp && !ph.camp.used ? ph.camp : null) || eventPointer() || G.altar || G.chests[0];
   if (!t) return;
   const L = hudLayout(), hasBoss = G.gkMob && !G.gkMob.dead && isBossPhase();
-  const Z = VIEW.zoom, sx = (t.x - camX) * Z, sy = (t.y - camY) * Z, m = 34, top = Math.min(VIEW.ch / 2 - m, L.y + L.h + (hasBoss ? 54 : 8));
+  const Z = VIEW.zoom, sx = (t.x - camX) * Z, sy = (t.y - camY) * Z, m = 34, top = Math.min(VIEW.ch / 2 - m, (L.bottom || L.y + L.h) + (hasBoss ? 54 : 8));
   if (sx > m && sx < VIEW.cw - m && sy > top && sy < VIEW.ch - m) return;
   const cx = VIEW.cw / 2, cy = VIEW.ch / 2, ang = Math.atan2(sy - cy, sx - cx);
   const kx = (VIEW.cw / 2 - m) / Math.abs(Math.cos(ang) || 1e-6), ky = (Math.sin(ang) < 0 ? cy - top : VIEW.ch / 2 - m) / Math.abs(Math.sin(ang) || 1e-6);

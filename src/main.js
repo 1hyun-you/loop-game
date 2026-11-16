@@ -60,7 +60,7 @@ function onBack() {
   try { history.pushState({ g: 1 }, ''); } catch (e) { }
 }
 function backAct() {
-  const sub = ['s_back', 'cx_back', 'pr_back'].map(id => document.getElementById(id)).find(Boolean);
+  const sub = ['s_back', 'cx_back', 'pr_back', 'ab_back'].map(id => document.getElementById(id)).find(Boolean);
   if (STATE.mode === 'title' && !sub) {
     if (performance.now() - BACK.armT < 2000) { window.removeEventListener('popstate', onBack); history.back(); return; }   // 앱 종료(이전 기록으로 이동)
     BACK.armT = performance.now(); backHint('한 번 더 누르면 종료');
@@ -78,16 +78,25 @@ const PAUSE_ABIL = { on: false };
 function pauseGame() {
   if (STATE.mode !== 'play' || !G || G.result) return;
   STATE.mode = 'pause'; INPUT.active = false; INPUT.id = null; INPUT.mag = 0;
-  const P = curPhase(), ph = G.ph;
-  UI.innerHTML = `<div class="layer">
+  /* 0.55 재배치: 정보 한 묶음 + 보유 능력 아이콘 + 버튼 3단(계속 / 내 능력·도감·설정 / 다시 시작·처음 화면) */
+  const P = curPhase(), ph = G.ph, p = G.p;
+  const tile = (h, lv) => `<span class="pz-t">${h}${lv ? `<em>${lv}</em>` : ''}</span>`;
+  const ws = p.weapons.slice().sort((a, b) => (b.base ? 1 : 0) - (a.base ? 1 : 0)).map(w => { const d = WEAPONS[w.id]; return tile(icBox(w.fu || w.base ? JOB_COL[p.job] : CFG.colors[d.cat], d.ic, branchWeaponArt(w.id, w.br)), w.lvl); }).join('');
+  const ps = p.passives.map(x => tile(icBox(CFG.colors.passive, PASSIVES[x.id].ic, x.id), x.lvl)).join('');
+  const job = p.job ? (p.job2 && JOBS[p.job2] ? JOBS[p.job2].name : JOBS[p.job].name) : '';
+  UI.innerHTML = `<div class="layer pz">
     <h2>일시정지</h2>
-    <div class="stats" ${PAUSE_ABIL.on ? 'style="display:none"' : ''}><span>경과 시간</span><span>${fmtTime(G.time)}</span><span>페이즈</span><span>${P ? `${ph.i + 1}/${ph.order.length} ${curPhaseName()}` : '이동 중'}</span><span>레벨</span><span>${G.p.level}</span><span>체력</span><span>${Math.ceil(G.p.hp)}/${G.p.maxHp}</span></div>
-    ${PAUSE_ABIL.on ? abilityHTML() : `<div class="build">${buildChips()}</div>`}
-    <div class="menu"><button class="pri" id="resume">계속</button><button id="pabil">${PAUSE_ABIL.on ? '능력 닫기' : '내 능력'}</button><button id="pcodex">도감</button><button id="psettings">설정</button><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div>`;
+    <div class="pz-info"><span class="l1">${job ? esc(job) + ' · ' : ''}Lv ${p.level}</span><span class="l2"><span>${fmtTime(G.time)}</span><span>${P ? `${ph.i + 1}/${ph.order.length} ${esc(curPhaseName())}` : '이동 중'}</span><span>체력 ${Math.ceil(p.hp)}/${p.maxHp}</span></span></div>
+    ${ws || ps ? `<div class="pz-build" id="pbuild" role="button" tabindex="0" aria-label="내 능력 보기">${ws ? `<div class="r"><i>무기</i>${ws}</div>` : ''}${ps ? `<div class="r"><i>보조</i>${ps}</div>` : ''}</div>` : ''}
+    <div class="pz-menu"><button class="pri" id="resume">계속</button>
+      <div class="r3"><button id="pabil">내 능력</button><button id="pcodex">도감</button><button id="psettings">설정</button></div>
+      <div class="r2"><button id="restart">다시 시작</button><button id="home">처음 화면</button></div></div></div>`;
+  const again = () => { STATE.mode = 'play'; pauseGame(); };
   on('resume', resumeGame);
-  on('pabil', () => { PAUSE_ABIL.on = !PAUSE_ABIL.on; STATE.mode = 'play'; pauseGame(); });
-  on('pcodex', () => showCodex('w', () => { STATE.mode = 'play'; pauseGame(); }));   // 0.34 게임 중 도감
-  on('psettings', () => showSettings(() => { STATE.mode = 'play'; pauseGame(); }));
+  on('pabil', () => showAbil(again));
+  on('pbuild', () => showAbil(again));
+  on('pcodex', () => showCodex('w', again));   // 0.34 게임 중 도감
+  on('psettings', () => showSettings(again));
   on('restart', () => { if (confirmStep('restart')) newRun(); });
   on('home', () => { if (confirmStep('home')) showTitle(); });
 }
@@ -96,7 +105,7 @@ function resumeGame() { if (STATE.mode !== 'pause') return; PAUSE_ABIL.on = fals
 function confirmStep(id) {
   const b = document.getElementById(id); if (!b) return true;
   if (b.dataset.armed) return true;
-  b.dataset.armed = '1'; b.classList.add('warn'); b.textContent = (id === 'home' ? '처음 화면' : '다시 시작') + ' · 한 번 더 누르면 확정';
+  b.dataset.armed = '1'; b.classList.add('warn'); b.textContent = '한 번 더 눌러 확정';
   return false;
 }
 
@@ -160,7 +169,7 @@ const PBTN = document.createElement('button');
 PBTN.id = 'pausebtn'; PBTN.className = 'pausebtn'; PBTN.setAttribute('aria-label', '일시정지'); PBTN.innerHTML = `<img src="${uiIcon('pause')}" alt="">`;
 PBTN.addEventListener('click', pauseGame); document.body.appendChild(PBTN);
 let pbShown = null;
-function syncPauseBtn() { const L=hudLayout();PBTN.style.left=L.pause.x+'px';PBTN.style.top=L.pause.y+'px';PBTN.style.width=L.pause.w+'px';PBTN.style.height=L.pause.h+'px'; const v = STATE.mode === 'play' && G && !G.result; if (v !== pbShown) { pbShown = v; PBTN.style.display = v ? '' : 'none'; } }
+function syncPauseBtn() { const L=hudLayout(),k=L.k||1;PBTN.style.left=L.pause.x*k+'px';PBTN.style.top=L.pause.y*k+'px';PBTN.style.width=L.pause.w*k+'px';PBTN.style.height=L.pause.h*k+'px'; const v = STATE.mode === 'play' && G && !G.result; if (v !== pbShown) { pbShown = v; PBTN.style.display = v ? '' : 'none'; } }
 /* 화면 전환·앱 이탈 시 자동 일시정지 */
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
 window.addEventListener('blur', () => { if (!STATE.dev.auto) pauseGame(); });

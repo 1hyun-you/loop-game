@@ -36,11 +36,16 @@ function hudPlate45(c, key, x, y, w, h, fill, stroke, radius) {
   if (image) c.drawImage(image, x, y, w, h);
   else uiPanel(c, x, y, w, h, fill, stroke, radius);
 }
+/* 0.55 화면 폭 대응: 좁은 화면에서 칸이 작아지고 넓은 화면에서 패널이 화면 폭 전체로 늘어나던 것을 정리
+   — 칸 크기 고정(28), 패널 최대 폭 430, 설정 '상단 화면 크기'(작게·보통·크게)는 전체 배율로 적용
+   — 반환 좌표는 배율 적용 전(그리기용) 값, k = 배율, bottom = 화면 기준 아래쪽 끝 */
+const HUD_K = { s: 0.88, m: 1, l: 1.12 }, HUD_MAXW = 430;
+function hudK() { return HUD_K[SETTINGS.hud] || 1; }
 hudLayout = function (width = VIEW.cw, sat = VIEW.sat) {
-  const w = Math.min(600, width - 16), x = (width - w) / 2, y = sat + 6, S = clamp(Math.floor((width - 280) / 28) + 22, 22, 30), gap = 3, pw = 44, contentW = w - pw - 4, top = 51;
+  const k = hudK(), lw = width / k, w = Math.min(HUD_MAXW, lw - 16), x = (lw - w) / 2, y = sat / k + 6, S = lw < 350 ? 26 : 28, gap = 3, pw = 44, contentW = w - pw - 4, top = 51;
   const tile = (i, row, right = false, n = 1) => ({ x: right ? x + contentW - n * S - (n - 1) * gap + i * (S + gap) : x + 2 + i * (S + gap), y: y + top + row * (S + gap), w: S, h: S });
   const boss = H45.k, h = top + S + (S + gap) * (1 - boss) + (boss ? 34 * boss : 0);
-  return { x, y, w, h, S, gap, contentW, tile, top, pause: { x: x + w - pw, y: y + 3, w: pw, h: 44 }, kills: { x: x + contentW - 76, y: y + 4, w: 76, h: 18 } };
+  return { k, x, y, w, h, S, gap, contentW, tile, top, bottom: (y + h) * k, pause: { x: x + w - pw, y: y + 3, w: pw, h: 44 }, kills: { x: x + contentW - 76, y: y + 4, w: 76, h: 18 } };
 };
 function bossOn45() { return !!(G.gkMob && !G.gkMob.dead && G.ph && isBossPhase()); }
 drawSlots = function (c) {
@@ -84,6 +89,7 @@ drawHUD = function (c) {
   const now = performance.now(), dt = Math.min(0.1, (now - (H45.last || now)) / 1000); H45.last = now;
   H45.k += ((bossOn45() ? 1 : 0) - H45.k) * Math.min(1, dt * 7); if (Math.abs(H45.k - (bossOn45() ? 1 : 0)) < 0.01) H45.k = bossOn45() ? 1 : 0;
   const L = hudLayout(), p = G.p, ph = G.ph, P = curPhase(), b = p.job && baseW(), col = p.job ? JOB_COL[p.job] : '#f0dfb4'; c.save(); c.imageSmoothingEnabled = true;
+  c.scale(L.k, L.k);
   hudPlate45(c, 'hud-plate', L.x, L.y + 3, L.contentW + 2, 44, 'rgba(22,31,43,.60)', '#6b6c6044', 8);
   uiBar(c, L.x + 6, L.y + 5, L.contentW - 10, 2, clamp(G.rc ? G.rc.xpShow : p.xp / Math.max(1, p.need), 0, 1), '#91bfcb', 'rgba(0,0,0,0)');
   /* 왼쪽: 기본 무기 + 직업 이름 · Lv */
@@ -96,19 +102,22 @@ drawHUD = function (c) {
     tx = r.x + r.w + 6;
   }
   const status = p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : '';
-  uiText(c, p.job ? (p.job2 && JOBS[p.job2] ? JOBS[p.job2].name : JOBS[p.job].name) : 'Lv ' + p.level, tx, L.y + 19, 13, col, 'left', 92, 700);
+  uiText(c, p.job ? (p.job2 && JOBS[p.job2] ? JOBS[p.job2].name : JOBS[p.job].name) : 'Lv ' + p.level, tx, L.y + 19, 14, col, 'left', 92, 700);
   /* 가운데: 시간 + 페이즈 이름 n/N */
   const cx = L.x + L.contentW * 0.52;
-  uiText(c, fmtTime(G.time), cx, L.y + 17, 15, '#f0e9d9', 'center', 70, 650);
+  uiText(c, fmtTime(G.time), cx, L.y + 17, 16, '#f0e9d9', 'center', 70, 650);
   const pn = P ? curPhaseName() : G.result === 'clear' ? '돌파' : '이동 중', cnt = P ? `${ph.i + 1}/${ph.order.length}` : '';
-  c.font = `600 11px ${UI_ART.font}`; const nw = Math.min(110, c.measureText(pn).width), cw2 = cnt ? c.measureText(cnt).width + 10 : 0, pwid = nw + cw2 + 14, px = cx - pwid / 2, py = L.y + 28;
+  const lvTx = p.job ? 'Lv ' + p.level + status : '전직 전', hpTx = String(Math.ceil(p.hp)), rx = L.x + L.contentW - 4;
+  c.font = `500 12px ${UI_ART.font}`; const lvW = Math.min(92, c.measureText(lvTx).width), hpW = Math.min(34, c.measureText(hpTx).width);
+  c.font = `600 12px ${UI_ART.font}`; const nw = Math.min(110, c.measureText(pn).width), cw2 = cnt ? c.measureText(cnt).width + 10 : 0, pwid = nw + cw2 + 14, py = L.y + 28;
+  const pMin = tx + lvW + 2, pMax = rx - 60 - hpW - 2 - pwid, px = pMax >= pMin ? clamp(cx - pwid / 2, pMin, pMax) : cx - pwid / 2;   // 0.55 좌우 글자와 겹치면 옆으로 비킴
   // Keep the phase group centered in its existing space, with a finer inner bezel.
   const inset = 6;
   const phaseLeft = px + inset, phaseRight = px + pwid - inset;
-  c.font = `500 11px ${UI_ART.font}`; c.textAlign = 'left'; c.fillStyle = '#d9cbb3';
-  c.fillText(p.job ? 'Lv ' + p.level + status : '전직 전', tx, L.y + 35, clamp(phaseLeft - tx - 3, 1, 92));
+  c.font = `500 12px ${UI_ART.font}`; c.textAlign = 'left'; c.fillStyle = '#d9cbb3';
+  c.fillText(lvTx, tx, L.y + 35, clamp(phaseLeft - tx - 3, 1, 92));
   uiPanel(c, phaseLeft, py, phaseRight - phaseLeft, 15, ph.ambush ? '#543137' : '#252631', ph.ambush ? '#a85f59' : '#75654f', 6);
-  c.font = `600 11px ${UI_ART.font}`; c.fillStyle = ph.ambush ? '#ffc9ae' : '#f5dfae';
+  c.font = `600 12px ${UI_ART.font}`; c.fillStyle = ph.ambush ? '#ffc9ae' : '#f5dfae';
   c.fillText(pn, phaseLeft + 6, py + 8, Math.max(12, nw - 11));
   if (cnt) {
     const badgeWidth = cw2 - 2, badgeRight = phaseRight - 3;
@@ -117,14 +126,15 @@ drawHUD = function (c) {
   }
   if (P) uiBar(c, px + 4, py + 16, pwid - 8, 2, phaseProgress(), ph.accT > 0 ? '#f1e6bc' : '#cdb57c', 'rgba(0,0,0,.35)');
   /* 오른쪽: 처치 + 체력 */
-  const kills = G.kills >= 10000 ? (G.kills / 10000).toFixed(1) + '만' : G.kills, rx = L.x + L.contentW - 4;
-  uiText(c, '처치 ' + kills, rx, L.y + 17, 12, '#d9cbb3', 'right', 80, 600);
+  const kills = G.kills >= 10000 ? (G.kills / 10000).toFixed(1) + '만' : G.kills;
+  uiText(c, '처치 ' + kills, rx, L.y + 17, 13, '#d9cbb3', 'right', 80, 600);
   const hp = clamp(p.hp / p.maxHp, 0, 1); uiBar(c, rx - 56, L.y + 33, 56, 5, hp, hp > 0.3 ? '#9fc19d' : '#d58c86');
-  c.font = `500 11px ${UI_ART.font}`; c.textAlign = 'right'; c.fillStyle = '#d7e1d8';
-  c.fillText(String(Math.ceil(p.hp)), rx - 60, L.y + 35, clamp(rx - 62 - phaseRight, 1, 34));
+  c.font = `500 12px ${UI_ART.font}`; c.textAlign = 'right'; c.fillStyle = '#d7e1d8';
+  c.fillText(hpTx, rx - 60, L.y + 35, clamp(rx - 62 - phaseRight, 1, 34));
   drawSlots(c); drawBossBar(c);
-  const below = L.y + L.h + 4;
-  if (STATE.dev.fps && STATE.mode !== 'result') uiText(c, Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount(), L.x + L.w - 2, below + 10, 10, '#d1d8d9', 'right', L.w - 8);
+  c.restore(); c.save();                                     // 0.55 아래쪽 안내·알림은 배율 미적용
+  const below = L.bottom + 4;
+  if (STATE.dev.fps && STATE.mode !== 'result') uiText(c, Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount(), (L.x + L.w) * L.k - 2, below + 10, 10, '#d1d8d9', 'right', L.w - 8);
   let ty = Math.max(VIEW.ch * 0.3, below + 30); for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); uiText(c, t.text, VIEW.cw / 2, ty, 14, t.color, 'center', VIEW.cw - 30, 600); ty += 24; } c.globalAlpha = 1;
   drawGuide(c); c.restore();
 };
