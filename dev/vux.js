@@ -82,7 +82,7 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     await ev(() => { SETTINGS.dlgAuto = true; localStorage.removeItem(CFG.SAVE_KEY); saveCache = null; newRun(); STATE.mode = 'play'; hideUI(); G.sel = null; });
     for (let i = 0; i < 40; i++) { await wait(80); const m = await ev(() => { if (STATE.mode === 'talk') dlgTap(); else if (STATE.mode === 'select' && G.sel && G.sel.kind === 'start') pickCard(0); return STATE.mode; }); if (m === 'play' && i > 3) break; }
     await wait(100);
-    await ev(() => { G.pendingLv = 1; }); await wait(300);
+    await ev(() => { STATE.dev.auto = false; G.pendingLv = 1; }); await wait(300);   // 0.56 자동 선택이 배치 점검 대기(1.5초)보다 먼저 카드를 고르는 시간 의존 실패 방지
     if (await ev(() => STATE.mode === 'select')) {
       await audit('레벨업 선택'); await scrollKeep('제외 버튼', '#banish');
       await ev(() => { if (G.sel.banish) G.sel.banish = false; toggleAbil(); }); await wait(60); await audit('내 능력'); await ev(() => toggleAbil());
@@ -142,6 +142,12 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
     for (const t of ['p', 'r', 'j', 'e']) { await click(`[data-tab="${t}"]`); await wait(320); await audit('게임 중 도감 ' + t); }
     await click('cx_back'); await wait(60); chk(`[${W}x${H}] 도감 → 일시정지 복귀`, await ev(() => STATE.mode === 'pause' && !!document.getElementById('pcodex')));
     await click('psettings'); await wait(60); await audit('일시정지 설정'); await scrollKeep('일시정지 설정 토글', 'button.tg[data-k]');
+    // 0.56 결과 화면: 배치·내 능력 왕복·버튼 3종
+    await ev(() => { hideUI(); STATE.mode = 'play'; G.report = buildReport(); G.report.score = 1234; showResult(); }); await wait(80); await audit('결과 화면');
+    chk(`[${W}x${H}] 결과 화면 핵심 수치 4칸·버튼 3종`, await ev(() => document.querySelectorAll('.rs-kpi>div').length === 4 && ['again', 'home', 'rabil'].every(i => !!document.getElementById(i))));
+    await click('rabil'); await wait(60); await audit('결과 내 능력'); await click('ab_back'); await wait(60);
+    chk(`[${W}x${H}] 결과 → 내 능력 → 결과 복귀`, await ev(() => STATE.mode === 'result' && !!document.getElementById('again')));
+    await ev(() => { STATE.mode = 'play'; hideUI(); pauseGame(); }); await wait(60);
     chk(`[${W}x${H}] 페이지 오류 0`, !errs.length, errs.slice(0, 2).join(' / '));
     await p.context().close();
   }
