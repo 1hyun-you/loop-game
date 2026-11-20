@@ -1,4 +1,4 @@
-// 0.57 치트 패널 점검: 위치·묶음·버튼 동작·무기 고르기·연성 완료·구간 이동
+// 0.57 치트 패널 점검 (0.57a 보스전 자동 전직 포함): 위치·묶음·버튼 동작·무기 고르기·연성 완료·구간 이동
 // 사용: NODE_PATH=$(npm root -g) node dev/vshot57.js [저장 폴더]
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
@@ -71,6 +71,7 @@ const VIEWS = (process.env.VIEWS || '360x780,412x915').split(',').map(v => v.spl
     await click('b_igna');
     for (let i = 0; i < 60; i++) { await wait(100); const r = await ev(() => { if (STATE.mode !== 'play') { if (STATE.mode === 'talk') dlgTap(); else if (STATE.mode === 'select') { hideUI(); G.sel = null; STATE.mode = 'play'; G.pendingLv = 0; G.pendingBr = []; } } return G.gkMob && !G.gkMob.dead ? G.gkMob.gk : null; }); if (r) break; }
     ok(await ev(() => G.gkMob && G.gkMob.gk === 'igna' && G.p.level >= 53), '이그나전 ' + await ev(() => (G.gkMob && G.gkMob.gk) + ':' + G.p.level + ':' + G.ph.id));
+    ok(await ev(() => !!G.p.job && !!G.p.job2), '보스전 레벨 맞춤 2차 전직 자동');
     await shot('gate');
     // 새 판 두 번 누르기
     await ev(() => { if (!DEV.el) document.getElementById('devbtn').click(); });
@@ -84,6 +85,15 @@ const VIEWS = (process.env.VIEWS || '360x780,412x915').split(',').map(v => v.spl
     await click('fit'); ok(await ev(() => STATE.dev.fit === false), '레벨 맞춤 끔');
     await click('b_demon').catch(() => {}); await click('boss'); await click('b_demon'); await wait(100);
     ok(await ev(() => G.ph.order[G.ph.order.length - 1] === 'demon' && G.runType === 'retry'), '마왕전 예약');
+    ok(await ev(() => !G.p.job2), '레벨 맞춤 끔: 전직 자동 없음');
+    // 0.57a: 전직 전 새 판에서 보스전 + 레벨 맞춤 → 전직·2차 전직 자동
+    await click('fit'); await click('restart'); await click('restart'); await wait(200);
+    for (let i = 0; i < 40; i++) { await wait(80); const m = await ev(() => { if (STATE.mode === 'talk') dlgTap(); else if (STATE.mode === 'select' && G.sel && G.sel.kind === 'start') pickCard(0); return STATE.mode; }); if (m === 'play' && i > 3 && await ev(() => G.p.weapons.length > 0)) break; }
+    await ev(() => { if (!DEV.el) document.getElementById('devbtn').click(); });
+    await click('boss'); await click('b_' + await ev(() => GK_ORDER[0])); await wait(100);
+    ok(await ev(() => !!G.p.job && !!G.p.job2 && G.p.level >= 53 && G.p.ult >= JOB_CFG.ultNeed), '전직 전 보스전 자동 전직 ' + await ev(() => G.p.job + ':' + G.p.job2 + ':' + G.p.level));
+    await click('boss'); await click('b_demon'); await wait(100);
+    ok(await ev(() => !!G.p.job2), '마왕전 자동 전직 유지');
     const e2 = await ev(() => window.__errs || []);
     console.log(W + 'x' + H, 'errs', errs.length, errs.slice(0, 3), e2.slice(0, 3)); allErr.push(...errs, ...e2);
     await ctx.close();
