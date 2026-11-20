@@ -29,8 +29,9 @@ const VIEWS = (process.env.VIEWS || '360x780,412x915').split(',').map(v => v.spl
     await start();
     ok(await ev(() => STATE.dev.fps === false), 'FPS 기본 꺼짐');
     await ev(() => document.getElementById('devbtn').click()); await wait(150);
-    const secs = await ev(() => [...document.querySelectorAll('.dev .sec>b')].map(e => e.textContent).join(','));
-    ok(secs === '진행,성장,무기,구간 이동,기타', '묶음 ' + secs);
+    const secs = await ev(() => document.querySelectorAll('.dev .sec').length + ':' + document.querySelectorAll('.dev .sec>b').length);
+    ok(secs === '4:0', '묶음 4개·제목 없음 ' + secs);
+    ok(await ev(() => [...document.querySelectorAll('.dev button')].every(e => e.getBoundingClientRect().height <= 32)), '버튼 축소');
     const inView = () => ev(() => { const r = document.querySelector('.dev').getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1; });
     ok(await inView(), '패널 화면 안 (기본 위치)'); await shot('panel_left');
     const keys = await ev(() => [...document.querySelectorAll('.dev button')].map(e => e.dataset.k).join(','));
@@ -76,7 +77,7 @@ const VIEWS = (process.env.VIEWS || '360x780,412x915').split(',').map(v => v.spl
     // 새 판 두 번 누르기
     await ev(() => { if (!DEV.el) document.getElementById('devbtn').click(); });
     const r0 = await ev(() => G.time); await click('restart'); ok(await ev(t => G.time >= t, r0), '새 판 1회는 대기');
-    ok(await ev(() => document.querySelector('.dev button[data-k="restart"]').textContent === '한 번 더'), '새 판 확인 문구');
+    ok(await ev(() => document.querySelector('.dev button[data-k="restart"]').textContent === '확인'), '새 판 확인 문구');
     await click('restart'); await wait(200); ok(await ev(() => G.time < 2), '새 판 2회 실행');
     // 새 판: 인물 선택 직전
     for (let i = 0; i < 40; i++) { await wait(80); const m = await ev(() => { if (STATE.mode === 'talk') dlgTap(); else if (STATE.mode === 'select' && G.sel && G.sel.kind === 'start') pickCard(0); return STATE.mode; }); if (m === 'play' && i > 3 && await ev(() => G.p.weapons.length > 0)) break; }
