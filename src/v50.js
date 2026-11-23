@@ -203,7 +203,7 @@ autoVec = function () {
   if (J === 'archer' && !inHz && here < (typeof V54 !== 'undefined' ? V54.arcStop : 2.5) && !(tg && (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 궁수 정지 사격
   // 궁극기 정지 발동: 예고 밖에서만 (무적 궁극기 전사·도적은 발동까지 0.9초 넘게 남으면 허용)
   if (ultReady() && !autoUltSetting() && (here > 3 || G.time - G.tm.readyAt > 8)) {
-    if (!inHz || ((J === 'warrior' || J === 'rogue') && hz > 0.9)) { S.ultStop++; return (AUTO.out = { x: 0, y: 0, m: 0 }); }
+    if (!inHz || ((J === 'warrior' || J === 'rogue') && hz > 0.9)) { S.ultStop++; ultPress58('ai'); }   // 0.58 버튼 누름, 정지 없음
   }
   // 군주: 군기 안 유지 (회피·보석·목표 지점 이동 시 제외)
   // 0.51: 안전할 때(예고 없음·주변 위험 낮음·체력 50% 이상) 보석 수집 우선 — 위치 규칙 해제, 보석 끌림 2배, 위험 0.8배

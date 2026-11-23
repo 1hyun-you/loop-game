@@ -194,7 +194,7 @@ function updatePhase(dt) {
   }
   const P = PHASES[ph.id], dk = G.kills - ph.k0; ph.k0 = G.kills;
   if (!eventPaused()) {
-    ph.t += dt;          // 곁가지 사건 진행 중 페이즈 타이머 정지 (3단계 결정 안건 6)
+    ph.t += dt;          // 돌발 사건 진행 중 페이즈 타이머 정지 (3단계 결정 안건 6)
     if (P.goal === 'time' && (ph.ambush || !REST_PH.includes(ph.id)) && dk > 0) {   // 0.24 처치 가속 (휴식형 제외, 습격 변형 포함)
       const b = Math.min(dk * PH_CFG.accPerKill, P.dur * PH_CFG.accMax - ph.acc);
       if (b > 0) { ph.t += b; ph.acc += b; ph.accT = 0.6; }

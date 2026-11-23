@@ -4,7 +4,7 @@
    보상은 성능 영향 없음(판 점수 배율·칭호·주인공 색상), 배율·강화 수치는 초기값 (5단계 시험으로 확정)
    ============================================================ */
 /* ---------- 설정 (기기 저장) ---------- */
-const SET_DEF = { autoUlt: false, joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false, fps: 60, hitstop: true, hud: 'm' };   // 0.47 프레임 60/120·타격 멈춤
+const SET_DEF = { autoUlt: false, ultSide: 'L', joy: 'float', confirm2: false, sfx: 80, bgm: 60, vibe: true, shake: true, dlgAuto: false, dmgNum: false, fps: 60, hitstop: true, hud: 'm' };   // 0.47 프레임 60/120·타격 멈춤
 const SETTINGS = (() => { try { return Object.assign({}, SET_DEF, JSON.parse(localStorage.getItem(CFG.SAVE_KEY + '_set') || '{}')); } catch (e) { return Object.assign({}, SET_DEF); } })();
 function saveSettings() { try { localStorage.setItem(CFG.SAVE_KEY + '_set', JSON.stringify(SETTINGS)); } catch (e) { } }
 /* 0.27f 전체 화면 옵션 삭제: 상태 표시줄 표시형 확정 (웹 전체 화면은 뒤로가기 시 해제·재적용 버벅임 발생) */
@@ -89,7 +89,8 @@ function showSettings(back) {
   const V = (k, nm) => `<div class="row"><div class="rt"><b>${nm}</b><span>0~100</span></div><input type="range" min="0" max="100" step="10" value="${SETTINGS[k]}" data-v="${k}" aria-label="${nm}"><output>${SETTINGS[k]}</output></div>`;
   UI.innerHTML = `<div class="layer scroll pg">${pgHead('설정', 's_back')}<div class="rows">
     <div class="row"><div class="rt"><b>조이스틱</b><span>${SETTINGS.joy === 'fixed' ? '고정형: 화면 아래 중앙 기준' : '유동형: 처음 누른 위치 기준'}</span></div><button class="tg" id="s_joy">${SETTINGS.joy === 'fixed' ? '고정형' : '유동형'}</button></div>
-    ${T('autoUlt', '궁극기 자동 발동', '꺼짐: 손을 떼고 잠시 멈춰 발동 · 켜짐: 적이 몰리면 자동')}
+    <div class="row"><div class="rt"><b>궁극기 버튼 위치</b><span>조이스틱 ${SETTINGS.ultSide === 'R' ? '오른쪽' : '왼쪽'}에 표시</span></div><button class="tg" id="s_ults">${SETTINGS.ultSide === 'R' ? '오른쪽' : '왼쪽'}</button></div>
+    ${T('autoUlt', '궁극기 자동 발동', '꺼짐: 조이스틱 옆 버튼으로 발동 · 켜짐: 적이 몰리면 자동')}
     ${T('confirm2', '두 번 눌러 확정', '선택 카드를 한 번 더 눌러야 선택')}
     ${T('dlgAuto', '대사 자동 넘김', '대사가 끝나면 잠시 후 다음 줄로')}
     ${T('vibe', '진동', '피격과 고비 순간(전직·각성·연성·궁극기·강적 처치)에 진동')}
@@ -105,6 +106,7 @@ function showSettings(back) {
   UI.querySelectorAll('button.tg[data-k]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; SETTINGS[k] = !SETTINGS[k]; saveSettings(); b.classList.toggle('on', SETTINGS[k]); b.setAttribute('aria-checked', SETTINGS[k]); sfx('ui'); }));   // 0.37 제자리 전환 (손잡이 이동)
   UI.querySelectorAll('input[data-v]').forEach(i => i.addEventListener('input', () => { SETTINGS[i.dataset.v] = +i.value; i.nextElementSibling.textContent = i.value; saveSettings(); auVol(); if (i.dataset.v === 'sfx') sfx('ui'); }));
   on('s_joy', () => { SETTINGS.joy = SETTINGS.joy === 'fixed' ? 'float' : 'fixed'; saveSettings(); keepScroll(() => showSettings(back)); });
+  on('s_ults', () => { SETTINGS.ultSide = SETTINGS.ultSide === 'R' ? 'L' : 'R'; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_fps', () => { SETTINGS.fps = SETTINGS.fps === 120 ? 60 : 120; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_hud', () => { SETTINGS.hud = { s: 'm', m: 'l', l: 's' }[SETTINGS.hud] || 'l'; saveSettings(); keepScroll(() => showSettings(back)); });
   on('s_back', back);

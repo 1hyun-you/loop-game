@@ -1,5 +1,5 @@
 /* ============================================================
-   곁가지 사건 (0.10) — 판당 1~2회, 3종 (3단계 결정 안건 6)
+   돌발 사건 (0.10) — 판당 1~2회, 3종 (3단계 결정 안건 6)
    공통: 일반 페이즈(기믹형·야영지 제외) 진행 중 플레이어 주변 생성, 간접 신호로 성격 암시,
          무시 가능(일정 시간 후 소멸), 진입 시 진행 중 페이즈 타이머 정지, 완료 후 복귀
    동굴 입구: 정예 소굴 45초 생존 → 유물 우선 보물 상자
@@ -43,12 +43,12 @@ function eventSpawn(pl) {
     e.hp = e.maxHp = e.hp * EV_CFG.giantHp; e.dmg *= EV_CFG.giantDmg; e.r = EV_CFG.giantR; e.color = '#7a5a8a'; e.xp = 40;
     e.cmd = true; e.sleep = true; e.ev = c; c.mob = e;
   }
-  G.ev.cur = c; toast(D.sign, D.color);
+  G.ev.cur = c; toast(`돌발 사건 · ${D.sign}`, D.color);
 }
 function eventEnd(outcome) {
   const c = G.ev.cur; if (!c) return;
   G.ev.log.push([c.type, outcome, Math.round(G.time - c.at)]);
-  if (outcome === 'ok' || outcome === 'refuse') fragUnlock(c.type);   // 곁가지 사건 첫 해결 조각 (0.13), 0.16: 봉인된 문은 열기만 해도 해금
+  if (outcome === 'ok' || outcome === 'refuse') fragUnlock(c.type);   // 돌발 사건 첫 해결 조각 (0.13), 0.16: 봉인된 문은 열기만 해도 해금
   if (c.mob && !c.mob.dead && outcome !== 'ok') c.mob.dead = true;
   G.ev.cur = null;
 }

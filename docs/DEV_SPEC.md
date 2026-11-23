@@ -25,7 +25,7 @@
 | 구분 | 파일 |
 | --- | --- |
 | 설정·공통 | config.js(설정표·버전·저장 키), util.js, input.js |
-| 판 진행 | game.js, phase.js, event.js(곁가지 사건·저주·야영지), boss.js(수문장 4인), demon.js(마왕전·판 구조) |
+| 판 진행 | game.js, phase.js, event.js(돌발 사건·저주·야영지), boss.js(수문장 4인), demon.js(마왕전·판 구조) |
 | 서사·메타 | story.js(대사·기록 조각·엔딩), meta.js(설정·도감 기록·고난도·도전 조건·점수·칭호), guide.js(첫 판 안내) |
 | 전투·성장 | weapons.js, growth.js(분기·정예·보물 상자), job.js(전직·직업 규칙·2차 전직), select.js, arsenal.js, awaken.js(각성), ult.js(궁극기), jobplus.js, mobs.js, bpat.js(보스 패턴 순번표) |
 | 표현 | sprite.js, juice.js, react.js, dot29.js, dot30.js, render.js, vfx.js, motion.js, audio.js |
@@ -53,6 +53,7 @@
 | v55.js | 상단 칸 고정·크기 설정, 일시정지·내 능력(showAbil)·선택 카드, RULE55 규칙 문구, 마왕 rate 0.0077 |
 | v56.js | 사망·마왕 처치 클로즈업, 무기 이름표, 결과 화면(showResult), 첫 판 안내 |
 | v57.js | 치트 패널 개편(DEV.place·DEV.draw 교체, 무기 고르기 창 dev57Open, 레벨 일괄 상승 dev57Levels, 구간 이동 dev57JobPick·dev57JobAwk·dev57Boss) |
+| v58.js | 궁극기 버튼(ult58Pos·ultPress58, 손 떼고 정지 발동 폐지 JOB_CFG.ultStop 무한대, 설정 ultSide), 명칭 교체(돌발 사건·화염술사) |
 
 - 구조 문제: 덧씌우기 누적으로 같은 기능이 여러 파일에 흩어짐 → 대규모 재구성 구현 전에 통합 정리 검토 필요 (회차 65 정기 점검 지적)
 
@@ -147,7 +148,7 @@
 | dev/vfuse54.js | 연성 조합별 피해 배율 측정 |
 | dev/vsq50.js | 동료 지휘 점검 |
 | dev/vult.js, vboss.js, vaw.js | 궁극기·보스 패턴·각성 점검 |
-| dev/vshotNN.js | 버전별 화면 캡처 점검 (vshot57: 치트 패널 동작 24항목) |
+| dev/vshotNN.js | 버전별 화면 캡처 점검 (vshot57: 치트 패널 동작 24항목, vshot58: 궁극기 버튼 22항목 × 화면 폭 3종) |
 
 - 기록: `dev/sim_log/` (버전별 runs·사용성 결과)
 - 동료 지휘·사용성 점검은 다른 시험과 동시에 돌리면 시간 초과성 실패 → 단독 실행
@@ -165,7 +166,7 @@
 ### 최근 참고 수치 (0.56)
 
 - 일반 30판 직업 균등 돌파 23/30, 무적 8판 평균 737초, 마왕전 22회 중 처치 17·평균 142초
-- 관찰: 궁수·마법사 돌파율 최저, 전직 전 사망 간헐 발생 (원인 미확정)
+- 관찰: 궁수·화염술사 돌파율 최저, 전직 전 사망 간헐 발생 (원인 미확정)
 
 ### 자동 플레이 로직 요지
 
