@@ -33,6 +33,7 @@
 | 그림 적용(GPT) | art-*.js, effect-*.js, field-*.js, hud-art-data.js, fuse-art*.js, 직업별 *-art.js·*-art-data.js |
 | 버전별 덧씌우기 | v40.js ~ v58.js (각 버전 변경분, 이전 함수를 감싸거나 교체) |
 | ★인물 구조 (0.60~) | hero60.js — 인물 8명·짝 무기 8종·인물 선택·인물 각성·궁극기·연성 틀, v58.js 다음·main.js 앞 (아래 '인물 구조' 절) |
+| ★인물 구현 (0.61~) | h60-<인물>.js — 인물 1명씩, hero60.js 다음·main.js 앞 (0.61 h60-berserker.js 광전사) |
 | 개발 도구 | dev.js(게임 내 치트 패널), main.js(마지막, 시작) |
 
 ### 버전별 덧씌우기 파일 주요 내용
@@ -69,6 +70,9 @@
 - 인물 데이터 `HERO60[id]`: name·sub·ic·wpn(전용 무기)·slots·art(임시 그림)·col(표시색)·c1~c3(DESIGN 10장 3색)·rule·ult·aw(A·B)·impl
   - `impl: false` = 구현 전 임시 상태(전용 무기 기본형·고유 규칙 없음·임시 공통 충격파 궁극기·'제작 중' 표시), 인물 구현 회차에 true + 아래 연결점 등록
   - 연결점(인물 구현 때 HERO60[id]에 등록, impl true일 때만 호출): stat(w)·dmgMul(e,o)·onHit·onKill·hurtMul·onHurt·avoid·tick(dt)·onPick·onAwaken(k)·ultFn(k)·status()·dials()
+  - 0.61 추가: fire(w,S)(전용 무기 발동, 숫자 반환 = 다음 발동까지 시간)·br([{k,nm,ds}] 전용 무기 발현 A·B, Lv 3 선택)·wak({A,B} 무기 각성, Lv 5에 고른 발현으로 자동)·onBranch(w)·onWak(w)·spdMul()(이동 속도)·draw(c)(무기 그리기 뒤, 월드 좌표)·drawBody(c, fn)(캐릭터 그리기 감싸기)
+  - 짝 무기의 발현·각성 대기열은 전용 칸(w.base)일 때만 (checkBranch 덮어쓰기), 연성 fire도 숫자 반환 가능
+- 인물 각성 기회 보장 `evRetry60`: 인물 선택 직후 다음 페이즈 돌발 사건 1번 보장, 각성 전 실패·무시 시 다음 일반 페이즈에 다른 종류 추가 (G.ev.plan, 기록 h60.evAdd)
 - 짝 무기 `PW60` 8종: cleave·dagger·arrow·turret·fireball·lamp·bell·thorn, 발동 `PAIR60[id](w,S)` (false = 대상 없음 → 0.25초 뒤 재시도), 장면 `G.f60` (cuts·vines·tw)
 - 연성: `FUSE60_NM`(56종 이름표), `FUSE60[인물][짝 무기] = { nm, ds, fire(w,S), cd? }` 등록된 것만 연성 카드 등장 (짝 무기 Lv 5, 레벨업 1회당 1장)
 - 덮어쓴 연결 함수: updateWeapons·wStats·jobDmgMul·onEnemyHit·onEnemyKill·playerHurtMul·onPlayerHurt·playerAvoid·heal·updateJob·useUlt·applyJob·applyJob2·openJob2·jobCands·altarCheck·updateAltar·v42Update·levelCands·drawCards·applyFuse·fuseCands
@@ -159,6 +163,7 @@
 | 도구 | 용도 |
 | --- | --- |
 | dev/vtest.js | 가상 시계 기반 실제 프레임 시험 (Playwright), `--god` 무적, `--jobs` 인물 8명 순환 배정, `--job` 인물 지정(잔영 1순위·자동 선택), `--rotate` 수문장 순환, `--demon final\|retry\|mix`, `--preset release\|post`, `--tier`·`--cond`, `--seed N`(같은 난수열 재현: 그리기 난수 분리·소리 끔·그림 불러오기 대기 → 같은 코드면 결과 완전 일치, 정리 전후 동일 동작 비교용), `--cov 파일`(함수 단위 실행 기록) |
+| dev/vber61.js | 광전사 집중 점검 38항목 (투지·격노, 발현·무기 각성, 궁극기 3종, 인물 각성 A·B, 연성 7종 발동·피해, 페이지 오류) |
 | dev/deadcode.cjs | 죽은 코드 판독 `node dev/deadcode.cjs [--cov 기록.json,...] [--covstat] [--out 목록.json] [--apply]` (결합본 기준, `--apply`는 src에서 삭제·선언 유지 처리) |
 | dev/vpar.sh | 동시 실행 `sh dev/vpar.sh <판 수> <기록 파일> [--god]` |
 | dev/vsum.js | 집계 (판 길이·보스전·돌파·연성·피해 비중) |

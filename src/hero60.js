@@ -251,8 +251,9 @@ function updateWeapons(dt) {
     if (w.t > 0) continue;
     let r;
     const fd = w.fu && fuseDef60(w.fu.job, w.id);
-    if (fd) r = fd.fire(w, S); else r = (PAIR60[w.id] || (() => false))(w, S);
-    w.t = r === false ? 0.25 : (fd && fd.cd ? fd.cd(w, S) : S.cd);
+    const hf = !fd && w.base && heroImpl60() && H60().fire;        // 전용 무기: 인물 구현 후 인물 쪽 발동(발현·무기 각성 포함)
+    if (fd) r = fd.fire(w, S); else if (hf) r = hf(w, S); else r = (PAIR60[w.id] || (() => false))(w, S);
+    w.t = r === false ? 0.25 : typeof r === 'number' ? r : (fd && fd.cd ? fd.cd(w, S) : S.cd);   // 숫자 = 다음 발동까지 시간 직접 지정
     if (r === false) continue;
     if (r !== 'tick') rcFire60(w);
     if (pBr('haste') === 'echo' && w.id !== 'lamp' && Math.random() < 0.12) w.t = 0.05;   // 보조 효과 분기 '연속 발동'
@@ -356,6 +357,8 @@ function applyHero60(id) {
   toast(H.impl ? H.rule : `${H.name} · 제작 중 (고유 규칙 준비 중)`, H.col);
   toast(own ? `${WEAPONS[H.wpn].name} Lv ${b.lvl} → 전용 칸` : `전용 무기 ${WEAPONS[H.wpn].name} 획득`, H.col);
   heroBurst60(H.col); if (typeof cine47 === 'function') cine47('job', H.col);
+  checkBranch('w', b.id);                                   // 0.61 이미 Lv 3 이상인 무기를 전용 칸으로 가져온 경우 발현 대기
+  evRetry60(null);                                          // 0.61 인물 선택 직후 페이즈 돌발 사건 1번 보장
 }
 applyJob = applyHero60;
 function heroBurst60(col) {
@@ -524,7 +527,7 @@ drawWeapons = function (c, inView) {
     c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); c.moveTo(t.x, t.y - 2); c.lineTo(t.x + Math.cos(t.a) * 12, t.y - 2 + Math.sin(t.a) * 12); c.stroke();
   }
   c.globalAlpha = 1;
-  for (const w of p.weapons) if (w.id === 'lamp' && w.lk && w.lk.length && G.time - w.lkT < 0.35) {   // 영혼 줄기: 적 → 등불로 흐르는 물결선
+  for (const w of p.weapons) if (w.id === 'lamp' && !w.fu && w.lk && w.lk.length && G.time - w.lkT < 0.35) {   // 연성된 등불은 인물 쪽에서 그림   // 영혼 줄기: 적 → 등불로 흐르는 물결선
     const col = wCol60(w), hx = p.x + 10, hy = p.y - 12;
     c.fillStyle = col; c.globalAlpha = 0.9; c.beginPath(); c.arc(hx, hy, 4 + Math.sin(G.time * 9), 0, 7); c.fill();
     c.strokeStyle = col; c.lineWidth = 2.2; c.lineCap = 'round';
@@ -610,6 +613,66 @@ function cxFuse() {
     return cxCard({ job: j, col: H.col, ic: H.ic, nm: H.name, tag: '연성 7종 · 전용 무기 ' + WEAPONS[H.wpn].name, lines: [`<details class="acc"><summary>연성 7종</summary><div class="cxg">${PW60.filter(id => F[id]).map(id => `<div><b>${esc(F[id])}</b><span>${esc(WEAPONS[id].name)} + ${esc(WEAPONS[H.wpn].name)}${fuseDef60(j, id) ? '' : ' · 제작 중'}</span></div>`).join('')}</div></details>`] }); }).join('');
   return '<p class="hint">인물 선택 후 무기 칸의 짝 무기가 Lv 5가 되면 레벨업에 연성 카드 등장 · 그 칸이 인물 고유 연성 무기로 변신</p>' + rows;
 }
+
+/* ---------- 0.61 전용 무기 발현(Lv 3, A·B 택1) → 무기 각성(Lv 5, 고른 발현에 묶여 자동) ----------
+   인물 구현 때 HERO60[id].br = [{ k: 'A', nm, ds }, { k: 'B', nm, ds }], HERO60[id].wak = { A: { nm, ds }, B: { nm, ds } } 등록
+   짝 무기(일반 무기)는 발현·각성 없음 → 전용 칸(w.base)일 때만 대기열에 올림 */
+const _checkBranch60 = checkBranch;
+checkBranch = function (kind, id) {
+  if (kind !== 'w' || !PW60.includes(id)) return _checkBranch60(kind, id);
+  const it = wObj(id), H = H60(); if (!it || !it.base || !H || !H.impl || !H.br) return;
+  if (it.lvl >= BRANCH_AT && !it.br && !it.brQ) { BRANCHES[id] = H.br; it.brQ = true; G.pendingBr.push({ kind, id }); }
+  if (it.lvl >= AW43 && it.br && !it.aw && H.wak && H.wak[it.br]) applyWak60(it);
+};
+function applyWak60(w) {                                   // 무기 각성: 선택 없이 고른 발현의 다음 단계로
+  const H = H60(), A = H.wak[w.br]; w.aw = w.br; G.stats.branches.push(w.id + ':aw:' + w.aw);
+  banner('무기 각성 · ' + A.nm, `${WEAPONS[w.id].name} · ${A.ds}`, H.col, 1.8); sfx('ult');
+  fx({ kind: 'ring', x: G.p.x, y: G.p.y, r0: 10, r1: 120, dur: 0.6, color: H.col, follow: true });
+  if (typeof cine47 === 'function') cine47('awaken', H.col, w);
+  hook60('onWak', w); recalc();
+}
+const _applyBranch60 = applyBranch;
+applyBranch = function (c) {
+  const w = c.kind === 'w' && !c.aw && wObj(c.id), H = H60();
+  if (!w || !w.base || !H || !H.br) return _applyBranch60(c);
+  w.br = c.k; G.stats.branches.push(c.id + ':' + c.k);
+  const o = H.br.find(x => x.k === c.k);
+  banner('발현 · ' + o.nm, `${WEAPONS[c.id].name} · ${o.ds}`, H.col, 1.6);
+  hook60('onBranch', w); recalc();
+  checkBranch('w', c.id);                                  // 발현 고르기 전에 이미 Lv 5면 바로 무기 각성
+};
+const _cardInfoBr60 = cardInfo;
+cardInfo = function (c) {
+  const r = _cardInfoBr60(c), w = c.t === 'branch' && !c.aw && wObj(c.id), H = H60();
+  if (r && w && w.base && H && H.br) { r.col = H.col; r.tag = '전용 무기 발현 · ' + WEAPONS[c.id].name; const A = H.wak && H.wak[c.k]; if (A) r.ds += `\nLv 5 무기 각성 · ${A.nm}`; }
+  return r;
+};
+const _selHeadBr60 = SEL_HEAD.branch;
+SEL_HEAD.branch = s => { const w = s.q && !s.q.aw && wObj(s.q.id); return w && w.base && H60() && H60().br ? ['발현', `${WEAPONS[s.q.id].name} Lv ${BRANCH_AT} · 전용 무기 발현 1종 선택`] : _selHeadBr60(s); };
+/* 이동 속도·그리기 연결점: HERO60[id].spdMul()·draw(c)·drawBody(c, fn) */
+const _ultSpdMul60 = ultSpdMul;
+ultSpdMul = function () { const h = hook60('spdMul'); return _ultSpdMul60() * (h || 1); };
+const _drawWeaponsH60 = drawWeapons;
+drawWeapons = function (c, inView) { const r = _drawWeaponsH60(c, inView); if (G.p.job) { c.save(); hook60('draw', c); c.restore(); } return r; };
+const _drawPlayerH60 = drawPlayer;
+drawPlayer = function (c) { const H = H60(); if (H && H.impl && H.drawBody) return H.drawBody(c, () => _drawPlayerH60.apply(this, arguments)); return _drawPlayerH60.apply(this, arguments); };
+
+/* ---------- 0.61 인물 각성 기회 보장 (회차 92 결정) ----------
+   인물 선택 직후 페이즈에 돌발 사건 1번 보장, 각성 전 돌발 사건을 놓치면(실패·무시) 다음 일반 페이즈에 다른 종류가 다시 나옴 */
+function evRetry60(avoid) {
+  const E = G.ev, ph = G.ph, p = G.p; if (!E || !p.job || p.job2) return;
+  const k = ph.i + 1; if (k >= ph.order.length - 1) return;   // 마지막(수문장) 페이즈 제외
+  if (E.plan.some(q => q.i === k)) return;
+  const types = Object.keys(EVENTS).filter(t => t !== avoid), type = types[Math.floor(Math.random() * types.length)];
+  E.plan.push({ i: k, type, at: rand(EV_CFG.at[0], EV_CFG.at[1]), retry60: 1 }); E.plan.sort((a, b) => a.i - b.i);
+  const S = S60(); S.evAdd = (S.evAdd || 0) + 1;
+}
+const _eventEndR60 = eventEnd;
+eventEnd = function (outcome) {
+  const c = G.ev && G.ev.cur, r = _eventEndR60(outcome);
+  if (c && outcome !== 'ok' && outcome !== 'refuse') evRetry60(c.type);
+  return r;
+};
 
 /* ---------- 저장 변환: 옛 직업 도감 기록 → 인물 (전사 → 광전사, 마법사 → 화염술사, 소환사 → 사령술사), 시간술사·군주·옛 무기 기록은 보관만 ---------- */
 (function () {
