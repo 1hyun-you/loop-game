@@ -34,7 +34,7 @@ const JOB43 = {
   druid: { pre: '야수', nm: '야수 무장', ds: '곰이 연성 무기로 강타, 늑대가 연성 무기를 물고 돌진' },
 };
 for (const j in JOB43) if (JOB_WX[j]) Object.assign(JOB_WX[j], { pre: JOB43[j].nm, ds: JOB43[j].ds });
-let fuseName = (j, id) => JOB43[j].pre + ' ' + WEAPONS[id].name;
+let fuseName;   // 선언 유지 (값은 뒤 파일 대입)
 const F43 = () => G.f43 || (G.f43 = { trail: [], bat: null, wr: [], relicT: 0, kills0: 0, echoes: 0, fires: {} });
 const baseW = () => G.p.weapons.find(w => w.base);
 const slotWs = () => G.p.weapons.filter(w => !w.base);
@@ -42,55 +42,24 @@ const fusedWs = () => G.p.weapons.filter(w => w.fu);
 const slotCount = () => slotW() - (baseW() ? 1 : 0);
 const baseRetired = () => false;   // 0.50: 모든 칸 연성 후에도 기본 무기 계속 발동 (구: fusedWs().length >= slotCount())
 const awDone = w => !AWAKEN[w.id] || !!w.aw;
-function fuseCands() {
-  const p = G.p, b = baseW(); if (!p.job || !b || b.lvl < AW43 || !awDone(b)) return [];
-  return slotWs().filter(w => !w.fu && w.lvl >= AW43 && awDone(w));
-}
 
 /* ---------- 기본 무기 칸: 슬롯 계산 (meta.js slotW가 fusedN()=fz 개수를 더하므로 기본 무기에 fz 표시) ---------- */
 function makeBase(w) { w.base = true; w.fz = 'base'; return w; }
 
 /* ---------- 레벨 단계: Lv 3 분기 · Lv 5 각성 ---------- */
-checkBranch = function (kind, id) {
+function checkBranch(kind, id) {
   const it = kind === 'w' ? wObj(id) : G.p.passives.find(x => x.id === id); if (!it) return;
   if (it.lvl >= BRANCH_AT && !it.br && !it.brQ && BRANCHES[id]) { it.brQ = true; G.pendingBr.push({ kind, id }); }
   if (kind === 'w' && AWAKEN[id] && it.lvl >= AW43 && !it.aw && !it.awQ) { it.awQ = true; G.pendingBr.push({ kind: 'w', id, aw: true }); }
-};
+}
 SEL_HEAD.branch = s => s.q.aw ? ['무기 각성', `${itemName(s.q.id)} ${AW43}레벨 · 각성 1종 선택`] : ['분기 선택', `${itemName(s.q.id)} 강화 ${BRANCH_AT}단계 · 플레이 방식 선택`];
 
 /* ---------- 전직 후보: 보유 무기 대응 직업 ---------- */
 const SYM_JOB = Object.fromEntries(Object.entries(FZ_SYMBOL).map(([j, w]) => [w, j]));
-jobCands = function (prev = []) {
-  if (typeof window !== 'undefined' && window.__vtJob && JOBS[window.__vtJob]) return [{ t: 'job', id: window.__vtJob }];
-  let js = shuffle(G.p.weapons.map(w => SYM_JOB[w.id]).filter(Boolean));
-  const fresh = js.filter(j => !prev.includes(j)); if (fresh.length) js = fresh;
-  if (!js.length) js = shuffle(JOB_ORDER.filter(j => !prev.includes(j)));
-  if (!js.length) js = shuffle(JOB_ORDER.slice());
-  return js.slice(0, 3).map(id => ({ t: 'job', id }));
-};
 
 /* ---------- 전직: 상징 무기 → 기본 무기 칸 ---------- */
-const _applyJob43 = applyJob;
-applyJob = function (id) {
-  const p = G.p, sym = FZ_SYMBOL[id], own = p.weapons.find(w => w.id === sym);
-  if (own) p.weapons = p.weapons.filter(w => w !== own);           // 도적 무기 칸 정리 대상에서 제외
-  _applyJob43(id);
-  const b = makeBase(own || { id: sym, lvl: 1, t: 0.3 }); p.weapons.push(b);
-  G.stats.base = sym + ':' + b.lvl; F43();
-  toast(`기본 무기 · ${WEAPONS[sym].name} (${JOBS[id].name})`, JOB_COL[id]);
-  checkBranch('w', sym); recalc();
-};
 
 /* ---------- 연성 카드 ---------- */
-const _drawCards43 = drawCards;
-drawCards = function (n, ex = []) {
-  const r = _drawCards43(n, ex), c = fuseCands()[0];
-  if (c && n === selN() && !ex.some(x => x.t === 'fuse') && r.length) {
-    let i = r.length - 1; while (i > 0 && r[i].t === 'pet') i--;
-    r.splice(i, 1); r.unshift({ t: 'fuse', id: c.id });
-  }
-  return r;
-};
 const _isFill43 = isFill;
 isFill = c => c.t === 'fuse' || _isFill43(c);
 const _cardInfo43 = cardInfo;
@@ -105,33 +74,8 @@ const _applyCard43 = applyCard;
 applyCard = function (c) { if (c.t !== 'fuse') return _applyCard43(c); if (G.sel && G.sel.kind === 'chest') (G.stats.chestPicks = G.stats.chestPicks || []).push('fuse:' + c.id); else G.stats.picks.push(G.p.level - G.pendingLv + ':fuse:' + c.id); applyFuse(c.id); };
 const _choiceType43 = choiceType;
 choiceType = (c, f) => f.k === 'k-fuse' ? '연성' : _choiceType43(c, f);
-function applyFuse(id) {
-  const p = G.p, w = slotWs().find(x => x.id === id && !x.fu); if (!w || !p.job) return;
-  const j = p.job; w.fu = { job: j, nm: fuseName(j, id) }; w.t = 0.3;
-  (G.stats.fuses = G.stats.fuses || []).push(`${id}:${j}:${Math.round(G.time)}`);
-  if (fusedWs().length === 1) F43().kills0 = G.kills;
-  banner('연성 · ' + w.fu.nm, `${JOB43[j].nm} · ${WEAPONS[id].name} + ${WEAPONS[baseW().id].name}`, JOB_COL[j], 2.4);
-  toast(fusedWs().length >= slotCount() ? '모든 칸 연성 완료 · 기본 무기 계속 발동' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
-  fuseMoment(j, w); sfx('ult'); shake(3, 0.3); recalc();
-}
+function applyFuse() { }   // 선언 유지 (본문은 뒤 파일 대입으로 교체)
 /* 직업별 연성 순간 연출. 아트 로딩 실패 시 기존 연출 사용. */
-function fuseMoment(j, w) {
-  if (startFuseArt(j, w)) {
-    if (j === 'warrior') shake(6, 0.4);
-    return;
-  }
-  const p = G.p, col = JOB_COL[j], R = (r0, r1, d, o = {}) => fx(Object.assign({ kind: 'ring', x: p.x, y: p.y, r0, r1, dur: d, color: col, follow: true }, o));
-  if (j === 'warrior') { R(10, 200, 0.7, { fill: true }); shake(6, 0.4); }
-  else if (j === 'rogue') for (let i = 0; i < 6; i++) fx({ kind: 'pop', x: p.x + Math.cos(i) * 40, y: p.y + Math.sin(i) * 40, r: 14, color: '#203040', dur: 0.4 });
-  else if (j === 'sovereign') for (let i = -1; i <= 1; i++) fx({ kind: 'pop', x: p.x + i * 34, y: p.y - 40, r: 12, color: col, dur: 0.6 });
-  else if (j === 'archer') for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; fx({ kind: 'zap', x: p.x, y: p.y, x2: p.x + Math.cos(a) * 140, y2: p.y + Math.sin(a) * 140, dur: 0.3 }); }
-  else if (j === 'engineer') { R(60, 10, 0.5); R(10, 120, 0.6); }
-  else if (j === 'chrono') { R(160, 10, 0.8); G.later.push({ t: 0.5, f: () => R(10, 160, 0.6) }); }
-  else if (j === 'mage') for (let i = 0; i < 6; i++) G.later.push({ t: i * 0.06, f: () => fx({ kind: 'pop', x: p.x + Math.cos(i * 1.05) * 50, y: p.y + Math.sin(i * 1.05) * 50, r: 12, color: ['#ff9a4a', '#bfe8ff', '#fff27a'][i % 3], dur: 0.4 }) });
-  else if (j === 'summoner') for (let i = 0; i < 4; i++) fx({ kind: 'pop', x: p.x + rand(-60, 60), y: p.y + rand(-60, 60), r: 16, color: col, dur: 0.7 });
-  else if (j === 'priest') { fx({ kind: 'pop', x: p.x, y: p.y - 46, r: 22, color: col, dur: 0.8 }); R(10, 130, 0.6, { fill: true }); }
-  else if (j === 'druid') { R(10, 110, 0.5); for (const m of G.pets || []) fx({ kind: 'ring', x: m.x, y: m.y, r0: 6, r1: 50, dur: 0.5, color: col }); }
-}
 
 /* ---------- 연성 무기 발동: 직업 뼈대 × 짝 무기 ---------- */
 const fireAs = (w, S, k, x, y, ex) => { const S2 = Object.assign({}, S, { dmg: S.dmg * k }); if (ex) ex(S2); return x == null ? WEAPON_FIRE[w.id](w, S2) : atPos(x, y, () => WEAPON_FIRE[w.id](w, S2)); };
@@ -181,28 +125,5 @@ const _wName43 = wName;
 wName = function (id) { const w = G && G.p && G.p.weapons.find(x => x.id === id); return w && w.fu ? w.fu.nm : _wName43(id); };
 
 /* ---------- 직업 시련 → 2차 전직 조건 ---------- */
-v42Update = function (dt) {
-  const p = G.p; if (!p.job || !FZ_TRIAL[p.job]) return;
-  const f = F42();
-  if (!f.base) { f.base = { kills: G.kills, elite: G.stats.eliteKills || 0, ult: G.stats.ults || 0 }; f.px = p.x; f.py = p.y; f.hp = p.hp; }
-  const mv = Math.hypot(p.x - f.px, p.y - f.py); f.px = p.x; f.py = p.y;
-  f.dist += mv; f.time += dt; if (mv < 0.3) f.still += dt; if (p.hp > p.maxHp * 0.9) f.hi += dt;
-  if (p.hp < f.hp) f.hurt += f.hp - p.hp; f.hp = p.hp;
-  if (!f.done && fzProg() >= FZ_TRIAL[p.job].n) {
-    f.done = 1; G.stats.trialAt = Math.round(G.time);
-    toast('시련 완수 · 2차 전직 개방', JOB_COL[p.job]); banner(FZ_TRIAL[p.job].nm, '2차 전직 조건 달성', JOB_COL[p.job], 2.2);
-    if (!p.job2) G.job2Ready = true;
-  }
-};
-const _altarCheck43 = altarCheck;
-altarCheck = function () {
-  const was = G.job2Ready; _altarCheck43();
-  const p = G.p; if (p.job && !p.job2 && !F42().done && G.ph.i < p.jobAt + 3) G.job2Ready = was;   // 시련 미완수: 전직 후 3페이즈 돌파 시 대체 개방
-};
 
 /* ---------- 도감 연성 탭 ---------- */
-cxFuse = function () {
-  const jobs = JOB_ORDER.map(id => { const X = JOB43[id], W = WEAPONS[FZ_SYMBOL[id]], T = FZ_TRIAL[id];
-    return cxCard({ job: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name + ' · ' + X.nm, tag: '기본 무기 ' + W.name, lines: [`<b>${esc(X.ds)}</b>`, cxChips([['이름', esc(X.pre + ' + 무기 이름')], ['2차 전직 시련', esc(T.nm)]]), `<details class="acc"><summary>시련 조건</summary><div class="cxg"><div><b>${esc(T.nm)}</b><span>${esc(T.ds)} · 미달 시 전직 후 3페이즈 돌파로 개방</span></div></div></details>`] }); }).join('');
-  return '<p class="hint">전직 시 상징 무기가 기본 무기 칸으로 이동 · 무기 칸 무기와 기본 무기가 모두 Lv 5(각성 완료)면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 특화 연성 무기로 변신 (분기·각성 계승) · 모든 칸 연성 후에도 기본 무기 계속 발동</p>' + jobs;
-};

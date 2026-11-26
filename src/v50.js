@@ -23,62 +23,9 @@ const S50 = () => G.stats.v50 || (G.stats.v50 = { ultHz: 0, ultStop: 0, sovT: 0,
 
 /* ---------- 동료 지휘 ---------- */
 SQ46.gap = V50.gap;
-const sd50 = u => u.sd50 || (u.sd50 = [Math.random(), Math.random(), Math.random(), Math.random() < 0.5 ? -1 : 1]);
-goals46 = function (U, Gm, rOf) {
-  const p = G.p;
-  for (const u of U) {
-    const s = sd50(u), e = u.tg;
-    if (e) {
-      // 다가온 쪽에서 붙음 + 약간의 흔들림 (자리 고정 없음)
-      let ang = Math.atan2(u.y - e.y, u.x - e.x); if (!Number.isFinite(ang)) ang = s[0] * Math.PI * 2;
-      ang += Math.sin(G.time * (0.7 + 0.5 * s[1]) + s[0] * 9) * 0.22;
-      const D = e.r + rOf(u) + 1 + 3 * Math.sin(G.time * (1.1 + s[2]) + s[1] * 7);
-      u.gx = e.x + Math.cos(ang) * D; u.gy = e.y + Math.sin(ang) * D; u.ang = ang;
-    } else {
-      // 느슨한 배회: 동료마다 다른 기준 각도·회전 속도·반경 주기
-      const th = s[0] * Math.PI * 2 + G.time * (0.12 + 0.22 * s[1]) * s[3] + Math.sin(G.time * 0.37 + s[2] * 11) * 0.5;
-      const R = Gm.rIn + (Gm.rOut - Gm.rIn) * (0.5 + 0.5 * Math.sin(G.time * (0.45 + 0.4 * s[2]) + s[0] * 13));
-      u.gx = p.x + Math.cos(th) * R; u.gy = p.y + Math.sin(th) * R;
-    }
-  }
-};
-const _squad50 = squad46;
-squad46 = function (U, o = {}) {
-  if (U && U.length && G.p) {
-    const S = S50(), p = G.p, nr2 = SQ46.near * SQ46.near;
-    for (const e of G.enemies) {
-      if (e.dead || !big46(e)) continue;
-      if (e.px50 != null && Math.hypot(e.x - e.px50, e.y - e.py50) > V50.tele) { e.tp50 = G.time; S.sqTele++; }
-      e.px50 = e.x; e.py50 = e.y;
-    }
-    // 교대: 큰 적과 멀리 떨어진 공격자 ↔ 그 적에 훨씬 가까운 다른 동료 (표적 맞교환, 투입 인원 유지)
-    const per = !(U._t50 > G.time); if (per) U._t50 = G.time + 0.5;
-    for (const a of U) {
-      const e = a.tg; if (!e || e.dead || !big46(e) || a.ret) continue;
-      const d = Math.hypot(a.x - e.x, a.y - e.y);
-      if (!((e.tp50 === G.time && d > V50.teleFar) || (per && d > V50.bigFar))) continue;
-      let c = null, cd = d - 60;
-      for (const v of U) { if (v === a || v.ret || (v.tg && (big46(v.tg) || dist2(v.tg.x, v.tg.y, p.x, p.y) < nr2))) continue; const dv = Math.hypot(v.x - e.x, v.y - e.y); if (dv < cd) { cd = dv; c = v; } }
-      if (c) { a.tg = c.tg || null; c.tg = e; S.sqDrop++; }
-    }
-  }
-  return _squad50(U, o);
-};
 /* 망령: 공격 사거리 +10 (겹침 완화로 바깥에 선 망령도 공격) */
-updateMinions = function (dt) {
-  const p = G.p, k = p.job2 === 'lord' ? 2 : 1, dmg = 8 * k * p.mod.dmg;
-  const U = sumUnits46(); if (U.length) squad46(U, { dt, state: G.sq46m || (G.sq46m = { t: 0 }) });
-  for (const m of G.minions) {
-    m.life -= dt; m.hitT -= dt;
-    moveUnit46(m, 170, dt, U);
-    const e = m.tg;
-    if (e && m.hitT <= 0 && Math.hypot(e.x - m.x, e.y - m.y) < e.r + m.r + 6 + V50.reach) { m.hitT = 0.5; m.vx = e.x - m.x; if (m.giant) markSummonAttack(m, Math.atan2(e.y - m.y, m.vx)); damageEnemy(e, dmg, { src: 'minion' }); }
-  }
-  G.minions = G.minions.filter(m => m.life > 0);
-};
 
 /* ---------- 범위 그림: 안쪽 옅게 + 가장자리 무기별 장식 ---------- */
-const DECO50 = { t: -1, n: 0 };
 function fam50(f) {
   const w = f.w48, a = f.art || '';
   if (w === 'icering' || f.element === 'ice' || a === 'frost' || a === 'shatter') return 'ice';
@@ -89,76 +36,7 @@ function fam50(f) {
   return null;
 }
 const seed50 = o => o.seed48 || (o.seed48 = 1 + Math.floor(hash2(Math.round(o.x || 0), Math.round(o.y || 0) + 7) * 1e6));
-function deco50(c, fam, x, y, r, a, sd, col) {
-  if (!(a > 0.02) || !(r > 10) || !Number.isFinite(x + y)) return;
-  if (DECO50.t !== G.time) { DECO50.t = G.time; DECO50.n = 0; }
-  const cap = vfxLite() ? 260 : 640; if (DECO50.n >= cap) return;
-  const tau = Math.PI * 2, n = clamp(Math.round(tau * r / (fam === 'earth' ? 30 : fam === 'shock' ? 40 : 22)), 6, 24), s = clamp(r * 0.085, 4, 11);
-  DECO50.n += n; S50().deco++;
-  c.save(); c.globalAlpha = clamp(a, 0, 1); c.lineJoin = 'round'; c.lineCap = 'round';
-  for (let i = 0; i < n; i++) {
-    const h = hash2(sd, i), b = i * tau / n + (h - 0.5) * 0.5, cs = Math.cos(b), sn = Math.sin(b), px = x + cs * r, py = y + sn * r;
-    if (fam === 'ice') {
-      const L = s * (1.1 + 0.9 * hash2(sd, i + 31)), w = s * 0.42;
-      c.beginPath(); c.moveTo(px - sn * w, py + cs * w); c.lineTo(px + cs * L * 0.75, py + sn * L * 0.75); c.lineTo(px + sn * w, py - cs * w); c.lineTo(px - cs * L * 0.45, py - sn * L * 0.45); c.closePath();
-      c.fillStyle = '#eef9ff'; c.fill(); c.lineWidth = 1.2; c.strokeStyle = '#6aaedc'; c.stroke();
-      if (h > 0.5) { const q = s * 0.5, bx = px + sn * w * 1.6, by = py - cs * w * 1.6; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + cs * q * 1.4 + sn * q * 0.4, by + sn * q * 1.4 - cs * q * 0.4); c.stroke(); }
-    } else if (fam === 'earth') {
-      const L = s * (1.8 + 0.8 * hash2(sd, i + 31)), pr = (hash2(sd, i + 61) - 0.5) * 2;
-      const q1x = px - cs * L * 0.35 - sn * s * 0.35 * pr, q1y = py - sn * L * 0.35 + cs * s * 0.35 * pr, q2x = px - cs * L * 0.7 + sn * s * 0.3 * pr, q2y = py - sn * L * 0.7 - cs * s * 0.3 * pr, q3x = px - cs * L, q3y = py - sn * L;
-      c.beginPath(); c.moveTo(px, py); c.lineTo(q1x, q1y); c.lineTo(q2x, q2y); c.lineTo(q3x, q3y);
-      c.strokeStyle = '#4e331c'; c.lineWidth = 2.4; c.stroke(); c.strokeStyle = '#e6c48c'; c.lineWidth = 0.8; c.stroke();
-      const rx = x + cs * (r + s * 0.7), ry = y + sn * (r + s * 0.7), k2 = s * (0.35 + 0.25 * h);
-      c.beginPath(); c.moveTo(rx - k2, ry); c.lineTo(rx, ry - k2 * 0.8); c.lineTo(rx + k2 * 0.9, ry + k2 * 0.2); c.lineTo(rx + k2 * 0.1, ry + k2 * 0.8); c.closePath(); c.fillStyle = '#9c7444'; c.fill();
-    } else if (fam === 'shock') {
-      const st = tau / n, w = st * 0.62;
-      c.strokeStyle = col || '#dfe8ff'; c.lineWidth = 3.2; c.beginPath(); c.arc(x, y, r, b, b + w); c.stroke();
-      c.globalAlpha = clamp(a, 0, 1) * 0.55; c.lineWidth = 2; c.beginPath(); c.arc(x, y, r * 0.86, b + st * 0.5, b + st * 0.5 + w * 0.8); c.stroke();
-      c.globalAlpha = clamp(a, 0, 1) * 0.3; c.lineWidth = 1.4; c.beginPath(); c.arc(x, y, r * 0.74, b + st * 0.2, b + st * 0.2 + w * 0.6); c.stroke();
-      c.globalAlpha = clamp(a, 0, 1);
-    } else if (fam === 'fire') {
-      const fl = 0.75 + 0.25 * Math.sin(G.time * 10 + i * 2.3), L = s * 1.6 * fl * (0.8 + 0.4 * hash2(sd, i + 31)), w = s * 0.5;
-      const tx = px + cs * L, ty = py + sn * L;
-      c.beginPath(); c.moveTo(px - sn * w, py + cs * w); c.quadraticCurveTo(px + cs * L * 0.5 - sn * w * 0.9, py + sn * L * 0.5 + cs * w * 0.9, tx, ty); c.quadraticCurveTo(px + cs * L * 0.5 + sn * w * 0.9, py + sn * L * 0.5 - cs * w * 0.9, px + sn * w, py - cs * w); c.closePath();
-      c.fillStyle = '#ff7f32'; c.fill();
-      c.beginPath(); c.moveTo(px - sn * w * 0.45, py + cs * w * 0.45); c.lineTo(px + cs * L * 0.55, py + sn * L * 0.55); c.lineTo(px + sn * w * 0.45, py - cs * w * 0.45); c.closePath(); c.fillStyle = '#ffd77a'; c.fill();
-    } else if (fam === 'vine') {
-      const L = s * (1.2 + 0.6 * h), w = s * 0.35, cv = (h - 0.5) * 2;
-      c.beginPath(); c.moveTo(px - sn * w, py + cs * w); c.quadraticCurveTo(px + cs * L * 0.6 + sn * L * 0.35 * cv, py + sn * L * 0.6 - cs * L * 0.35 * cv, px + cs * L, py + sn * L); c.lineTo(px + sn * w, py - cs * w); c.closePath();
-      c.fillStyle = '#3d6a2c'; c.fill(); c.strokeStyle = '#a6d07c'; c.lineWidth = 0.9; c.stroke();
-    } else if (fam === 'heal') {
-      const q = s * (0.5 + 0.3 * Math.sin(G.time * 4 + i)), ix = x + cs * r * 0.94, iy = y + sn * r * 0.94;
-      c.beginPath(); c.moveTo(ix, iy - q); c.lineTo(ix + q * 0.25, iy - q * 0.25); c.lineTo(ix + q, iy); c.lineTo(ix + q * 0.25, iy + q * 0.25); c.lineTo(ix, iy + q); c.lineTo(ix - q * 0.25, iy + q * 0.25); c.lineTo(ix - q, iy); c.lineTo(ix - q * 0.25, iy - q * 0.25); c.closePath();
-      c.fillStyle = '#e4ffd8'; c.fill();
-    } else {
-      const q = s * 0.55, rb = b + G.time * 0.6;
-      c.save(); c.translate(x + Math.cos(rb) * r, y + Math.sin(rb) * r); c.rotate(rb);
-      c.beginPath(); c.moveTo(q * 1.3, 0); c.lineTo(0, q * 0.6); c.lineTo(-q * 1.3, 0); c.lineTo(0, -q * 0.6); c.closePath();
-      c.fillStyle = col || '#d8c8ff'; c.fill(); c.strokeStyle = '#ffffff'; c.lineWidth = 0.8; c.stroke(); c.restore();
-    }
-  }
-  c.restore();
-}
 const _paintedRing50 = paintedRing;
-paintedRing = function (c, f, k, x, y) {
-  if (f.kind !== 'ring') return false;
-  const fam = fam50(f); if (!fam) return _paintedRing50(c, f, k, x, y);
-  const r = Math.max(1, lerp(f.r0, f.r1, 1 - (1 - k) ** 2));
-  const key = f.art || (f.element === 'ice' ? (f.fill ? 'shatter' : 'frost') : f.element === 'earth' ? 'earth' : effectKey(f.color, f.fill));
-  const A = fade49(k), fl = k < 0.12 ? 1 : k < 0.3 ? 1 - (k - 0.12) / 0.18 : 0;
-  if (!paintedEffect(c, key, x, y, r, (V50.inner + (V50.flash - V50.inner) * fl) * A, k * .2)) return false;
-  rangeEdge48(c, x, y, r, f.color || '#dfcfaa', V50.band * A, null, f);
-  deco50(c, fam, x, y, r, (0.6 + 0.4 * fl) * A, seed50(f), f.color);
-  return true;
-};
-paintedPool = function (c, z) {
-  const key = { trail: 'heal', vine: 'vine', crack: 'earth', fire: 'fire' }[z.kind] || 'fire', fam = { trail: 'heal', vine: 'vine', crack: 'earth', fire: 'fire' }[z.kind] || 'fire';
-  const fade = clamp((z.dur - z.t) * 3, 0, 1), fl = z.t < 0.25 ? 1 - z.t / 0.25 : 0;
-  if (!paintedEffect(c, key, z.x, z.y, z.r, (0.2 + 0.35 * fl) * fade)) return false;
-  rangeEdge48(c, z.x, z.y, z.r, z.kind === 'fire' || !z.kind ? '#ffcc8a' : '#c0d5ad', 0.18 * fade, null, z);
-  deco50(c, fam, z.x, z.y, z.r, 0.7 * fade, seed50(z));
-  return true;
-};
 
 /* ---------- 자동 플레이 ---------- */
 /* 공격 예고가 덮는 지점: 발동까지 남은 시간(이미 발동 중 장판 0), 없으면 Infinity */
@@ -183,7 +61,7 @@ function home50(p, tg) {
   if (J === 'druid' && G.pets && G.pets.length) { const c = cen(G.pets); return { ...c, d: 110, w: 10 }; }
   return null;
 }
-autoVec = function () {
+function autoVec() {
   if (AUTO.run !== G) { AUTO.run = G; AUTO.next = 0; AUTO.out = null; }
   if (G.time < AUTO.next && AUTO.out) return AUTO.out;
   AUTO.next = G.time + rand(0.1, 0.2);          // 사람 반응 지연 재현
@@ -227,13 +105,8 @@ autoVec = function () {
   let x = AUTO.dir.x * (1 - k) + best.x * k, y = AUTO.dir.y * (1 - k) + best.y * k; const m = Math.hypot(x, y) || 1;
   AUTO.dir = { x: x / m, y: y / m };
   return (AUTO.out = { x: x / m, y: y / m, m: 1 });
-};
+}
 /* 집계: 예고 안 궁극기 정지 발동, 군주 군기 안 체류 */
-const _useUlt50 = useUlt;
-useUlt = function () {
-  if (STATE.dev.auto && G.p && !autoUltSetting() && !(G.p.job === 'warrior' || G.p.job === 'berserker' || G.p.job === 'rogue') && hazT50(G.p.x, G.p.y) < Infinity) S50().ultHz++;
-  return _useUlt50.apply(this, arguments);
-};
 const _updateUlt50 = updateUlt;
 updateUlt = function (dt) {
   const p = G.p;

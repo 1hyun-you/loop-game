@@ -25,38 +25,9 @@ const wxSrc = src => { const c = SRC_CAT[src]; return c && wxOn(c); };
 function wName(id) { const d = WEAPONS[id]; return wxOn(d.cat) ? JOB_WX[G.p.job].pre + ' ' + d.name : d.name; }
 function jobTint(cat) { return G.p.job ? JOB_COL[G.p.job] : null; }   // 0.41 직업 색 발광은 유지
 
-function jobWeaponHit(e, o) {
-  const p = G.p, j = p.job, src = o.src;
-  if (e.dead || !wxSrc(src)) return;
-  const base = o.dmg0 || 0;
-  if (j === 'warrior') { p.fury = Math.min(100, p.fury + 1); G.tm.furyHold = Math.max(G.tm.furyHold || 0, 1); }
-  if (j === 'rogue' && Math.random() < 0.08 && base) { fx({ kind: 'pop', x: e.x, y: e.y, r: 9, color: '#203040', dur: 0.18 }); G.later.push({ t: 0.08, f: () => damageEnemy(e, base * 0.6, { src: 'wx' }) }); }
-  if (j === 'sovereign' && Math.random() < 0.06 && base) { const x = e.x, y = e.y; G.later.push({ t: 0, f: () => explode(x, y, 44, base * 0.5, 'wx', '#ffd24a') }); }
-  if (j === 'archer' && Math.random() < 0.25) e.mk = (e.mk || 0) + 1;
-  if (j === 'engineer' && Math.random() < 0.1 && base) { const x = e.x, y = e.y; G.later.push({ t: 0, f: () => explode(x, y, 32, base * 0.4, 'wx', '#ffd890') }); }
-  if (j === 'chrono' && Math.random() < 0.1 && base) { fx({ kind: 'ring', x: e.x, y: e.y, r0: 4, r1: 18, dur: 0.5, color: '#c8c0ff' }); G.later.push({ t: 0.5, f: () => damageEnemy(e, base, { src: 'wx' }) }); }
-  if (j === 'mage' && Math.random() < 0.08 && base) { const x = e.x, y = e.y, col = { ice: '#bfe8ff', fire: '#ff9a4a', bolt: '#bfe4ff', arcane: '#d0b8ff' }[ELEM[src]] || '#e8b0ff'; G.later.push({ t: 0, f: () => explode(x, y, 36, base * 0.5, 'wx', col) }); }
-  if (j === 'druid') p.petMark = e;
-}
 /* 처치 시 변환 효과 (소환사·프리스트) */
-function jobWeaponKill(e) {
-  const p = G.p; if (!wxSrc(e.ls)) return;
-  if (p.job === 'summoner' && !e.minionOf && G.minions.length < (p.job2 === 'necro' ? 10 : 6) && Math.random() < 0.12) addMinion(e.x, e.y);
-  if (p.job === 'priest') p.holy++;
-}
 
 /* ---------- 전직 연출 ---------- */
-function jobCeremony(id, second) {
-  const p = G.p, col = JOB_COL[id];
-  if (second) { const o = JOB2[id].concat(JOB2_STAT).find(x => x.k === p.job2); banner('2차 전직 · ' + o.nm, JOBS[id].name + ' 숙련', col, 2.2); }
-  else { banner(JOBS[id].name + ' 전직', JOB_WX[id].tag || '', col, 2.2); toast(JOBS[id].rule.split(/[,·]/)[0].trim(), col); }
-  sfx('ult'); shake(4, 0.3); rcBig(col, 0.4);               // 3등급 반응 (0.28)
-  fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 150, dur: 0.7, color: col, fill: true, follow: true });
-  fx({ kind: 'ring', x: p.x, y: p.y, r0: 40, r1: 220, dur: 0.9, color: '#ffffff', follow: true });
-  sparkBurst(p.x, p.y, 120, col);
-  const n = p.weapons.filter(w => wxOn(WEAPONS[w.id].cat)).length;
-  if (!second && n) toast(`공용 무기 ${n}종 ${JOB_WX[id].pre} 무기로 변환`, col);
-}
 /* 2차 전직 문양은 지면층에서 그려 적 공격 예고가 위에 표시되도록 함 */
 function drawJobAura(c, ground = false) {
   const p = G.p; if (!p.job) return;
@@ -133,55 +104,8 @@ function applyBond(c) {
   toast(`${PET[c.id].name} · ${bondPerk(c.k).nm}`, '#a8e08a');
 }
 function bondPerk(k) { for (const kind in BOND_PERKS) for (const t of BOND_PERKS[kind]) for (const o of t) if (o.k === k) return o; return null; }
-function updateBleeds(dt) {
-  if (!G.bleeds || !G.bleeds.length) return;
-  for (const b of G.bleeds) { b.t -= dt; b.tick -= dt; if (b.tick <= 0 && !b.e.dead) { b.tick = 0.5; b.e.lpk = 'wolf'; damageEnemy(b.e, b.d * 0.5, { src: 'pet' }); } }
-  G.bleeds = G.bleeds.filter(b => b.t > 0 && !b.e.dead);
-}
 function addPet(kind) { const p = G.p, a = rand(Math.PI * 2); G.pets.push({ kind, x: p.x + Math.cos(a) * 30, y: p.y + Math.sin(a) * 30, t: 0.5, sk: PET[kind].sk * 0.5, tg: null, vx: 0, i: G.pets.length }); }
 function petsInit() { G.pets = []; G.bond = {}; G.bleeds = []; G.pendingBond = []; addPet('wolf'); addPet('bear'); }
-function updatePets(dt) {
-  const p = G.p; if (p.job !== 'druid') return;
-  updateBleeds(dt);
-  const claimed = new Set();
-  for (const m of G.pets) {
-    const S = petStat(m.kind); m.t -= dt; m.sk -= dt;
-    // 표적: 야생 변환 표식 → 기존 표적 유지 → 플레이어 주변 미점유 적
-    if (p.petMark && !p.petMark.dead && dist2(p.petMark.x, p.petMark.y, p.x, p.y) < 300 * 300 && !claimed.has(p.petMark.id)) m.tg = p.petMark;
-    if (m.tg && (m.tg.dead || dist2(m.tg.x, m.tg.y, p.x, p.y) > 320 * 320)) m.tg = null;
-    if (!m.tg) { let best = null, bd = 260 * 260; gridQuery(p.x, p.y, 260, e => { if (claimed.has(e.id)) return; const d = dist2(e.x, e.y, m.x, m.y) * (m.kind === 'bear' && (e.elite || e.gk) ? 0.4 : 1); if (d < bd) { bd = d; best = e; } }); m.tg = best; }
-    if (m.tg) claimed.add(m.tg.id);
-    const e = m.tg, leash = dist2(m.x, m.y, p.x, p.y) > 300 * 300;
-    const tx = e && !leash ? e.x : p.x + Math.cos(m.i * 2.4 + G.time * 0.6) * 36, ty = e && !leash ? e.y : p.y + Math.sin(m.i * 2.4 + G.time * 0.6) * 36;
-    const dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1, reach = e ? e.r + S.r : 4;
-    if (d > reach) { const v = Math.min(d - reach, S.sp * (leash ? 1.6 : 1) * dt); m.x += dx / d * v; m.y += dy / d * v; m.vx = dx; }
-    for (const o of G.pets) if (o !== m) { const ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od > 0 && od < 16) { m.x += ox / od * (16 - od) * 0.5; m.y += oy / od * (16 - od) * 0.5; } }
-    if (e && m.t <= 0 && d <= reach + 6) {
-      m.t = S.atk; m.bite = 0.15; e.lpk = m.kind;
-      if (m.kind === 'wolf' && bondHas('wolf', 'bleed') && G.bleeds.length < 120 && !G.bleeds.some(b => b.e === e)) G.bleeds.push({ e, t: 3, tick: 0.5, d: S.dmg * 0.4 });
-      damageEnemy(e, S.dmg, { src: 'pet', kb: m.kind === 'bear' ? 120 : 30, fx: m.x, fy: m.y });
-    }
-    if (m.lvT > 0) m.lvT -= dt;
-    if (m.kind === 'bear' && bondHas('bear', 'thorn')) { m.th = (m.th || 0) - dt; if (m.th <= 0) { m.th = 1; gridQuery(m.x, m.y, S.r + 26, t => { t.lpk = 'bear'; damageEnemy(t, S.dmg * 0.5, { src: 'pet' }); }); } }
-    if (m.bite > 0) m.bite -= dt;
-    if (m.sk <= 0 && (e || m.kind === 'wolf')) {                       // 주기 자동 스킬
-      m.sk = S.sk;
-      if (m.kind === 'wolf') { let n = 0; gridQuery(m.x, m.y, S.skR, t => { n++; t.slowT = Math.max(t.slowT || 0, 2); t.lpk = 'wolf'; damageEnemy(t, S.dmg * (bondHas('wolf', 'howl2') ? 0.3 : 0.45), { src: 'howl' }); }); if (n && bondHas('wolf', 'alpha')) G.tm.alpha = 4; fx({ kind: 'ring', x: m.x, y: m.y, r0: 8, r1: S.skR, dur: 0.4, color: '#c8d4e0' }); if (!n) m.sk = 1; }
-      else {
-        const x = m.x, y = m.y, R = S.skR, dm = S.dmg; gridQuery(x, y, R, t => { t.lpk = 'bear'; damageEnemy(t, dm * 2.5, { src: 'maul', kb: 260, fx: x, fy: y }); }); fx({ kind: 'ring', x, y, r0: 10, r1: R, dur: 0.35, color: '#c89060', fill: true });
-        if (p.job2 === 'ursa') heal(1, '수호 곰'); if (bondHas('bear', 'guard')) heal(2, '보호 본능');
-        if (bondHas('bear', 'after')) (G.petLater = G.petLater || []).push({ t: G.time + 0.5, x, y, R, d: dm * 1.5 });
-      }
-    }
-  }
-  if (G.petLater && G.petLater.length) G.petLater = G.petLater.filter(u => { if (G.time < u.t) return true; gridQuery(u.x, u.y, u.R, t => { t.lpk = 'bear'; damageEnemy(t, u.d, { src: 'maul', kb: 140, fx: u.x, fy: u.y }); }); fx({ kind: 'ring', x: u.x, y: u.y, r0: 10, r1: u.R, dur: 0.3, color: '#e0b080' }); return false; });
-  if (p.petMark && p.petMark.dead) p.petMark = null;
-}
-function petKilled(e) {
-  const own = e.lpk && (e.ls === 'pet' || e.ls === 'howl' || e.ls === 'maul');
-  if (G.p.job2 === 'pack' && e.ls === 'pet') for (const m of G.pets) if (m.kind === 'wolf') m.sk -= 1;
-  if (own) { bondXp(e.lpk, e.elite || e.gk ? BOND_CFG.eliteKill : BOND_CFG.kill); if (e.lpk === 'wolf' && bondHas('wolf', 'frenzy')) for (const m of G.pets) if (m.kind === 'wolf') m.sk -= 1; }
-}
 function drawPets(c, inView) {
   if (!G.pets || !G.pets.length) return;
   for (const m of G.pets) {
@@ -216,24 +140,7 @@ Object.assign(SPR, {
 
 /* ---------- 시간술사 궁극기 '과거의 나' ---------- */
 const RW = { keep: 5, every: 0.1, dur: 3, R: 38 };
-function recordTrail(dt) {
-  const p = G.p; if (p.job !== 'chrono') return;
-  G.tm.trl = (G.tm.trl || 0) - dt; if (G.tm.trl > 0) return; G.tm.trl = RW.every;
-  G.trail.push({ x: p.x, y: p.y, hp: p.hp }); if (G.trail.length > RW.keep / RW.every) G.trail.shift();
-}
 function rwPos(k) { const P = G.rw.pts, f = clamp(k, 0, 1) * (P.length - 1), i = Math.floor(f), j = Math.min(P.length - 1, i + 1), u = f - i; return { x: lerp(P[i].x, P[j].x, u), y: lerp(P[i].y, P[j].y, u) }; }
-function updateRewind(dt) {
-  const R = G.rw; if (!R) return;
-  const p = G.p; R.t += dt; R.tick -= dt;
-  const k = R.t / RW.dur, q = rwPos(k * k * (3 - 2 * k));         // 부드러운 가감속
-  R.x = q.x; R.y = q.y;
-  if (R.tick <= 0) { R.tick = 0.15; const d = (22 + p.level * 1.6) * p.mod.dmg; gridQuery(q.x, q.y, RW.R, e => { if ((e.ht.rw || 0) > G.time) return; e.ht.rw = G.time + 0.5; e.slowT = Math.max(e.slowT || 0, 2.5); damageEnemy(e, d, { src: 'ult', kb: 90, fx: q.x, fy: q.y }); }); }
-  if (R.t >= RW.dur) {
-    if (R.hp > p.hp) { const g = R.hp - p.hp; heal(g, '시간 역행'); toast(`시간 역행 · 체력 +${Math.round(g)}`, '#c8c0ff'); }
-    fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 60, dur: 0.4, color: '#c8c0ff', follow: true });
-    G.rw = null;
-  }
-}
 function drawRewind(c) {
   const R = G.rw; if (!R || R.x == null) return;
   const k = R.t / RW.dur;

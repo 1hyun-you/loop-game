@@ -151,19 +151,9 @@ function uiText(c,s,x,y,size=12,color='#efe8d9',align='left',max=Infinity,weight
   s=String(s); if(c.measureText(s).width>max){while(s.length&&c.measureText(s+'…').width>max)s=s.slice(0,-1);s+='…';}
   c.fillText(s,x,y);
 }
-function hudLayout(width=VIEW.cw,sat=VIEW.sat) {
-  const w=Math.min(600,width-16),x=(width-w)/2,y=sat+6,S=clamp(Math.floor((width-280)/28)+22,22,30),gap=3,contentW=w-56;
-  const tile=(i,row,right=false,n=1)=>({x:right?x+contentW-n*S-(n-1)*gap+i*(S+gap):x+4+i*(S+gap),y:y+48+row*(S+gap),w:S,h:S});
-  return {x,y,w,h:48+2*S+gap,S,gap,contentW,tile,pause:{x:x+w-48,y,w:48,h:48},kills:{x:x+contentW-76,y:y+4,w:76,h:18}};
-}
 function uiBar(c,x,y,w,h,k,col,bg='#111b27') {
   uiRound(c,x,y,w,h,h/2);c.fillStyle=bg;c.fill();
   const fill=w*clamp(k,0,1);if(fill>0){c.save();c.clip();c.fillStyle=col;c.fillRect(x,y,fill,h);c.fillStyle='rgba(255,255,255,.22)';c.fillRect(x,y,fill,Math.max(1,h*.25));c.restore();}
-}
-function drawXpGauge(c,top) {
- const L=hudLayout(),p=G.p,k=clamp(G.rc?G.rc.xpShow:p.xp/Math.max(1,p.need),0,1);
- uiBar(c,L.x+4,L.y,L.contentW-4,3,k,'#91bfcb');
- uiText(c,'Lv '+p.level,L.x+4,L.y+14,13,'#f0dfb4','left',58,650);
 }
 function uiTile(c,r,art,color,level,progress,mark) {
   uiPanel(c,r.x,r.y,r.w,r.h,'#182330',art?color:'#414c58',5);
@@ -190,45 +180,6 @@ const UI_EXW_ICON={
   second:{warrior:'slam',rogue:'knife',archer:'arrow',engineer:'bomb',mage:'icering',summoner:'orb',sovereign:'cleave',chrono:'hourglass',priest:'beam',druid:'trap'}
 };
 function uiAbilityArt(id,first){const key=UI_EXW_ICON[first?'first':'second'][id];return UI_ART.images[key]||iconCanvas(key,2)||UI_ART.images.crest;}
-function drawSlots(c,unused) {
-  const L=hudLayout(),p=G.p,T=G.tm; c.save();c.imageSmoothingEnabled=true;
-  for(let i=0;i<slotW();i++){const it=p.weapons[i];if(!it)continue;uiTile(c,L.tile(i,0),it&&iconCanvas(branchWeaponArt(it.id, it.br),2),it?CFG.colors[WEAPONS[it.id].cat]:'#414c58',it&&it.lvl,undefined,it&&jobTint(WEAPONS[it.id].cat));}
-  const pcd={magnet:['vacuum',()=>1-(T.vac==null?30:T.vac)/30],vit:['shield',()=>p.shield?1:1-T.shield/12],haste:['charge',()=>1-T.charge/8]};
-  for(let i=0;i<CFG.slots.passive;i++){const it=p.passives[i],q=it&&pcd[it.id];if(!it)continue;uiTile(c,L.tile(i,1),it&&iconCanvas(it.id,2),CFG.colors.passive,it&&it.lvl,q&&it.br===q[0]?q[1]():undefined);}
-  const specials=[[p.exw1,EXW1],[p.exw,EXW]].filter(([s])=>s);
-  specials.forEach(([st,table],i)=>{const X=table[st.id],r=L.tile(i,0,true,specials.length);uiTile(c,r,uiAbilityArt(st.id,table===EXW1),'#c3a86d',undefined,X.cd>.6?1-Math.max(0,st.t)/X.cd:undefined);uiText(c,table===EXW1?'Ⅰ':'Ⅱ',r.x+3,r.y+5,7,'#fff0bb','left',10,700);});
-  const ds=jobDials();ds.forEach((d,i)=>{const key=d.ic==='궁'?'spark':d.ic==='기'?'crest':d.ic==='탑'?'gear':'crest';uiTile(c,L.tile(i,1,true,ds.length),UI_ART.images[key],d.col,undefined,d.k);});
-  c.restore();
-}
-function drawBossBar(c,y,unused) {
-  const e=G.gkMob;if(!e||e.dead||!G.ph||!isBossPhase())return;
-  const L=hudLayout(),D=bossDef(e.gk),bx=L.x+10,bw=L.w-20;
-  uiPanel(c,L.x,y-2,L.w,43,'rgba(31,25,36,.88)','#946d69',8);
-  const name=e.gk==='demon'?`${D.name} · ${['그림자 군주','암흑 결계','종언'][e.st]} (${e.st+1}/3)`:`${D.name} · ${D.gate}`;
-  uiText(c,name,L.x+L.w/2,y+10,13,'#eed6c4','center',bw-12,600);
-  uiBar(c,bx,y+23,bw,8,e.hp/e.maxHp,e.rage||e.st===2?'#d68c72':'#ba8188');
-  if(e.gk==='demon'){c.fillStyle='#f4debe';for(const k of DM_CFG.stages)c.fillRect(bx+bw*k,y+23,1,6);}
-}
-function drawHUD(c) {
- const L=hudLayout(),p=G.p,ph=G.ph,P=curPhase();c.save();c.imageSmoothingEnabled=true;
- // Text-sized backplates; no full-width opaque panel and no empty inventory tiles.
- uiPanel(c,L.x,L.y+3,L.contentW+2,40,'rgba(22,31,43,.60)','#6b6c6044',5);
- drawXpGauge(c,L.y);
- uiText(c,fmtTime(G.time),L.x+L.contentW*.48,L.y+14,15,'#f0e9d9','center',58,650);
- const kills=G.kills>=10000?(G.kills/10000).toFixed(1)+'만':G.kills;
- uiText(c,'처치 '+kills,L.x+L.contentW-2,L.y+14,12,'#d9cbb3','right',76,600);
- const hp=clamp(p.hp/p.maxHp,0,1);uiBar(c,L.x+4,L.y+31,52,5,hp,hp>.3?'#9fc19d':'#d58c86');
- uiText(c,Math.ceil(p.hp),L.x+61,L.y+33,12,'#d7e1d8','left',30);
- const status=heroStatus60(' ');
- const phase=P?((ph.i+1)+'/'+ph.order.length+' '+curPhaseName()):G.result==='clear'?'돌파':'이동 중';
- uiText(c,(status?status.trim()+' · ':'')+phase,L.x+L.contentW-2,L.y+32,12,ph.ambush?'#e6a58d':'#dfcb98','right',L.contentW-100,600);
- if(P)uiBar(c,L.x+100,L.y+41,L.contentW-102,2,phaseProgress(),ph.accT>0?'#f1e6bc':'#cdb57c');
- drawSlots(c,L.y+48);drawBossBar(c,L.y+L.h+6);
- const hasBoss=!!(G.gkMob&&!G.gkMob.dead&&isBossPhase()),below=L.y+L.h+(hasBoss?54:4);
- if(STATE.dev.fps&&STATE.mode!=='result')uiText(c,Math.round(STATE.fps)+' FPS · 적 '+aliveCount(),L.x+L.w-2,below+10,10,'#d1d8d9','right',L.w-8);
- let ty=Math.max(VIEW.ch*.3,below+30);for(const t of G.toasts){c.globalAlpha=Math.min(1,(t.dur-t.t)*3);uiText(c,t.text,VIEW.cw/2,ty,14,t.color,'center',VIEW.cw-30,600);ty+=24;}c.globalAlpha=1;
- drawGuide(c);c.restore();
-}
 function drawGuide(c) {
   const g=GD.cur;if(!g||STATE.mode!=='play')return;const tx=typeof g.tx==='function'?g.tx():g.tx,W=VIEW.cw,w=Math.min(400,W-32);
   c.save();c.globalAlpha=clamp(Math.min(GD.t*4,(GD.dur-GD.t)*3),0,1);c.font=`500 14px ${UI_ART.font}`;

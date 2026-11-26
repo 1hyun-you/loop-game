@@ -30,7 +30,6 @@ const fsrc = (j, id) => 'fu_' + j + '_' + id;
 const CAT44 = { warrior: 'melee', rogue: 'ranged', sovereign: 'melee', archer: 'ranged', engineer: 'ranged', chrono: 'magic', mage: 'magic', summoner: 'magic', priest: 'magic', druid: 'melee' };
 const SRC44 = {}; for (const j in F44) for (const r of F44[j]) { SRC44[fsrc(j, r[0])] = r[1]; SRC_CAT[fsrc(j, r[0])] = CAT44[j]; }
 const _srcName44 = srcName; srcName = k => SRC44[k] || _srcName44(k);
-fuseName = (j, id) => (fu44(j, id) || { nm: JOB43[j].pre + ' ' + WEAPONS[id].name }).nm;
 
 /* ---------- 공용 부품 ---------- */
 const F44S = () => G.f44 || (G.f44 = { lines: [], traps: [], nodes: [], hurtT: 0, fury: 0, rageT: 0 });
@@ -254,8 +253,6 @@ hurtPlayer = function (dmg, src) {
   if (p.hp < h0 && p.job === 'warrior' && G.time >= F44S().hurtT) { const w = fusedWs().find(x => x.id === 'trap'); if (w) { F44S().hurtT = G.time + 0.6; warMark(fuseCtx(w, wStats(w), 1)); } }
   return r;
 };
-const _playerAvoid44 = playerAvoid;
-playerAvoid = function () { if (G.tm.smoke44 > 0 && Math.random() < 0.5) { fx({ kind: 'pop', x: G.p.x, y: G.p.y, r: 14, color: '#8a96a8', dur: 0.2 }); return true; } return _playerAvoid44(); };
 /* 기술자 덫 설치 */
 function engTrap(Z, kind, on) { const p = G.p; trap44({ tag: Z.src, x: p.x, y: p.y, R: 0, max: 8, kind, col: Z.col, on: T => { on(T, T.who); engineerTrapTrigger(T); } }); }
 /* 시간술사 기본 고리 */
@@ -274,68 +271,13 @@ function fuseFire44(w, S, k) {
   if (r !== false) { const f = F43(); f.fires[j] = (f.fires[j] || 0) + 1; G.stats.fuseFires = (G.stats.fuseFires || 0) + 1; const FF = G.stats.fu44 || (G.stats.fu44 = {}); FF[Z.src] = (FF[Z.src] || 0) + 1; }
   return r;
 }
-const fuseCd44 = (w, S) => { const D = FU44[w.fu.job] && FU44[w.fu.job][w.id], B = WEAPONS[w.id].base; return D ? D.cd * (B.cd ? S.cd / B.cd : 1) : S.cd; };
-applyFuse = function (id) {
-  const p = G.p, w = slotWs().find(x => x.id === id && !x.fu); if (!w || !p.job) return;
-  const j = p.job, F = fu44(j, id); w.fu = { job: j, nm: fuseName(j, id) }; w.t = 0.3; w.c44 = 0;
-  (G.stats.fuses = G.stats.fuses || []).push(`${id}:${j}:${Math.round(G.time)}`);
-  if (fusedWs().length === 1) F43().kills0 = G.kills;
-  banner('연성 · ' + w.fu.nm, F ? (F.mode === '직업' ? '직업 변화' : '무기 결합') + ` · ${WEAPONS[id].name} + ${WEAPONS[baseW().id].name}` : '', JOB_COL[j], 2.4);
-  toast(fusedWs().length >= slotCount() ? '모든 칸 연성 완료 · 기본 무기 계속 발동' : `연성 ${fusedWs().length}/${slotCount()}`, JOB_COL[j]);
-  fuseMoment(j, w); sfx('ult'); shake(3, 0.3); recalc();
-};
 const _cardInfo44 = cardInfo;
 cardInfo = function (c) {
   const r = _cardInfo44(c); if (c.t !== 'fuse') return r;
   const F = fu44(G.p.job, c.id); if (F) { r.nm = F.nm; r.ds = `${F.mode === '직업' ? '직업 변화' : '무기 결합'} · ${F.ds}\n${F.num}`; }
   return r;
 };
-updateWeapons = function (dt) {
-  const p = G.p, J = p.job && J41(), mage = p.job === 'mage', eng = p.job === 'engineer' ? engSlots() : null, ret = baseRetired();
-  let ti = 0;
-  for (const w of p.weapons) {
-    const S = wStats(w);
-    if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
-    if (mage && !w.base) continue;                              // 0.53 마법사: 기본 무기는 평소대로 발동
-    if (w.base && ret) continue;
-    w.t -= dt * ultCdMul();
-    if (w.t <= 0) {
-      let r;
-      if (w.fu) r = fuseFire44(w, S);
-      else if (eng && eng.includes(w) && G.turrets.length) { const t = G.turrets[ti++ % G.turrets.length]; r = atPos(t.x, t.y, () => WEAPON_FIRE[w.id](w, scaleS(S, V41.eng.slotDmg))); if (r !== false) fx({ kind: 'ring', x: t.x, y: t.y, r0: 4, r1: 20, dur: 0.2, color: '#ffd890' }); }
-      else r = WEAPON_FIRE[w.id](w, S);
-      w.t = r === false ? 0.25 : (w.fu ? fuseCd44(w, S) : S.cd); if (r !== false) rcFire(w);
-      if (r !== false && p.job === 'rogue' && !DUR41[w.id] && !w.fu) rogueEcho(w, S);
-      if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;
-    }
-  }
-  if (mage) mageVolley(dt, J);
-  updateTraps(dt); updateArsenal(dt); fuseTick(dt); fuseTick44(dt);
-  for (const L of G.later) { L.t -= dt; if (L.t <= 0) { L.done = true; L.f(); } }
-  if (G.later.length) G.later = G.later.filter(L => !L.done);
-};
-mageVolley = function (dt, J) {
-  const C = V41.mag, p = G.p;
-  J.vol -= dt * ultCdMul(); if (J.vol > 0) return;
-  J.vol = J.volP = (p.job2 === 'archmage' ? C.cdB : C.cd) * Math.max(C.cdMin, p.mod.cd); J.volN++;
-  const ret = baseRetired(), list = p.weapons.filter(w => w.id !== 'spin' && !w.base);   // 0.53 기본 무기는 동시 시전에서 제외
-  list.forEach((w, i) => G.later.push({ t: i * C.gap, f: () => {
-    if (G.result || !p.weapons.includes(w)) return;
-    const S = wStats(w);
-    if (w.fu) { const k = Math.max(C.dmg, J.volP / fuseCd44(w, S) * C.fair); if (fuseFire44(w, S, k) !== false) rcFire(w); return; }
-    const k = Math.max(C.dmg, J.volP / S.cd * C.fair), r = WEAPON_FIRE[w.id](w, scaleS(S, k)); if (r !== false) rcFire(w);
-  } }));
-  if (list.length) { fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 70, dur: 0.3, color: '#e8b0ff', follow: true }); G.stats.volleys = (G.stats.volleys || 0) + 1; }
-};
 /* 성물: 회복마다 첫 연성 무기 추가 발동 (0.8초 간격) */
-heal = function (v, src) {
-  const r = _heal43(v, src), p = G.p, f = G.f43;
-  if (p && p.job === 'priest' && f && v > 0.3 && G.time >= f.relicT && !G.result && !/성역|순례|축복/.test(src || '')) {
-    const w = fusedWs()[0];
-    if (w) { f.relicT = G.time + 0.8; const q = relicPos(); fx({ kind: 'pop', x: q.x, y: q.y, r: 14, color: '#fff2a8', dur: 0.3 }); fuseFire44(w, wStats(w), 0.5); G.stats.relicHeal = (G.stats.relicHeal || 0) + 1; }
-  }
-  return r;
-};
 /* 시계추 구체: 정지 적 피해 2배 */
 const _damageEnemy44 = damageEnemy;
 damageEnemy = function (e, dmg, o = {}) { if (o.src === 'fu_chrono_orb' && e && e.frz > 0) dmg *= 2; return _damageEnemy44(e, dmg, o); };
@@ -392,9 +334,3 @@ const _newRun44 = newRun;
 newRun = function () { const r = _newRun44.apply(this, arguments); G.f44 = null; return r; };
 
 /* ---------- 도감 연성 탭: 직업별 연성 무기 9종 ---------- */
-cxFuse = function () {
-  const jobs = JOB_ORDER.map(id => { const W = WEAPONS[FZ_SYMBOL[id]], T = FZ_TRIAL[id];
-    const rows = F44[id].map(r => `<div><b>${esc(r[1])}</b><span>${esc(WEAPONS[r[0]].name)} · ${r[4] === '직업' ? '직업 변화' : '무기 결합'} · ${esc(r[2])} · ${esc(r[3])}</span></div>`).join('');
-    return cxCard({ job: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name + ' · 연성 9종', tag: '기본 무기 ' + (FORM53[id] ? FORM53[id].nm + ' (' + W.name + ' 변형)' : W.name), lines: [`<details class="acc"><summary>연성 무기 9종</summary><div class="cxg">${rows}</div></details>`, cxChips([['2차 전직 시련', esc(T.nm)]])] }); }).join('');
-  return '<p class="hint">전직 시 상징 무기가 기본 무기 칸으로 이동 · 무기 칸 무기와 기본 무기가 모두 Lv 5(각성 완료)면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 고유 연성 무기로 변신 (무기 결합 또는 직업 변화) · 모든 칸 연성 후에도 기본 무기 계속 발동</p>' + jobs;
-};

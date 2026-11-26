@@ -3,28 +3,8 @@
    구조 출처: 초안 0.2l ui.js levelCands·drawCards·renderSelect (분기·유물·직업 카드 제거)
    ============================================================ */
 const jobColor = id => JOBS[id].cats ? '#7fc8a0' : CFG.colors[JOBS[id].cat];
-function levelCands() {
-  const p = G.p, out = [], ban = G.banished, nW = p.weapons.length, K = CFG.select;
-  const jc = id => jobCat(WEAPONS[id].cat) ? JOB_CFG.jobCatW : 1;   // 전직 계열 후보 비중 증가
-  for (const w of p.weapons) if (w.lvl < CFG.weaponMax && !ban.has(w.id)) out.push({ t: 'wup', id: w.id, w: K.wupW * (nW >= 3 ? K.wupW3 : 1) * jc(w.id) });
-  if (nW < slotW()) {
-    const nw = WEAPON_ORDER.filter(id => !hasW(id) && !ban.has(id) && catOk(WEAPONS[id].cat)), nk = Math.min(1, K.wnewPool / Math.max(1, nw.length));   // 0.27 무기 18종 확대: 신규 무기 후보 총 비중을 12종 시기 수준으로 정규화
-    for (const id of nw) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * jc(id) * nk });
-  }
-  for (const id of RELIC_ORDER) if (relicReady(id)) out.push({ t: 'relic', id, w: 2.5 });
-  for (const ps of p.passives) if (ps.lvl < CFG.passiveMax && !ban.has(ps.id)) out.push({ t: 'pup', id: ps.id, w: K.pupW });
-  if (p.passives.length < CFG.slots.passive) for (const id of PASSIVE_ORDER) if (!hasP(id) && !ban.has(id)) out.push({ t: 'pnew', id, w: K.pnewW });
-  return out;
-}
+function levelCands() { }   // 선언 유지 (본문은 뒤 파일 대입으로 교체)
 const FILL_CARDS = [{ t: 'power', id: 'power' }, { t: 'heal', id: 'heal' }];
-function drawCards(n, exclude = []) {
-  const same = (a, b) => a.t === b.t && a.id === b.id;
-  const pool = levelCands().filter(c => !exclude.some(x => same(x, c))), res = [];
-  while (res.length < n && pool.length) { const c = weightedPick(pool); res.push(c); pool.splice(pool.indexOf(c), 1); }
-  for (const t of traitCands(exclude.concat(res))) if (res.length < n) res.push(t);   // 숙련 특성 우선 (0.23)
-  for (const f of FILL_CARDS) if (res.length < n && !res.some(x => same(x, f)) && !exclude.some(x => same(x, f))) res.push(f);
-  return res;
-}
 function isFill(c) { return c.t === 'power' || c.t === 'heal' || c.t === 'trait'; }
 
 function openSelect() {
@@ -63,7 +43,6 @@ function abilityHTML() {
   if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => row('#8a6aa0', '저', CURSES[k].name, '', CURSES[k].ds, '', '', '', '', '', miscIcon(k, icBox('#8a6aa0', '저')))).join('');
   return `<div class="abil">${h || '<p class="sub">보유 능력 없음</p>'}</div>`;
 }
-function toggleAbil() { const s = G.sel; if (!s) return; s.abil = !s.abil; renderSelect(); }
 function autoLater() { if (STATE.dev.auto && !STATE.dev.semi) { const s = G.sel; setTimeout(() => { if (G && G.sel === s) autoSelect(); }, rand(700, 1200) / Math.sqrt(STATE.dev.speed)); } }
 function cardInfo(c) {
   const p = G.p;

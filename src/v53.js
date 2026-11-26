@@ -113,14 +113,6 @@ damageEnemy = function (e, dmg, o) {
 };
 
 /* 전직: 기본 무기 변형 안내 · 시련 폐지 · 감속 반경 초기화 */
-const _applyJob53 = applyJob;
-applyJob = function (id) {
-  _applyJob53(id);
-  F42().done = 1;                                            // 시련 폐지: 2차 전직은 전직 후 1페이즈 돌파로 개방
-  if (id === 'chrono') V41.chr.R = V53.chrR0;
-  const F = FORM53[id]; if (F) toast(`기본 무기 변형 · ${WEAPONS[F.id].name} → ${F.nm}`, JOB_COL[id]);
-};
-v42Update = function () { };
 const _cardInfo53 = cardInfo;
 cardInfo = function (c) {
   const r = _cardInfo53(c);
@@ -129,22 +121,17 @@ cardInfo = function (c) {
 };
 
 /* ---------- 2차 전직: 숙련 삭제 (2택) ---------- */
-openJob2 = function () {
-  G.pendingJob2 = false; G.job2Ready = false; STATE.mode = 'select'; clearInput();
-  const j = G.p.job; G.sel = { kind: 'job2', cards: JOB2[j].map(o => ({ t: 'job2', id: j, k: o.k })) };
-  renderSelect(); autoLater();
-};
 
 /* ---------- 캐릭터 임의 이동 폐지 ---------- */
 /* 암살자: 순간 이동 → 그림자 기습 (플레이어는 제자리) */
-rogueTp = function () {
+function rogueTp() {
   const J = J41(), p = G.p, C = V41.rog; if (G.time < J.tpT) return;
   const t = nearestEnemy(p.x, p.y, C.tpR); if (!t) return;
   J.tpT = G.time + C.tp;
   fx({ kind: 'zap', x: p.x, y: p.y, x2: t.x, y2: t.y, dur: 0.14 }); fx({ kind: 'pop', x: t.x, y: t.y, r: 16, color: '#203040', dur: 0.25 });
   damageEnemy(t, (V53.shadowD + p.level * V53.shadowLv) * p.mod.dmg, { src: 'shadow53' });
   G.stats.tps = (G.stats.tps || 0) + 1; S53().shadow++;
-};
+}
 SRC44.shadow53 = '그림자 기습'; SRC_CAT.shadow53 = 'ranged';
 { const o = JOB2.rogue.find(x => x.k === 'assassin'); if (o) o.ds = '치명타 피해 3배, 처치 시 그림자가 가까운 적을 기습(2초 재사용)'; }
 /* 전사 연성 방패 돌격 → 방패 강타 (제자리에서 전방 들이받기) */

@@ -9,8 +9,6 @@
    • 패널·연성 무기 외형: 0.46-art1
    ============================================================ */
 const BASE_CARD_W = 3;
-const _levelCands45 = levelCands;
-levelCands = function () { const r = _levelCands45.apply(this, arguments), b = G.p && baseW && baseW(); if (b) for (const c of r) if (c.t === 'wup' && c.id === b.id) c.w *= BASE_CARD_W; return r; };
 const _cardScore45 = cardScore;
 cardScore = function (c) { const b = G.p && baseW(); if (b && c.t === 'wup' && c.id === b.id) return 7 + rand(0, 0.5); return _cardScore45(c); };
 const _cardInfo45 = cardInfo;
@@ -41,14 +39,14 @@ function hudPlate45(c, key, x, y, w, h, fill, stroke, radius) {
    — 반환 좌표는 배율 적용 전(그리기용) 값, k = 배율, bottom = 화면 기준 아래쪽 끝 */
 const HUD_K = { s: 0.88, m: 1, l: 1.12 }, HUD_MAXW = 430;
 function hudK() { return HUD_K[SETTINGS.hud] || 1; }
-hudLayout = function (width = VIEW.cw, sat = VIEW.sat) {
+function hudLayout(width = VIEW.cw, sat = VIEW.sat) {
   const k = hudK(), lw = width / k, w = Math.min(HUD_MAXW, lw - 16), x = (lw - w) / 2, y = sat / k + 6, S = lw < 350 ? 26 : 28, gap = 3, pw = 44, contentW = w - pw - 4, top = 51;
   const tile = (i, row, right = false, n = 1) => ({ x: right ? x + contentW - n * S - (n - 1) * gap + i * (S + gap) : x + 2 + i * (S + gap), y: y + top + row * (S + gap), w: S, h: S });
   const boss = H45.k, h = top + S + (S + gap) * (1 - boss) + (boss ? 34 * boss : 0);
   return { k, x, y, w, h, S, gap, contentW, tile, top, bottom: (y + h) * k, pause: { x: x + w - pw, y: y + 3, w: pw, h: 44 }, kills: { x: x + contentW - 76, y: y + 4, w: 76, h: 18 } };
-};
+}
 function bossOn45() { return !!(G.gkMob && !G.gkMob.dead && G.ph && isBossPhase()); }
-drawSlots = function (c) {
+function drawSlots(c) {
   const L = hudLayout(), p = G.p, T = G.tm, col = p.job ? JOB_COL[p.job] : '#c3a86d', K = 1 - H45.k; c.save(); c.imageSmoothingEnabled = true;
   slotWs().forEach((it, i) => {
     const r = L.tile(i, 0), moment = fuseArtForSlot(it), t = fuseArtProgress(moment);
@@ -64,8 +62,8 @@ drawSlots = function (c) {
     const ds = jobDials(); ds.forEach((d, i) => { const key = d.ic === '궁' ? 'spark' : d.ic === '기' ? 'crest' : d.ic === '탑' ? 'gear' : 'crest'; uiTile(c, L.tile(i, 1, true, ds.length), UI_ART.images[key], d.col, undefined, d.k); });
   }
   c.restore();
-};
-drawBossBar = function (c) {
+}
+function drawBossBar(c) {
   const e = G.gkMob; if (!e || e.dead || !G.ph || !isBossPhase() || H45.k < 0.02) return;
   const L = hudLayout(), D = bossDef(e.gk), y = L.y + L.top + L.S + L.gap + (1 - H45.k) * 8, bw = L.contentW - 4;
   c.save(); c.globalAlpha = H45.k;
@@ -84,8 +82,8 @@ drawBossBar = function (c) {
   uiBar(c, L.x + 6, y + 19, bw - 2, 6, e.hp / e.maxHp, ink, hudPlates45['boss-plate'] ? '#201725' : undefined);
   if (e.gk === 'demon') { c.fillStyle = '#f4debe'; for (const k of DM_CFG.stages) c.fillRect(L.x + 6 + (bw - 2) * k, y + 19, 1, 6); }
   c.restore();
-};
-drawHUD = function (c) {
+}
+function drawHUD(c) {
   const now = performance.now(), dt = Math.min(0.1, (now - (H45.last || now)) / 1000); H45.last = now;
   H45.k += ((bossOn45() ? 1 : 0) - H45.k) * Math.min(1, dt * 7); if (Math.abs(H45.k - (bossOn45() ? 1 : 0)) < 0.01) H45.k = bossOn45() ? 1 : 0;
   const L = hudLayout(), p = G.p, ph = G.ph, P = curPhase(), b = p.job && baseW(), col = p.job ? JOB_COL[p.job] : '#f0dfb4'; c.save(); c.imageSmoothingEnabled = true;
@@ -137,7 +135,7 @@ drawHUD = function (c) {
   if (STATE.dev.fps && STATE.mode !== 'result') uiText(c, Math.round(STATE.fps) + ' FPS · 적 ' + aliveCount(), (L.x + L.w) * L.k - 2, below + 10, 10, '#d1d8d9', 'right', L.w - 8);
   let ty = Math.max(VIEW.ch * 0.3, below + 30); for (const t of G.toasts) { c.globalAlpha = Math.min(1, (t.dur - t.t) * 3); uiText(c, t.text, VIEW.cw / 2, ty, 14, t.color, 'center', VIEW.cw - 30, 600); ty += 24; } c.globalAlpha = 1;
   drawGuide(c); c.restore();
-};
+}
 /* 일시정지 버튼: 상단 패널과 같은 표현 */
 (function () {
   if (typeof document === 'undefined') return;

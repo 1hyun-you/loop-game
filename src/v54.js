@@ -73,19 +73,7 @@ gkKeep = function (e, d, want, lo, hi) { const r = _gkKeep54(e, d, want, lo, hi)
 /* ---------- 직업 보정 (0.53 직업 균등 90판: 마법사 2/8 · 궁수 3/9 · 소환사 4/9 / 프리스트 8/9 최고 피해 전부 심판의 빛) ---------- */
 Object.assign(V54, { focDecay: 0.5, waveR: 95, waveKb: 230, waveD: 6, waveLv: 0.5, sumSelf: 0.7, priK: 0.5 });
 /* 궁수: 이동 시 집중 즉시 해제 → 0.5초마다 1씩 감소 (피하느라 잠깐 움직여도 전부 잃지 않음) */
-const _arcTick54 = arcTick;
-arcTick = function (dt) {
-  const p = G.p, J = J41(), f = J.focus, mv = p.moving;
-  _arcTick54(dt);
-  if (mv) { J.mv54 = (J.mv54 || 0) + dt; let k = f; while (J.mv54 >= V54.focDecay && k > 0) { J.mv54 -= V54.focDecay; k--; } if (k <= 0) J.mv54 = 0; J.focus = k; G.stats.focusMax = Math.max(G.stats.focusMax || 0, k); }
-  else J.mv54 = 0;
-};
 /* 마법사: 동시 시전 순간 원소 파동 — 주변 적을 밀쳐내 다음 시전까지 숨 돌릴 틈 */
-const _mageVolley54 = mageVolley;
-mageVolley = function (dt, J) {
-  const n = J.volN; _mageVolley54(dt, J);
-  if (J.volN !== n && !G.result) { const p = G.p; hitC(p.x, p.y, V54.waveR * p.mod.area, (V54.waveD + p.level * V54.waveLv) * p.mod.dmg, 'mwave54', { kb: V54.waveKb, col: '#e8b0ff', fill: false }); const S = S54(); S.wave = (S.wave || 0) + 1; }
-};
 SRC44.mwave54 = '원소 파동'; SRC_CAT.mwave54 = 'magic';
 /* 소환사: 직접 공격 피해 -40% → -30% / 프리스트: 심판의 빛 배율 0.55 → 0.5 */
 V41.sum.self = V54.sumSelf; V53.priK = V54.priK;

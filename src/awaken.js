@@ -46,33 +46,6 @@ Object.assign(JOB_WX, {
   priest: { pre: '신성', ds: '조준 대상 체력 높은 적 우선, 처치 시 정화 누적 +1' },
   druid: { pre: '야생', ds: '명중 시 동료 기술 재사용 -0.2초 (초당 최대 1초)' },
 });
-jobWeaponHit = function (e, o) {
-  const p = G.p, j = p.job, src = o.src;
-  if (e.dead || !wxSrc(src)) return;
-  if (j === 'warrior') { p.fury = Math.min(100, p.fury + 1); G.tm.furyHold = Math.max(G.tm.furyHold || 0, 1); }
-  if (j === 'sovereign') e.sub = G.time + 3;
-  if (j === 'chrono' && RANGED_SRC[src] && !e.boss) { e.tw = (e.tw || 0) + 1; e.slowT = Math.max(e.slowT || 0, 1); if (e.tw >= 5 && !e.cmd) { e.tw = 0; e.frz = 1.5; } }
-  if (j === 'druid' && G.pets && G.pets.length && !(G.awDruT > G.time)) { G.awDruT = G.time + 0.2; for (const m of G.pets) m.sk -= 0.2; }
-};
-jobWeaponKill = function (e) {
-  const p = G.p; if (!wxSrc(e.ls)) return;
-  if (p.job === 'priest') p.holy++;
-};
-const _jobDmgMul = jobDmgMul;
-jobDmgMul = function (e, o) {
-  let m = _jobDmgMul(e, o); const p = G.p;
-  if (p.job && wxSrc(o.src)) {
-    if (p.job === 'chrono' && e.frz > 0) m *= 1.3;
-    if (p.job === 'summoner') m *= 1 + 0.04 * Math.min(6, G.minions.length);
-  }
-  return m;
-};
-const _onEnemyHit = onEnemyHit;
-onEnemyHit = function (e, o) {
-  const p = G.p, src = o.src;
-  if (p.job === 'mage' && ELEM[src] && wxSrc(src) && !G.wxOff) { const old = ELEM[src]; ELEM[src] = ['fire', 'ice', 'bolt'][Math.floor(G.time / 1.5) % 3]; try { _onEnemyHit(e, o); } finally { ELEM[src] = old; } return; }
-  _onEnemyHit(e, o);
-};
 /* 프리스트 변환: 조준 함수가 체력 높은 적 우선 */
 const _nearestEnemy = nearestEnemy;
 nearestEnemy = function (x, y, maxR = 600) {
@@ -83,13 +56,6 @@ nearestEnemy = function (x, y, maxR = 600) {
 };
 
 /* ---------- 각성 대기열 (분기 화면 재사용) ---------- */
-const _checkBranch = checkBranch;
-checkBranch = function (kind, id) {
-  _checkBranch(kind, id);
-  if (kind !== 'w' || !AWAKEN[id]) return;
-  const w = wObj(id);
-  if (w && w.lvl >= AWAKEN_AT && !w.aw && !w.awQ) { w.awQ = true; G.pendingBr.push({ kind: 'w', id, aw: true }); }
-};
 const _openBranch = openBranch;
 openBranch = function () {
   const q = G.pendingBr[0];
@@ -109,18 +75,6 @@ applyBranch = function (c) {
 };
 
 /* ---------- 수치 보정 ---------- */
-const _wStats = wStats;
-wStats = function (w) {
-  const S = _wStats(w), p = G.p, D = WEAPONS[w.id];
-  if (p.job === 'warrior' && D.cat === 'melee' && wxOn('melee')) S.area *= 1 + 0.3 * (p.fury || 0) / 100;
-  if (p.job === 'rogue' && wxOn('melee') && (w.id === 'spin' || w.id === 'flail')) S.dmg *= 1.2;
-  if (w.aw === 'cent') S.dmg *= 1 + 0.1 * (w.cent || 0);
-  if (w.id === 'lance' && w.aw === 'charge') S.dmg *= 1.3;
-  if (w.id === 'slam' && w.aw === 'grav') S.dmg *= 1.25;
-  if (w.id === 'boomerang' && w.aw === 'heavy') { S.area *= 1.5; S.pierce += 3; }
-  if (w.id === 'orb' && w.aw === 'sat') S.dmg *= 1.2;
-  return S;
-};
 
 /* ---------- 발동 감싸기: 각성 전후 처리 · 도적·엔지니어·프리스트 변환 ---------- */
 const AW_BASE = {};
@@ -280,17 +234,6 @@ updateProjectiles = function (dt) {
 };
 
 /* ---------- 회전검 칼날 방벽 · 뇌운 · 굴절 · 진공 칼날 ---------- */
-const _updateSpin = updateSpin;
-updateSpin = function (w, S, dt) {
-  _updateSpin(w, S, dt);
-  const p = G.p;
-  if (w.aw === 'burst') { w.bt = (w.bt == null ? 2.5 : w.bt) - dt; if (w.bt <= 0) { w.bt = 2.5; for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; shoot({ kind: 'arrow', x: p.x + Math.cos(a) * w.R, y: p.y + Math.sin(a) * w.R, ang: a, sp: 460, r: 9, dmg: S.dmg * 0.8, pierce: 99, life: 0.5, color: '#ffe8d8', src: 'spin_aw', wind: true }); } } }
-  if (w.aw !== 'wall' || !G.eb || !G.eb.length) return;
-  for (let i = 0; i < w.n; i++) {
-    const a = w.a + i * Math.PI * 2 / w.n, bx = p.x + Math.cos(a) * w.R, by = p.y + Math.sin(a) * w.R;
-    for (const b of G.eb) if (b.life > 0 && dist2(b.x, b.y, bx, by) < (w.bs + (b.r || 6)) ** 2) { b.life = 0; fx({ kind: 'pop', x: b.x, y: b.y, r: 6, color: '#ffffff', dur: 0.15 }); }
-  }
-};
 const _updateArsenal = updateArsenal;
 updateArsenal = function (dt) {
   _updateArsenal(dt);

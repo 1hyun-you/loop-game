@@ -16,14 +16,6 @@ function markSummonAttack(unit, angle) {
   SUMMON_UNIT_ATTACKS.set(unit, { time: G.time, flip: Math.cos(angle) < 0 });
 }
 
-function markHawkDive(p, target) {
-  const dx = target.x - p.x, dy = target.y - p.y;
-  const length = Math.hypot(dx, dy);
-  SUMMON_HAWK_DIVES.set(G, {
-    x: target.x, y: target.y, dx: length ? dx / length : (p.face.x < 0 ? -1 : 1),
-    dy: length ? dy / length : 0, time: G.time
-  });
-}
 
 function summonSprite(c, kind, frame, x, y, radius, flip, alpha, lift = 0, tilt = 0) {
   c.save();

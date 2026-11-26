@@ -9,8 +9,6 @@
 const CODEX_TABS = [['w', '무기'], ['p', '보조'], ['x', '연성'], ['j', '인물'], ['e', '적'], ['f', '조각'], ['u', '해금']];   // 0.37 한 줄 탭 (짧은 이름)
 
 /* 기본 수치 표기 순서·명칭 (밀쳐내기·투사체 속도 등 체감 어려운 항목 제외) */
-const CX_STAT = [['dmg', '피해', v => Math.round(v)], ['cd', '재사용', v => v + '초'], ['n', '개수', v => v], ['pierce', '관통', v => v], ['range', '사거리', v => v], ['len', '길이', v => v], ['R', '범위', v => v],
-  ['arc', '각도', v => Math.round(v * 57.3) + '°'], ['rot', '회전', v => v + '/초'], ['dur', '지속', v => v + '초'], ['tick', '타격 간격', v => v + '초'], ['life', '사거리 시간', v => v + '초'], ['max', '최대 설치', v => v], ['hitCd', '같은 적 타격 간격', v => v + '초']];
 const CX_GK_PAT = {
   bargan: { p: '추격 돌진 · 강타 · 대지 균열 · 바위 투척', r: '연속 돌진 · 투기장 (벽·바위 충돌 시 기절)' },
   igna: { p: '원형 탄막 · 조준 부채꼴 · 화염 장판 · 화염 회오리 · 불기둥 격자', r: '작열하는 태양' },
@@ -76,21 +74,6 @@ function cxRange(a, b) {
 function cxPassive(id, seen) {
   const D = PASSIVES[id];
   return cxCard({ dim: !seen, id, col: CFG.colors.passive, ic: D.ic, nm: D.name, tag: '1→5단계', lines: [cxRange(D.desc(1), D.desc(5)), cxBr(BRANCHES[id], '3단계 분기')] });
-}
-const cxMat = id => `<span class="cxm">${icBox(WEAPONS[id] ? CFG.colors[WEAPONS[id].cat] : CFG.colors.passive, (WEAPONS[id] || PASSIVES[id]).ic, id, 'sm')}${esc(itemName(id))}</span>`;
-function cxJob2(id) {
-  return `<details class="acc"><summary>2차 전직 ${JOB2[id].length}종</summary><div class="cxg">${JOB2[id].map(o => `<div>${uiJob2Crest(id,o.k,'sm')}<b>${esc(o.nm)}</b><span>${esc(o.ds).replace(' · 궁극기: ', '</span><span class="u">궁극기 · ')}</span></div>`).join('')}</div></details>`;
-}
-function cxJob(id, seen) {
-  const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id];
-  return cxCard({ dim: !seen, job: id, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: X.tag, lines: [`<b>${esc(JOB_SHORT[id])}</b>`, cxChips([['궁극기', esc(U[0])], ['연성', esc(X.pre)]]),
-    `<details class="acc"><summary>상세</summary><div class="cxg"><div><b>핵심 규칙</b><span>${esc(J.rule)}</span></div><div><b>궁극기 ${esc(U[0])}</b><span>${esc(U[1])}</span></div><div><b>연성 · ${esc(X.pre)}</b><span>${esc(X.ds)}</span></div></div></details>`, cxJob2(id)] });
-}
-function cxFuse() {
-  const types = Object.entries(FZ_TYPES).map(([k, T]) => cxCard({ fuse: T[1], col: '#ffd27a', ic: T[0].slice(0, 1), nm: T[0], tag: k, lines: [`<b>${esc(T[2])}</b>`] })).join('');
-  const jobs = JOB_ORDER.map(id => { const T = FZ_TRIAL[id], W = WEAPONS[FZ_SYMBOL[id]];
-    return cxCard({ trial: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name, tag: T.nm, lines: [`<b>${esc(T.ds)}</b>`, cxChips([['상징 무기', esc(W.name)], ['연성', esc(FZ_JOB[id])]]), `<details class="acc"><summary>상징 무기 효과</summary><div class="cxg"><div><b>${esc(W.name)}</b><span>${esc(FZ_SYM_TX[id])}</span></div></div></details>`] }); }).join('');
-  return '<p class="hint">직업 시련 완수 시 Lv 6 무기 2종을 합침 · 판당 최대 2회 · 부품 무기는 슬롯을 차지하지 않음</p>' + types + '<h3>직업별 시련·연성</h3>' + jobs;
 }
 function cxEnemyPortrait(o) {
   const src = CODEX_PORTRAITS[o.portrait];

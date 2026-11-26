@@ -18,11 +18,6 @@ function RC() {
 }
 
 /* 시간 배율: 정지·슬로모션 (자동 시험·배속 중에는 시간 배율 미적용 — 시험 결과 왜곡 방지) */
-function rcScale(raw) {
-  const r = G && G.rc; if (!r || r.slow <= 0) return 1;
-  r.slow -= raw;
-  return STATE.dev.speed > 1 || STATE.dev.auto ? 1 : r.slowK;
-}
 function rcSlow(k, t) { const r = RC(); if (t > r.slow || k < r.slowK) { r.slowK = k; r.slow = Math.max(r.slow, t); } }
 function rcFlash(col, a, t) { const r = RC(); if (a >= r.flashA * Math.max(0, 1 - r.flash / r.flashT) || r.flash <= 0) { r.flashCol = col; r.flashA = a; r.flashT = t; r.flash = t; } }
 
@@ -137,15 +132,6 @@ function drawReactTop(c) {
   c.restore();
 }
 /* 주인공: 공격 순간 눌림·반동, 피격 시 흰색 */
-function drawHeroReact(c, fr, flip, tint) {
-  const p = G.p, r = G.rc, q = r ? r.sq : 0, by = p.y + p.r * 1.1;
-  const opt = { flip, tint, mode: p.flash > 0.12 ? 'white' : 'n' };
-  if (q <= 0.02) { drawSprite(c, 'hero', fr, p.x, by, opt); return; }
-  const rx = -p.face.x * 2.2 * q, ry = -p.face.y * 1.2 * q;
-  c.save(); c.translate(p.x + rx, by + ry); c.scale(1 + 0.12 * q, 1 - 0.12 * q); c.translate(-p.x - rx, -by - ry);
-  drawSprite(c, 'hero', fr, p.x + rx, by + ry, opt);
-  c.restore();
-}
 /* 화면 좌표: 피격 가장자리 붉은 테두리·체력 위험 맥동·색 섬광 */
 function drawReactScreen(c) {
   const p = G.p, r = G.rc, W = VIEW.cw, H = VIEW.ch;

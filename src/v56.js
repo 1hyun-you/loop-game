@@ -240,7 +240,7 @@ function buildTiles56() {
   const ps = p.passives.map(x => tile(icBox(CFG.colors.passive, PASSIVES[x.id].ic, x.id), x.lvl)).join('');
   return ws || ps ? `<div class="pz-build" id="rbuild" role="button" tabindex="0" aria-label="내 능력 보기">${ws ? `<div class="r"><i>무기</i>${ws}</div>` : ''}${ps ? `<div class="r"><i>보조</i>${ps}</div>` : ''}</div>` : '';
 }
-showResult = function () {
+function showResult() {
   STATE.mode = 'result'; G.toasts = [];
   const R = G.report, p = G.p, done = G.ph.log.filter(x => x[2] === 'ok').length;
   const D = GATEKEEPERS[G.gk], dm = R.demon, gk = R.gate && R.gate[1] === 'kill';
@@ -272,7 +272,7 @@ showResult = function () {
   const back = () => showResult();
   on('again', newRun); on('home', showTitle);
   on('rabil', () => showAbil(back)); on('rbuild', () => showAbil(back));
-};
+}
 
 /* ---------- 첫 판 안내 보강 ---------- */
 (function () {

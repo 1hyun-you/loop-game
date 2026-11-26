@@ -186,10 +186,6 @@ function bounceProj(pr, e) {
   if (pr.scat) { pr.scat = false; for (const da of [-0.6, 0.6]) { const s2 = shoot({ kind: 'star', x: pr.x, y: pr.y, ang: a + da, sp: 460, r: 4, dmg: pr.dmg * 0.5, pierce: 1, life: 0.8, color: '#e8ecff', src: 'shuriken', bounce: true, mini: true }); s2.hits.add(e.id); } }
 }
 /* 공용 유물 명중·처치 연계 */
-function arsenalHit(e, o) {
-  if (o.src === 'mbolt' && hasRelic('bigorb') && !o.bo) { const x = e.x, y = e.y, d = WEAPONS.orb.base.dmg * 0.4 * G.p.mod.dmg; G.later.push({ t: 0, f: () => explode(x, y, 34, d, 'mbolt_x', '#b8c8ff') }); }
-  if (o.src === 'shard' && !e.dead) e.slowT = Math.max(e.slowT || 0, 1);
-}
 function relicKill(e) {
   if (e.ls === 'spin' && hasRelic('bloodspin')) killHeal(0.6, '피의 칼날');
 }
@@ -208,31 +204,6 @@ const EXW1 = {
   priest: { name: '축복 고리', ic: '복', ds: '4초마다 체력 2% 회복 + 주변 신성 피해', cd: 4.0, dmg: 22, R: 100 },
   druid: { name: '가시 사출', ic: '가', ds: '1.6초마다 여덟 방향 가시 발사', cd: 1.6, dmg: 14 },
 };
-function updateExw1(dt) {
-  const p = G.p, x = p.exw1; if (!x) return;
-  const D = EXW1[x.id], dm = D.dmg * p.mod.dmg;
-  x.t -= dt / p.mod.cd; if (x.t > 0) return; x.t = D.cd;
-  const col = JOB_COL[x.id];
-  switch (x.id) {
-    case 'warrior': { const t = nearestEnemy(p.x, p.y, D.R * 1.4); const a0 = t ? Math.atan2(t.y - p.y, t.x - p.x) : Math.atan2(p.face.y, p.face.x);
-      gridQuery(p.x, p.y, D.R, e => { let da = Math.atan2(e.y - p.y, e.x - p.x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= 1.25) damageEnemy(e, dm, { src: 'waraxe', kb: 200, fx: p.x, fy: p.y }); });
-      fx({ kind: 'arc', a: a0, arc: 2.5, r: D.R, dur: 0.18, color: col }); break; }
-    case 'rogue': { const ts = enemiesInRange(p.x, p.y, 220).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y)).slice(0, 3); if (!ts.length) { x.t = 0.3; break; }
-      ts.forEach((e, i) => G.later.push({ t: i * 0.07, f: () => { if (e.dead) return; fx({ kind: 'slash', x: e.x, y: e.y, a: rand(7), dur: 0.22, color: '#203040' }); damageEnemy(e, dm, { src: 'shade' }); } })); break; }
-    case 'sovereign': gridQuery(p.x, p.y, D.R, e => damageEnemy(e, dm, { src: 'gshield', kb: 380, fx: p.x, fy: p.y })); G.tm.wall = Math.max(G.tm.wall || 0, 1);
-      fx({ kind: 'ring', x: p.x, y: p.y, r0: 12, r1: D.R, dur: 0.25, color: col, fill: true }); break;
-    case 'archer': { if (!nearestEnemy(p.x, p.y, 500)) { x.t = 0.3; break; } for (let i = 0; i < 3; i++) G.later.push({ t: i * 0.1, f: () => shoot({ kind: 'arrow', x: G.p.x, y: G.p.y, ang: aimAng(), sp: 640, r: 5, dmg: dm, pierce: 1, life: 0.9, color: col, src: 'xbow' }) }); break; }
-    case 'engineer': { const ts = enemiesInRange(p.x, p.y, D.R).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y)).slice(0, 2); if (!ts.length) { x.t = 0.3; break; }
-      for (const e of ts) { fx({ kind: 'zap', x: p.x, y: p.y, x2: e.x, y2: e.y, dur: 0.16 }); damageEnemy(e, dm, { src: 'coil' }); } break; }
-    case 'chrono': { x.rot = (x.rot || 0) + 0.4; for (let i = 0; i < 4; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: x.rot + i * Math.PI / 2, sp: 300, r: 5, dmg: dm, pierce: 2, life: 1.0, color: col, src: 'shard' }); break; }
-    case 'mage': { const a0 = aimAng(420); for (let i = 0; i < 2; i++) shoot({ kind: 'fire', x: p.x, y: p.y, ang: a0 + (i ? 0.3 : -0.3), sp: 300, r: 6, dmg: dm, R: D.R, life: 1.0, color: '#ff8a3a', src: 'flameorb' }); break; }
-    case 'summoner': { const ts = shuffle(enemiesInRange(p.x, p.y, 300)).slice(0, 2); if (!ts.length) { x.t = 0.3; break; }
-      for (const e of ts) { const ex = e.x, ey = e.y; afx({ k: 'hand', x: ex, y: ey, dur: 0.45 }); gridQuery(ex, ey, D.R, t => { if (!t.cmd && !t.boss && !t.gk) t.frz = Math.max(t.frz || 0, 0.4); damageEnemy(t, dm, { src: 'bonehand' }); }); } break; }
-    case 'priest': heal(p.maxHp * 0.02, '축복 고리'); gridQuery(p.x, p.y, D.R, e => damageEnemy(e, dm, { src: 'bless' }));
-      fx({ kind: 'ring', x: p.x, y: p.y, r0: 20, r1: D.R, dur: 0.4, color: col, fill: true, follow: true }); break;
-    case 'druid': for (let i = 0; i < 8; i++) shoot({ kind: 'arrow', x: p.x, y: p.y, ang: i * Math.PI / 4 + (x.t2 = !x.t2) * 0.2, sp: 420, r: 4, dmg: dm, pierce: 1, life: 0.5, color: '#9fe08a', src: 'thornshot' }); break;
-  }
-}
 
 /* ---------- 그리기 ---------- */
 SPR.star = { px: 2, frames: [['...k...', '..kMk..', '..kWk..', 'kMWWWMk', '..kWk..', '..kMk..', '...k...']] };

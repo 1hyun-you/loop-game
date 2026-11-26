@@ -29,10 +29,11 @@ const SERVER = http.createServer((q, s) => {
   s.setHeader('content-type', 'text/html; charset=utf-8'); s.end(page());
 });
 
-const INIT = () => {
+const INIT = (seed) => {
+  if (seed) { let a = seed >>> 0; const mk = a => () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; Math.random = mk(a); window.__VTrr = mk(a ^ 0x9e3779b9); window.AudioContext = window.webkitAudioContext = undefined; }   // 0.61 --seed: 같은 난수열로 동일 동작 비교 (그리기 난수 분리·소리 끔 — 실제 시계 기반 음 예약이 난수를 소모하지 않게)   // 0.61 --seed: 같은 난수열로 동일 동작 비교
   const realNow = performance.now.bind(performance);
   const VT = { now: 0, seq: 1, timers: new Map(), raf: [], realNow, errs: [] };
-  window.__VT = VT;
+  window.__VT = VT; VT.rr = window.__VTrr;   // 그리기용 난수는 분리 (그림 불러오기 시점 차이가 게임 진행 난수에 섞이지 않게)
   performance.now = () => VT.now;
   window.setTimeout = (fn, ms, ...a) => { const id = VT.seq++; VT.timers.set(id, { t: VT.now + Math.max(0, +ms || 0), fn, a, rep: 0 }); return id; };
   window.setInterval = (fn, ms, ...a) => { const id = VT.seq++; const r = Math.max(1, +ms || 1); VT.timers.set(id, { t: VT.now + r, fn, a, rep: r }); return id; };
@@ -56,7 +57,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon, jrot }) => {
   if (!H.hooked) {
     H.hooked = true;
     const st = window.step; window.step = dt => { const a = VT.realNow(); st(dt); H.stepMs += VT.realNow() - a; H.steps++; };
-    const rn = window.render; window.render = () => { if (H.rc++ % H.renEvery) return; const a = VT.realNow(); rn(); H.renMs += VT.realNow() - a; H.renders++; };
+    const rn = window.render; window.render = () => { if (H.rc++ % H.renEvery) return; const a = VT.realNow(); const mr = Math.random; if (VT.rr) Math.random = VT.rr; try { rn(); } finally { Math.random = mr; } H.renMs += VT.realNow() - a; H.renders++; };
   }
   Object.assign(H, { rc: 0, renEvery, stepMs: 0, steps: 0, renMs: 0, renders: 0, flow: [] });
   const wall0 = VT.realNow();
@@ -127,8 +128,9 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon, jrot }) => {
   await new Promise(r => SERVER.listen(PORT, '127.0.0.1', r));
   const b = await chromium.launch({ args: ['--disable-gpu', '--num-raster-threads=1'] });
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
-  await ctx.addInitScript(INIT);
+  await ctx.addInitScript(INIT, +opt('seed', 0));
   const p = await ctx.newPage();
+  const COV = opt('cov', null); if (COV) await p.coverage.startJSCoverage({ resetOnNavigation: false });   // 0.61 --cov: 함수 단위 실행 기록(죽은 코드 판독)
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   if (opt('job', null)) await p.addInitScript(j => { window.__vtJob = j; }, opt('job', null));   // 0.26 --job: 전직 후보를 지정 직업 1종으로 고정
   await p.goto(`http://127.0.0.1:${PORT}/`);
@@ -145,6 +147,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon, jrot }) => {
     await p.evaluate(() => { const k = CFG.SAVE_KEY + '_set', o = JSON.parse(localStorage.getItem(k) || '{}'); o.dmgNum = true; localStorage.setItem(k, JSON.stringify(o)); });
     await p.goto(`http://127.0.0.1:${PORT}/`);
   }
+  if (+opt('seed', 0)) await p.waitForTimeout(4000);   // 0.61 --seed: 그림 불러오기 완료 후 시작 (동일 동작 비교)
   let prevRuns = 0;
   for (let i = 0; i < N; i++) {
     let rec;
@@ -155,6 +158,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon, jrot }) => {
     fs.appendFileSync(OUT, JSON.stringify(rec) + '\n');
     console.log(`#${i + 1}/${N} ` + (rec.fatal ? 'FATAL ' + rec.fatal : `${rec.result} ${rec.time}s f${rec.frags} sc${rec.score}${rec.trueEnd ? ' TRUE' : ''} Lv${rec.level} k${rec.kills} maxEn${rec.maxEn} err${rec.errs.length} flow[${rec.flow}] ${rec.cost.wallSec}s`));
   }
+  if (COV) fs.writeFileSync(path.resolve(ROOT, COV), JSON.stringify((await p.coverage.stopJSCoverage()).filter(e => e.source && e.source.length > 1e6).map(e => ({ functions: e.functions, len: e.source.length }))));   // 새로고침 전에 기록 (페이지를 떠나면 실행 기록이 사라짐)
   // 새로고침 후 저장 유지 점검
   const before = await p.evaluate(() => localStorage.getItem(CFG.SAVE_KEY));
   await p.goto(`http://127.0.0.1:${PORT}/`);

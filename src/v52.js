@@ -46,7 +46,7 @@ remap48 = function (f, k) { return f && (f.kind === 'arc' || f.shd52) ? k : _rem
 const _env52 = env48;
 env48 = function (c, f, k) { if (f && (f.kind === 'arc' || f.shd52)) return; return _env52(c, f, k); };
 
-drawBasicCleave = function (c, f, image, k, reduced) {
+function drawBasicCleave(c, f, image, k, reduced) {
   const x = f.artX, y = f.artY, E = V52.sweepEnd, start = f.a - f.arc / 2;
   const s = reduced ? 1 : swing52(Math.min(1, k / E));
   const shrink = k > E ? (k - E) / (1 - E) : 0;
@@ -67,7 +67,7 @@ drawBasicCleave = function (c, f, image, k, reduced) {
   c.rotate(angle);
   c.globalAlpha = opacity;
   c.drawImage(image, f.r * .22, -thickness / 2, length, thickness);
-};
+}
 
 /* ---------- 방패 충격: 둥글게 솟음 → 바깥으로 밀어냄 → 흩어짐 ---------- */
 function shieldShape52(c, h, col, hi) {
@@ -117,10 +117,10 @@ function drawShield52(c, f, k, x, y) {
 }
 
 /* ---------- 얼음 고리: 냉기 물결 + 지나간 바닥 서리 ---------- */
-basicIceWave = function (f) { return f.kind === 'ring' && f.element === 'ice' && f.trk48 && f.follow && !f.fill; };
+function basicIceWave(f) { return f.kind === 'ring' && f.element === 'ice' && f.trk48 && f.follow && !f.fill; }
 const FROST52 = { owner: null, list: [] };
 function frostList52() { if (FROST52.owner !== G) { FROST52.owner = G; FROST52.list = []; } return FROST52.list; }
-drawBasicIce = function (c) {
+function drawBasicIce(c) {
   const p = G.p, x = p.x, y = p.y, reduced = VFX.reduced.matches, L = frostList52();
   for (const f of G.fx) {
     if (!basicIceWave(f) || f.t >= f.dur) continue;
@@ -158,7 +158,7 @@ drawBasicIce = function (c) {
     c.globalAlpha = A * 0.35; c.fillStyle = '#cdeeff'; c.beginPath(); c.arc(L[i].x, L[i].y, s * 1.3, 0, Math.PI * 2); c.fill();
   }
   c.restore();
-};
+}
 
 /* ---------- 그리기 연결 ---------- */
 const _paintedRing52 = paintedRing;
@@ -170,11 +170,11 @@ const _drawBasicWorld52 = drawBasicWeaponWorld;
 drawBasicWeaponWorld = function (c, inView) { follow52(); return _drawBasicWorld52(c, inView); };
 
 /* ---------- 정지·슬로모션: 가상 시험만 차단 ---------- */
-rcScale = function (raw) {
+function rcScale(raw) {
   const r = G && G.rc; if (!r || r.slow <= 0) return 1;
   r.slow -= raw;
   return BOT49 ? 1 : r.slowK;
-};
+}
 
 /* ---------- 보석 획득음: 5음계 8단계 ---------- */
 const GEM52 = ['C6', 'D6', 'E6', 'G6', 'A6', 'C7', 'D7', 'E7'].map(nf);

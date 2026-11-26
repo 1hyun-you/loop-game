@@ -138,20 +138,6 @@ function dev57Promote(lv) {
 }
 
 /* ---------- 구간 이동 ---------- */
-function dev57JobPick() {
-  if (!dev57Play()) return;
-  if (G.p.job) { toast('이미 인물 선택 완료 · 새 판에서 사용', '#c49aff'); return; }
-  dev57Fit(DEV57.lvJob);
-  const q = ringAt(120, 160); G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: G.ph.i };
-  toast('인물 선택 직전 · 제단 출현', '#c49aff');
-}
-function dev57JobAwk() {
-  if (!dev57Play()) return;
-  if (G.p.job2) { toast('이미 인물 각성 완료', '#c49aff'); return; }
-  if (!G.p.job) { const c = jobCands()[0]; applyJob(c.id); }
-  dev57Fit(DEV57.lvAwk);
-  G.job2Ready = false; G.pendingJob2 = true;
-}
 function dev57Boss(k) {
   if (!dev57Play()) return;
   if (isBossPhase()) { toast('보스전 진행 중', '#c49aff'); return; }

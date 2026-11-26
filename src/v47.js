@@ -71,45 +71,8 @@ damageEnemy = function (e, dmg, o = {}) {
   if (e.hp >= hp0 && !e.dead) return;                       // 막힘·보호막·보류
   hitAfter47(e, o, I);
 };
-function hitAfter47(e, o, I) {
-  const H = H47(), p = G.p, F = H.frame;
-  if (F.t !== G.time) { F.t = G.time; F.n = {}; }
-  const big = e.elite || e.gk || e.boss;
-  let heavyBig = false;
-  if (I) {
-    const n = F.n[o.src] = (F.n[o.src] || 0) + 1;
-    if (I.k === 'heavy' && (o.crit || big || n === V47.bigN)) heavyBig = !(n > V47.bigN);
-    if (n <= (I.k === 'multi' ? 4 : 8)) mark47(e, I, o, heavyBig);
-  }
-  if (heavyBig) hitStop47(V47.stopHeavy, e);
-  else if (big && !e.clone && I) hitStop47(V47.stopBig, e);   // 정예·보스 멈춤은 플레이어 무기 타격만 (동료·궁극기 제외)
-  /* 직업 결정적 순간 */
-  const j = p.job; if (!j) return;
-  if (heavyBig && (j === 'warrior' || j === 'sovereign' || j === 'druid')) jobVib47(j, true);
-  else if (o.src === 'mark' && j === 'archer') jobVib47(j);
-  else if (o.src === 'react' && j === 'mage') jobVib47(j);
-}
-function hitStop47(S, e) {
-  const H = H47(); if (G.time - H.stopAt < V47.stopGap) return;
-  H.stopAt = G.time; S47().hs++;
-  if (SETTINGS.hitstop === false) return;
-  rcSlow(S.k, S.t);
-  if (S === V47.stopHeavy) shake(2.2, 0.12);
-}
-function jobVib47(j, strong) {
-  const H = H47(), t = performance.now(); if (t - H.vibAt < V47.vibGap) return;
-  H.vibAt = t; const V = S47().vib; V[j] = (V[j] || 0) + 1;
-  if (!SETTINGS.vibe || STATE.dev.auto || !navigator.vibrate) return;
-  try { navigator.vibrate(strong ? V47.vibStrong : V47.vibWeak); } catch (err) { }
-}
 
 /* 타격 표시 (임시 도형) */
-function mark47(e, I, o, heavyBig) {
-  const H = H47(); if (H.marks.length >= V47.hitMax) return;
-  const p = G.p, a = Math.atan2(e.y - p.y, e.x - p.x);
-  const durK = { heavy: 0.22, multi: 0.12, pierce: 0.16, blast: 0.3, dot: 0.25 };
-  H.marks.push({ x: e.x, y: e.y, r: e.r || 8, a, k: I.k, k2: I.k2, col: I.col || HIT_COL[I.k], t: 0, dur: heavyBig ? 0.32 : durK[I.k], big: heavyBig, crit: !!o.crit });
-}
 function drawMark47(c, m, k, kind, s, col) {
   const q = 1 - k, x = m.x, y = m.y, r = m.r;
   c.strokeStyle = col; c.fillStyle = col;
@@ -135,26 +98,12 @@ function drawMark47(c, m, k, kind, s, col) {
 
 /* ---------- 무기 외형 변화 (Lv 3 분기·Lv 5 각성, 임시 도형) ---------- */
 /* 분기 키 → 형태. 같은 무기의 두 분기는 서로 다른 형태 */
-const FORM47 = {
-  cleave: { wide: 'sweep', double: 'cross' }, shield: { wall: 'wall', twin: 'twinring' }, slam: { after: 'ripple', fissure: 'crack' },
-  arrow: { pierce: 'lance', split: 'fork' }, shuriken: { ricochet: 'zigzag', scatter: 'stars' }, trap: { snare: 'net', cluster: 'tri' },
-  fireball: { big: 'flare', pool: 'puddle' }, icering: { freeze: 'spikes', shatter: 'shards' }, orb: { swarm: 'swarm', nova: 'nova' }, beam: { prism: 'prism', track: 'curve' },
-};
 const _rcFire47 = rcFire;
 rcFire = function (w) {
   const r = _rcFire47.apply(this, arguments);
   try { if (w && G.p && !w.fu) form47(w); else if (w && w.big47) bigFire47(w); } catch (err) { if (STATE.dev.auto) throw err; }
   return r;
 };
-function form47(w) {
-  const F = FORM47[w.id], shp = F && w.br && F[w.br];
-  if (w.big47) bigFire47(w);
-  if (!shp) return;
-  const H = H47(); if (H.forms.length >= V47.formMax) H.forms.shift();
-  const p = G.p, awI = w.aw && AWAKEN[w.id] ? Math.max(0, AWAKEN[w.id].findIndex(o => o.k === w.aw)) : -1;
-  H.forms.push({ shp, aw: awI, t: 0, dur: awI >= 0 ? 0.55 : 0.42, a: Math.atan2(p.face.y, p.face.x), col: CFG.colors[WEAPONS[w.id].cat], s: (awI >= 0 ? 1.35 : 1) * (w.bigS47 || 1) });
-  w.bigS47 = 0; S47().forms++;
-}
 /* 각성·연성 후 첫 발동: 크게 */
 function bigFire47(w) {
   w.big47 = false; S47().big++;
@@ -287,33 +236,7 @@ applyBranch = function (c) {
   if (c && c.aw && c.kind === 'w') { const w = G.p.weapons.find(x => x.id === c.id); cine47('awaken', CFG.colors[WEAPONS[c.id].cat], w); }
   return r;
 };
-const _applyJob47 = applyJob;
-applyJob = function (id) { const r = _applyJob47.apply(this, arguments); cine47('job', JOB_COL[id]); return r; };
-const _applyJob2_47 = applyJob2;
-applyJob2 = function (k) { const r = _applyJob2_47.apply(this, arguments); cine47('job2', JOB_COL[G.p.job]); jobVib47(G.p.job, true); return r; };
-const _applyFuse47 = applyFuse;
-applyFuse = function (id) {
-  const n0 = fusedWs().length, r = _applyFuse47.apply(this, arguments);
-  if (fusedWs().length > n0) { const w = G.p.weapons.find(x => x.id === id && x.fu); cine47('fuse', JOB_COL[G.p.job], w); }
-  return r;
-};
 
 /* ---------- 직업 결정적 순간 (약 진동) ---------- */
-const _addTurret47 = addTurret;
-addTurret = function (x, y, temp) { const r = _addTurret47.apply(this, arguments); if (!temp && G.p.job === 'engineer') jobVib47('engineer'); return r; };
 const _addMinion47 = addMinion;
 addMinion = function () { const r = _addMinion47.apply(this, arguments); if (G.p.job === 'summoner') jobVib47('summoner'); return r; };
-const _purify47 = purify;
-purify = function () { const r = _purify47.apply(this, arguments); if (G.p.job === 'priest') jobVib47('priest'); return r; };
-const _onEnemyHit47 = onEnemyHit;
-onEnemyHit = function (e, o) {
-  const f0 = e && e.frz || 0, r = _onEnemyHit47.apply(this, arguments);
-  if (G.p.job === 'chrono' && e && (e.frz || 0) > f0 + 0.5) jobVib47('chrono');
-  return r;
-};
-const _updateJob47 = updateJob;
-updateJob = function (dt) {
-  const n0 = G.stats.passes || 0, r = _updateJob47.apply(this, arguments);
-  if (G.p.job === 'rogue' && (G.stats.passes || 0) > n0) jobVib47('rogue');
-  return r;
-};

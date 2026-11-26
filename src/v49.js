@@ -20,15 +20,15 @@ const S49 = () => G.stats.v49 || (G.stats.v49 = { corpse: 0, kinds: {}, gChase: 
 const BOT49 = !!navigator.webdriver;
 
 /* ---------- 진동: 자동 플레이 허용 ---------- */
-vib48 = function (k) {
+function vib48(k) {
   const V = S48().vib; V[k] = (V[k] || 0) + 1;
   if (!SETTINGS.vibe || BOT49 || !navigator.vibrate) return;
   try { navigator.vibrate(V48.vib[k]); } catch (err) { }
-};
+}
 
 /* ---------- 표시 제거: 타격 성격·분기 형태 ---------- */
-mark47 = function () { };
-form47 = function (w) { if (w && w.big47) bigFire47(w); };
+function mark47() { }
+function form47(w) { if (w && w.big47) bigFire47(w); }
 
 /* ---------- 범위 안 그림 또렷하게 ---------- */
 remap48 = (function (prev) {
@@ -40,21 +40,16 @@ remap48 = (function (prev) {
   };
 })(remap48);
 const fade49 = k => k < 0.45 ? 1 : Math.max(0, 1 - ((k - 0.45) / 0.55) ** 1.6);
-paintedRing = function (c, f, k, x, y) {
+function paintedRing(c, f, k, x, y) {
   if (f.kind !== 'ring') return false;
   const r = Math.max(1, lerp(f.r0, f.r1, 1 - (1 - k) ** 2));
   const key = f.art || (f.element === 'ice' ? (f.fill ? 'shatter' : 'frost') : f.element === 'earth' ? 'earth' : effectKey(f.color, f.fill));
   const A = fade49(k);
   if (!paintedEffect(c, key, x, y, r, V49.ringA * A, k * .2)) return false;
   rangeEdge48(c, x, y, r, f.color || '#dfcfaa', .42 * A, f.k48 || (f.element === 'ice' ? 'dot' : null), f); return true;
-};
-paintedPool = function (c, z) {
-  const key = { trail: 'heal', vine: 'vine', crack: 'earth', fire: 'fire' }[z.kind] || 'fire', fade = clamp((z.dur - z.t) * 3, 0, 1);
-  if (!paintedEffect(c, key, z.x, z.y, z.r, V49.poolA * fade)) return false;
-  rangeEdge48(c, z.x, z.y, z.r, z.kind === 'fire' || !z.kind ? '#ffcc8a' : '#c0d5ad', .3 * fade, z.kind ? POOLK48[z.kind] : 'blast', z); return true;
-};
+}
 /* 가장자리 띠: 안쪽 채움 제거, 바깥 테두리 부근만 얇게 */
-bandStamp48 = function (col) {
+function bandStamp48(col) {
   const key = 'v49' + col; let cv = BAND48.get(key); if (cv) return cv;
   const [r, g, b] = rgb48(col), S = 128;
   cv = document.createElement('canvas'); cv.width = cv.height = S;
@@ -64,7 +59,7 @@ bandStamp48 = function (col) {
   x.fillStyle = gr; x.fillRect(0, 0, S, S);
   if (BAND48.size >= 28) BAND48.delete(BAND48.keys().next().value);
   BAND48.set(key, cv); return cv;
-};
+}
 
 /* ---------- 몬스터 사망 동작 ---------- */
 const C49 = () => G.c49 || (G.c49 = []);
@@ -141,73 +136,6 @@ chronoSlow = function (e) {
   }
   return m;
 };
-sovTick = function (dt) {
-  const p = G.p, C = V41.sov, J = J41(), b = G.banner;
-  if (b && p.job2 === 'conqueror') { b.x = p.x; b.y = p.y; }
-  const n = b ? (p.job2 === 'benevolent' ? C.guardsB : C.guards) : 0;
-  while (J.gd.length < n) J.gd.push({ x: p.x, y: p.y, t: 0, a: 0, pa: 0, n: 0, stab: 0, bash: 0, tg: null });
-  J.gd.length = n; if (!n) return;
-  const R = bannerR49(), R2 = R * R, S = S49();
-  // 침입 적 목록 (군기 안), 가까운 순
-  const intr = [];
-  gridQuery(b.x, b.y, R, e => { if (!e.dead && !e.fixed && dist2(e.x, e.y, b.x, b.y) < R2) intr.push(e); });
-  intr.sort((u, v) => dist2(u.x, u.y, b.x, b.y) - dist2(v.x, v.y, b.x, b.y));
-  // 바깥 경계 방향: 군기 밖 가장 가까운 적
-  let watchA = null, wd = 1e18;
-  if (!intr.length) gridQuery(b.x, b.y, R + V49.watch, e => { if (e.dead) return; const d = dist2(e.x, e.y, b.x, b.y); if (d >= R2 && d < wd) { wd = d; watchA = Math.atan2(e.y - b.y, e.x - b.x); } });
-  const taken = new Set();
-  J.gd.forEach((g, i) => {
-    g.stab = Math.max(0, g.stab - dt); g.bash = Math.max(0, g.bash - dt); g.t -= dt;
-    // 표적 유지·배정: 다른 근위병과 겹치지 않게
-    if (g.tg && (g.tg.dead || dist2(g.tg.x, g.tg.y, b.x, b.y) > R2 * 1.1)) g.tg = null;
-    if (g.tg && taken.has(g.tg) && intr.length > taken.size) g.tg = null;
-    if (!g.tg && intr.length) {
-      let best = null, bd = 1e18;
-      for (const e of intr) { if (taken.has(e) && intr.length > taken.size) continue; const d = dist2(e.x, e.y, g.x, g.y); if (d < bd) { bd = d; best = e; } }
-      g.tg = best; if (best) S.gChase++;
-    }
-    if (g.tg) taken.add(g.tg);
-    const e = g.tg;
-    if (e) {
-      const dx = e.x - g.x, dy = e.y - g.y, d = Math.hypot(dx, dy) || 1, reach = V49.gReach + (e.r || 10);
-      g.a = Math.atan2(dy, dx);
-      if (d > reach) { const st = Math.min(d - reach, V49.gSpd * dt); g.x += dx / d * st; g.y += dy / d * st; }
-      else if (g.t <= 0) attack49(g, e, b, p, C);
-    } else {
-      // 가장자리 대기: 바깥 위협 방향 기준 균등 배치, 천천히 회전 보정
-      const base = watchA != null ? watchA : g.pa;
-      const want = base + i * Math.PI * 2 / n;
-      let da = ((want - g.pa + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-      if (i === 0 || watchA == null) g.pa += clamp(da, -2.2 * dt, 2.2 * dt);
-      else g.pa = J.gd[0].pa;
-      const pa = (i === 0 ? g.pa : J.gd[0].pa) + i * Math.PI * 2 / n;
-      const tx = b.x + Math.cos(pa) * R * V49.postR, ty = b.y + Math.sin(pa) * R * V49.postR;
-      const dx = tx - g.x, dy = ty - g.y, d = Math.hypot(dx, dy);
-      if (d > 2) { const st = Math.min(d, V49.gSpd * dt); g.x += dx / d * st; g.y += dy / d * st; }
-      g.a = pa;                                                // 바깥을 바라봄
-      if (g.t <= 0) { const t = _nearestEnemy41(g.x, g.y, C.gR); if (t) { g.a = Math.atan2(t.y - g.y, t.x - g.x); attack49(g, t, b, p, C); } }
-    }
-  });
-};
-function attack49(g, e, b, p, C) {
-  g.t = C.gAtk; g.n++;
-  markSummonAttack(g, g.a);
-  const dmg = (C.gDmg + C.gDmgLv * p.level) * p.mod.dmg, S = S49();
-  if (g.n % V49.bashN === 0) {                                // 방패 밀치기: 큰 효과
-    const ox = e.x - b.x, oy = e.y - b.y, od = Math.hypot(ox, oy) || 1;
-    g.bash = 0.28; S.gBash++;
-    damageEnemy(e, dmg * 1.2, { src: 'guardian', kb: 0, fx: g.x, fy: g.y });
-    if (!e.dead && !e.gk && !e.boss) { e.kbx = (e.kbx || 0) + ox / od * 330; e.kby = (e.kby || 0) + oy / od * 330; }
-    const fxX = g.x + Math.cos(g.a) * 14, fxY = g.y + Math.sin(g.a) * 14;
-    fx({ kind: 'ring', x: fxX, y: fxY, r0: 6, r1: 38, dur: 0.3, color: '#ffd24a', fill: true });
-    fx({ kind: 'arc', x: g.x, y: g.y, a: g.a, r: 26, spread: 1.6, dur: 0.22, color: '#fff2c0' });
-    sparkBurst(fxX, fxY, 30, '#ffd24a'); shake(1.4, 0.1);
-  } else {                                                     // 창 찌르기: 중간 효과
-    g.stab = 0.18; S.gStab++;
-    damageEnemy(e, dmg, { src: 'guardian', kb: 110, fx: g.x, fy: g.y });
-    fx({ kind: 'slash', x: e.x, y: e.y, a: g.a, dur: 0.18, color: '#ffe9a8' });
-  }
-}
 /* 근위병 동작 표시 (임시): 찌르기 시 앞으로 내딛기 + 창 궤적, 밀치기 시 방패 반원 */
 function drawGuard49(c, inView) {
   const J = J41(); if (!J.gd || !J.gd.length || G.p.job !== 'sovereign') return;

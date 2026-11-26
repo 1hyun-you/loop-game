@@ -15,7 +15,6 @@ const V41 = {
   pri: { need: 0.05, R: 100, d: 18, dLv: 1.8, k: 4, saintHeal: 1.3, saintSh: 0.15, saintCd: 12 },
   dru: { xp: 1.5 },
 };
-const DUR41 = { spin: 1, flail: 1, beam: 1 };          // 지속형 무기: 재발동 대신 피해 배율로 처리
 
 /* ---------- 설명 문구 교체 ---------- */
 const JOB41 = {
@@ -53,67 +52,22 @@ const J41 = () => G.j41 || (G.j41 = { store: 0, focus: 0, focT: 0, ovh: 0, hist:
 const inChrono = e => G.p.job === 'chrono' && dist2(e.x, e.y, G.p.x, G.p.y) < V41.chr.R * V41.chr.R;
 function chronoSlow(e) { return inChrono(e) && !e.gk ? V41.chr.slow : 1; }
 function chronoBullet(b) { return G.p.job === 'chrono' && dist2(b.x, b.y, G.p.x, G.p.y) < V41.chr.R * V41.chr.R ? V41.chr.eb : 1; }
-const engSlots = () => G.p.weapons.filter(w => !DUR41[w.id]).slice(0, V41.eng.slots);
 function atPos(x, y, f) { const p = G.p, ox = p.x, oy = p.y; p.x = x; p.y = y; try { return f(); } finally { p.x = ox; p.y = oy; } }
-function scaleS(S, k) { return Object.assign({}, S, { dmg: S.dmg * k }); }
 
 /* ---------- 무기 수치 ---------- */
-const _wStats41 = wStats;
-wStats = function (w) {
-  const S = _wStats41(w), p = G.p; if (!p || !p.job) return S;
-  const D = WEAPONS[w.id];
-  if (p.job === 'warrior' && G.tm.rage > 0 && D.cat === 'melee') S.area *= V41.war.rageArea;
-  if (p.job === 'rogue' && DUR41[w.id]) S.dmg *= V41.rog.durDmg;
-  if (p.job === 'summoner') S.dmg *= V41.sum.self;
-  return S;
-};
 
 /* ---------- 무기 발동: 도적 재현 · 기술자 포탑 칸 · 마법사 동시 시전 · 소환사 망령 ---------- */
-function rogueEcho(w, S) {
-  const C = V41.rog, p = G.p;
-  G.later.push({ t: C.echoT, f: () => { if (G.result || !p.weapons.includes(w)) return; fx({ kind: 'pop', x: p.x, y: p.y, r: 14, color: '#203040', dur: 0.2 }); WEAPON_FIRE[w.id](w, scaleS(S, C.echo)); } });
-  if (p.job2 === 'dancer') G.later.push({ t: C.cloneT, f: () => { const c = J41().clone; if (G.result || !c || !p.weapons.includes(w)) return; atPos(c.x, c.y, () => WEAPON_FIRE[w.id](w, scaleS(S, C.clone))); markSummonAttack(c, Math.atan2(p.face.y, p.face.x)); fx({ kind: 'pop', x: c.x, y: c.y, r: 12, color: '#7fe0c0', dur: 0.2 }); } });
-}
-function mageVolley(dt, J) { }   // 0.44 정의가 대체 (0.53 구판 본문 제거)
 /* 마법사 속성: 무기(피해원)마다 다른 속성, 동시 시전마다 순환 → 동시 명중 시 원소 반응 */
 const SRC41 = Object.keys(SRC_CAT);
-const _onEnemyHit41 = onEnemyHit;
-onEnemyHit = function (e, o) {
-  const p = G.p, src = o.src;
-  if (p.job === 'mage' && SRC_CAT[src]) { const had = src in ELEM, old = ELEM[src]; ELEM[src] = ['fire', 'ice', 'bolt'][(SRC41.indexOf(src) + J41().volN) % 3]; try { _onEnemyHit41(e, o); } finally { if (had) ELEM[src] = old; else delete ELEM[src]; } }
-  else _onEnemyHit41(e, o);
-  if (e.dead || !p.job) return;
-  if (p.job === 'warrior') { warStoreHit(e, o); if (SRC_CAT[src] === 'melee' && !(G.tm.rage > 0)) { p.fury = Math.min(100, p.fury + 1); G.tm.furyHold = Math.max(G.tm.furyHold || 0, 1); } }   // 근접 명중 투지 +1 (기존 변환 규칙 흡수)
-  if (p.job === 'chrono' && inChrono(e) && !e.boss && !RANGED_SRC[src] && !(e.tw41 > G.time)) { e.tw41 = G.time + V41.chr.stack; e.tw = (e.tw || 0) + 1; e.slowT = Math.max(e.slowT || 0, 1); if (e.tw >= 5 && !e.cmd) { e.tw = 0; e.frz = 1.5; } }
-};
 
 /* ---------- 전사: 피해 저장·격노 ---------- */
-function warStoreHit(e, o) {
-  const J = J41(), C = V41.war, p = G.p;
-  if (p.job2 === 'guard' || J.store <= 0 || SRC_CAT[o.src] !== 'melee') return;
-  const d = J.store * (C.storeK + C.storeKLv * p.level) * p.mod.dmg, x = e.x, y = e.y; J.store = 0;
-  G.later.push({ t: 0, f: () => { fx({ kind: 'ring', x, y, r0: 8, r1: C.storeR, dur: 0.3, color: '#ff8a5a', fill: true }); gridQuery(x, y, C.storeR, t => damageEnemy(t, d, { src: 'w_store', kb: 140, fx: x, fy: y })); } });
-}
 function warHurt(lost) {
   const J = J41(), C = V41.war, p = G.p;
   if (p.job2 === 'guard') { const d = lost * C.storeK * C.guardK * (1 + 0.06 * p.level) * p.mod.dmg; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: C.guardR, dur: 0.3, color: '#8fd0ff', follow: true }); gridQuery(p.x, p.y, C.guardR, t => damageEnemy(t, d, { src: 'w_store', kb: 160, fx: p.x, fy: p.y })); return; }
   J.store = Math.min(p.maxHp * C.storeCap, J.store + lost * C.store);
 }
-function warTick(dt) {
-  const p = G.p, T = G.tm, C = V41.war;
-  if (T.rage > 0) { T.rage -= dt; p.fury = 100; T.furyHold = 1; if (T.rage <= 0) { p.fury = 0; } }
-  else if (p.fury >= 100) { T.rage = p.job2 === 'berserk' ? C.rageB : C.rage; toast('격노', '#ff6a3a'); fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 110, dur: 0.4, color: '#ff6a3a', follow: true }); G.stats.rages = (G.stats.rages || 0) + 1; }
-}
 
 /* ---------- 피해 배율 ---------- */
-const _jobDmgMul41 = jobDmgMul;
-jobDmgMul = function (e, o) {
-  let m = _jobDmgMul41(e, o); const p = G.p, J = G.j41;
-  if (p.job === 'warrior' && p.job2 === 'berserk') m *= 1 + V41.war.berMax * (1 - p.hp / p.maxHp);
-  if (p.job === 'archer' && J && J.focus) { m *= 1 + V41.arc.dmg * J.focus; if (!o.crit && Math.random() < V41.arc.crit * J.focus) { m *= 2; o.crit = true; } }
-  if (p.job === 'chrono' && p.job2 === 'rewind' && e.frz > 0) m *= 1;   // 기존 1.5배 유지 (job.js)
-  return m;
-};
 
 /* ---------- 피격: 전사 저장 · 시간술사 되감기 ---------- */
 const _hurtPlayer41 = hurtPlayer;
@@ -155,14 +109,6 @@ killEnemy = function (e) {
   try { _killEnemy41(e); } finally { G._xk41 = 1; }
   if (p.job === 'rogue' && p.job2 === 'assassin' && !G.result) rogueTp();
 };
-function rogueTp() {
-  const J = J41(), p = G.p, C = V41.rog; if (G.time < J.tpT) return;
-  const t = _nearestEnemy(p.x, p.y, C.tpR); if (!t) return;
-  J.tpT = G.time + C.tp; const a = Math.atan2(p.y - t.y, p.x - t.x);
-  fx({ kind: 'pop', x: p.x, y: p.y, r: 14, color: '#203040', dur: 0.25 });
-  p.x = t.x + Math.cos(a) * (t.r + 18); p.y = t.y + Math.sin(a) * (t.r + 18); p.invT = Math.max(p.invT, 0.3);
-  fx({ kind: 'pop', x: p.x, y: p.y, r: 14, color: '#7fe0c0', dur: 0.25 }); G.stats.tps = (G.stats.tps || 0) + 1;
-}
 
 /* ---------- 궁수: 표식 적 우선 조준 ---------- */
 const _nearestEnemy41 = nearestEnemy;
@@ -174,17 +120,6 @@ nearestEnemy = function (x, y, maxR = 600) {
 };
 
 /* ---------- 레벨업 카드: 군주 4장 · 드루이드 동료 강화 ---------- */
-const _drawCards41 = drawCards;
-drawCards = function (n, ex = []) {
-  const p = G.p, lv = n === selN();
-  if (p.job === 'sovereign' && lv) n += V41.sov.cards;
-  const r = _drawCards41(n, ex);
-  if (p.job === 'druid' && lv && G.pets && G.pets.length && !r.some(c => c.t === 'pet')) {
-    const k = ['wolf', 'bear'].filter(q => G.pets.some(m => m.kind === q) && bondOf(q).lv < BOND_CFG.maxLv).sort((a, b) => bondOf(a).lv - bondOf(b).lv)[0];
-    if (k) { const c = { t: 'pet', id: k }; if (r.length >= n) r[r.length - 1] = c; else r.push(c); }
-  }
-  return r;
-};
 const _cardInfo41 = cardInfo;
 cardInfo = function (c) {
   if (c.t !== 'pet') return _cardInfo41(c);
@@ -201,119 +136,16 @@ const _cardScore41 = cardScore;
 cardScore = function (c) { return c.t === 'pet' ? 4.6 : _cardScore41(c); };
 
 /* ---------- 포탑: 미사일 일제 · 보행 기계 ---------- */
-function missileVolley(t, n) {
-  const p = G.p, C = V41.eng, R = C.mR * (p.job2 === 'artillery' ? C.mRA : 1), d = turretDmg() * C.mDmg;
-  const ts = shuffle(enemiesInRange(t.x, t.y, 380)).slice(0, n);
-  if (ts.length) markInstallationShot(t, Math.atan2(ts[0].y - t.y, ts[0].x - t.x));
-  for (const e of ts) {
-    const x = e.x, y = e.y, duration = 0.3;
-    fx({ kind: 'zap', x: t.x, y: t.y, x2: x, y2: y, dur: 0.2, installationArt: 'missile' });
-    const delay = { t: duration, f: () => { if (!G.result) explode(x, y, R, d, 'missile', '#ffb060'); } };
-    INSTALLATION_FLIGHTS.set(delay, { x: t.x, y: t.y, x2: x, y2: y, duration });
-    G.later.push(delay);
-  }
-  if (ts.length) G.stats.missiles = (G.stats.missiles || 0) + ts.length;
-}
-const _updateTurrets41 = updateTurrets;
-updateTurrets = function (dt) {
-  const p = G.p, C = V41.eng;
-  const n0 = G.proj.length;
-  _updateTurrets41(dt);
-  if (p.job !== 'engineer') return;
-  for (let i = n0; i < G.proj.length; i++) { const pr = G.proj[i]; if (pr.src !== 'turret') continue; const t = G.turrets.find(q => Math.abs(q.x - pr.x) < 1 && Math.abs(q.y - pr.y) < 1); if (t) { if (p.job2 === 'mechanic' && !t.temp) markSummonAttack(t, pr.ang); t.n = (t.n || 0) + 1; if (t.n >= C.every) { t.n = 0; missileVolley(t, C.n); } } }   // 포탑 발사 집계 → 5발마다 미사일
-  for (const t of G.turrets) {
-    if (p.job2 === 'mechanic' && !t.temp) {
-      const i = G.turrets.indexOf(t), a = i * 2.1 + G.time * 0.3, tx = p.x + Math.cos(a) * 70, ty = p.y + Math.sin(a) * 70, dx = tx - t.x, dy = ty - t.y, d = Math.hypot(dx, dy) || 1;
-      if (d > 6) { const s = Math.min(d, C.walk * dt); t.x += dx / d * s; t.y += dy / d * s; }
-    }
-  }
-};
-const _useUlt41 = useUlt;
-useUlt = function () { const r = _useUlt41.apply(this, arguments); if (G.p.job === 'engineer') for (const t of G.turrets) missileVolley(t, V41.eng.n); return r; };
 
 /* ---------- 소환사: 망령 무기 사용 · 거대 망령 ---------- */
-function minionWeapons(dt) {
-  const p = G.p, C = V41.sum, ws = p.weapons.filter(w => !DUR41[w.id]); if (!ws.length) return;
-  const lord = p.job2 === 'lord';
-  if (lord) {
-    if (G.minions.length > 1 || (G.minions[0] && !G.minions[0].giant)) G.minions = G.minions.filter(m => m.giant).slice(0, 1);
-    if (!G.minions.length) G.minions.push({ id: ++G.pid, x: p.x, y: p.y, r: C.gR, life: 1e9, hitT: 0, giant: true });
-  }
-  for (const m of G.minions) {
-    m.wt = (m.wt == null ? rand(0.3, C.mCd) : m.wt) - dt; if (m.wt > 0) continue;
-    m.wt = lord ? C.gCd : C.mCd;
-    const w = pick(ws), S = _wStats41(w), k = lord ? C.gDmg : C.mDmg;
-    atPos(m.x, m.y, () => WEAPON_FIRE[w.id](w, scaleS(S, k)));
-    if (m.giant) markSummonAttack(m, (m.vx || 0) < 0 ? Math.PI : 0);
-    fx({ kind: 'pop', x: m.x, y: m.y, r: m.r + 4, color: '#b89cff', dur: 0.2 });
-  }
-}
 
 /* ---------- 군주: 근위병 · 이동 진지 ---------- */
-function sovTick(dt) {
-  const p = G.p, C = V41.sov, J = J41(), b = G.banner;
-  if (b && p.job2 === 'conqueror') { b.x = p.x; b.y = p.y; }
-  const n = b ? (p.job2 === 'benevolent' ? C.guardsB : C.guards) : 0;
-  while (J.gd.length < n) J.gd.push({ x: p.x, y: p.y, t: 0, a: 0 });
-  J.gd.length = n;
-  J.gd.forEach((g, i) => {
-    const a = i * Math.PI * 2 / n + G.time * 0.6, tx = b.x + Math.cos(a) * b.r * 0.55, ty = b.y + Math.sin(a) * b.r * 0.55;
-    g.x += (tx - g.x) * Math.min(1, dt * 6); g.y += (ty - g.y) * Math.min(1, dt * 6);
-    g.t -= dt; if (g.t > 0) return;
-    const e = _nearestEnemy41(g.x, g.y, C.gR); if (!e) return;
-    g.t = C.gAtk; g.a = Math.atan2(e.y - g.y, e.x - g.x);
-    markSummonAttack(g, g.a);
-    fx({ kind: 'slash', x: e.x, y: e.y, a: g.a, dur: 0.2, color: '#ffd24a' });
-    damageEnemy(e, (C.gDmg + C.gDmgLv * p.level) * p.mod.dmg, { src: 'guardian', kb: 90, fx: g.x, fy: g.y });
-  });
-}
 
 /* ---------- 궁수: 집중 · 저격 · 매 ---------- */
-function arcTick(dt) {
-  const p = G.p, C = V41.arc, J = J41();
-  if (p.moving) { J.focus = 0; J.focT = 0; }
-  else { J.focT += dt; while (J.focT >= C.step) { J.focT -= C.step; if (J.focus < C.max) { J.focus++; if (J.focus === C.max) fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 40, dur: 0.3, color: '#b8ff9a', follow: true }); } } }
-  G.stats.focusMax = Math.max(G.stats.focusMax || 0, J.focus);
-  if (p.job2 === 'sniper' && J.focus >= C.max) {
-    J.snipeT -= dt;
-    if (J.snipeT <= 0) { J.snipeT = C.snipeCd; const d = (C.snipe + C.snipeLv * p.level) * p.mod.dmg; shoot({ kind: 'arrow', x: p.x, y: p.y, ang: aimAng(900), sp: 1300, r: 8, dmg: d, pierce: 99, life: 0.9, color: '#fff6a0', src: 'snipe' }); fx({ kind: 'ring', x: p.x, y: p.y, r0: 4, r1: 30, dur: 0.2, color: '#fff6a0', follow: true }); }
-  }
-  if (p.job2 === 'hunter') {
-    J.hawkT -= dt;
-    if (J.hawkT <= 0) { J.hawkT = C.hawkCd; const e = nearestEnemy(p.x, p.y, 340); if (e) { markHawkDive(p, e); fx({ kind: 'slash', x: e.x, y: e.y, a: rand(Math.PI * 2), dur: 0.25, color: '#e0c890' }); damageEnemy(e, (C.hawk + C.hawkLv * p.level) * p.mod.dmg, { src: 'hawk' }); if (!e.dead) e.mk = (e.mk || 0) + 2; } }
-  }
-}
 
 /* ---------- 직업 갱신 ---------- */
-const _updateJob41 = updateJob;
-updateJob = function (dt) {
-  _updateJob41(dt);
-  const p = G.p; if (!p.job || G.result) return;
-  const J = J41();
-  J.hist.push({ t: G.time, hp: p.hp }); while (J.hist.length > 2 && G.time - J.hist[0].t > V41.chr.rewind) J.hist.shift();
-  if (p.job === 'warrior') warTick(dt);
-  if (p.job === 'sovereign') sovTick(dt);
-  if (p.job === 'archer') arcTick(dt);
-  if (p.job === 'summoner') minionWeapons(dt);
-  if (p.job === 'rogue' && p.job2 === 'dancer') { const c = J.clone || (J.clone = { x: p.x, y: p.y }); c.x += (p.x - p.face.x * 34 - c.x) * Math.min(1, dt * 4); c.y += (p.y - p.face.y * 34 - c.y) * Math.min(1, dt * 4); }
-};
 
 /* ---------- 전직 적용 ---------- */
-const _applyJob41 = applyJob;
-applyJob = function (id) {
-  G.j41 = null; _applyJob41(id); const p = G.p;
-  if (id === 'rogue' && p.weapons.length > V41.rog.slots) {
-    const keep = p.weapons.slice().sort((a, b) => b.lvl - a.lvl).slice(0, V41.rog.slots), gone = p.weapons.filter(w => !keep.includes(w));
-    p.weapons = p.weapons.filter(w => keep.includes(w)); recalc();
-    toast(`그림자 정리 · ${gone.map(w => WEAPONS[w.id].name).join('·')} 해제`, '#7fe0c0');
-  }
-  if (id === 'summoner') for (let i = 0; i < V41.sum.start; i++) addMinion(p.x + rand(-30, 30), p.y + rand(-30, 30));
-  if (id === 'mage') J41().vol = 1;
-  toast(JOB41[id].tag + ' · ' + JOBS[id].rule.split(',')[0], JOB_COL[id]);
-  G.stats.jobRule = 41;
-};
-const _applyJob2_41 = applyJob2;
-applyJob2 = function (k) { _applyJob2_41(k); if (k === 'lord') G.minions = []; };
 
 /* 소환물 원화는 위험 예고보다 먼저 그린다. 기존 문양·대체 표시는 원래 순서를 유지한다. */
 function drawJob41(c, inView) {

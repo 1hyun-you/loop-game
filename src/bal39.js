@@ -41,12 +41,6 @@ slash = function (a0, arc, range, dmg, kb, basicWeapon) {
   const p = G.p; if (!G.eb || !G.eb.length) return;
   for (const b of G.eb) { if (b.life <= 0 || b.src !== '마왕 혼령') continue; const dx = b.x - p.x, dy = b.y - p.y; if (dx * dx + dy * dy > (range + b.r) ** 2) continue; let da = Math.atan2(dy, dx) - a0; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= arc / 2 + 0.15) killSouls(b.x, b.y, 1); }
 };
-const _updateSpin39 = updateSpin;
-updateSpin = function (w, S, dt) {
-  _updateSpin39(w, S, dt);
-  const p = G.p; if (!G.eb || !G.eb.length) return;
-  for (let i = 0; i < w.n; i++) { const a = w.a + i * Math.PI * 2 / w.n; killSouls(p.x + Math.cos(a) * w.R, p.y + Math.sin(a) * w.R, w.bs); }
-};
 const _updateArsenal39 = updateArsenal;
 updateArsenal = function (dt) {
   _updateArsenal39(dt);

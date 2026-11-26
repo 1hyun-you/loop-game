@@ -28,7 +28,6 @@ const RULE55 = {
 for (const j in RULE55) if (JOBS[j]) JOBS[j].rule = RULE55[j];
 JOB_SHORT.mage = '3.2초마다 무기 동시 시전';
 JOB_SHORT.chrono = '주변 적·탄환 감속 · 5번 맞히면 정지';
-const baseNm55 = j => FORM53[j] ? FORM53[j].nm : WEAPONS[FZ_SYMBOL[j]].name;
 
 /* ---------- 심판의 빛(프리스트 기본 무기) 각성: 실제 동작 기준 이름·설명 ---------- */
 const AW55 = { priest: { orb: { sat: { nm: '잔광', ds: '피해 +20%, 같은 자리에 빛이 2회 더 내리침 (피해 40%)' }, split: { nm: '빛 갈래', ds: '주변에 작은 빛 기둥 3개 추가 (피해 35%)' } } } };
@@ -104,20 +103,6 @@ function wChips55(w, br, ak) {
   return a.length ? cxChips(a) : '';
 }
 const cxDet55 = (head, rows) => rows.length ? `<details class="acc"><summary>${esc(head)}</summary><div class="cxg${rows.length === 1 ? ' one' : ''}">${rows.map(([b, t]) => `<div><b>${esc(b)}</b><span>${esc(t)}</span></div>`).join('')}</div></details>` : '';
-function abilW55() {
-  const p = G.p, ws = p.weapons.slice().sort((a, b) => (b.base ? 1 : 0) - (a.base ? 1 : 0));
-  if (!ws.length) return '<p class="hint">보유 무기 없음</p>';
-  return ws.map(w => {
-    const d = WEAPONS[w.id], F = form53(w), fu = w.fu && fu44(w.fu.job, w.id), col = w.fu || w.base ? JOB_COL[p.job] : CFG.colors[d.cat];
-    const br = w.br && BRANCHES[w.id] && BRANCHES[w.id].find(x => x.k === w.br), ak = w.aw && awTx55(w.id, w.aw), det = [];
-    if (fu) det.push(['재료', `${d.name} + ${baseNm55(w.fu.job)}`]);
-    if (br) det.push(['분기 · ' + br.nm, br.ds]);
-    if (ak) det.push(['각성 · ' + ak.nm, ak.ds]);
-    const next = !w.fu && w.lvl < CFG.weaponMax ? (w.lvl + 1 === BRANCH_AT && BRANCHES[w.id] && !w.br ? '분기 선택' : w.lvl + 1 === AW43 && AWAKEN[w.id] && !w.aw ? '각성' : '') : '';
-    return cxCard({ id: branchWeaponArt(w.id, w.br), col, ic: d.ic, nm: wName(w.id), tag: (w.base ? '기본 무기 · ' : w.fu ? '연성 · ' : '') + 'Lv ' + w.lvl,
-      lines: [esc(fu ? fu.ds : F ? F.ds : d.desc), wChips55(w, br, ak), next ? `<i>다음 레벨</i> ${esc(next)}` : '', cxDet55('상세', det)] });
-  }).join('');
-}
 function abilP55() {
   const p = G.p; let h = '';
   h += p.passives.length ? p.passives.map(x => { const d = PASSIVES[x.id], br = x.br && BRANCHES[x.id] && BRANCHES[x.id].find(o => o.k === x.br);
@@ -127,23 +112,6 @@ function abilP55() {
   if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => cxCard({ col: '#8a6aa0', ic: '저', nm: CURSES[k].name, lines: [esc(CURSES[k].ds)] })).join('');
   return h;
 }
-function abilJ55() {
-  const p = G.p;
-  if (!p.job) return '<p class="hint">전직 전 · 전직 제단에서 직업 선택</p>';
-  const j = p.job, J = JOBS[j], U = ULT_TXT[j], J2 = p.job2 && JOB2[j].find(o => o.k === p.job2), b = baseW(), n = fusedWs().length;
-  const det = [['핵심 규칙', J.rule], ['궁극기 · ' + U[0], U[1] + (J2 && ULT2_TXT[J2.k] ? ' · 2차: ' + ULT2_TXT[J2.k] : '')]];
-  det.push(J2 ? ['2차 · ' + J2.nm, J2.ds] : ['2차 전직', '전직 후 1페이즈 돌파 시 2종 중 선택']);
-  det.push(['연성', '무기 칸 무기와 기본 무기가 모두 Lv 5·각성이면 레벨업에 연성 카드 등장']);
-  let h = cxCard({ job: j, col: JOB_COL[j], ic: J.ic, nm: J.name + (J2 ? ' · ' + J2.nm : ''), tag: (JOB_WX[j] && JOB_WX[j].tag) || '',
-    lines: [`<b>${esc(JOB_SHORT[j])}</b>`, cxChips([['궁극기', esc(U[0])], b ? ['기본 무기', esc(wName(b.id))] : null, ['연성', `${n}/${slotCount()}`]]), cxDet55('상세', det)] });
-  if (j === 'druid' && G.pets.length) h += '<h3>야수 동료</h3>' + ['wolf', 'bear'].map(k => {
-    const m = G.pets.filter(x => x.kind === k).length; if (!m) return '';
-    const S = petStat(k), D = PET[k], B = bondOf(k);
-    return cxCard({ col: '#7fd07a', ic: D.ic, nm: D.name + (m > 1 ? ' ×' + m : ''), tag: '유대 Lv ' + B.lv + (B.lv < BOND_CFG.maxLv ? ` · 다음 ${B.xp}/${bondNeed(B.lv)}` : ' · 최대'),
-      lines: [cxChips([['피해', Math.round(S.dmg)], ['공격 간격', S.atk.toFixed(2) + '초'], [k === 'wolf' ? '울부짖음' : '강타', S.sk.toFixed(1) + '초']]), B.perks.length ? `<i>전용 능력</i> ${esc(B.perks.map(x => bondPerk(x).nm).join(', '))}` : ''] });
-  }).join('');
-  return h;
-}
 function showAbil(back, tab) {
   const K = ABIL_TABS.map(t => t[0]); tab = K.includes(tab) ? tab : 'w';
   const body = { w: abilW55, p: abilP55, j: abilJ55 };
@@ -151,24 +119,13 @@ function showAbil(back, tab) {
   uiPager(UI.querySelector('.layer'), K, tab, () => { });
   on('ab_back', back);
 }
-toggleAbil = function () {
+function toggleAbil() {
   const s = G.sel; if (!s) return;
   const b = document.getElementById('ab_back'); if (b) { b.click(); return; }
   showAbil(() => { if (G && G.sel) { STATE.mode = 'select'; renderSelect(); } });
-};
+}
 
 /* ---------- 도감 정리: 직업 카드·연성 탭의 옛 문구(직업별 연성 규칙·시련) 제거 ---------- */
-cxJob = function (id, seen) {
-  const J = JOBS[id], U = ULT_TXT[id], X = JOB_WX[id], F = FORM53[id], B = WEAPONS[FZ_SYMBOL[id]].name;
-  return cxCard({ dim: !seen, job: id, col: JOB_COL[id], ic: J.ic, nm: J.name, tag: X.tag, lines: [`<b>${esc(JOB_SHORT[id])}</b>`, cxChips([['궁극기', esc(U[0])], ['기본 무기', esc(F ? F.nm : B)]]),
-    `<details class="acc"><summary>상세</summary><div class="cxg"><div><b>핵심 규칙</b><span>${esc(J.rule)}</span></div><div><b>궁극기 ${esc(U[0])}</b><span>${esc(U[1])}</span></div><div><b>기본 무기 · ${esc(F ? F.nm : B)}</b><span>${esc(F ? `${B} 변형 · ${F.ds}` : '전직 시 기본 무기 칸으로 이동 (없으면 Lv 1 지급)')}</span></div></div></details>`, cxJob2(id)] });
-};
-cxFuse = function () {
-  const jobs = JOB_ORDER.map(id => {
-    const rows = F44[id].map(r => `<div><b>${esc(r[1])}</b><span>${esc(WEAPONS[r[0]].name)} + ${esc(baseNm55(id))}</span><span>${esc(r[2])}</span></div>`).join('');
-    return cxCard({ job: id, col: JOB_COL[id], ic: JOBS[id].ic, nm: JOBS[id].name, tag: '연성 ' + F44[id].length + '종', lines: [esc('무기 칸 무기 + 기본 무기 ' + baseNm55(id)), `<details class="acc"><summary>연성 무기 ${F44[id].length}종</summary><div class="cxg">${rows}</div></details>`] }); }).join('');
-  return '<p class="hint">무기 칸 무기와 기본 무기가 모두 Lv 5·각성이면 레벨업에 연성 카드 등장 · 선택한 칸이 직업 고유 무기로 변신</p>' + jobs;
-};
 
 /* ---------- 화면 모양 ---------- */
 (function () {

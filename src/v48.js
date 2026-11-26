@@ -21,16 +21,9 @@ const V48 = {
 const S48 = () => G.stats.v48 || (G.stats.v48 = { vib: {}, stop: 0, slow: 0, tag: 0, deb: 0 });
 
 /* ---------- 진동: 고비 순간만 ---------- */
-function vib48(k) {
-  const V = S48().vib; V[k] = (V[k] || 0) + 1;
-  if (!SETTINGS.vibe || STATE.dev.auto || !navigator.vibrate) return;
-  try { navigator.vibrate(V48.vib[k]); } catch (err) { }
-}
-jobVib47 = function (j) { const V = S47().vib; V[j] = (V[j] || 0); };          // 직업별 진동 폐지 (호출부 유지, 무동작)
+function jobVib47(j) { const V = S47().vib; V[j] = (V[j] || 0); }          // 직업별 진동 폐지 (호출부 유지, 무동작)
 const _cine48 = cine47;
 cine47 = function (kind, col, w) { _cine48(kind, col, w); if (V47.cine[kind]) vib48('grow'); };
-const _useUlt48 = useUlt;
-useUlt = function () { const r = _useUlt48.apply(this, arguments); vib48('ult'); return r; };
 const _rcKill48 = rcKill;
 rcKill = function (e) {
   const boss = e && e.gk && !e.clone, elite = e && !boss && e.elite && !e.clone;
@@ -41,14 +34,14 @@ rcKill = function (e) {
 };
 
 /* ---------- 타격 멈춤: 일반 타격 폐지 (성격 표시는 유지) ---------- */
-hitAfter47 = function (e, o, I) {
+function hitAfter47(e, o, I) {
   const H = H47(), F = H.frame;
   if (F.t !== G.time) { F.t = G.time; F.n = {}; }
   if (!I) return;
   const n = F.n[o.src] = (F.n[o.src] || 0) + 1, big = e.elite || e.gk || e.boss;
   const heavyBig = I.k === 'heavy' && (o.crit || big || n === V47.bigN) && n <= V47.bigN;
   if (n <= (I.k === 'multi' ? 4 : 8)) mark47(e, I, o, heavyBig);
-};
+}
 
 /* ---------- 무기 발동 효과 표시: 발동 중 생성된 효과에 성격 표지 ---------- */
 let CUR48 = null, DMG48 = 0;
@@ -235,18 +228,6 @@ function rgb48(col) {
   m = /rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(s); if (m) return [+m[1], +m[2], +m[3]];
   return [232, 216, 175];
 }
-function bandStamp48(col) {
-  let cv = BAND48.get(col); if (cv) return cv;
-  const [r, g, b] = rgb48(col), S = 128;
-  cv = document.createElement('canvas'); cv.width = cv.height = S;
-  const x = cv.getContext('2d'), gr = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-  gr.addColorStop(0, `rgba(${r},${g},${b},0)`); gr.addColorStop(0.5, `rgba(${r},${g},${b},0.06)`);
-  gr.addColorStop(0.8, `rgba(${r},${g},${b},0.32)`); gr.addColorStop(0.93, `rgba(${r},${g},${b},0.7)`);
-  gr.addColorStop(0.985, `rgba(${r},${g},${b},0.38)`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
-  x.fillStyle = gr; x.fillRect(0, 0, S, S);
-  if (BAND48.size >= 28) BAND48.delete(BAND48.keys().next().value);
-  BAND48.set(col, cv); return cv;
-}
 function rangeEdge48(c, x, y, r, col, alpha, kind, obj) {
   if (!(r > 2 && alpha > 0.005) || !Number.isFinite(x + y)) return;
   c.save(); c.globalAlpha = clamp(alpha, 0, 1); c.imageSmoothingEnabled = true;
@@ -266,17 +247,5 @@ function rangeEdge48(c, x, y, r, col, alpha, kind, obj) {
   c.restore();
 }
 /* 기존 경계선 함수 교체: 선 대신 가장자리 그라데이션 */
-effectBoundary = function (c, x, y, r, color, alpha = .35) { rangeEdge48(c, x, y, r, color, Math.min(1, alpha * 1.25), null, null); };
-paintedRing = function (c, f, k, x, y) {
-  if (f.kind !== 'ring') return false;
-  const r = Math.max(1, lerp(f.r0, f.r1, 1 - (1 - k) ** 2));
-  const key = f.art || (f.element === 'ice' ? (f.fill ? 'shatter' : 'frost') : f.element === 'earth' ? 'earth' : effectKey(f.color, f.fill));
-  if (!paintedEffect(c, key, x, y, r, (1 - k) ** 1.5 * .75, k * .2)) return false;
-  rangeEdge48(c, x, y, r, f.color || '#dfcfaa', .55 * (1 - k), f.k48 || (f.element === 'ice' ? 'dot' : null), f); return true;
-};
+function effectBoundary(c, x, y, r, color, alpha = .35) { rangeEdge48(c, x, y, r, color, Math.min(1, alpha * 1.25), null, null); }
 const POOLK48 = { fire: 'blast', crack: 'heavy', vine: 'dot' };
-paintedPool = function (c, z) {
-  const key = { trail: 'heal', vine: 'vine', crack: 'earth', fire: 'fire' }[z.kind] || 'fire', fade = clamp((z.dur - z.t) * 3, 0, 1);
-  if (!paintedEffect(c, key, z.x, z.y, z.r, .55 * fade)) return false;
-  rangeEdge48(c, z.x, z.y, z.r, z.kind === 'fire' || !z.kind ? '#ffcc8a' : '#c0d5ad', .34 * fade, z.kind ? POOLK48[z.kind] : 'blast', z); return true;
-};

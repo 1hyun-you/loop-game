@@ -17,39 +17,6 @@ function upText(id, u) {
 }
 
 /* 현재 레벨 수치: 1레벨 기본값 + 2~L레벨 강화 누적 + 보조 효과 */
-function wStats(w) {
-  const D = WEAPONS[w.id], B = D.base, M = G.p.mod;
-  const s = { dmg: 0, area: 0, cd: 0, n: 0, pierce: 0, rot: 0 };
-  for (let i = 0; i < w.lvl - 1; i++) for (const k in D.ups[i]) s[k] += D.ups[i][k];
-  // 분기 (0.5)
-  let dm = 1, cm = 1;
-  const br = w.br;
-  if (br === 'wide') s.area += w.id === 'spin' ? 0.35 : 0.25;
-  if (br === 'pierce') { s.pierce += 3; dm *= 1.15; }
-  if (br === 'multi') s.n += 1;
-  if (br === 'big') { s.area += 0.45; dm *= 1.2; cm *= 1.15; }
-  if (pBr('might') === 'pen' && (w.id === 'arrow' || w.id === 'boomerang' || w.id === 'knife')) s.pierce += 1;
-  if (br === 'fan') s.n += 2;
-  if (br === 'swarm') { s.n += 2; dm *= 0.8; }
-  // 3단계 보조 효과 (0.8): 공격 범위·투사체 수
-  const aL = passLv('area'), mL = passLv('multi');
-  if (aL) { if (pBr('area') === 'dense') dm *= 1 + 0.12 * aL; else s.area += 0.08 * aL + (pBr('area') === 'giant' ? 0.15 : 0); }
-  if (pBr('area') === 'giant') dm *= 1.08;
-  if (mL && B.n) { s.n += multiN(mL) + (pBr('multi') === 'barrage' ? 1 : 0); dm *= 1 + 0.03 * mL + (pBr('multi') === 'velocity' ? 0.2 : 0); if (pBr('multi') === 'barrage') cm *= 1.2; }   // 0.26 하향: 개수 2·5단계 각 +1, 단계당 피해 +3%
-  // 직업 (0.6·0.7)
-  if (G.p.job2 === 'archmage' && D.cat === 'magic') cm *= 0.8;
-  if (G.p.job2 === 'berserk' && w.id === 'cleave' && G.p.fury >= 100) s.area += 0.3;
-  if (jobCat(D.cat)) dm *= 1.1;                                          // 전직 계열 무기 피해 +10%
-  if (G.p.job2 === 'accel') cm *= 0.88;
-  return {
-    dmg: B.dmg * (1 + s.dmg) * M.dmg * dm,
-    area: 1 + s.area,
-    cd: (B.cd || 0) * (1 - s.cd) * M.cd * cm,
-    n: (B.n || 1) + s.n,
-    pierce: (B.pierce || 0) + s.pierce,
-    rot: (B.rot || 0) * (1 + s.rot) / M.cd,          // 재사용 감소는 회전검 회전 속도로 환산
-  };
-}
 
 function aimAng(range = 520) { const t = nearestEnemy(G.p.x, G.p.y, range); return t ? Math.atan2(t.y - G.p.y, t.x - G.p.x) : Math.atan2(G.p.face.y, G.p.face.x); }
 function enemiesInRange(x, y, r) { const a = []; gridQuery(x, y, r, e => { a.push(e); }); return a; }
@@ -185,34 +152,7 @@ function slash(a0, arc, range, dmg, kb, basicWeapon = false) {
   fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.16, color: jobTint('melee') || '#ffe0d0', ...(basicWeapon ? { basicArt: 'cleave', artX: p.x, artY: p.y } : {}), ...(p.job === 'warrior' ? { warArt: 'cleave', x: p.x, y: p.y } : {}) });
 }
 /* 회전검: 상시 회전, 적별 타격 간격 0.35초 · 투척 궤도 분기: 2.4초마다 0.8초간 반경 확장 (피해 130%) */
-function updateSpin(w, S, dt) {
-  const D = WEAPONS.spin.base, p = G.p, storm = G.tm.storm > 0 ? 2 : 1;
-  let R = D.R * S.area, dm = S.dmg; const bsz = D.size * S.area;
-  if (w.br === 'throw') { w.tt = ((w.tt || 0) + dt) % 2.4; if (w.tt < 0.8) { R *= 1 + 1.4 * Math.sin(Math.PI * w.tt / 0.8); dm *= 1.3; } }
-  w.a = (w.a || 0) + S.rot * storm * dt; w.n = S.n; w.R = R; w.bs = bsz;
-  for (let i = 0; i < S.n; i++) {
-    const a = w.a + i * Math.PI * 2 / S.n, bx = p.x + Math.cos(a) * R, by = p.y + Math.sin(a) * R;
-    const hk = 'spin' + i; gridQuery(bx, by, bsz, e => { if ((e.ht[hk] || 0) <= G.time) { e.ht[hk] = G.time + D.hitCd; damageEnemy(e, dm, { kb: D.kb, fx: p.x, fy: p.y, src: 'spin' }); } });
-  }
-}
 
-function updateWeapons(dt) {
-  for (const w of G.p.weapons) {
-    const S = wStats(w);
-    if (w.id === 'spin') { updateSpin(w, S, dt); continue; }
-    if (w.fz) continue;                                          // 0.42 연성 부품: 발동은 주체 무기가 담당
-    w.t -= dt * ultCdMul();                                      // 군주 궁극기: 재사용 2배 속도
-    if (w.t <= 0) {
-      const r = WEAPON_FIRE[w.id](w, S); w.t = r === false ? 0.25 : (w.fx ? fuseCd(w, S) : S.cd); if (r !== false) { rcFire(w); if (w.fx) fuseFire(w, S); if (G.p.job && w.id === FZ_SYMBOL[G.p.job]) symbolFire(w, S); }   // 공격 반응 (0.28)
-     
-      if (r !== false && pBr('haste') === 'echo' && Math.random() < 0.12) w.t = 0.05;   // 연속 발동 분기
-    }
-  }
-  updateTraps(dt); updateArsenal(dt);                       // 0.27 철퇴·광선·폭탄·회오리
-  // 지연 실행 (연속 베기 등)
-  for (const L of G.later) { L.t -= dt; if (L.t <= 0) { L.done = true; L.f(); } }
-  if (G.later.length) G.later = G.later.filter(L => !L.done);
-}
 
 /* 투사체 이동·충돌 */
 function updateProjectiles(dt) {

@@ -13,9 +13,6 @@ function installationArtReady(name) {
   return !!image && image.complete && image.naturalWidth === INSTALLATION_FRAMES[name] * 96 && image.naturalHeight === 96;
 }
 
-function markInstallationShot(turret, angle) {
-  INSTALLATION_SHOTS.set(turret, { angle, time: G.time });
-}
 
 function installationSprite(c, name, frame, x, y, size, angle = 0, alpha = 1, anchor = 0.5) {
   c.save();

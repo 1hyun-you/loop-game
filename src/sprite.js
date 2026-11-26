@@ -212,7 +212,6 @@ const SPR = {
   ]] },
 };
 /* 지형 타일 (16×16, 밝은 풀밭) — 변형 4종을 좌표 해시로 배치 */
-const TILE_PAL = { a: '#62b04c', b: '#59a545', c: '#79c65a', d: '#4b923e', f: '#fff3b0', h: '#ffffff', i: '#f39ab0' };
 const TILES = [
   ['aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa',
     'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa'],
@@ -223,7 +222,6 @@ const TILES = [
   ['aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaafaaaaaaaaa', 'aaaaafyfaaaaaaaa', 'aaaaaafaaaaaaaaa', 'aaaaaadaaaaahaaa', 'aaaaaaaaaaahihaa',
     'aaaaaaaaaaaahaaa', 'aaaaaaaaaaaadaaa', 'aaaaaaaaaaaaaaaa', 'aaacaaaaaaaaaaaa', 'aacdcaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaa'],
 ];
-const GROUND_BASE = TILE_PAL.a;
 
 /* 색 보조 */
 function shadeHex(hex, k) {

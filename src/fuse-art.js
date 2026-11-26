@@ -7,23 +7,6 @@ for (const [job, source] of Object.entries(FUSE_ART_DATA)) {
   image.src = source;
 }
 
-function startFuseArt(job, weapon) {
-  const image = FUSE_ART.images[job];
-  if (!weapon || !image || !image.complete || !image.naturalWidth) return false;
-  let run = FUSE_ART.runs.get(G);
-  if (!run) {
-    run = { slots: new WeakMap(), latest: null };
-    FUSE_ART.runs.set(G, run);
-  }
-  const moment = { job, weapon, image, time: G.time };
-  if (job === 'summoner') {
-    // Reuse the legacy four spirits' scatter so selection consumes the same random draws.
-    moment.spirits = Array.from({ length: 4 }, () => [rand(-60, 60), rand(-60, 60)]);
-  }
-  run.latest = moment;
-  run.slots.set(weapon, moment);
-  return true;
-}
 
 function fuseArtProgress(moment) {
   return moment ? (G.time - moment.time) / FUSE_ART.duration : 1;

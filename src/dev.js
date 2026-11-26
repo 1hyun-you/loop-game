@@ -51,26 +51,6 @@ const DEV = {
 };
 
 /* 진행 상태 바로가기 (0.15a) — 시험 도구 --preset 동일 내용 주입, 최초 적용 시 실제 저장 데이터 백업 */
-const DEV_BAK = () => CFG.SAVE_KEY + '_devbak';
-function devHasBak() { try { return !!localStorage.getItem(DEV_BAK()); } catch (e) { return false; } }
-function devPreset(pre) {
-  try {
-    if (!devHasBak()) localStorage.setItem(DEV_BAK(), JSON.stringify({ main: localStorage.getItem(CFG.SAVE_KEY), run: localStorage.getItem(CFG.SAVE_KEY + '_run') }));
-    const all = GK_ORDER.slice(), s = { runs: 0, clears: 10, gates: all, demonTries: 3, demonKills: 1, ending1: 1, intro: 1, metGk: all, metDemon: 1, frags: FRAGS.map(f => f.id) };
-    if (pre === 'post') Object.assign(s, { trueEnd: 1, tierMax: 3, titles: ['end'] });
-    localStorage.setItem(CFG.SAVE_KEY, JSON.stringify(s));
-    localStorage.setItem(CFG.SAVE_KEY + '_run', JSON.stringify({ tier: 0, conds: [] }));
-  } catch (e) { }
-  location.reload();
-}
-function devRestore() {
-  try {
-    const b = JSON.parse(localStorage.getItem(DEV_BAK()) || 'null'); if (!b) return;
-    const put = (k, v) => v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v);
-    put(CFG.SAVE_KEY, b.main); put(CFG.SAVE_KEY + '_run', b.run); localStorage.removeItem(DEV_BAK());
-  } catch (e) { }
-  location.reload();
-}
 
 /* 자동 이동 — 시험용 (켜면 레벨업 카드도 자동 선택) (초안 자동 로직 v2 축약: 16방향 위험도 + 경험치 무리 추적 + 적 무리 접근) */
 const AUTO = { dir: { x: 0, y: -1 }, next: 0, out: null, run: null };
@@ -129,31 +109,4 @@ function autoGkTarget(e) {
   if (AUTO.split !== s) { AUTO.split = s; AUTO.seeAt = s + rand(1.2, 2.6); AUTO.see = Math.random() < 0.8; }
   if (G.time >= AUTO.seeAt && AUTO.see) return e;
   return [e].concat(G.enemies.filter(o => o.clone && !o.dead)).sort((a, b) => dist2(a.x, a.y, p.x, p.y) - dist2(b.x, b.y, p.x, p.y))[0];
-}
-function autoVec() {
-  if (AUTO.run !== G) { AUTO.run = G; AUTO.next = 0; AUTO.out = null; }
-  if (G.time < AUTO.next && AUTO.out) return AUTO.out;
-  AUTO.next = G.time + rand(0.1, 0.2);          // 사람 반응 지연 재현
-  const p = G.p, tg = autoTarget();
-  let tx = 0, ty = 0, td = 0, pull = 1;
-  if (tg) { tx = tg.x - p.x; ty = tg.y - p.y; td = Math.hypot(tx, ty) || 1; tx /= td; ty /= td; }
-  if (tg && tg.k === 'fight') pull = td > 130 ? 1 : td > 90 ? 0.2 : -0.4;
-  if (tg && tg.k === 'boss') pull = td > 60 ? 1 : 0;                       // 대장은 근접 사거리까지 접근
-  if (tg && tg.k === 'gk') { const mel = p.weapons.filter(w => WEAPONS[w.id].cat === 'melee').length >= 2, lo = mel ? 55 : 110, hi = mel ? 95 : 170; pull = td > hi ? 1 : td < lo ? -0.6 : 0.1; }   // 수문장: 근접형은 붙고 원거리형은 거리 유지
-  const here = autoDanger(p.x, p.y);
-  if (p.job === 'archer' && here < 2.5 && !(tg && (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 0.41 궁수 집중: 위험 낮을 때 정지 사격 (사람 플레이 재현)
-  if (ultReady() && !autoUltSetting() && (here > 3 || G.time - G.tm.readyAt > 8)) ultPress58('ai');   // 0.58 궁극기: 버튼 누름 (정지 불필요)
-  let best = AUTO_DIRS[0], bs = -1e9;
-  for (const dv of AUTO_DIRS) {
-    const dg = autoDanger(p.x + dv.x * 30, p.y + dv.y * 30) + 0.6 * autoDanger(p.x + dv.x * 70, p.y + dv.y * 70);
-    const s = -dg * (STATE.dev.god ? 0.15 : 1) + (tg ? (dv.x * tx + dv.y * ty) * (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk' ? 26 : 6) * pull : 0) + (dv.x * AUTO.dir.x + dv.y * AUTO.dir.y) * 1.2;
-    if (s > bs) { bs = s; best = dv; }
-  }
-  const ev2 = G.ev && G.ev.cur, stopR = G.ph.zone ? G.ph.zone.r - 20 : ev2 && ev2.state === 'idle' && tg && tg.x === ev2.x ? 12 : 20;
-  if (tg && tg.k === 'goal' && td < stopR) return (AUTO.out = { x: 0, y: 0, m: 0 });
-  if (here < 1.5 && -here >= bs && !(tg && (tg.k === 'gem' || tg.k === 'goal'))) return (AUTO.out = { x: 0, y: 0, m: 0 });
-  const k = here > 6 ? 1 : 0.55;
-  let x = AUTO.dir.x * (1 - k) + best.x * k, y = AUTO.dir.y * (1 - k) + best.y * k; const m = Math.hypot(x, y) || 1;
-  AUTO.dir = { x: x / m, y: y / m };
-  return (AUTO.out = { x: x / m, y: y / m, m: 1 });
 }

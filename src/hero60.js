@@ -114,7 +114,6 @@ function fuseCands60() {
   const p = G.p; if (!p.job || !baseW()) return [];
   return slotWs().filter(w => !w.fu && w.lvl >= CFG.weaponMax && fuseDef60(p.job, w.id));
 }
-fuseCands = fuseCands60;
 fuseName = (j, id) => (FUSE60_NM[j] && FUSE60_NM[j][id]) || WEAPONS[id].name;
 
 /* ---------- 상태 ---------- */
@@ -134,7 +133,7 @@ const _addXp60 = addXp;
 addXp = function (v) { return _addXp60(v * TEMP60.xp); };
 
 /* ---------- 무기 수치 (보조 효과 반영, 옛 직업·분기 보정 제거) ---------- */
-wStats = function (w) {
+function wStats(w) {
   const D = WEAPONS[w.id], p = G.p, M = p.mod;
   if (!D) return { dmg: 0, area: 1, cd: 1, n: 1, pierce: 0, rot: 0 };
   const B = D.base, s = { dmg: 0, area: 0, cd: 0, n: 0, pierce: 0 };
@@ -147,7 +146,7 @@ wStats = function (w) {
   if (pBr('might') === 'pen' && w.id === 'arrow') s.pierce += 1;
   const H = heroStat60(w); dm *= H.dmg; cm *= H.cd;
   return { dmg: B.dmg * (1 + s.dmg) * M.dmg * dm * TEMP60.dmg, area: (1 + s.area) * H.area, cd: (B.cd || 0) * (1 - s.cd) * M.cd * cm, n: (B.n || 1) + s.n, pierce: (B.pierce || 0) + s.pierce, rot: 0 };
-};
+}
 /* 인물 규칙의 무기 수치 보정 (전용·연성 무기만, 인물 구현 때 HERO60[id].stat(w) 등록) */
 function heroStat60(w) { const H = H60(); return H && H.impl && H.stat && (w.base || w.fu) ? Object.assign({ dmg: 1, cd: 1, area: 1 }, H.stat(w)) : { dmg: 1, cd: 1, area: 1 }; }
 const wCol60 = w => (w.base || w.fu) && H60() ? H60().col : WEAPONS[w.id].col;
@@ -244,7 +243,7 @@ function tick60(dt) {
 }
 
 /* ---------- 무기 발동 갱신 (옛 연성·직업 발동 경로 대체) ---------- */
-updateWeapons = function (dt) {
+function updateWeapons(dt) {
   const p = G.p;
   for (const w of p.weapons) {
     const S = wStats(w);
@@ -261,7 +260,7 @@ updateWeapons = function (dt) {
   tick60(dt);
   for (const L of G.later) { L.t -= dt; if (L.t <= 0) { L.done = true; L.f(); } }
   if (G.later.length) G.later = G.later.filter(L => !L.done);
-};
+}
 function rcFire60(w) {
   if (!WEAPONS[w.id].noMotion || typeof motionState !== 'function') return rcFire(w);
   const m = motionState(), a = m.attack; rcFire(w); m.attack = a;   // 단검·영혼 등불: 캐릭터 몸 동작 없음
@@ -269,38 +268,38 @@ function rcFire60(w) {
 
 /* ---------- 인물 규칙 연결점 (구현 전 인물은 전부 기본값) ---------- */
 const hook60 = (k, ...a) => { const H = H60(); return H && H.impl && H[k] ? H[k](...a) : undefined; };
-jobDmgMul = function (e, o) {
+function jobDmgMul(e, o) {
   let m = 1, cc = 0, cm = 2;
   if (pBr('might') === 'crit') cc += 0.15;                    // 보조 효과 분기 '치명'
   if (cc && Math.random() < cc) { m *= cm; o.crit = true; }
   if (pBr('might') === 'pen' && (e.r >= 16 || e.elite || e.cmd)) m *= 1.25;
   const h = hook60('dmgMul', e, o); if (h) m *= h;
   return m;
-};
-onEnemyHit = function (e, o) { if (!G.p.job || e.dead) return; hook60('onHit', e, o); };
-onEnemyKill = function (e) { if (!G.p.job) return; ultKillGain(e); hook60('onKill', e); };
-playerHurtMul = function () { let m = ultHurtMul(); const h = hook60('hurtMul'); if (h) m *= h; return m; };
-onPlayerHurt = function () { hook60('onHurt'); };
-playerAvoid = function () {
+}
+function onEnemyHit(e, o) { if (!G.p.job || e.dead) return; hook60('onHit', e, o); }
+function onEnemyKill(e) { if (!G.p.job) return; ultKillGain(e); hook60('onKill', e); }
+function playerHurtMul() { let m = ultHurtMul(); const h = hook60('hurtMul'); if (h) m *= h; return m; }
+function onPlayerHurt() { hook60('onHurt'); }
+function playerAvoid() {
   const p = G.p, T = G.tm;
   if (T.inv > 0) return true;
   if (p.shield) { p.shield = false; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 34, dur: 0.3, color: '#8fd0ff', follow: true }); p.invT = CFG.player.invuln; return true; }
   if (pBr('swift') === 'dodge' && Math.random() < 0.2) { p.invT = 0.3; fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 26, dur: 0.25, color: '#c8ffd8', follow: true }); return true; }
   return !!hook60('avoid');
-};
+}
 heal = function (v, src = '기타') {                          // 옛 사제 초과 회복·성물 추가 발동 제거 (game.js 원형)
   const p = G.p; if (hasCond('noheal')) return; if (hasCurse('blight')) v *= 0.6;
   const b = p.hp; p.hp = Math.min(p.maxHp, p.hp + v);
   const H = G.stats.healBy || (G.stats.healBy = {}); H[src] = (H[src] || 0) + (p.hp - b) / p.maxHp; if (p.hp > b) vfxHeal();
 };
-updateJob = function (dt) {
+function updateJob(dt) {
   const T = G.tm;
   for (const k of ['inv', 'ultWin']) if (T[k] > 0) T[k] -= dt;
   hook60('tick', dt);
   updateUlt(dt); updateUltFx(dt);
-};
-updateAltar = function () { };
-v42Update = function () { };                                 // 옛 직업 시련 폐지
+}
+function updateAltar() { }
+function v42Update() { }                                 // 옛 직업 시련 폐지
 
 /* 인물 상태 글자·주기 표시 (상단 화면): 인물 구현 때 HERO60[id].status()·dials() 등록 */
 function heroStatus60(sep) { const t = hook60('status'); return t ? sep + t : ''; }
@@ -321,17 +320,17 @@ function heroCands60() {
   return byLv.concat(rest).slice(0, 3);
 }
 jobCands = () => heroCands60().map(id => ({ t: 'job', id }));
-altarCheck = function () {
+function altarCheck() {
   const ph = G.ph, p = G.p;
   if (hasCond('nojob') || p.job || G.h60asked) return;       // 도전 조건 '전직 금지' = 인물 없이 진행
   if (ph.i + 1 >= 1 && ph.i + 1 < ph.order.length) { G.h60asked = true; G.h60q = 'hero'; G.pendingJob2 = true; }
-};
-openJob2 = function () {
+}
+function openJob2() {
   G.pendingJob2 = false; G.job2Ready = false;
   const q = G.h60q; G.h60q = null;
   if (q === 'hero' && !G.p.job) return openHero60();
   if (q === 'aw' && G.p.job && !G.p.job2) return openAw60();
-};
+}
 function openHero60() {
   const p = G.p, ids = heroCands60(), offs = [[-96, -58], [0, -108], [96, -58]];
   STATE.mode = 'select'; clearInput(); G.stats.altarOpen++;
@@ -396,7 +395,7 @@ applyJob2 = applyAw60;
 
 /* ---------- 궁극기: 인물별 기본 + 각성 A·B 교체 (구현 전 = 임시 공통 충격파) ---------- */
 function ultName60(j) { const H = HERO60[j], k = G.p.job2; return H ? (k && H.aw[k] ? H.aw[k].ult : H.ult[0]) : '궁극기'; }
-useUlt = function () {
+function useUlt() {
   const p = G.p, j = p.job, H = HERO60[j]; if (!H) return;
   const U = UU(), D = (90 + p.level * 7) * p.mod.dmg;
   p.ult = 0; p.ultRef = 0; G.ultB && (G.ultB.ref = 0); G.stats.ults++; (G.ultAt || (G.ultAt = [])).push(Math.round(G.time)); G.tm.stopT = 0; sfx('ult');
@@ -407,7 +406,7 @@ useUlt = function () {
   const dur = (fn || ultTemp60)(p, D, U) || 1;
   U.end = G.time + dur; G.tm.ultWin = Math.max(JOB_CFG.ultWin, dur);
   if (typeof vib48 === 'function') vib48('ult');
-};
+}
 function ultTemp60(p, D) {                                   // 임시 공통 충격파 (최종본 아님)
   const col = H60().col; S60().tmpUlt++;
   p.invT = Math.max(p.invT, 0.8);
@@ -440,7 +439,7 @@ function levelCands60() {
   return out;
 }
 levelCands = levelCands60;
-drawCards = function (n, exclude = []) {
+function drawCards(n, exclude = []) {
   const same = (a, b) => a.t === b.t && a.id === b.id;
   const pool = levelCands().filter(c => !exclude.some(x => same(x, c))), res = [];
   while (res.length < n && pool.length) { const c = weightedPick(pool); res.push(c); pool.splice(pool.indexOf(c), 1); }
@@ -450,7 +449,7 @@ drawCards = function (n, exclude = []) {
   const c = fuseCands60()[0];
   if (c && n === selN() && !exclude.some(x => x.t === 'fuse60') && res.length) { res.splice(res.length - 1, 1); res.unshift({ t: 'fuse60', id: c.id }); }
   return res;
-};
+}
 const _isFill60 = isFill;
 isFill = c => c.t === 'fuse60' || _isFill60(c);
 const _cardInfo60 = cardInfo;
@@ -576,7 +575,7 @@ iconCanvas = function (id, t) {
 };
 
 /* ---------- 내 능력·도감 ---------- */
-abilW55 = function () {
+function abilW55() {
   const p = G.p, ws = p.weapons.slice().sort((a, b) => (b.base ? 1 : 0) - (a.base ? 1 : 0));
   if (!ws.length) return '<p class="hint">보유 무기 없음</p>';
   return ws.map(w => {
@@ -584,21 +583,21 @@ abilW55 = function () {
     return cxCard({ id: w.id, col, ic: d.ic, nm: wName(w.id), tag: (w.base ? '전용 무기 · ' : w.fu ? '연성 · ' : '') + 'Lv ' + w.lvl,
       lines: [esc(fd ? fd.ds || '' : d.desc), wChips55(w, null, null), !w.fu && w.lvl < CFG.weaponMax ? '' : !w.base && !w.fu && p.job && FUSE60_NM[p.job] && FUSE60_NM[p.job][w.id] ? `<i>연성</i> ${esc(FUSE60_NM[p.job][w.id])}${fuseDef60(p.job, w.id) ? '' : ' (제작 중)'}` : ''] });
   }).join('');
-};
-abilJ55 = function () {
+}
+function abilJ55() {
   const p = G.p;
   if (!p.job) return '<p class="hint">인물 선택 전 · 첫 페이즈가 끝나면 동료의 기억 중 하나를 선택</p>';
   const H = HERO60[p.job], A = p.job2 && H.aw[p.job2], b = baseW(), n = fusedWs().length;
   const det = [['고유 규칙', H.rule + (H.impl ? '' : ' (제작 중)')], ['궁극기 · ' + ultName60(p.job), A ? A.ds : H.ult[1]], A ? ['인물 각성 · ' + A.nm, A.ds] : ['인물 각성', '돌발 사건을 클리어하면 2종 중 선택'], ['연성', '짝 무기 Lv 5에 레벨업 선택지로 연성 카드 등장']];
   return cxCard({ job: p.job, col: H.col, ic: H.ic, nm: H.name + (A ? ' · ' + A.nm : ''), tag: H.sub + (H.impl ? '' : ' · 제작 중'),
     lines: [`<b>${esc(H.rule)}</b>`, cxChips([['궁극기', esc(ultName60(p.job))], b ? ['전용 무기', esc(wName(b.id))] : null, ['연성', String(n)]]), cxDet55('상세', det)] });
-};
+}
 ABIL_TABS[2] = ['j', '인물'];
-cxJob = function (id, seen) {
+function cxJob(id, seen) {
   const H = HERO60[id], W = WEAPONS[H.wpn], F = FUSE60_NM[id];
   return cxCard({ dim: !seen, job: id, col: H.col, ic: H.ic, nm: H.name, tag: H.sub + (H.impl ? '' : ' · 제작 중'), lines: [`<b>${esc(H.rule)}</b>`, cxChips([['궁극기', esc(H.ult[0])], ['전용 무기', esc(W.name)]]),
     `<details class="acc"><summary>상세</summary><div class="cxg"><div><b>궁극기 ${esc(H.ult[0])}</b><span>${esc(H.ult[1])}</span></div>${['A', 'B'].map(k => `<div><b>인물 각성 ${k} · ${esc(H.aw[k].nm)}</b><span>${esc(H.aw[k].ds)} · 궁극기 ${esc(H.aw[k].ult)}</span></div>`).join('')}<div><b>연성 7종</b><span>${esc(Object.keys(F).map(k => F[k]).join(' · '))}</span></div></div></details>`] });
-};
+}
 const _cxWeapon60 = cxWeapon;
 cxWeapon = function (id, seen) {                           // 짝 무기 카드: 인물별 연성 이름 (펼침)
   const h = _cxWeapon60(id, seen); if (!PW60.includes(id)) return h;
@@ -606,11 +605,11 @@ cxWeapon = function (id, seen) {                           // 짝 무기 카드:
   const add = `<p><i>전용 무기</i> ${esc(HERO60[own].name)}</p><details class="acc"><summary>인물별 연성 7종</summary><div class="cxg">${rows}</div></details>`;
   return h.replace(/<\/div>$/, add + '</div>');
 };
-cxFuse = function () {
+function cxFuse() {
   const rows = H60_ORDER.map(j => { const H = HERO60[j], F = FUSE60_NM[j];
     return cxCard({ job: j, col: H.col, ic: H.ic, nm: H.name, tag: '연성 7종 · 전용 무기 ' + WEAPONS[H.wpn].name, lines: [`<details class="acc"><summary>연성 7종</summary><div class="cxg">${PW60.filter(id => F[id]).map(id => `<div><b>${esc(F[id])}</b><span>${esc(WEAPONS[id].name)} + ${esc(WEAPONS[H.wpn].name)}${fuseDef60(j, id) ? '' : ' · 제작 중'}</span></div>`).join('')}</div></details>`] }); }).join('');
   return '<p class="hint">인물 선택 후 무기 칸의 짝 무기가 Lv 5가 되면 레벨업에 연성 카드 등장 · 그 칸이 인물 고유 연성 무기로 변신</p>' + rows;
-};
+}
 
 /* ---------- 저장 변환: 옛 직업 도감 기록 → 인물 (전사 → 광전사, 마법사 → 화염술사, 소환사 → 사령술사), 시간술사·군주·옛 무기 기록은 보관만 ---------- */
 (function () {
@@ -626,18 +625,18 @@ const _metaSave60 = metaSave;
 metaSave = function (s) { if (s) s.h60 = 1; return _metaSave60.apply(this, arguments); };   // 새 저장도 변환 완료 표시 (다시 열 때 중복 변환 없음)
 
 /* ---------- 치트 패널: 인물·각성 바로가기 ---------- */
-dev57JobPick = function () {
+function dev57JobPick() {
   if (!dev57Play()) return;
   if (G.p.job) { toast('이미 인물 선택 완료 · 새 판에서 사용', '#c49aff'); return; }
   dev57Fit(DEV57.lvJob); G.h60asked = true; G.h60q = 'hero'; G.pendingJob2 = true;
   toast('인물 선택 · 기억 잔영', '#c49aff');
-};
-dev57JobAwk = function () {
+}
+function dev57JobAwk() {
   if (!dev57Play()) return;
   if (G.p.job2) { toast('이미 인물 각성 완료', '#c49aff'); return; }
   if (!G.p.job) applyHero60(heroCands60()[0]);
   dev57Fit(DEV57.lvAwk); G.h60awAsked = true; G.h60q = 'aw'; G.pendingJob2 = true;
-};
+}
 
 /* ---------- 화면 모양 ---------- */
 (function () {

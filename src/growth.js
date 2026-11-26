@@ -46,14 +46,9 @@ const ELITE_AB = { dash: '돌진', split: '분열', shield: '보호막', haste: 
 function wBr(id) { const w = G.p.weapons.find(x => x.id === id); return w && w.br; }
 function pBr(id) { const x = G.p.passives.find(q => q.id === id); return x && x.br; }
 function hasRelic(id) { return G.p.relics.includes(id); }
-function relicReady(id) { return false; }   // 0.42 유물 폐지 (연성으로 대체)   // 0.31 제외한 유물 재등장 방지
 function itemName(id) { return (WEAPONS[id] || PASSIVES[id]).name; }
 
 /* 강화 3단계 도달 → 분기 대기열 적재 */
-function checkBranch(kind, id) {
-  const it = kind === 'w' ? G.p.weapons.find(x => x.id === id) : G.p.passives.find(x => x.id === id);
-  if (it && it.lvl >= BRANCH_AT && !it.br && !it.brQ) { it.brQ = true; G.pendingBr.push({ kind, id }); }
-}
 function openBranch() {
   const q = G.pendingBr.shift(), opts = BRANCHES[q.id];
   STATE.mode = 'select'; clearInput();

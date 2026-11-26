@@ -22,21 +22,6 @@ function paintedEffect(c,key,x,y,r,alpha=.6,angle=0,sy=1){
  c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.clip();
  const cell=EFFECT_DATA.cell;c.drawImage(im,i%4*cell,Math.floor(i/4)*cell,cell,cell,-r,-r,r*2,r*2);c.restore();return true;
 }
-function effectBoundary(c,x,y,r,color,alpha=.35){
- c.save();c.globalAlpha=alpha;c.strokeStyle=color;c.lineWidth=1;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();c.restore();
-}
-function paintedRing(c,f,k,x,y){
- if(f.kind!=='ring')return false;
- const r=Math.max(1,lerp(f.r0,f.r1,1-(1-k)**2));
- const key=f.art||(f.element==='ice'?(f.fill?'shatter':'frost'):f.element==='earth'?'earth':effectKey(f.color,f.fill));
- if(!paintedEffect(c,key,x,y,r,(1-k)**1.5*.75,k*.2))return false;
- effectBoundary(c,x,y,r,f.color||'#dfcfaa',.42*(1-k));return true;
-}
-function paintedPool(c,z){
- const key={trail:'heal',vine:'vine',crack:'earth',fire:'fire'}[z.kind]||'fire',fade=clamp((z.dur-z.t)*3,0,1);
- if(!paintedEffect(c,key,z.x,z.y,z.r,.55*fade))return false;
- effectBoundary(c,z.x,z.y,z.r,z.kind==='fire'||!z.kind?'#ffcc8a':'#c0d5ad',.22*fade);return true;
-}
 function paintedAura(c,key,x,y,r,alpha=.5){
  if(!paintedEffect(c,key,x,y,r,alpha,Math.sin(G.time*.5)*.06))effectBoundary(c,x,y,r,'#c3d4e5',alpha);
 }
@@ -119,25 +104,6 @@ function basicWeaponProjectile(pr) {
   return null;
 }
 
-function drawBasicCleave(c, f, image, k, reduced) {
-  const { artX: x, artY: y } = f;
-  const start = f.a - f.arc / 2, end = f.a + f.arc / 2;
-  const sweep = reduced ? 1 : clamp(k / .42, 0, 1);
-  const angle = lerp(start, end, .08 + .84 * sweep);
-  const tail = reduced ? start : Math.max(start, angle - f.arc * (image === BASIC_WEAPON_IMAGES.cleave_wide ? .88 : .7));
-  const opacity = Math.min(1, (1 - k) / .48);
-  const length = f.r * .77, thickness = length * image.naturalHeight / image.naturalWidth;
-  c.globalAlpha = .37 * opacity;
-  c.fillStyle = '#d5cec2';
-  c.beginPath();
-  c.arc(x, y, f.r, tail, angle);
-  c.arc(x, y, f.r * .79, angle, tail, true);
-  c.fill();
-  c.translate(x, y);
-  c.rotate(angle);
-  c.globalAlpha = opacity;
-  c.drawImage(image, f.r * .22, -thickness / 2, length, thickness);
-}
 
 function drawBasicSlam(c, f, image, k, reduced) {
   const after = f.branchArt === 'slam_after';
@@ -208,27 +174,7 @@ function drawBasicWeaponWorld(c, inView) {
   c.restore();
 }
 
-function basicIceWave(f) {
-  return f.kind === 'ring' && f.element === 'ice' && f.trk48 && f.follow && !f.fill && basicWeaponImage('icering');
-}
 
-function drawBasicIce(c) {
-  const { x, y } = G.p;
-  for (const f of G.fx) {
-    const image = basicIceWave(f);
-    if (!image || f.t >= f.dur) continue;
-    const k = remap48(f, f.t / f.dur);
-    const r = Math.max(4, lerp(f.r0, f.r1, ease51(Math.min(1, k / .8))));
-    const alpha = .5 * Math.min(1, (1 - k) / .3);
-    c.save();
-    c.beginPath();
-    c.arc(x, y, r, 0, Math.PI * 2);
-    c.clip();
-    c.globalAlpha *= alpha;
-    c.drawImage(image, x - r, y - r, r * 2, r * 2);
-    c.restore();
-  }
-}
 
 function drawBasicBeams(c, reduced) {
   const p = G.p, image = basicWeaponImage('beam');

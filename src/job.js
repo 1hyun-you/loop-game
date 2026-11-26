@@ -23,7 +23,6 @@ const JOBS = {
 const JOB_ORDER = ['warrior', 'rogue', 'sovereign', 'archer', 'engineer', 'chrono', 'mage', 'summoner', 'priest', 'druid'];
 CAT_NAME.hybrid = '혼합';
 const jobCats = id => JOBS[id].cats || [JOBS[id].cat];
-const jobCat = cat => !!G.p.job && jobCats(G.p.job).includes(cat);
 /* 2차 전직 — 직업마다 변화형 2종 + 능력치형 1종 */
 const JOB2 = {
   warrior: [{ k: 'berserk', nm: '광전사', ds: '투지 효과 1.6배, 투지 최대 시 대검 베기 범위 +30%' }, { k: 'guard', nm: '수호기사', ds: '투지 최대 도달 시 최대 체력 25% 보호막 (10초 재사용)' }],
@@ -54,41 +53,10 @@ const EXW = {
 const JOB_CFG = { altarAfter: 2, altarDist: [170, 240], altarR: 26, altarStay: 0.6, ultNeed: 100, ultKill: 0.08, ultSec: 0.4, ultKillCap: 3, ultElite: 5, ultHurtK: 1, ultBossHit: 0.35, ultBossCap: 1.8, ultWin: 4, ultRefK: 0.5, ultRefMax: 12, job2Min: 60, ultStop: 0.6, ultAutoN: 10, jobCatW: 1.4 };
 
 /* ---------- 주력 계열 ---------- */
-function catLevels() { const s = { melee: 0, ranged: 0, magic: 0 }; for (const w of G.p.weapons) s[WEAPONS[w.id].cat] += w.lvl; return s; }
-function mainCat() { return Object.entries(catLevels()).sort((a, b) => b[1] - a[1] || Math.random() - 0.5)[0][0]; }
 /* 후보 3종: 주력 계열 2종(혼합 직업은 두 계열 모두 보유 시 주력 후보 포함) + 다른 계열 1종 (0.9 10직업 확장) */
-function jobCands(prev = []) {
-  if (typeof window !== 'undefined' && window.__vtJob && JOBS[window.__vtJob]) return [{ t: 'job', id: window.__vtJob }];   // 가상 시험 직업 지정 (dev/vtest.js --job)
-  const mc = mainCat(), lv = catLevels();
-  const fit = j => JOBS[j].cats ? JOBS[j].cats.includes(mc) && Math.min(...JOBS[j].cats.map(c => lv[c])) >= 0.4 * lv[mc] : JOBS[j].cat === mc;   // 혼합: 부 계열이 주력의 40% 이상
-  let main = shuffle(JOB_ORDER.filter(fit)); const fresh = main.filter(j => !prev.includes(j));
-  main = fresh.concat(main.filter(j => prev.includes(j))).slice(0, 2);
-  const rest = shuffle(JOB_ORDER.filter(j => !main.includes(j) && (JOBS[j].cats ? !JOBS[j].cats.includes(mc) : JOBS[j].cat !== mc)));
-  const other = rest.find(j => !prev.includes(j)) || rest[0];
-  return shuffle(main.concat(other)).map(id => ({ t: 'job', id }));
-}
+function jobCands() { }   // 선언 유지 (본문은 뒤 파일 대입으로 교체)
 
 /* ---------- 제단 ---------- */
-function altarCheck() {
-  const ph = G.ph, p = G.p;
-  if (hasCond('nojob')) return;                              // 도전 조건 전직 금지 (0.15)
-  if (!p.job && ph.i + 1 >= JOB_CFG.altarAfter && ph.i + 1 < ph.order.length) {
-    const q = ringAt(JOB_CFG.altarDist[0], JOB_CFG.altarDist[1]);
-    G.altar = { x: q.x, y: q.y, r: JOB_CFG.altarR, stay: 0, at: ph.i };
-    G.stats.altarSeen++; toast('전직 제단 출현 · 다음 페이즈 끝까지 유지', '#d9a8ff');
-  }
-  if (p.job && !p.job2 && ph.i >= p.jobAt + 1) G.job2Ready = true;         // 1차 전직 후 1개 페이즈 돌파
-}
-function updateAltar(dt) {
-  const a = G.altar, p = G.p; if (!a) return;
-  if (dist2(a.x, a.y, p.x, p.y) < (a.r + p.r) ** 2) { a.stay += dt; if (a.stay >= JOB_CFG.altarStay && STATE.mode === 'play') openAltar(); }
-  else a.stay = 0;
-}
-function openAltar() {
-  STATE.mode = 'select'; clearInput(); G.stats.altarOpen++;
-  G.sel = { kind: 'job', cards: jobCands(), offer: false };
-  renderSelect(); autoLater();
-}
 function offerWeapon(id) {
   const p = G.p; if (p.weapons.length < 2) return;
   p.weapons = p.weapons.filter(w => w.id !== id); G.stats.offers++;
@@ -97,96 +65,13 @@ function offerWeapon(id) {
   toast(`${WEAPONS[id].name} 봉헌`, '#d9a8ff'); renderSelect(); autoLater();
 }
 function leaveAltar() { G.altar = null; G.sel = null; hideUI(); STATE.mode = 'play'; G.stats.altarLeave++; toast('제단을 떠남 · 다음 페이즈 뒤 재등장', '#bfb6d6'); }
-function applyJob(id) {
-  const p = G.p; p.job = id; p.jobAt = G.ph.i; p.ult = 50; G.altar = null;   // 0.38 전용 무기 폐지
-  G.stats.job = id; G.stats.jobAt = Math.round(G.time);
-  if (id === 'druid') petsInit();
-  recalc(); jobCeremony(id, false);                         // 0.26 전직 연출·무기 변환 안내
-}
-function openJob2() {
-  G.pendingJob2 = false; G.job2Ready = false; STATE.mode = 'select'; clearInput();
-  const j = G.p.job; G.sel = { kind: 'job2', cards: JOB2[j].concat(JOB2_STAT).map(o => ({ t: 'job2', id: j, k: o.k })) };
-  renderSelect(); autoLater();
-}
-function applyJob2(k) {
-  const p = G.p; p.job2 = k;   // 0.38 전용 무기 폐지
-  G.stats.job2 = k; G.stats.job2At = Math.round(G.time);
-  if (k === 'veteran') { p.vet = true; }
-  if (k === 'pack') { addPet('wolf'); addPet('wolf'); }
-  recalc(); jobCeremony(p.job, true);
-}
+function applyJob() { }   // 선언 유지 (본문은 뒤 파일 대입으로 교체)
+function applyJob2() { }   // 선언 유지 (본문은 뒤 파일 대입으로 교체)
 
 /* ---------- 피해·피격 연계 ---------- */
-function jobDmgMul(e, o) {
-  const p = G.p; let m = 1;
-  if (G.tm.alpha > 0) m *= 1.2;                                   // 0.26a 늑대 우두머리의 함성
-  if (e.slowT > 0 && bondHas('wolf', 'howl2')) m *= 1.2;          // 0.26a 긴 울음
-  if (p.job === 'warrior') m *= 1 + 0.4 * (p.job2 === 'berserk' ? 1.6 : 1) * p.fury / 100;
-  let cc = 0, cm = 2;
-  if (pBr('might') === 'crit') cc += 0.15;
-  if (p.job === 'rogue') { cc += Math.min(0.35, 0.05 + G.tm.run * 0.075); if (p.job2 === 'assassin') cm = 3; }
-  if (cc && Math.random() < cc) { m *= cm; o.crit = true; }
-  if (pBr('might') === 'pen' && (e.r >= 16 || e.elite || e.cmd)) m *= 1.25;
-  if (p.job === 'sovereign' && inBanner()) m *= 1.25;
-  if (p.job2 === 'rewind' && e.frz > 0) m *= 1.5;
-  return m;
-}
 const ELEM = { icering: 'ice', shatter: 'ice', mbolt: 'arcane', nova: 'arcane', firetrap: 'fire', fireball: 'fire', fireball_pool: 'fire', flame: 'fire', firefield: 'fire', lightning: 'bolt', chain: 'bolt', thunder: 'bolt', frost: 'ice', meteor: 'fire' };
 const RANGED_SRC = { knife: 1, trap: 1, arrow: 1, split: 1, boomerang: 1, longbow: 1, turret: 1, dagger: 1, rain: 1 };
-function onEnemyHit(e, o) {
-  const p = G.p, src = o.src;
-  if (src === 'knife' && hasRelic('arcknife') && Math.random() < 0.2) shoot({ kind: 'orb', x: e.x, y: e.y, ang: rand(Math.PI * 2), sp: 270, r: 6, dmg: WEAPONS.orb.base.dmg * 0.6 * p.mod.dmg, pierce: 0, life: 1.6, color: '#9fb8ff', src: 'mbolt', home: true });
-  if (src === 'arrow' && hasRelic('thunderarrow') && Math.random() < 0.2) chainBolt(e, 2, WEAPONS.lightning.base.dmg * 0.5 * p.mod.dmg, 'thunder');
-  arsenalHit(e, o);                                         // 0.27 유물 명중 연계
-  if (!p.job || e.dead) return;
-  jobWeaponHit(e, o);                                       // 0.26 공용 무기 직업 변환
-  if (p.job === 'archer' && RANGED_SRC[src]) {
-    e.mk = (e.mk || 0) + 1; const need = p.job2 === 'sniper' ? 3 : 5;
-    if (e.mk >= need) { e.mk = 0; markBurst(e); }
-  }
-  if (p.job === 'chrono' && RANGED_SRC[src] && !e.boss) {
-    e.tw = (e.tw || 0) + 1; e.slowT = Math.max(e.slowT || 0, 1);
-    if (e.tw >= 5 && !e.cmd) { e.tw = 0; e.frz = 1.5; }
-  }
-  if (p.job === 'mage') {
-    const el = ELEM[src]; if (!el) return;
-    if (e.el && e.el !== el && G.time - e.elT < 2 && !(e.rcT > G.time)) { e.rcT = G.time + 1; reaction(e); }
-    e.el = el; e.elT = G.time;
-  }
-}
-function onEnemyKill(e) {
-  const p = G.p; if (!p.job) return;
-  ultKillGain(e);
-  if (p.job === 'priest' && ++p.holy >= (p.job2 === 'saint' ? 24 : 40)) { p.holy = 0; purify(); }
-  jobWeaponKill(e); if (p.job === 'druid') petKilled(e);
-  if (p.job === 'summoner' && !e.minionOf) {
-    const cap = p.job2 === 'necro' ? 10 : 6, ch = p.job2 === 'necro' ? 0.24 : 0.12;
-    if (G.minions.length < cap && Math.random() < ch) addMinion(e.x, e.y);
-  }
-}
-function playerHurtMul() {
-  const p = G.p; let m = 1;
-  if (p.job === 'warrior') m *= 1 - 0.3 * p.fury / 100;
-  if (G.tm.wall > 0) m *= 0.6;
-  m *= ultHurtMul();                                              // 0.32 광전사·수호기사
-  if (p.job === 'sovereign' && inBanner()) m *= 0.85;
-  return m;
-}
 /* 피격 직전 판정: true 반환 시 피해 무효 */
-function playerAvoid() {
-  const p = G.p, T = G.tm;
-  if (T.inv > 0) return true;
-  if (p.shield) { p.shield = false; G.tm.shield = 12; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: 34, dur: 0.3, color: '#8fd0ff', follow: true }); p.invT = CFG.player.invuln; return true; }
-  if (pBr('swift') === 'dodge' && Math.random() < 0.2) { p.invT = 0.3; fx({ kind: 'ring', x: p.x, y: p.y, r0: 8, r1: 26, dur: 0.25, color: '#c8ffd8', follow: true }); return true; }
-  return false;
-}
-function onPlayerHurt() {
-  const p = G.p;
-  if (p.job === 'warrior') {
-    p.fury = Math.min(100, p.fury + 20); G.tm.furyHold = 3;
-    if (p.fury >= 100 && p.job2 === 'guard' && G.tm.guard <= 0) { G.tm.guard = 10; p.shield = true; }
-  }
-}
 
 /* ---------- 효과 함수 ---------- */
 function chainBolt(from, n, dmg, src) {
@@ -199,25 +84,8 @@ function chainBolt(from, n, dmg, src) {
     damageEnemy(best, dmg, { src }); cur = best;
   }
 }
-function markBurst(e) {
-  const p = G.p, k = p.job2 === 'sniper' ? 1.5 : 1, dmg = (25 + p.level * 2) * p.mod.dmg * k;
-  fx({ kind: 'ring', x: e.x, y: e.y, r0: 6, r1: 46, dur: 0.25, color: '#b8ff9a' });
-  gridQuery(e.x, e.y, 46, t => damageEnemy(t, dmg, { src: 'mark' }));
-  if (p.job2 === 'hunter') for (let i = 0; i < 4; i++) shoot({ kind: 'arrow', x: e.x, y: e.y, ang: i * Math.PI / 2 + Math.PI / 4, sp: 480, r: 5, dmg: dmg * 0.5, pierce: 1, life: 0.6, color: '#b8ff9a', src: 'mark' });
-}
-function reaction(e) {
-  const p = G.p, el = p.job2 === 'elemental', R = 52 * (el ? 1.4 : 1), dmg = (16 + p.level * 1.2) * p.mod.dmg * (el ? 1.7 : 1);
-  fx({ kind: 'ring', x: e.x, y: e.y, r0: 8, r1: R, dur: 0.3, color: '#e8b0ff', fill: true });
-  gridQuery(e.x, e.y, R, t => damageEnemy(t, dmg, { src: 'react' }));
-}
 /* 0.9 직업 보조 함수 */
 function inBanner() { const b = G.banner, p = G.p, r = b ? b.r * ultBannerR() : 0; return !!(b && dist2(b.x, b.y, p.x, p.y) < r * r) || ultInBanner(); }   // 0.32 호령 반경 2배·정복왕 추가 군기
-function purify() {
-  const p = G.p, j = p.job2 === 'judge', R = 110 * (j ? 1.35 : 1), d = (20 + p.level * 2) * p.mod.dmg * (j ? 2 : 1) * 1.5;   // 0.35 빈도 절반 보상 피해 1.5배
-  heal(p.maxHp * (p.job2 === 'saint' ? 0.09 : 0.04), '정화');   // 0.53 회복 하향 (6%·12% → 4%·9%)   // 0.35 회복 하향(필요 처치 2배·회복량 60%)
-  fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: R, dur: 0.4, color: '#fff2a8', fill: true });
-  gridQuery(p.x, p.y, R, e => damageEnemy(e, d, { src: 'holy', kb: 160, fx: p.x, fy: p.y }));
-}
 function addMinion(x, y) { G.stats.maxMinions = Math.max(G.stats.maxMinions || 0, G.minions.length + 1); G.minions.push({ id: ++G.pid, x, y, r: G.p.job2 === 'lord' ? 9 : 7, life: 20, hitT: 0 }); }
 
 /* ---------- 궁극기 ---------- */
@@ -253,110 +121,8 @@ function updateUlt(dt) {
 }
 
 /* ---------- 포탑·망령 ---------- */
-function addTurret(x, y, temp) {
-  const p = G.p, cap = p.job2 === 'artillery' ? 4 : p.job2 === 'mechanic' ? 3 : 2;
-  if (!temp) while (G.turrets.filter(t => !t.temp).length >= cap) { const i = G.turrets.findIndex(t => !t.temp); G.turrets.splice(i, 1); }
-  G.turrets.push({ x, y, t: 0.3, life: temp ? 10 : (p.job2 === 'mechanic' ? 1e9 : 20), temp });
-}
-function turretDmg() { const p = G.p; let d = 10 * p.mod.dmg; for (const w of p.weapons) if (WEAPONS[w.id].cat === 'ranged') d = Math.max(d, wStats(w).dmg * 0.6); return d; }
-function updateTurrets(dt) {
-  const p = G.p;
-  if (p.job === 'engineer') { G.tm.turret -= dt; if (G.tm.turret <= 0) { G.tm.turret = 10; addTurret(p.x, p.y); } }
-  const rate = (p.job2 === 'mechanic' ? 1.5 : 1) * (G.tm.overdrive > 0 ? 2 : 1);
-  for (const t of G.turrets) {
-    t.life -= dt; t.t -= dt * rate;
-    if (t.t <= 0) {
-      t.t = 0.8; const e = nearestEnemy(t.x, t.y, 360);
-      if (e) {
-        const a = Math.atan2(e.y - t.y, e.x - t.x);
-        t.a = a;
-        const projectile = shoot({ kind: p.job2 === 'artillery' ? 'shell' : 'arrow', x: t.x, y: t.y, ang: a, sp: 520, r: 4, dmg: turretDmg(), pierce: 0, life: 0.8, R: 30, color: '#ffd890', src: 'turret' });
-        if (G.proj[G.proj.length - 1] === projectile) markInstallationShot(t, a);
-      }
-    }
-  }
-  G.turrets = G.turrets.filter(t => t.life > 0);
-}
 /* 망령: 서로 다른 적 분산 공격 (0.26) — 표적 유지·미점유 적 우선·망령 간 간격 유지, 적 없으면 주인 주변 선회 */
-function updateMinions(dt) {
-  const p = G.p, k = p.job2 === 'lord' ? 2 : 1, dmg = 8 * k * p.mod.dmg, claim = new Map();
-  for (const m of G.minions) if (m.tg && !m.tg.dead) claim.set(m.tg.id, (claim.get(m.tg.id) || 0) + 1);
-  G.minions.forEach((m, i) => {
-    m.life -= dt; m.hitT -= dt; m.rt = (m.rt || 0) - dt;
-    if (m.tg && (m.tg.dead || dist2(m.tg.x, m.tg.y, p.x, p.y) > 360 * 360)) { claim.set(m.tg.id, (claim.get(m.tg.id) || 1) - 1); m.tg = null; }
-    if (!m.tg || m.rt <= 0) {
-      m.rt = 1.2; let best = null, bs = 1e18;
-      gridQuery(p.x, p.y, 320, e => { const s = dist2(e.x, e.y, m.x, m.y) * (1 + 3 * (claim.get(e.id) || 0) - (e === m.tg ? 0.5 : 0)); if (s < bs) { bs = s; best = e; } });
-      if (best !== m.tg) { if (m.tg) claim.set(m.tg.id, (claim.get(m.tg.id) || 1) - 1); m.tg = best; if (best) claim.set(best.id, (claim.get(best.id) || 0) + 1); }
-    }
-    const e = m.tg, a = i * 2.39996 + G.time * 0.8;
-    const tx = e ? e.x : p.x + Math.cos(a) * 44, ty = e ? e.y : p.y + Math.sin(a) * 44, dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1;
-    if (d > 4) { m.vx = dx; m.x += dx / d * 170 * dt; m.y += dy / d * 170 * dt; }
-    for (let j = 0; j < G.minions.length; j++) { if (j === i) continue; const o = G.minions[j], ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od > 0 && od < 13) { m.x += ox / od * (13 - od) * 0.5; m.y += oy / od * (13 - od) * 0.5; } }
-    if (e && m.hitT <= 0 && d < e.r + m.r + 2) { m.hitT = 0.5; damageEnemy(e, dmg, { src: 'minion' }); }
-  });
-  G.minions = G.minions.filter(m => m.life > 0);
-}
 
 /* ---------- 직업 전용 무기 ---------- */
-function updateExw(dt) {
-  const p = G.p, x = p.exw; if (!x) return;
-  const D = EXW[x.id], dm = D.dmg * p.mod.dmg;
-  x.t -= dt / p.mod.cd; if (x.t > 0) return; x.t = D.cd;
-  if (x.id === 'warrior') { fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: D.R, dur: 0.3, color: '#d8a070', fill: true }); gridQuery(p.x, p.y, D.R, e => damageEnemy(e, dm, { src: 'quake', kb: 160, fx: p.x, fy: p.y })); }
-  if (x.id === 'rogue') { const a0 = Math.atan2(p.face.y, p.face.x); for (let i = 0; i < 3; i++) shoot({ kind: 'arrow', x: p.x, y: p.y, ang: a0 + (i - 1) * 0.18, sp: 560, r: 4, dmg: dm, pierce: 1, life: 0.7, color: '#b0f0a0', src: 'dagger' }); }
-  if (x.id === 'archer') shoot({ kind: 'arrow', x: p.x, y: p.y, ang: aimAng(), sp: 700, r: 7, dmg: dm, pierce: 99, life: 1.0, color: '#fff6a0', src: 'longbow' });
-  if (x.id === 'engineer') { if (G.mines.length < 8) G.mines.push({ x: p.x, y: p.y, r: 10, arm: 0.5 }); }
-  if (x.id === 'mage') { gridQuery(p.x, p.y, D.R, e => { e.slowT = 0.6; damageEnemy(e, dm, { src: 'frost' }); }); }
-  if (x.id === 'sovereign') { const a0 = Math.atan2(p.face.y, p.face.x); slash(a0, 2.2, D.R, dm, 200); }
-  if (x.id === 'chrono') { x.side = -(x.side || 1); const a0 = Math.atan2(p.face.y, p.face.x) + x.side * Math.PI / 2; gridQuery(p.x, p.y, D.R, e => { let da = Math.atan2(e.y - p.y, e.x - p.x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= Math.PI / 2) damageEnemy(e, dm, { src: 'pendulum', kb: 120, fx: p.x, fy: p.y }); }); fx({ kind: 'arc', a: a0, arc: Math.PI, r: D.R, dur: 0.16, color: '#d8d0ff' }); }
-  if (x.id === 'priest') { const ts = enemiesInRange(p.x, p.y, 380).sort((a, b) => b.hp - a.hp); const e = ts[0]; if (e) { fx({ kind: 'bolt', x: e.x, y: e.y, dur: 0.2 }); gridQuery(e.x, e.y, D.R, t => damageEnemy(t, dm, { src: 'radiance' })); fx({ kind: 'ring', x: e.x, y: e.y, r0: 6, r1: D.R, dur: 0.25, color: '#fff2a8' }); } else x.t = 0.3; }
-  if (x.id === 'druid') for (let i = 0; i < 3; i++) { const q = ringAt(40, 160); addPool({ x: q.x, y: q.y, r: D.R, dur: 2.5, every: 0.4, dmg: dm, src: 'thorn', kind: 'vine', slow: true }); }
-  if (x.id === 'summoner') for (let i = 0; i < 2; i++) shoot({ kind: 'orb', x: p.x, y: p.y, ang: rand(Math.PI * 2), sp: 260, r: 6, dmg: dm, pierce: 0, life: 2.2, color: '#c8a8ff', src: 'orb', home: true });
-}
-function updateMines(dt) {
-  const D = EXW.engineer, dm = D.dmg * G.p.mod.dmg;
-  for (const m of G.mines) {
-    m.arm -= dt; if (m.arm > 0) continue;
-    let hit = false; gridQuery(m.x, m.y, m.r, () => { hit = true; return false; });
-    if (hit) { m.dead = true; explode(m.x, m.y, D.R, dm, 'mine', '#ffcf70'); }
-  }
-  G.mines = G.mines.filter(m => !m.dead);
-}
 
 /* ---------- 직업 갱신 (매 틱) ---------- */
-function updateJob(dt) {
-  const p = G.p, T = G.tm;
-  if (G.job2Ready && !p.job2 && G.time - G.stats.jobAt >= JOB_CFG.job2Min) { G.job2Ready = false; G.pendingJob2 = true; }   // 최소 60초 경과 후
-  for (const k of ['inv', 'dance', 'rain', 'overdrive', 'guard', 'passCd', 'roar', 'stop', 'sanct', 'wrath', 'ultWin', 'alpha']) if (T[k] > 0) T[k] -= dt;
-  if (p.job === 'sovereign') {
-    T.banner = (T.banner == null ? 0 : T.banner) - dt;
-    if (T.banner <= 0) { T.banner = 10; G.banner = { x: p.x, y: p.y, r: 110 * (p.job2 === 'conqueror' ? 1.5 : 1) }; fx({ kind: 'ring', x: p.x, y: p.y, r0: 10, r1: G.banner.r, dur: 0.4, color: '#ffd24a' }); }
-    const b = G.banner;
-    if (b && p.job2 === 'conqueror') { T.bt = (T.bt || 0) - dt; if (T.bt <= 0) { T.bt = 0.5; const d = (6 + p.level * 0.6) * p.mod.dmg; gridQuery(b.x, b.y, b.r, e => damageEnemy(e, d, { src: 'banner' })); } }
-    if (p.job2 === 'benevolent' && inBanner()) heal(p.maxHp * 0.02 * dt, '성군 군기');
-    benevolentHeal(dt);
-  }
-  if (p.job === 'druid') {
-    updatePets(dt);
-    if (T.wrath > 0) { T.vine = (T.vine || 0) - dt; if (T.vine <= 0) { T.vine = 1; const q = ringAt(30, 140); addPool({ x: q.x, y: q.y, r: 50, dur: 2.5, every: 0.4, dmg: (10 + p.level) * p.mod.dmg, src: 'ult', kind: 'vine', slow: true }); } }
-  }
-  recordTrail(dt); updateRewind(dt);
-  if (G.sanct && T.sanct > 0) {
-    const S = G.sanct; T.st = (T.st || 0) - dt;
-    if (T.st <= 0) { T.st = 0.4; const d = (14 + p.level * 1.2) * p.mod.dmg; gridQuery(S.x, S.y, S.r, e => damageEnemy(e, d, { src: 'ult' })); }
-    if (dist2(S.x, S.y, p.x, p.y) < S.r * S.r) heal(p.maxHp * 0.035 * dt, '성역');   // 0.53 5% → 3.5%
-  } else if (G.sanct) G.sanct = null;
-  if (p.job === 'warrior') { if (T.furyHold > 0) T.furyHold -= dt; else p.fury = Math.max(0, p.fury - 4 * dt); }
-  if (p.job === 'rogue') {
-    T.run = p.moving ? Math.min(4, T.run + dt) : Math.max(0, T.run - dt * 3);
-    if (p.moving && T.passCd <= 0) {
-      let n = 0; gridQuery(p.x, p.y, p.r + 10, () => { n++; });
-      if (n >= 2) { T.passCd = 1.5; p.invT = Math.max(p.invT, 0.25); G.stats.passes++;
-        if (p.job2 === 'dancer') { const d = (14 + p.level) * p.mod.dmg; gridQuery(p.x, p.y, 60, e => damageEnemy(e, d, { src: 'dance' })); fx({ kind: 'ring', x: p.x, y: p.y, r0: 6, r1: 60, dur: 0.25, color: '#b0f0a0', follow: true }); } }
-    }
-    if (T.dance > 0) { T.danceT = (T.danceT || 0) - dt; if (T.danceT <= 0) { T.danceT = 0.15; const ts = shuffle(enemiesInRange(p.x, p.y, 160)).slice(0, 4), d = (30 + p.level * 2) * p.mod.dmg; for (const e of ts) { fx({ kind: 'pop', x: e.x, y: e.y, r: 8, color: '#202030', dur: 0.15 }); damageEnemy(e, d, { src: 'ult' }); } } }
-  }
-  if (T.rain > 0) { T.rainT = (T.rainT || 0) - dt; if (T.rainT <= 0) { T.rainT = 0.1; const q = ringAt(0, 200), d = (24 + p.level * 1.5) * p.mod.dmg; fx({ kind: 'ring', x: q.x, y: q.y, r0: 4, r1: 40, dur: 0.2, color: '#d8ffc8' }); gridQuery(q.x, q.y, 40, e => damageEnemy(e, d, { src: 'ult' })); } }
-  updateTurrets(dt); updateMinions(dt); updateMines(dt); updateExw(dt); updateExw1(dt); updateUlt(dt); updateUltFx(dt);
-}

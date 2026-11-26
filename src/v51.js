@@ -108,8 +108,8 @@ paintedRing = function (c, f, k, x, y) {
   const key = f.art || effectKey(f.color, f.fill);
   return paintedEffect(c, key, x, y, r, 0.75 * fade49(k), k * .2);
 };
-paintedPool = function (c, z) {
+function paintedPool(c, z) {
   const key = { trail: 'heal', vine: 'vine', crack: 'earth', fire: 'fire' }[z.kind] || 'fire';
   const fade = clamp((z.dur - z.t) * 3, 0, 1), fl = z.t < 0.25 ? 1 - z.t / 0.25 : 0, wob = 0.06 * Math.sin(G.time * 5 + (z.x + z.y) * 0.01);
   return paintedEffect(c, key, z.x, z.y, z.r * (1 + 0.02 * Math.sin(G.time * 3.3 + z.x)), (0.32 + wob + 0.3 * fl) * fade, G.time * 0.15);
-};
+}
