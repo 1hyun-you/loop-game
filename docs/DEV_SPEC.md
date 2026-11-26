@@ -1,6 +1,6 @@
 # 회귀의 들판 — 개발 명세
 
-개정 2026-11-20 (회차 68, Claude) · 기준 버전 0.57 · 코드 구조·기술 규칙·배포·시험 체계
+개정 2026-11-26 (회차 91, Claude) · 기준 버전 0.60 · 코드 구조·기술 규칙·배포·시험 체계
 
 - 기획서(`docs/DESIGN.md`)가 무엇을 만드는가의 기준, 이 문서는 어떻게 만드는가의 기준.
 - 이전 개발 명세(Claude Docs, 0.42 기준, https://claude.ai/artifact/KLY3in2oZWiouTCR7Dxsf8)는 기준 아님, 참고 보관.
@@ -31,7 +31,8 @@
 | 표현 | sprite.js, juice.js, react.js, dot29.js, dot30.js, render.js, vfx.js, motion.js, audio.js |
 | 화면 | icons.js, codex.js, ui37.js, select-art.js, ui-art.js |
 | 그림 적용(GPT) | art-*.js, effect-*.js, field-*.js, hud-art-data.js, fuse-art*.js, 직업별 *-art.js·*-art-data.js |
-| 버전별 덧씌우기 | v40.js ~ v56.js (각 버전 변경분, 이전 함수를 감싸거나 교체) |
+| 버전별 덧씌우기 | v40.js ~ v58.js (각 버전 변경분, 이전 함수를 감싸거나 교체) |
+| ★인물 구조 (0.60~) | hero60.js — 인물 8명·짝 무기 8종·인물 선택·인물 각성·궁극기·연성 틀, v58.js 다음·main.js 앞 (아래 '인물 구조' 절) |
 | 개발 도구 | dev.js(게임 내 치트 패널), main.js(마지막, 시작) |
 
 ### 버전별 덧씌우기 파일 주요 내용
@@ -56,6 +57,23 @@
 | v58.js | 궁극기 버튼(ult58Pos·ultPress58, 손 떼고 정지 발동 폐지 JOB_CFG.ultStop 무한대, 설정 ultSide), 명칭 교체(돌발 사건·화염술사) |
 
 - 구조 문제: 덧씌우기 누적으로 같은 기능이 여러 파일에 흩어짐 → 대규모 재구성 구현 전에 통합 정리 검토 필요 (회차 65 정기 점검 지적)
+- 0.60 이후: 옛 직업·무기·연성 관련 덧씌우기(v41·v42·v43 연성부·v44·v46·v53 일부, job.js 규칙부, jobplus.js 동료·유대, arsenal.js, awaken.js, ult.js 옛 궁극기)는 hero60.js가 연결 함수를 덮어써 실행되지 않음 — 파일 삭제·남는 덧씌우기 통합은 정리 묶음(회차 92 예정)에서 0.60과 같은 동작 확인하며 진행
+
+### 인물 구조 (hero60.js, 0.60)
+
+- 식별명: 인물 `p.job` = berserker·rogue·archer·engineer·pyromancer·necromancer·priest·druid (docs/characters 파일명과 같음), 인물 각성 `p.job2` = 'A'·'B'
+  - 옛 직업 표(JOBS·JOB_COL·JOB2·ULT_TXT·JOB_SHORT·JOB_WX·FZ_SYMBOL)에 인물 8명 항목을 채워 화면·결과·도감 공용 함수가 그대로 읽음, JOB_ORDER = 인물 8명
+  - 옛 직업 식별명과 겹치는 5명(rogue·archer·engineer·priest·druid)의 옛 규칙은 연결 함수 덮어쓰기로 차단 (아래 목록), 새 코드에 `p.job === '<옛 id>'` 판정 추가 금지
+- 인물 데이터 `HERO60[id]`: name·sub·ic·wpn(전용 무기)·slots·art(임시 그림)·col(표시색)·c1~c3(DESIGN 10장 3색)·rule·ult·aw(A·B)·impl
+  - `impl: false` = 구현 전 임시 상태(전용 무기 기본형·고유 규칙 없음·임시 공통 충격파 궁극기·'제작 중' 표시), 인물 구현 회차에 true + 아래 연결점 등록
+  - 연결점(인물 구현 때 HERO60[id]에 등록, impl true일 때만 호출): stat(w)·dmgMul(e,o)·onHit·onKill·hurtMul·onHurt·avoid·tick(dt)·onPick·onAwaken(k)·ultFn(k)·status()·dials()
+- 짝 무기 `PW60` 8종: cleave·dagger·arrow·turret·fireball·lamp·bell·thorn, 발동 `PAIR60[id](w,S)` (false = 대상 없음 → 0.25초 뒤 재시도), 장면 `G.f60` (cuts·vines·tw)
+- 연성: `FUSE60_NM`(56종 이름표), `FUSE60[인물][짝 무기] = { nm, ds, fire(w,S), cd? }` 등록된 것만 연성 카드 등장 (짝 무기 Lv 5, 레벨업 1회당 1장)
+- 덮어쓴 연결 함수: updateWeapons·wStats·jobDmgMul·onEnemyHit·onEnemyKill·playerHurtMul·onPlayerHurt·playerAvoid·heal·updateJob·useUlt·applyJob·applyJob2·openJob2·jobCands·altarCheck·updateAltar·v42Update·levelCands·drawCards·applyFuse·fuseCands
+- 흐름: 1페이즈 끝 altarCheck → `G.h60q='hero'` + pendingJob2 → openJob2 → 기억 잔영 선택(G.sel.kind 'hero') / 돌발 사건 eventEnd('ok'·'refuse') → `G.h60q='aw'` → 인물 각성(kind 'haw', 2회 터치 확정)
+- 무기 칸: slotW = heroSlotN() + fusedN() (전용 무기는 fz='base'로 칸 미점유), 도적 3칸은 impl 이후 적용
+- 전환기 임시 보정 `TEMP60` { dmg 1.2, spawn 0.7, xp 1.25 }: 대규모 밸런스 단계에서 제거·재조정
+- 저장 변환: 옛 seenJ(전사 → 광전사, 마법사 → 화염술사, 소환사 → 사령술사)·seenW(짝 무기만) 1회 변환, 원본은 seenJ0·seenW0 보관, 변환·새 저장에 h60 표시
 
 ### 작성 규칙
 
@@ -127,7 +145,7 @@
   - 구간 이동(보라): 인물(제단 출현), 각성(인물 없으면 후보 1순위로 선택), 보스(수문장 4인·마왕 선택), 맞춤(레벨 맞춤 켬/끔, 켬: 구간 적정 레벨까지 자동 상승, 보스는 전직·2차 전직·궁극기 가득까지 자동 — 0.57a)
   - 구간 적정 레벨(0.56 일반 30판 평균): 인물 선택 19, 인물 각성 26, 수문장전 53, 마왕전 43 (`DEV57` 상수)
   - 기타(회색): 정예, 새판(두 번 눌러 실행, 대기 중 '확인'), FPS(기본 꺼짐)
-  - 인물 선택·각성 바로가기는 재구성 구현 전까지 현재 전직 구조로 동작
+  - 인물 선택 바로가기 = 기억 잔영 화면 열기, 각성 바로가기 = 인물 각성 선택 열기 (0.60), 무기 창 '연성 완료'는 구현된 연성만 동작(미구현은 '제작 전' 안내)
 - 시작 시 자동·4배속, 완전 자동·반자동 모드
 - 진동·정지·슬로모션은 브라우저 자동화(가상 시험, navigator.webdriver)에서만 차단
 - 원칙: 신규 기능 구현 시 해당 기능을 빠르게 확인할 시험 도구 함께 추가
@@ -138,16 +156,15 @@
 
 | 도구 | 용도 |
 | --- | --- |
-| dev/vtest.js | 가상 시계 기반 실제 프레임 시험 (Playwright), `--god` 무적, `--jobs` 직업 순환 배정, `--job` 직업 지정, `--rotate` 수문장 순환, `--demon final\|retry\|mix`, `--preset release\|post`, `--tier`·`--cond` |
+| dev/vtest.js | 가상 시계 기반 실제 프레임 시험 (Playwright), `--god` 무적, `--jobs` 인물 8명 순환 배정, `--job` 인물 지정(잔영 1순위·자동 선택), `--rotate` 수문장 순환, `--demon final\|retry\|mix`, `--preset release\|post`, `--tier`·`--cond` |
 | dev/vpar.sh | 동시 실행 `sh dev/vpar.sh <판 수> <기록 파일> [--god]` |
 | dev/vsum.js | 집계 (판 길이·보스전·돌파·연성·피해 비중) |
 | dev/vjob.js | 직업별 돌파·분당 피격·처치, 수문장·마왕전 집계 |
-| dev/vux.js | 사용성 점검 (현재 195항목, 화면 폭 3종) |
+| dev/vux.js | 사용성 점검 (현재 207항목, 화면 폭 3종, 0.60 기억 잔영·인물 각성·짝 무기 기본형 점검 포함) |
 | dev/vui.js | 메뉴·설정·도감 화면 점검 |
-| dev/vfuse44.js | 연성 90종 발동·피해·이름 점검 |
-| dev/vfuse54.js | 연성 조합별 피해 배율 측정 |
-| dev/vsq50.js | 동료 지휘 점검 |
-| dev/vult.js, vboss.js, vaw.js | 궁극기·보스 패턴·각성 점검 |
+| dev/vfuse44.js, vfuse54.js | 옛 연성 90종 점검 (0.60 이후 사용 중지, 인물 연성 구현 때 새 점검 도구로 교체) |
+| dev/vsq50.js, vult.js, vaw.js, vjob.js | 옛 동료 지휘·궁극기·각성·직업 집계 (0.60 이후 사용 중지) |
+| dev/vboss.js | 보스 패턴 점검 |
 | dev/vshotNN.js | 버전별 화면 캡처 점검 (vshot57: 치트 패널 동작 24항목, vshot58: 궁극기 버튼 22항목 × 화면 폭 3종) |
 
 - 기록: `dev/sim_log/` (버전별 runs·사용성 결과)
@@ -163,15 +180,15 @@
 - 수정 우선순위: 오류 → 진행 흐름 → 피해 쏠림 → 자동 로직 자연스러움
 - 한계: 자동 플레이는 체감·재미 판단 불가, 체감은 사용자 실기기(자동 플레이 사용) 판단
 
-### 최근 참고 수치 (0.56)
+### 최근 참고 수치
 
-- 일반 30판 직업 균등 돌파 23/30, 무적 8판 평균 737초, 마왕전 22회 중 처치 17·평균 142초
-- 관찰: 궁수·화염술사 돌파율 최저, 전직 전 사망 간헐 발생 (원인 미확정)
+- 0.58: 일반 30판 돌파 22/30·평균 631초·평균 레벨 40.7, 수문장 처치 22~39초 (옛 직업 규칙·연성 90종 포함 기준)
+- 0.60: 인물 전원 구현 전 임시 상태 → 회차 91 기록 HANDOFF·dev/sim_log 참조 (돌파율·판 길이는 대규모 밸런스 단계에서 재기준)
 
 ### 자동 플레이 로직 요지
 
 - 공격 예고 안에서는 회피 최우선, 궁극기 정지 금지, 마왕 광선 회전 앞쪽 위험 인식
-- 직업별 교전 거리표, 군주 군기 이탈 감점, 포탑·망령·동료 근처 유지
+- 인물별 교전 거리표(V50.fight, 광전사·도적 근접), 궁수 정지 사격은 궁수 구현 후에만, 옛 군주·포탑·망령·동료 규칙은 해당 개체가 없어 미동작
 - 안전 시(예고 없음·위험 낮음·체력 50% 이상) 근처 보석 수집
 - 전용 무기 강화 우선
 
