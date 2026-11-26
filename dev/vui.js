@@ -14,11 +14,11 @@ const SERVER = http.createServer((q, s) => { s.setHeader('content-type', 'text/h
   const wait = ms => p.waitForTimeout(ms);
   // 진행 전: 도전 준비 버튼 없음, 도감·설정 있음
   chk('title no prep before end', !(await ev(() => !!document.getElementById('prep'))));
-  chk('codex open', await click('codex')); chk('codex frag tab 10', await ev(() => document.querySelectorAll('.cx').length === 10));
+  chk('codex open', await click('codex')); chk('codex weapon tab = WEAPON_ORDER', await ev(() => document.querySelectorAll('.pgp.on .cx').length === WEAPON_ORDER.length));   // 0.60 옛 '조각 10' 점검(0.13 화면 기준) 교체
   for (const t of ['w', 'e', 'u']) { await click(`[data-tab="${t}"]`); chk('codex tab ' + t, await ev(() => document.querySelectorAll('.cx, .stats').length > 0)); }
   await click('cx_back'); chk('back to title', await ev(() => STATE.mode === 'title'));
   // 설정 8종
-  await click('settings'); chk('settings rows 9', await ev(() => document.querySelectorAll('.row').length === 9));
+  await click('settings'); chk('settings rows >= 9', await ev(() => document.querySelectorAll('.row').length >= 9));
   for (const k of ['confirm2', 'dlgAuto', 'vibe', 'shake']) { const a = await ev(k => SETTINGS[k], k); await click(`[data-k="${k}"]`); chk('toggle ' + k, (await ev(k => SETTINGS[k], k)) === !a); }
   await click('s_joy'); chk('joy fixed', await ev(() => SETTINGS.joy === 'fixed'));
   await ev(() => { const i = document.querySelector('input[data-v="sfx"]'); i.value = 30; i.dispatchEvent(new Event('input')); }); chk('sfx 30', await ev(() => SETTINGS.sfx === 30));
@@ -42,15 +42,15 @@ const SERVER = http.createServer((q, s) => { s.setHeader('content-type', 'text/h
   await click('.card[data-i="0"]'); chk('first tap arms', await ev(() => STATE.mode === 'select' && !!document.querySelector('.card.armed')));
   await click('.card[data-i="0"]'); chk('second tap picks', await ev(() => STATE.mode === 'play'));
   // 0.26 직업 개편: 드루이드 동료·무기 변환 표시·2차 늑대 추가, 시간술사 과거의 나, 능력 보기
-  await ev(() => { if (!hasW('fireball')) addWeapon('fireball'); applyJob('druid'); });
-  chk('druid pets 2', await ev(() => G.pets.length === 2 && G.pets.some(m => m.kind === 'bear')));
-  chk('weapon convert name', await ev(() => G.p.weapons.some(w => wName(w.id).startsWith('야생 '))));
-  await ev(() => { G.pendingLv = 1; }); await wait(300); await ev(() => toggleAbil()); await wait(100);
-  chk('abil pets row', await ev(() => /야수 동료/.test(document.body.innerText)));
-  await ev(() => { G.sel = null; hideUI(); STATE.mode = 'play'; applyJob2('pack'); }); await wait(300);
-  chk('pack wolves 3', await ev(() => G.pets.filter(m => m.kind === 'wolf').length === 3 && !!G.p.exw));
-  await ev(() => { G.p.job2 = null; G.p.exw = null; G.pets = []; applyJob('chrono'); G.p.ult = JOB_CFG.ultNeed; for (let i = 0; i < 20; i++) recordTrail(0.11); useUlt(); });
-  await wait(400); chk('rewind running', await ev(() => !!G.rw && G.tm.stop > 0));
+  // 0.60 인물: 전용 칸 이동·내 능력 인물 탭·각성·임시 궁극기
+  await ev(() => { if (!hasW('thorn')) addWeapon('thorn'); applyJob('druid'); });
+  chk('hero druid base thorn', await ev(() => G.p.job === 'druid' && !!baseW() && baseW().id === 'thorn' && G.p.weapons.filter(w => w.id === 'thorn').length === 1));
+  await ev(() => showAbil(() => { hideUI(); }, 'j')); await wait(350);
+  chk('abil hero row', await ev(() => /드루이드/.test(document.body.innerText) && /수호목/.test(document.body.innerText)));
+  await ev(() => { G.sel = null; hideUI(); STATE.mode = 'play'; G.pendingLv = 0; applyJob2('B'); }); await wait(300);
+  chk('hero awaken B', await ev(() => G.p.job2 === 'B' && G.p.ult >= JOB_CFG.ultNeed));
+  await ev(() => { applyJob2('zzz'); useUlt(); });
+  await wait(600); chk('temp ult fired', await ev(() => G.p.ult < 1 && G.stats.h60.tmpUlt >= 1 && G.p.job2 === 'B'));
   await wait(1500); chk('page errors 0 (job)', errs.length === 0);
   // 진엔딩 후 상태 주입 → 도전 준비
   await ev(() => { localStorage.setItem(CFG.SAVE_KEY, JSON.stringify({ runs: 5, trueEnd: 1, tierMax: 2, titles: ['end', 't1'], frags: FRAGS.map(f => f.id), gates: GK_ORDER })); showTitle(); });

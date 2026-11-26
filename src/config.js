@@ -4,7 +4,7 @@
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.58',
+  VERSION: '0.60',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -29,8 +29,8 @@ const CAT_NAME = { melee: '근접', ranged: '원거리', magic: '마법' };
 const ENEMIES = {
   slime: { name: '초록 슬라임', hp: 9, speed: 46, dmg: 6, r: 10, color: '#5cc46b', shape: 'blob', xp: 1, from: 0, w: 5 },
   bat: { name: '동굴 박쥐', hp: 5, speed: 92, dmg: 5, r: 8, color: '#9a7be0', shape: 'tri', xp: 1, from: 0, w: 3 },
-  skel: { name: '해골 병사', hp: 18, speed: 58, dmg: 9, r: 11, color: '#ddd6c2', shape: 'sq', xp: 2, from: 1.5, w: 4 },
-  brute: { name: '오우거', hp: 70, speed: 40, dmg: 16, r: 18, color: '#c27a40', shape: 'hex', xp: 6, from: 3.5, w: 1 },
+  skel: { name: '해골 병사', hp: 34, speed: 58, dmg: 9, r: 11, color: '#ddd6c2', shape: 'sq', xp: 3, from: 1.5, w: 1.8 },   // 0.60 잡몹 체력 섞기: 단단한 적 2~4번 (체력 18 → 34, 비중 4 → 1.8, 경험치 2 → 3)
+  brute: { name: '오우거', hp: 70, speed: 40, dmg: 16, r: 18, color: '#c27a40', shape: 'hex', xp: 6, from: 3.5, w: 0.8 },
 };
 const ENEMY_ORDER = ['slime', 'bat', 'skel', 'brute'];
 

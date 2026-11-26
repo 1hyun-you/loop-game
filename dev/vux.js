@@ -4,6 +4,7 @@
 // 0.35 선택 화면 도감 버튼·복귀 점검 추가
 // 0.40 좌우 끌기 탭(탭별 스크롤)·화면 진입 시 배경 불투명 유지 점검 추가
 // 0.37 첫 화면 히어로형·고정 헤더·밀기 탭·분기 접기·설정 스위치·전직 2회 확정·회오리 생성 위치 점검 추가
+// 0.60 전직·회오리 점검 → 기억 잔영 인물 선택·인물 각성 2회 확정·짝 무기 기본형 점검으로 교체
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), http = require('http');
 const ROOT = path.resolve(__dirname, '..'), PORT = 48291;
@@ -95,9 +96,18 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
         await click('cx_back'); await wait(60); chk(`[${W}x${H}] ${kd} 도감 → 선택 화면 복귀`, await ev(() => STATE.mode === 'select' && !!document.querySelector('.card[data-i]') && !!document.getElementById('cbtn')));
       }
       await ev(() => pickCard(0));
-      // 0.37 전직 2회 터치 확정
-      const jt = await ev(() => { G.sel = { kind: 'job', cards: jobCands(), offer: false }; STATE.mode = 'select'; renderSelect(); const c = () => document.querySelector('.card[data-i="0"]'); c().click(); const a = STATE.mode === 'select' && !G.p.job && c().classList.contains('armed') && /한 번 더/.test(document.querySelector('.sel-head .sub').textContent); c().click(); return { a, b: STATE.mode === 'play' && !!G.p.job }; });
-      chk(`[${W}x${H}] 전직 1회 강조·2회 확정`, jt.a && jt.b, JSON.stringify(jt));
+      // 0.60 인물 선택(기억 잔영): 잔영 3명·누르면 정보·확정 버튼 / 인물 각성 2회 터치 확정
+      await ev(() => { closeSel(); G.p.job = null; G.p.job2 = null; G.p.weapons = G.p.weapons.filter(w => !w.base); G.h60q = 'hero'; openJob2(); }); await wait(80);
+      const hs = await ev(() => ({ g: document.querySelectorAll('.h60g').length, ok0: !!document.getElementById('h60ok') }));
+      chk(`[${W}x${H}] 기억 잔영 3명·처음엔 확정 버튼 없음`, hs.g === 3 && !hs.ok0, JSON.stringify(hs));
+      await click('.h60g[data-g="1"]'); await wait(60); await audit('기억 잔영');
+      const hp = await ev(() => { const b = document.getElementById('h60ok'), r = b && b.getBoundingClientRect(); return { ok: !!b, h: r ? Math.round(r.height) : 0, info: !!document.querySelector('.h60i .h b'), pick: G.sel && G.sel.pick, id: G.sel && G.sel.cards[1].id }; });
+      chk(`[${W}x${H}] 잔영 누르면 정보·확정 버튼(40px 이상)`, hp.ok && hp.h >= 40 && hp.info && hp.pick === 1, JSON.stringify(hp));
+      await click('#h60ok'); await wait(60);
+      const hc = await ev(() => ({ mode: STATE.mode, job: G.p.job, base: !!baseW(), ult: G.p.ult, need: JOB_CFG.ultNeed }));
+      chk(`[${W}x${H}] 확정 → 인물·전용 칸·궁극기 가득`, hc.mode === 'play' && hc.job === hp.id && hc.base && hc.ult >= hc.need - 0.01, JSON.stringify(hc));
+      const at = await ev(() => { G.h60q = 'aw'; openJob2(); const c = () => document.querySelector('.card[data-i="0"]'); c().click(); const a = STATE.mode === 'select' && !G.p.job2 && c().classList.contains('armed') && /한 번 더/.test(document.querySelector('.sel-head .sub').textContent); c().click(); return { a, b: STATE.mode === 'play' && G.p.job2 === 'A' }; });
+      chk(`[${W}x${H}] 인물 각성 1회 강조·2회 확정`, at.a && at.b, JSON.stringify(at));
     } else chk(`[${W}x${H}] 레벨업 선택 진입`, false, 'mode ' + await ev(() => STATE.mode));
     // 0.43 제외한 무기 재등장 (0.42 유물 폐지 → 무기 카드 기준으로 교체)
     const rel = await ev(() => {
@@ -112,19 +122,20 @@ const VIEWS = [[360, 560], [390, 844], [412, 915]];
       return { free, before, after, chest };
     });
     chk(`[${W}x${H}] 무기 제외 전 후보`, rel.before, JSON.stringify(rel)); chk(`[${W}x${H}] 무기 제외 후 미등장`, !rel.after && !rel.chest, JSON.stringify(rel));
-    // 0.37 회오리: 플레이어와 140 이상 떨어진 적 무리 지점 생성, 플레이어 근처 적 미흡인
-    const vx = await ev(() => {
-      G.enemies.length = 0; const p = G.p; p.face = { x: 1, y: 0 };
-      const mk = (x, y) => { const e = makeEnemy('slime', x, y); if (!G.enemies.includes(e)) G.enemies.push(e); return e; };
-      const near = mk(p.x + 40, p.y); for (let i = 0; i < 8; i++) mk(p.x + 230 + (i % 3) * 12, p.y + (i % 4) * 10);
-      gridBuild(G.enemies);
-      const w = G.p.weapons.find(x => x.id === 'vortex') || { id: 'vortex', lvl: 1 }; G.vortex = [];
-      WEAPON_FIRE.vortex(w, { dmg: 5, area: 1, n: 1 });
-      const v = G.vortex[0], d = v ? Math.hypot(v.x - p.x, v.y - p.y) : 0, nx = near.x;
-      for (let i = 0; i < 20; i++) updateArsenal(0.05);
-      return { d: Math.round(d), moved: Math.round(Math.abs(near.x - nx)) };
+    // 0.60 짝 무기 기본형: 가시 덩굴 묶음·단검 상처 선·포탑 설치 후 사격
+    const pw = await ev(() => {
+      G.enemies.length = 0; G.f60 = null; G.proj.length = 0; const p = G.p;
+      const mk = (x, y) => { const e = makeEnemy('skel', x, y); if (!G.enemies.includes(e)) G.enemies.push(e); e.hp = e.maxHp = 9999; return e; };
+      const a = mk(p.x + 120, p.y); gridBuild(G.enemies);
+      const S = k => wStats({ id: k, lvl: 1 });
+      PAIR60.thorn({ id: 'thorn', lvl: 1 }, S('thorn')); const root = a.frz > 0;
+      PAIR60.dagger({ id: 'dagger', lvl: 1 }, S('dagger')); const cut = G.f60.cuts.length > 0;
+      const w = { id: 'turret', lvl: 1, t: 0 }; G.p.weapons.push(w); PAIR60.turret(w, S('turret')); const tw = G.f60.tw.length;
+      for (let i = 0; i < 20; i++) tick60(0.05); const shot = G.proj.some(q => q.src === 'turret');
+      G.p.weapons = G.p.weapons.filter(x => x !== w); G.f60.tw.length = 0;
+      return { root, cut, tw, shot };
     });
-    chk(`[${W}x${H}] 회오리 전방 무리 생성·근접 적 미흡인`, vx.d >= 140 && vx.moved === 0, JSON.stringify(vx));
+    chk(`[${W}x${H}] 짝 무기 기본형 (묶음·상처 선·포탑 사격)`, pw.root && pw.cut && pw.tw === 1 && pw.shot, JSON.stringify(pw));
     // 일시정지 화면
     await ev(() => { STATE.mode = 'play'; hideUI(); pauseGame(); }); await wait(60); await audit('일시정지');
     // 0.55 일시정지 재배치·내 능력 전체 화면

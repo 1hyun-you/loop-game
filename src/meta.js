@@ -28,7 +28,7 @@ const CONDS = {
   ranged: { nm: '원거리 무기만', ds: '원거리·마법 계열 무기만 등장, 시작 무기 화살', mul: 1.15, title: '먼 곳의 사수', ex: 'melee' },
   two: { nm: '선택지 2개', ds: '레벨 업 선택지 3개 → 2개', mul: 1.3, title: '좁은 갈림길' },
   noheal: { nm: '회복 없음', ds: '모든 체력 회복 효과 무효', mul: 1.35, title: '상처를 견딘 자' },
-  nojob: { nm: '전직 금지', ds: '전직 제단 미등장 (궁극기 없음)', mul: 1.3, title: '이름 없는 검사' },
+  nojob: { nm: '홀로 걷기', ds: '인물 선택 없음 (궁극기 없음)', mul: 1.3, title: '이름 없는 검사' },
   slot3: { nm: '무기 3칸', ds: '무기 칸 5칸 → 3칸', mul: 1.25, title: '세 자루의 무기' },
 };
 const COND_ORDER = ['melee', 'ranged', 'two', 'noheal', 'nojob', 'slot3'];
@@ -55,7 +55,7 @@ function runOpt() {
 const optOf = () => (G && G.opt) || { tier: 0, conds: [] };
 const hasCond = k => optOf().conds.includes(k);
 const tierK = () => TIERS[optOf().tier].k * Math.max(META_CAP.kMin, 1 - META_CAP.kPerCond * optOf().conds.length);   // 0.17 조건 수만큼 적 강화 완화
-const slotW = () => hasCond('slot3') || (G && G.p && G.p.job === 'rogue') ? 3 + fusedN() : CFG.slots.weapon + fusedN();   // 0.41 도적 무기 칸 3
+const slotW = () => (hasCond('slot3') ? 3 : G && G.p ? heroSlotN() : CFG.slots.weapon) + fusedN();   // 0.60 인물별 무기 칸 (기본 5 + 전용 칸, 도적 = 전용 포함 3 — hero60.js heroSlotN)
 const selN = () => hasCond('two') ? 2 : CFG.select.cards;
 const catOk = cat => hasCond('melee') ? cat === 'melee' : hasCond('ranged') ? cat !== 'melee' : true;
 const startWeapon = () => hasCond('ranged') ? 'arrow' : START_WEAPON;

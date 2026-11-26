@@ -246,7 +246,7 @@ showResult = function () {
   const D = GATEKEEPERS[G.gk], dm = R.demon, gk = R.gate && R.gate[1] === 'kill';
   const head = dm ? (dm[0] === 'kill' ? '마왕 처치' : R.result === 'retreat' ? '마왕성 소멸' : '쓰러졌다') : R.result === 'clear' ? '들판 돌파' : R.result === 'retreat' ? '수문장 퇴각' : '쓰러졌다';
   const tone = R.result === 'clear' ? 'win' : R.result === 'dead' ? 'dead' : 'etc';
-  const job = p.job ? (p.job2 && JOBS[p.job2] ? JOBS[p.job2].name : JOBS[p.job].name) : '전직 전';
+  const job = p.job ? (p.job2 && JOBS[p.job2] ? JOBS[p.job2].name : JOBS[p.job].name) : '인물 선택 전';
   let sub = '';
   if (dm) sub = dm[0] === 'kill' ? `마왕 처치 누적 ${R.demonKills}회` : `마왕 ${dm[3]}/3 페이즈 · 남은 체력 ${dm[2]}%`;
   else if (gk && D) sub = `${D.name} 처치 · ${D.gate} 개방`;
@@ -280,7 +280,7 @@ showResult = function () {
   const add = (after, g) => { const i = GUIDE.findIndex(x => x.id === after); GUIDE.splice(i < 0 ? GUIDE.length : i + 1, 0, g); };
   add('phase', { id: 'elite', tx: '빛나는 큰 적은 정예 · 쓰러뜨리면 보물 상자', when: () => G.enemies.some(e => e.elite && !e.dead && !e.clone) });
   add('chest', { id: 'branch', tx: '무기는 Lv 3에서 분기 선택 · Lv 5에서 각성', when: () => G.p.weapons.some(w => w.lvl >= 2) });
-  add('altar', { id: 'job', tx: '전직 완료 · 직업 능력은 오른쪽 위 일시정지 → 내 능력에서 확인', when: () => !!G.p.job });
+  add('altar', { id: 'job', tx: '인물 선택 완료 · 인물 능력은 오른쪽 위 일시정지 → 내 능력에서 확인', when: () => !!G.p.job });
   add('ult', { id: 'fuse', tx: '무기 칸 무기와 기본 무기가 모두 Lv 5·각성이면 연성 카드 등장', when: () => !!G.p.job && G.p.weapons.some(w => !w.base && !w.fu && w.lvl >= 4) });
   add('warn', { id: 'gate', tx: '수문장 등장 · 제한 시간 안에 쓰러뜨리면 문 개방', when: () => !!(G.gkMob && !G.gkMob.dead && G.ph && G.ph.id === 'gate') });
 })();

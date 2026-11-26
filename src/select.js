@@ -122,10 +122,10 @@ function renderSelect0() {
   s.armed = null;
   UI.querySelectorAll('.card[data-i]').forEach(b => b.addEventListener('click', () => { sfx('pick');
     const i = +b.dataset.i;
-    const two = SETTINGS.confirm2 || kind === 'job' || kind === 'job2';   // 두 번 눌러 확정 (0.14) · 0.37 전직은 항상 2회
+    const two = SETTINGS.confirm2 || kind === 'job' || kind === 'job2' || kind === 'haw';   // 두 번 눌러 확정 (0.14) · 0.37 전직은 항상 2회
     if (two && !s.banish && s.armed !== i) {
       s.armed = i; UI.querySelectorAll('.card.armed').forEach(x => x.classList.remove('armed')); b.classList.remove('armed'); void b.offsetWidth; b.classList.add('armed');
-      const sb = UI.querySelector('.sel-head .sub'); if (sb) { sb.textContent = '한 번 더 누르면 ' + (kind === 'job' || kind === 'job2' ? '전직' : '선택') + ' 확정'; sb.classList.add('armtip'); }
+      const sb = UI.querySelector('.sel-head .sub'); if (sb) { sb.textContent = '한 번 더 누르면 ' + (kind === 'haw' ? '각성' : '선택') + ' 확정'; sb.classList.add('armtip'); }
       { const dsEl = b.querySelector('.ds'); if (b.dataset.full && dsEl) dsEl.textContent = b.dataset.full; }
       vibe(12); return;
     }

@@ -254,7 +254,6 @@ function jobDials() {
   const p = G.p, T = G.tm, out = []; if (!p.job) return out;
   out.push({ ic: '궁', col: '#ffe08a', k: p.ult / JOB_CFG.ultNeed });
   if (p.job === 'sovereign') out.push({ ic: '기', col: '#ffd24a', k: 1 - (T.banner == null ? 0 : T.banner) / 10 });
-  if (p.job === 'engineer') out.push({ ic: '탑', col: '#b4c2d4', k: 1 - T.turret / 10 });
-  if (p.job === 'druid') { const b = G.pets.find(m => m.kind === 'bear'); if (b) out.push({ ic: '곰', col: '#c89060', k: 1 - b.sk / petStat('bear').sk }); }
+  for (const d of heroDials60()) out.push(d);                // 0.60 인물 주기 표시 (인물 구현 때 HERO60[id].dials 등록, 옛 포탑·곰 표시 삭제)
   return out;
 }

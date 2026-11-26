@@ -5,10 +5,10 @@
    ============================================================ */
 Object.assign(ENEMIES, {
   gob: { name: '고블린 궁수', hp: 12, speed: 60, dmg: 6, r: 10, color: '#7fbf4a', shape: 'tri', xp: 2, from: 2, w: 1.3, mb: 'shoot' },
-  jelly: { name: '분열 젤리', hp: 22, speed: 44, dmg: 8, r: 12, color: '#6ad8f0', shape: 'blob', xp: 2, from: 3, w: 2, mb: 'split' },
+  jelly: { name: '분열 젤리', hp: 30, speed: 44, dmg: 8, r: 12, color: '#6ad8f0', shape: 'blob', xp: 3, from: 3, w: 1.2, mb: 'split' },
   mush: { name: '자폭 버섯', hp: 14, speed: 66, dmg: 8, r: 10, color: '#e8503c', shape: 'blob', xp: 2, from: 4.5, w: 1.4, mb: 'bomb' },
-  boar: { name: '돌진 멧돼지', hp: 40, speed: 50, dmg: 14, r: 13, color: '#8a5a3a', shape: 'hex', xp: 3, from: 6, w: 1.4, mb: 'dash' },
-  knight: { name: '방패병', hp: 60, speed: 42, dmg: 12, r: 13, color: '#9aa8bc', shape: 'sq', xp: 4, from: 7.5, w: 1.3, mb: 'shield' },
+  boar: { name: '돌진 멧돼지', hp: 48, speed: 50, dmg: 14, r: 13, color: '#8a5a3a', shape: 'hex', xp: 4, from: 6, w: 1.0, mb: 'dash' },
+  knight: { name: '방패병', hp: 60, speed: 42, dmg: 12, r: 13, color: '#9aa8bc', shape: 'sq', xp: 5, from: 7.5, w: 0.9, mb: 'shield' },
   wisp: { name: '떠도는 불꽃', hp: 10, speed: 105, dmg: 7, r: 9, color: '#b08cf0', shape: 'tri', xp: 2, from: 9, w: 1.8, mb: 'weave' },
 });
 ENEMY_ORDER.push('gob', 'jelly', 'mush', 'boar', 'knight', 'wisp');

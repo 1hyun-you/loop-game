@@ -19,7 +19,7 @@ const PHASES = {
   surge: { name: '몰아치는 무리', type: '전투형', goal: 'time', dur: 150, spawnMul: 1.8, bias: { bat: 6, slime: 6 }, tint: [200, 70, 60],
     hint: '물량 폭주' },
   warband: { name: '오우거 전열', type: '전투형', goal: 'kill', fail: 150, min: 40,   // 0.17 최소 지속 40초 (대장 조기 처치 시 잔여 전열 소탕 구간)
-    spawnMul: 0.9, bias: { brute: 1.5, skel: 5, slime: 3 }, tint: [190, 130, 60],
+    spawnMul: 0.9, bias: { brute: 1.2, skel: 2.6, slime: 5, bat: 1 },   // 0.60 잡몹 체력 섞기에 맞춰 단단한 적 비중 하향 (68% → 39%) tint: [190, 130, 60],
     hint: '오우거 대장 처치' },
   hunt: { name: '엘리트 사냥', type: '전투형', goal: 'hunt', fail: 150, spawnMul: 0.7, tint: [235, 205, 90],
     hint: '정예 4체 처치 (완료 시 보물 상자)' },

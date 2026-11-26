@@ -17,7 +17,7 @@
 const V50 = {
   gap: 10, reach: 10, tele: 70, teleFar: 110, bigFar: 190,
   inner: 0.18, flash: 0.62, band: 0.22,
-  fight: { archer: [90, 130], mage: [70, 110], chrono: [60, 110], engineer: [95, 135], summoner: [110, 150], priest: [80, 120], druid: [70, 110], warrior: [0, 45], rogue: [0, 40], sovereign: [20, 70] },
+  fight: { archer: [90, 130], mage: [70, 110], chrono: [60, 110], engineer: [95, 135], summoner: [110, 150], priest: [80, 120], druid: [70, 110], warrior: [0, 45], rogue: [0, 40], sovereign: [20, 70], berserker: [0, 45], pyromancer: [70, 110], necromancer: [60, 100] },
 };
 const S50 = () => G.stats.v50 || (G.stats.v50 = { ultHz: 0, ultStop: 0, sovT: 0, sovIn: 0, sqTele: 0, sqDrop: 0, deco: 0 });
 
@@ -200,10 +200,10 @@ autoVec = function () {
   if (tg && tg.k === 'boss') pull = td > 60 ? 1 : 0;
   if (tg && tg.k === 'gk') { const mel = p.weapons.filter(w => WEAPONS[w.id].cat === 'melee').length >= 2, lo = mel ? 55 : 110, hi = mel ? 95 : 170; pull = td > hi ? 1 : td < lo ? -0.6 : 0.1; }
   const here = autoDanger(p.x, p.y), hz = hazT50(p.x, p.y), inHz = hz < Infinity;
-  if (J === 'archer' && !inHz && here < (typeof V54 !== 'undefined' ? V54.arcStop : 2.5) && !(tg && (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 궁수 정지 사격
+  if (J === 'archer' && heroImpl60('archer') && !inHz && here < (typeof V54 !== 'undefined' ? V54.arcStop : 2.5) && !(tg && (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 궁수 정지 사격
   // 궁극기 정지 발동: 예고 밖에서만 (무적 궁극기 전사·도적은 발동까지 0.9초 넘게 남으면 허용)
   if (ultReady() && !autoUltSetting() && (here > 3 || G.time - G.tm.readyAt > 8)) {
-    if (!inHz || ((J === 'warrior' || J === 'rogue') && hz > 0.9)) { S.ultStop++; ultPress58('ai'); }   // 0.58 버튼 누름, 정지 없음
+    if (!inHz || ((J === 'warrior' || J === 'berserker' || J === 'rogue') && hz > 0.9)) { S.ultStop++; ultPress58('ai'); }   // 0.58 버튼 누름, 정지 없음
   }
   // 군주: 군기 안 유지 (회피·보석·목표 지점 이동 시 제외)
   // 0.51: 안전할 때(예고 없음·주변 위험 낮음·체력 50% 이상) 보석 수집 우선 — 위치 규칙 해제, 보석 끌림 2배, 위험 0.8배
@@ -211,7 +211,7 @@ autoVec = function () {
   // 군주: 안전 수집은 군기 반경+140 안 보석만 (군기 안 경험치 1.3배 유지)
   const b = J === 'sovereign' && G.banner ? G.banner : null, bR = b ? bannerR49() : 0, bOff = !b || inHz || (safe && dist2(tg.x, tg.y, b.x, b.y) < (bR + 140) ** 2) || (tg && (tg.k === 'goal' || (tg.k === 'gem' && dist2(tg.x, tg.y, b.x, b.y) < (bR + 80) ** 2)));   // 보석은 군기 근처(반경+80)만 예외
   const hm = inHz || safe ? null : home50(p, tg);
-  const melee = J === 'warrior' || J === 'rogue', god = STATE.dev.god, dk = inHz && !god ? 1.2 : melee && p.hp > p.maxHp * 0.5 ? 0.75 : 1, tk = inHz && !god ? 0.3 : safe ? 2 : 1, dk2 = safe ? 0.8 : 1;   // 무적 시험은 회피 가중 미적용(판 길이 측정 기준 유지)
+  const melee = J === 'warrior' || J === 'berserker' || J === 'rogue', god = STATE.dev.god, dk = inHz && !god ? 1.2 : melee && p.hp > p.maxHp * 0.5 ? 0.75 : 1, tk = inHz && !god ? 0.3 : safe ? 2 : 1, dk2 = safe ? 0.8 : 1;   // 무적 시험은 회피 가중 미적용(판 길이 측정 기준 유지)
   let best = AUTO_DIRS[0], bs = -1e9;
   for (const dv of AUTO_DIRS) {
     const dg = autoDanger(p.x + dv.x * 30, p.y + dv.y * 30) + 0.6 * autoDanger(p.x + dv.x * 70, p.y + dv.y * 70);
@@ -222,7 +222,7 @@ autoVec = function () {
   }
   const ev2 = G.ev && G.ev.cur, stopR = G.ph.zone ? G.ph.zone.r - 20 : ev2 && ev2.state === 'idle' && tg && tg.x === ev2.x ? 12 : 20;
   if (tg && tg.k === 'goal' && td < stopR) return (AUTO.out = { x: 0, y: 0, m: 0 });
-  if (J !== 'rogue' && !inHz && here < 1.5 && -here >= bs && !(tg && (tg.k === 'gem' || tg.k === 'goal'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 도적: 쉬지 않고 이동
+  if (!inHz && here < 1.5 && -here >= bs && !(tg && (tg.k === 'gem' || tg.k === 'goal'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 0.60 옛 도적 '쉬지 않고 이동' 예외 삭제
   const k = here > 6 || inHz ? 1 : 0.55;
   let x = AUTO.dir.x * (1 - k) + best.x * k, y = AUTO.dir.y * (1 - k) + best.y * k; const m = Math.hypot(x, y) || 1;
   AUTO.dir = { x: x / m, y: y / m };
@@ -231,7 +231,7 @@ autoVec = function () {
 /* 집계: 예고 안 궁극기 정지 발동, 군주 군기 안 체류 */
 const _useUlt50 = useUlt;
 useUlt = function () {
-  if (STATE.dev.auto && G.p && !autoUltSetting() && !(G.p.job === 'warrior' || G.p.job === 'rogue') && hazT50(G.p.x, G.p.y) < Infinity) S50().ultHz++;
+  if (STATE.dev.auto && G.p && !autoUltSetting() && !(G.p.job === 'warrior' || G.p.job === 'berserker' || G.p.job === 'rogue') && hazT50(G.p.x, G.p.y) < Infinity) S50().ultHz++;
   return _useUlt50.apply(this, arguments);
 };
 const _updateUlt50 = updateUlt;

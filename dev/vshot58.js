@@ -20,8 +20,10 @@ const VIEWS = (process.env.VIEWS || '360x780,412x915,768x1024').split(',').map(v
     await ev(() => { localStorage.clear(); saveCache = null; });
     await ev(() => { SETTINGS.dlgAuto = true; STATE.dev.auto = false; newRun(); STATE.mode = 'play'; hideUI(); G.sel = null; });
     for (let i = 0; i < 60; i++) { await wait(80); const m = await ev(() => { if (STATE.mode === 'talk') dlgTap(); else if (STATE.mode === 'select' && G.sel && G.sel.kind === 'start') pickCard(0); return STATE.mode; }); if (m === 'play' && i > 3 && await ev(() => G.p.weapons.length > 0)) break; }
-    await ev(() => { if (STATE.mode === 'select') { hideUI(); G.sel = null; STATE.mode = 'play'; } STATE.dev.god = true; applyJob('mage'); if (STATE.mode !== 'play') { hideUI(); G.sel = null; STATE.mode = 'play'; } });
-    ok(await ev(() => JOBS.mage.name === '화염술사' && JOBS.mage.ic === '화'), '화염술사 명칭');
+    await ev(() => { if (STATE.mode === 'select') { hideUI(); G.sel = null; STATE.mode = 'play'; } STATE.dev.god = true; applyJob('pyromancer'); if (STATE.mode !== 'play') { hideUI(); G.sel = null; STATE.mode = 'play'; } });
+    ok(await ev(() => JOBS.pyromancer.name === '화염술사' && JOBS.pyromancer.ic === '화'), '화염술사 명칭');
+    ok(await ev(() => ult58Visible()), '인물 선택 순간 궁극기 가득·버튼 표시');   // 0.60 선택 순간 게이지 가득
+    await ev(() => { G.p.ult = 0; });
     ok(await ev(() => !ult58Visible()), '게이지 미충전 시 버튼 없음');
     // 정지 발동 폐지: 가득 채우고 손 뗀 채 2초
     await ev(() => { G.p.ult = JOB_CFG.ultNeed; G.tm.readyAt = G.time; });

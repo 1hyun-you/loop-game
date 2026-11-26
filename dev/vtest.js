@@ -15,7 +15,7 @@ const fs = require('fs'), path = require('path'), http = require('http');
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i + 1] : d; };
 const PRESET = opt('preset', null), TIER = +opt('tier', 0), COND = opt('cond', ''); 
-const N = +(args[0] || 10), SPEED = +opt('speed', 8), CAP = +opt('cap', 1800), REN_EVERY = +opt('render', 2), GOD = args.includes('--god'), ROT = args.includes('--rotate'), DEMON = opt('demon', null), JROT = args.includes('--jobs') ? ['warrior', 'rogue', 'sovereign', 'archer', 'engineer', 'chrono', 'mage', 'summoner', 'priest', 'druid'] : null, OFF = +opt('off', 0), PORT = +opt('port', 48232);
+const N = +(args[0] || 10), SPEED = +opt('speed', 8), CAP = +opt('cap', 1800), REN_EVERY = +opt('render', 2), GOD = args.includes('--god'), ROT = args.includes('--rotate'), DEMON = opt('demon', null), JROT = args.includes('--jobs') ? ['berserker', 'rogue', 'archer', 'engineer', 'pyromancer', 'necromancer', 'priest', 'druid'] : null, OFF = +opt('off', 0), PORT = +opt('port', 48232);
 const ROOT = path.resolve(__dirname, '..');
 const OUT = path.resolve(ROOT, opt('out', 'dev/sim_log/runs.jsonl'));
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
@@ -77,7 +77,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon, jrot }) => {
   while ((STATE.mode === 'play' || STATE.mode === 'select' || STATE.mode === 'talk') && G === runG && !runG.finished) {
     tick(); frames++;
     if (STATE.mode === 'select') {
-      if (!wasSel) { selN++; selFrames = 0; if (!document.querySelector('.card')) H.flow.push('no_cards'); }
+      if (!wasSel) { selN++; selFrames = 0; if (!document.querySelector('.card, .h60g')) H.flow.push('no_cards'); }
       wasSel = true; if (++selFrames === 60 * 20) H.flow.push('select_stuck');
       if (selFrames > 60 * 30) break;
       continue;
@@ -115,6 +115,7 @@ const RUN_ONE = ({ cap, speed, renEvery, idx, god, rot, demon, jrot }) => {
     v49: runG.stats.v49 || null,
     v50: runG.stats.v50 || null,
     v51: runG.stats.v51 || null,
+    h60: runG.stats.h60 || null, job: R.job, job2: R.job2,
     v52: runG.stats.v52 || null, v53: runG.stats.v53 || null, v54: runG.stats.v54 || null,
     j41: (S => ({ job2: S.job2, volleys: S.volleys, rages: S.rages, missiles: S.missiles, overheal: S.overheal, focusMax: S.focusMax, tps: S.tps, rewound: S.rewound, minions: runG.minions.length, turrets: runG.turrets.length, guards: runG.j41 ? runG.j41.gd.length : 0 }))(runG.stats),   // 0.41 직업 핵심 규칙 발동 집계
     cost: { wallSec: Math.round((VT.realNow() - wall0) / 100) / 10, stepMs: H.steps ? +(H.stepMs / H.steps).toFixed(3) : 0, renMs: H.renders ? +(H.renMs / H.renders).toFixed(2) : 0 },

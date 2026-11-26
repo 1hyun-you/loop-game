@@ -8,7 +8,7 @@ const GUIDE = [
   { id: 'gem', tx: '적이 남긴 보석을 모으면 레벨 업 · 카드 1장 선택', when: () => G.gems.length > 0 && G.time > 4 },
   { id: 'phase', tx: '상단 노란 막대는 페이즈 목표 · 채우면 다음 페이즈', when: () => G.p.level >= 2 },
   { id: 'chest', tx: '보물 상자를 열면 무기 강화 또는 유물', when: () => G.chests.some(c => !c.dead) },
-  { id: 'altar', tx: '빛나는 제단 위에 잠시 서면 직업 선택', when: () => !!G.altar },
+  { id: 'altar', tx: '동료의 기억 중 하나를 누르고 확정', when: () => !!(G.sel && G.sel.kind === 'hero') },
   { id: 'ult', tx: () => SETTINGS.autoUlt ? '궁극기 준비 완료 · 적이 몰리면 자동 발동' : '궁극기 준비 완료 · 조이스틱 옆 버튼으로 발동', when: () => typeof ultReady === 'function' && ultReady() },
   { id: 'warn', tx: '붉은 장판과 ! 표식은 공격 예고 · 밖으로 피하기', when: () => G.hz.length > 0 },
   { id: 'hp', tx: '체력 부족 · 고기를 먹으면 회복', when: () => G.p.hp < G.p.maxHp * 0.4 },

@@ -101,13 +101,13 @@ drawHUD = function (c) {
     if (baseRetired()) { c.globalAlpha = 0.55; c.fillStyle = '#0e1725'; uiRound(c, r.x, r.y, r.w, r.h, 5); c.fill(); c.globalAlpha = 1; }
     tx = r.x + r.w + 6;
   }
-  const status = p.job === 'druid' ? (G.tm.wrath > 0 ? ' · 분노' : ' · 동료 ' + G.pets.length) : p.job === 'priest' ? ' · 정화 ' + p.holy : '';
+  const status = heroStatus60(' · ');   // 0.60 인물 상태 글자 (옛 드루이드 동료·사제 정화 표시 삭제)
   uiText(c, p.job ? (p.job2 && JOBS[p.job2] ? JOBS[p.job2].name : JOBS[p.job].name) : 'Lv ' + p.level, tx, L.y + 19, 14, col, 'left', 92, 700);
   /* 가운데: 시간 + 페이즈 이름 n/N */
   const cx = L.x + L.contentW * 0.52;
   uiText(c, fmtTime(G.time), cx, L.y + 17, 16, '#f0e9d9', 'center', 70, 650);
   const pn = P ? curPhaseName() : G.result === 'clear' ? '돌파' : '이동 중', cnt = P ? `${ph.i + 1}/${ph.order.length}` : '';
-  const lvTx = p.job ? 'Lv ' + p.level + status : '전직 전', hpTx = String(Math.ceil(p.hp)), rx = L.x + L.contentW - 4;
+  const lvTx = p.job ? 'Lv ' + p.level + status : '인물 선택 전', hpTx = String(Math.ceil(p.hp)), rx = L.x + L.contentW - 4;
   c.font = `500 12px ${UI_ART.font}`; const lvW = Math.min(92, c.measureText(lvTx).width), hpW = Math.min(34, c.measureText(hpTx).width);
   c.font = `600 12px ${UI_ART.font}`; const nw = Math.min(110, c.measureText(pn).width), cw2 = cnt ? c.measureText(cnt).width + 10 : 0, pwid = nw + cw2 + 14, py = L.y + 28;
   const pMin = tx + lvW + 2, pMax = rx - 60 - hpW - 2 - pwid, px = pMax >= pMin ? clamp(cx - pwid / 2, pMin, pMax) : cx - pwid / 2;   // 0.55 좌우 글자와 겹치면 옆으로 비킴

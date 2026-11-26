@@ -3,7 +3,7 @@
 const CHOICE_SCENE = {
   start:'들판으로 향하는 길',level:'한 걸음 더 강하게',chest:'들판에서 얻은 보물',
   branch:'나만의 전투 방식',job:'새로운 길을 새기다',job2:'더 깊어진 길',
-  camp:'잠시 머무는 자리',door:'문 너머의 대가',bond:'함께 자라는 힘'
+  camp:'잠시 머무는 자리',door:'문 너머의 대가',bond:'함께 자라는 힘',hero:'남겨진 동료의 기억',haw:'더 깊어진 길'
 };
 function choiceHeading(kind) {
   return `<div class="choice-kicker" aria-hidden="true"><span></span>${esc(CHOICE_SCENE[kind]||'여정의 갈림길')}<span></span></div>`;
@@ -71,7 +71,8 @@ window.addEventListener('resize',()=>requestAnimationFrame(fitChoices));
 function choiceType(c,f) {
   if(c.t==='branch')return c.aw?'무기 각성':'성장 분기';
   if(c.t==='bond')return '동료 유대';
-  if(c.t==='job'||c.t==='job2')return '직업';
+  if(c.t==='job'||c.t==='job2')return '인물';
+  if(c.t==='haw')return '인물 각성';
   if(c.t==='relic')return '유물';
   if(c.t==='trait')return '숙련 특성';
   return {'k-melee':'근접 무기','k-ranged':'원거리 무기','k-magic':'마법 무기','k-passive':'보조 효과'}[f.k]||'여정의 선택';
@@ -79,7 +80,7 @@ function choiceType(c,f) {
 function choiceIcon(c,f) {
   if(f.id)return icBox(f.col,f.ic,c.t === 'branch' && !c.aw ? branchWeaponArt(f.id, c.k) : f.id);
   if(c.t==='trait')return uiTraitIcon(c.id,f.col);
-  if(c.t==='job'&&UI_JOB_CREST[c.id])return uiJobCrest(c.id);
+  if((c.t==='job'||c.t==='haw')&&UI_JOB_CREST[c.id])return uiJobCrest(c.id);
   if(c.t==='job2'&&UI_JOB2_CREST[c.k]&&UI_JOB2_CREST[c.k].job===c.id)return uiJob2Crest(c.id,c.k);
   // Category symbols rather than pretending a shared weapon is unique job art.
   const key=c.t==='job'||c.t==='job2'?'crest':c.t==='doorYes'?'skull':c.t==='doorNo'?'back':c.t==='heal'||c.t==='campRest'?'heart':c.t==='campSupply'?'book':c.t==='bond'?'crest':'spark';

@@ -58,14 +58,16 @@ const VIEWS = (process.env.VIEWS || '360x780,412x915').split(',').map(v => v.spl
     ok(await ev(([id, br]) => { const w = G.p.weapons.find(x => x.id === id); return w && w.lvl === 5 && (!br || w.br === br) && (!AWAKEN[id] || !!w.aw) && STATE.mode === 'play'; }, [wid, br0]), '무기 지정 Lv5·발현·각성');
     // 연성 완료 (인물 없음 → 인물 선택 → 짝 무기)
     await click('wpick'); await wait(100);
-    await wclick('job_mage'); await wait(100); ok(await ev(() => G.p.job === 'mage' && !!baseW()), '창에서 인물 선택');
+    await wclick('job_pyromancer'); await wait(100); ok(await ev(() => G.p.job === 'pyromancer' && !!baseW()), '창에서 인물 선택');
+    // 0.60: 연성은 인물 구현 회차마다 채움 → 미구현 연성은 '제작 전' 안내만, 무기 변화 없음
     await wclick('fu_' + wid); await wait(100);
-    ok(await ev(id => { const w = G.p.weapons.find(x => x.id === id); return w && !!w.fu && baseW().lvl >= AW43; }, wid), '연성 완료');
+    ok(await ev(id => { const w = G.p.weapons.find(x => x.id === id); return w && (fuseDef60(G.p.job, id) ? !!w.fu : !w.fu); }, wid), '연성 완료 (미구현 연성은 제작 전 안내)');
+    await wclick('close'); await wait(60);
     await clearSel();
     for (let i = 0; i < 30; i++) { await wait(60); if (await ev(() => !(G.h47 && G.h47.cine))) break; }
     // 구간 이동: 인물 각성 직전
     await ev(() => { document.getElementById('devbtn').click(); document.getElementById('devbtn').click(); });
-    await click('j_awk'); for (let i = 0; i < 40; i++) { await wait(100); if (await ev(() => STATE.mode === 'select')) break; } ok(await ev(() => STATE.mode === 'select' && G.sel && G.sel.kind === 'job2' && G.p.level >= 26), '인물 각성 직전 ' + await ev(() => STATE.mode + ':' + (G.sel && G.sel.kind) + ':' + G.p.level));
+    await click('j_awk'); for (let i = 0; i < 40; i++) { await wait(100); if (await ev(() => STATE.mode === 'select')) break; } ok(await ev(() => STATE.mode === 'select' && G.sel && G.sel.kind === 'haw' && G.p.level >= 26), '인물 각성 직전 ' + await ev(() => STATE.mode + ':' + (G.sel && G.sel.kind) + ':' + G.p.level));
     await shot('job2'); await clearSel();
     // 보스전: 이그나
     await click('boss'); ok(await ev(() => document.querySelectorAll('.dev button[data-k^="b_"]').length === 5), '보스 5종');
@@ -82,7 +84,9 @@ const VIEWS = (process.env.VIEWS || '360x780,412x915').split(',').map(v => v.spl
     // 새 판: 인물 선택 직전
     for (let i = 0; i < 40; i++) { await wait(80); const m = await ev(() => { if (STATE.mode === 'talk') dlgTap(); else if (STATE.mode === 'select' && G.sel && G.sel.kind === 'start') pickCard(0); return STATE.mode; }); if (m === 'play' && i > 3 && await ev(() => G.p.weapons.length > 0)) break; }
     await ev(() => { if (!DEV.el) document.getElementById('devbtn').click(); });
-    await click('j_pick'); await wait(100); ok(await ev(() => !!G.altar && G.p.level >= 19), '인물 선택 직전 제단');
+    await click('j_pick'); for (let i = 0; i < 40; i++) { await wait(80); if (await ev(() => STATE.mode === 'select')) break; }
+    ok(await ev(() => STATE.mode === 'select' && G.sel && G.sel.kind === 'hero' && G.p.level >= 19), '인물 선택 직전 기억 잔영');
+    await ev(() => pickCard(0)); await wait(60);
     await click('fit'); ok(await ev(() => STATE.dev.fit === false), '레벨 맞춤 끔');
     await click('b_demon').catch(() => {}); await click('boss'); await click('b_demon'); await wait(100);
     ok(await ev(() => G.ph.order[G.ph.order.length - 1] === 'demon' && G.runType === 'retry'), '마왕전 예약');

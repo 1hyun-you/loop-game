@@ -219,7 +219,7 @@ function drawHUD(c) {
  uiText(c,'처치 '+kills,L.x+L.contentW-2,L.y+14,12,'#d9cbb3','right',76,600);
  const hp=clamp(p.hp/p.maxHp,0,1);uiBar(c,L.x+4,L.y+31,52,5,hp,hp>.3?'#9fc19d':'#d58c86');
  uiText(c,Math.ceil(p.hp),L.x+61,L.y+33,12,'#d7e1d8','left',30);
- const status=p.job==='druid'?(G.tm.wrath>0?' 분노':' 동료'+G.pets.length):p.job==='priest'?' 정화'+p.holy:'';
+ const status=heroStatus60(' ');
  const phase=P?((ph.i+1)+'/'+ph.order.length+' '+curPhaseName()):G.result==='clear'?'돌파':'이동 중';
  uiText(c,(status?status.trim()+' · ':'')+phase,L.x+L.contentW-2,L.y+32,12,ph.ambush?'#e6a58d':'#dfcb98','right',L.contentW-100,600);
  if(P)uiBar(c,L.x+100,L.y+41,L.contentW-102,2,phaseProgress(),ph.accT>0?'#f1e6bc':'#cdb57c');
