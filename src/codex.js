@@ -73,7 +73,7 @@ function cxRange(a, b) {
 }
 function cxPassive(id, seen) {
   const D = PASSIVES[id];
-  return cxCard({ dim: !seen, id, col: CFG.colors.passive, ic: D.ic, nm: D.name, tag: '1→5단계', lines: [cxRange(D.desc(1), D.desc(5)), cxBr(BRANCHES[id], '3단계 분기')] });
+  return cxCard({ dim: !seen, id, col: CFG.colors.passive, ic: D.ic, nm: D.name, tag: '1→5단계', lines: [cxRange(D.desc(1), D.desc(5)), cxBr(BRANCHES[id], '5단계 통달')] });
 }
 function cxEnemyPortrait(o) {
   const src = CODEX_PORTRAITS[o.portrait];
@@ -107,7 +107,7 @@ function showCodex(tab, back) {
   const S = cxSeen(), K = CODEX_TABS.map(t => t[0]);
   const bodyOf = t => {
     if (t === 'w') return '<p class="hint">수치: 1레벨 → 5레벨 (보조 효과 미포함) · 분기는 눌러서 펼침</p>' + WEAPON_ORDER.map(id => cxWeapon(id, S.seenW.has(id))).join('');
-    if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 분기는 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', trait: k, ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
+    if (t === 'p') return '<p class="hint">수치: 1단계 → 5단계 · 통달은 눌러서 펼침</p>' + PASSIVE_ORDER.map(id => cxPassive(id, S.seenP.has(id))).join('') + '<h3>숙련 특성</h3><p class="hint">무기·보조 효과 전부 최대 후 등장, 종류별 1회</p>' + TRAIT_ORDER.map(k => cxCard({ col: '#c8c0ff', trait: k, ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
     if (t === 'x') return cxFuse();
     if (t === 'j') return `<p class="hint">상세는 눌러서 펼침 · 첫 페이즈가 끝나면 동료의 기억 중 1명 선택 · 돌발 사건 클리어 시 인물 각성</p>` + JOB_ORDER.map(id => cxJob(id, S.seenJ.has(id))).join('');
     if (t === 'e') return cxEnemies(S);

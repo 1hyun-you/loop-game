@@ -72,7 +72,7 @@ cardInfo = function (c) {
     } else if (c.t === 'pup') {
       const d = PASSIVES[c.id], L = passLv(c.id);
       r.ds = rangeTx55(d.desc(L), d.desc(L + 1));
-      if (L + 1 === BRANCH_AT && BRANCHES[c.id] && !pBr(c.id)) r.tag += ' · 분기 선택';
+      if (L + 1 === PBR_AT && BRANCHES[c.id] && !pBr(c.id)) r.tag += ' · 통달';   // 0.62 보조 효과 통달 Lv 5
     } else if (c.t === 'branch' && c.aw) {
       const o = awTx55(c.id, c.k); if (o) { r.nm = o.nm; r.ds = o.ds; r.tag = wName(c.id) + ' 각성'; }
     } else if (c.t === 'job') {
@@ -106,7 +106,7 @@ const cxDet55 = (head, rows) => rows.length ? `<details class="acc"><summary>${e
 function abilP55() {
   const p = G.p; let h = '';
   h += p.passives.length ? p.passives.map(x => { const d = PASSIVES[x.id], br = x.br && BRANCHES[x.id] && BRANCHES[x.id].find(o => o.k === x.br);
-    return cxCard({ id: x.id, col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: 'Lv ' + x.lvl, lines: [esc(d.desc(x.lvl)), br ? cxChips([['분기', esc(br.nm)]]) : '', br ? cxDet55('상세', [['분기 · ' + br.nm, br.ds]]) : ''] }); }).join('') : '<p class="hint">보유 보조 효과 없음</p>';
+    return cxCard({ id: x.id, col: CFG.colors.passive, ic: d.ic, nm: d.name, tag: 'Lv ' + x.lvl, lines: [esc(d.desc(x.lvl)), br ? cxChips([['통달', esc(br.nm)]]) : '', br ? cxDet55('상세', [['통달 · ' + br.nm, br.ds]]) : ''] }); }).join('') : '<p class="hint">보유 보조 효과 없음</p>';
   const tk = Object.keys(p.tr || {});
   if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => cxCard({ trait: k, col: '#c8b0ff', ic: TRAITS[k].ic, nm: TRAITS[k].nm, lines: [esc(TRAITS[k].ds)] })).join('');
   if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => cxCard({ col: '#8a6aa0', ic: '저', nm: CURSES[k].name, lines: [esc(CURSES[k].ds)] })).join('');

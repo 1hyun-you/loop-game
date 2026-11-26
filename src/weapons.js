@@ -186,7 +186,7 @@ function updateProjectiles(dt) {
       if (pr.dead || pr.hits.has(e.id)) return;
       pr.hits.add(e.id);
       if (pr.kind === 'fire' || pr.kind === 'shell') { fireBurst(pr); pr.dead = true; return false; }
-      damageEnemy(e, pr.dmg, { kb: 40, fx: pr.x - pr.vx * 0.05, fy: pr.y - pr.vy * 0.05, src: pr.src });
+      damageEnemy(e, pr.dmg, { kb: 40, fx: pr.x - pr.vx * 0.05, fy: pr.y - pr.vy * 0.05, src: pr.src, cr60: pr.cr60 || null });   // 0.62 발동 때 치명타 판정
       if (pr.src === 'fu_priest_arrow') priestProjectileEcho(pr, 'arrow');
       if (pr.priestBase) priestProjectileEcho(pr, 'orb');
       if (pr.bleed && !e.dead) { e.bl = 3; e.blD = pr.dmg * 0.25; }

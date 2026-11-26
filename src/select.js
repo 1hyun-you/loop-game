@@ -28,7 +28,7 @@ function openStart() {
 /* 0.25 보유 능력 목록 (선택 화면·일시정지 화면) */
 function abilityHTML() {
   const p = G.p, row = (col, ic, nm, lv, ds, cls = '', id = '', trial = '', fuse = '', trait = '', icon = '') => `<div class="ab ${cls}">${fuse ? uiFuseCrest(fuse) : trial ? uiTrialCrest(trial) : trait ? uiTraitIcon(trait, col) : icon || icBox(col, ic, id)}<span><b>${esc(nm)}</b><span class="lv">${esc(lv)}</span><p>${esc(ds)}</p></span></div>`;
-  const brNm = (id, k) => { const o = k && BRANCHES[id] && BRANCHES[id].find(x => x.k === k); return o ? `\n분기 · ${o.nm}: ${o.ds}` : ''; };
+  const brNm = (id, k, hd = '분기') => { const o = k && BRANCHES[id] && BRANCHES[id].find(x => x.k === k); return o ? `\n${hd} · ${o.nm}: ${o.ds}` : ''; };
   let h = '';
   if (p.job) { const J = JOBS[p.job], J2 = p.job2 && JOB2[p.job].concat(JOB2_STAT).find(o => o.k === p.job2);
     h += '<h3>직업</h3>' + row(jobColor(p.job), J.ic, J.name, J2 ? '2차 · ' + J2.nm : '1차', J.rule + '\n궁극기 · ' + J.ult + (J2 ? '\n' + J2.nm + ' · ' + J2.ds : ''));
@@ -37,7 +37,7 @@ function abilityHTML() {
   if (p.weapons.length) h += '<h3>무기</h3>' + p.weapons.map(w => { const d = WEAPONS[w.id]; const ak = w.aw && AWAKEN[w.id].find(x => x.k === w.aw); const col = w.fu || w.base ? JOB_COL[p.job] : CFG.colors[d.cat];   // 0.43 기본 무기·연성 무기 표기
     const lv = (w.base ? `기본 무기 · ${JOBS[p.job].name} · ` : w.fu ? '연성 · ' : '') + 'Lv ' + w.lvl, head = w.fu ? `${(fu44(w.fu.job, w.id) || {}).mode === '직업' ? '직업 변화' : '무기 결합'} · ${(fu44(w.fu.job, w.id) || { ds: '' }).ds}\n재료 · ${d.name} + ${WEAPONS[FZ_SYMBOL[w.fu.job]].name}\n` : w.base && baseRetired() ? '모든 칸 연성 완료 · 단독 발동 종료\n' : '';
     return row(col, d.ic, wName(w.id), lv, head + d.desc + brNm(w.id, w.br) + (ak ? `\n각성 · ${ak.nm}: ${ak.ds}` : ''), '', w.id); }).join('');
-  if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br), '', x.id); }).join('');
+  if (p.passives.length) h += '<h3>보조 효과</h3>' + p.passives.map(x => { const d = PASSIVES[x.id]; return row(CFG.colors.passive, d.ic, d.name, 'Lv ' + x.lvl, d.desc(x.lvl) + brNm(x.id, x.br, '통달'), '', x.id); }).join('');
   if (p.job && FZ_TRIAL[p.job]) { const T = FZ_TRIAL[p.job], b = baseW(), n = fusedWs().length; h += '<h3>연성</h3>' + row(JOB_COL[p.job], '연', '연성', `${n}/${slotCount()}`, '무기 칸 무기마다 직업 고유 연성 무기 (무기 결합 또는 직업 변화)' + (b ? `\n조건 · 무기 칸 무기와 기본 무기 ${wName(b.id)} 모두 Lv 5·각성` : ''), '', '', '', '', ''); }   // 0.43
   const tk = Object.keys(p.tr || {}); if (tk.length) h += '<h3>숙련 특성</h3>' + tk.map(k => row('#c8b0ff', TRAITS[k].ic, TRAITS[k].nm, '', TRAITS[k].ds, '', '', '', '', k)).join('');
   if (p.curses && p.curses.length) h += '<h3>저주</h3>' + p.curses.map(k => row('#8a6aa0', '저', CURSES[k].name, '', CURSES[k].ds, '', '', '', '', '', miscIcon(k, icBox('#8a6aa0', '저')))).join('');

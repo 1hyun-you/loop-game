@@ -1,6 +1,6 @@
 # 회귀의 들판 — 개발 명세
 
-개정 2026-11-26 (회차 91, Claude) · 기준 버전 0.60 · 코드 구조·기술 규칙·배포·시험 체계
+개정 2026-11-27 (회차 93, Claude) · 기준 버전 0.62 · 코드 구조·기술 규칙·배포·시험 체계
 
 - 기획서(`docs/DESIGN.md`)가 무엇을 만드는가의 기준, 이 문서는 어떻게 만드는가의 기준.
 - 이전 개발 명세(Claude Docs, 0.42 기준, https://claude.ai/artifact/KLY3in2oZWiouTCR7Dxsf8)는 기준 아님, 참고 보관.
@@ -33,7 +33,7 @@
 | 그림 적용(GPT) | art-*.js, effect-*.js, field-*.js, hud-art-data.js, fuse-art*.js, 직업별 *-art.js·*-art-data.js |
 | 버전별 덧씌우기 | v40.js ~ v58.js (각 버전 변경분, 이전 함수를 감싸거나 교체) |
 | ★인물 구조 (0.60~) | hero60.js — 인물 8명·짝 무기 8종·인물 선택·인물 각성·궁극기·연성 틀, v58.js 다음·main.js 앞 (아래 '인물 구조' 절) |
-| ★인물 구현 (0.61~) | h60-<인물>.js — 인물 1명씩, hero60.js 다음·main.js 앞 (0.61 h60-berserker.js 광전사) |
+| ★인물 구현 (0.61~) | h60-<인물>.js — 인물 1명씩, hero60.js 다음·main.js 앞 (0.61 h60-berserker.js 광전사, 0.62 h60-rogue.js 도적) |
 | 개발 도구 | dev.js(게임 내 치트 패널), main.js(마지막, 시작) |
 
 ### 버전별 덧씌우기 파일 주요 내용
@@ -70,8 +70,13 @@
 - 인물 데이터 `HERO60[id]`: name·sub·ic·wpn(전용 무기)·slots·art(임시 그림)·col(표시색)·c1~c3(DESIGN 10장 3색)·rule·ult·aw(A·B)·impl
   - `impl: false` = 구현 전 임시 상태(전용 무기 기본형·고유 규칙 없음·임시 공통 충격파 궁극기·'제작 중' 표시), 인물 구현 회차에 true + 아래 연결점 등록
   - 연결점(인물 구현 때 HERO60[id]에 등록, impl true일 때만 호출): stat(w)·dmgMul(e,o)·onHit·onKill·hurtMul·onHurt·avoid·tick(dt)·onPick·onAwaken(k)·ultFn(k)·status()·dials()
-  - 0.61 추가: fire(w,S)(전용 무기 발동, 숫자 반환 = 다음 발동까지 시간)·br([{k,nm,ds}] 전용 무기 발현 A·B, Lv 3 선택)·wak({A,B} 무기 각성, Lv 5에 고른 발현으로 자동)·onBranch(w)·onWak(w)·spdMul()(이동 속도)·draw(c)(무기 그리기 뒤, 월드 좌표)·drawBody(c, fn)(캐릭터 그리기 감싸기)
+  - 0.62 추가: critAdd(w)(인물 치명타 확률) / 0.61 추가: fire(w,S)(전용 무기 발동, 숫자 반환 = 다음 발동까지 시간)·br([{k,nm,ds}] 전용 무기 발현 A·B, Lv 3 선택)·wak({A,B} 무기 각성, Lv 5에 고른 발현으로 자동)·onBranch(w)·onWak(w)·spdMul()(이동 속도)·draw(c)(무기 그리기 뒤, 월드 좌표)·drawBody(c, fn)(캐릭터 그리기 감싸기)
   - 짝 무기의 발현·각성 대기열은 전용 칸(w.base)일 때만 (checkBranch 덮어쓰기), 연성 fire도 숫자 반환 가능
+- ★치명타 공통 (0.62, hero60.js): `roll60(w)` 발동 1번에 판정 1회 → `runCR60(ctx, f)`가 판정을 걸고 발동 실행 + 그 안에서 예약한 `G.later`도 같은 판정으로 감쌈, `shoot` 투사체는 `pr.cr60`으로 판정을 들고 감(직격·fireBurst 폭발), 포탑 기본형은 한 발마다 판정
+  - `jobDmgMul`: `o.cr`(true/false 직접 지정)·`o.critMul`(배율 직접 지정) 우선, 아니면 현재 판정 + 피해원이 짝 무기 8종(PW60)일 때만 1.5배(통달 급소 1.8배) — 처치 폭발·궁극기·장판 틱은 판정 밖
+  - 확률 `critCh60(w)` = 보조 효과 치명타 Lv × 4% + 인물 연결점 `critAdd(w)` / 발동 결과는 `w.cr`(인물 규칙이 그 발동의 치명타 여부를 읽음)
+  - 보조 효과 통달 `PBR_AT = 5`(checkBranch 'p' 덮어쓰기, 전용 무기 발현 BRANCH_AT 3은 그대로), 9번째 보조 효과 crit(PASSIVE_ORDER 끝, 신규 후보 비중 8종 기준 정규화)
+- ★남길 무기 고르기 (0.62, hero60.js): 인물 선택 직후 일반 무기 > heroSlotN()이면 `G.h60q='keep'` → openJob2 → `openKeep60`(G.sel.kind 'keep', 카드 누르면 남김·빠짐 교체, 확정 버튼 `keepOk60`, 자동 플레이 = 기본 선택 확정), 빠지는 무기 레벨 × 0.5 × 현재 필요 경험치 환급(TEMP60 경험치 보정 미적용)
 - 인물 각성 기회 보장 `evRetry60`: 인물 선택 직후 다음 페이즈 돌발 사건 1번 보장, 각성 전 실패·무시 시 다음 일반 페이즈에 다른 종류 추가 (G.ev.plan, 기록 h60.evAdd)
 - 짝 무기 `PW60` 8종: cleave·dagger·arrow·turret·fireball·lamp·bell·thorn, 발동 `PAIR60[id](w,S)` (false = 대상 없음 → 0.25초 뒤 재시도), 장면 `G.f60` (cuts·vines·tw)
 - 연성: `FUSE60_NM`(56종 이름표), `FUSE60[인물][짝 무기] = { nm, ds, fire(w,S), cd? }` 등록된 것만 연성 카드 등장 (짝 무기 Lv 5, 레벨업 1회당 1장)
@@ -164,6 +169,7 @@
 | --- | --- |
 | dev/vtest.js | 가상 시계 기반 실제 프레임 시험 (Playwright), `--god` 무적, `--jobs` 인물 8명 순환 배정, `--job` 인물 지정(잔영 1순위·자동 선택), `--rotate` 수문장 순환, `--demon final\|retry\|mix`, `--preset release\|post`, `--tier`·`--cond`, `--seed N`(같은 난수열 재현: 그리기 난수 분리·소리 끔·그림 불러오기 대기 → 같은 코드면 결과 완전 일치, 정리 전후 동일 동작 비교용), `--cov 파일`(함수 단위 실행 기록) |
 | dev/vber61.js | 광전사 집중 점검 38항목 (투지·격노, 발현·무기 각성, 궁극기 3종, 인물 각성 A·B, 연성 7종 발동·피해, 페이지 오류) |
+| dev/vrog62.js | 도적·치명타 공통 집중 점검 63항목 (치명타 1회 판정·1.5배·보조 효과 치명타·통달 Lv 5·급소·흔들기·압도, 남길 무기 고르기 화면, 그림자 연격 기본·각성 A 연격·각성 B 상처, 발현·무기 각성, 궁극기 3종, 연성 7종 발동·피해·그림자 동작, 통나무 유인, 페이지 오류) |
 | dev/deadcode.cjs | 죽은 코드 판독 `node dev/deadcode.cjs [--cov 기록.json,...] [--covstat] [--out 목록.json] [--apply]` (결합본 기준, `--apply`는 src에서 삭제·선언 유지 처리) |
 | dev/vpar.sh | 동시 실행 `sh dev/vpar.sh <판 수> <기록 파일> [--god]` |
 | dev/vsum.js | 집계 (판 길이·보스전·돌파·연성·피해 비중) |

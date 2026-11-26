@@ -132,6 +132,33 @@ phaseSpawnMul = function () { return _phaseSpawnMul60.apply(this, arguments) * T
 const _addXp60 = addXp;
 addXp = function (v) { return _addXp60(v * TEMP60.xp); };
 
+/* ---------- 0.62 치명타 공통 (회차 93 결정) ----------
+   • 판정: 무기 발동 1번에 1회 (여러 적을 맞혀도 같은 결과), 그 발동의 투사체·늦은 타격도 같은 판정
+     발동 밖의 지속 피해(장판·소환물 틱 등)는 치명타 없음, 인물 규칙이 직접 지정하는 경우 o.cr·o.critMul
+   • 치명타 피해 1.5배 (통달 '급소' 1.8배), 확률 = 보조 효과 '치명타' 레벨당 +4% (모든 인물·모든 무기) + 인물 규칙(도적: 전용·연성 +20%)
+   • 보조 효과 통달: Lv 3 분기 → Lv 5 통달로 이동 (전용 무기 발현은 Lv 3 그대로), 공격력 분기 '치명' 삭제 → '압도' */
+const CRIT60 = { per: 0.04, mul: 1.5, vital: 1.8, shake: 0.3, over: 1.5 };
+const PBR_AT = 5;
+let CR60 = null;                                             // 현재 발동의 치명타 판정 { w, cr }
+function critCh60(w) { let c = CRIT60.per * passLv('crit'); const h = w && hook60('critAdd', w); if (h) c += h; return c; }
+function roll60(w) { const c = critCh60(w); return { w, cr: c > 0 && Math.random() < c }; }
+function withCR60(ctx, f) { const o = CR60; CR60 = ctx; try { return f(); } finally { CR60 = o; } }
+function runCR60(ctx, f) {                                   // 판정을 걸고 실행 + 그 안에서 예약한 늦은 타격(G.later)도 같은 판정
+  const n0 = G.later.length, r = withCR60(ctx, f);
+  for (let i = n0; i < G.later.length; i++) { const L = G.later[i], g = L.f; if (!L.cr60) { L.cr60 = 1; L.f = () => withCR60(ctx, g); } }
+  return r;
+}
+const critMul60 = () => pBr('crit') === 'vital' ? CRIT60.vital : CRIT60.mul;
+PASSIVES.crit = { name: '치명타', ic: '치', per: CRIT60.per, desc: L => `치명타 확률 +${4 * L}% (치명타 피해 1.5배)` };
+if (!PASSIVE_ORDER.includes('crit')) PASSIVE_ORDER.push('crit');
+BRANCHES.crit = [{ k: 'vital', nm: '급소', ds: '치명타 피해 1.5배 → 1.8배' }, { k: 'shake', nm: '흔들기', ds: '치명타를 맞은 적 0.3초 멈칫' }];
+BRANCHES.might = [{ k: 'over', nm: '압도', ds: '체력이 가득 찬 적에게 주는 첫 타격 피해 +50%' }, BRANCHES.might.find(o => o.k === 'pen')];
+ICON12.crit = ['....rrrr....', '..rr....rr..', '.r...WW...r.', '.r...WW...r.', 'r....yy....r', 'rWWWyyyyWWWr', 'rWWWyyyyWWWr', 'r....yy....r', '.r...WW...r.', '.r...WW...r.', '..rr....rr..', '....rrrr....'];
+const _shoot60 = shoot;
+shoot = function (o) { const pr = _shoot60(o); if (CR60 && pr && pr.cr60 === undefined) pr.cr60 = CR60; return pr; };   // 투사체는 발동 때 판정을 들고 감
+const _fireBurst60 = fireBurst;
+fireBurst = function (pr) { return pr && pr.cr60 ? withCR60(pr.cr60, () => _fireBurst60(pr)) : _fireBurst60(pr); };
+
 /* ---------- 무기 수치 (보조 효과 반영, 옛 직업·분기 보정 제거) ---------- */
 function wStats(w) {
   const D = WEAPONS[w.id], p = G.p, M = p.mod;
@@ -236,7 +263,7 @@ function tick60(dt) {
     const w = t.w, S = wStats(w), D = WEAPONS.turret.base, e = nearestEnemy(t.x, t.y, D.range * S.area);
     if (!e) { t.cd = 0.25; continue; }
     t.a = Math.atan2(e.y - t.y, e.x - t.x); t.cd = D.fire * (S.cd / D.cd);
-    shoot({ kind: 'arrow', x: t.x, y: t.y - 6, ang: t.a, sp: 520, r: 4, dmg: S.dmg, pierce: 0, life: D.range * S.area / 520, color: t.col, src: 'turret' });
+    withCR60(roll60(w), () => shoot({ kind: 'arrow', x: t.x, y: t.y - 6, ang: t.a, sp: 520, r: 4, dmg: S.dmg, pierce: 0, life: D.range * S.area / 520, color: t.col, src: 'turret' }));   // 포탑 한 발 = 공격 1번
   }
   F.tw = F.tw.filter(t => !t.dead);
   for (const k of ['cuts', 'vines']) { for (const o of F[k]) o.t += dt; F[k] = F[k].filter(o => o.t < o.dur); }
@@ -252,7 +279,8 @@ function updateWeapons(dt) {
     let r;
     const fd = w.fu && fuseDef60(w.fu.job, w.id);
     const hf = !fd && w.base && heroImpl60() && H60().fire;        // 전용 무기: 인물 구현 후 인물 쪽 발동(발현·무기 각성 포함)
-    if (fd) r = fd.fire(w, S); else if (hf) r = hf(w, S); else r = (PAIR60[w.id] || (() => false))(w, S);
+    const ctx = roll60(w); w.cr = ctx.cr;                         // 0.62 치명타: 공격(발동) 1번에 판정 1회
+    r = runCR60(ctx, () => fd ? fd.fire(w, S) : hf ? hf(w, S) : (PAIR60[w.id] || (() => false))(w, S));
     w.t = r === false ? 0.25 : typeof r === 'number' ? r : (fd && fd.cd ? fd.cd(w, S) : S.cd);   // 숫자 = 다음 발동까지 시간 직접 지정
     if (r === false) continue;
     if (r !== 'tick') rcFire60(w);
@@ -270,14 +298,19 @@ function rcFire60(w) {
 /* ---------- 인물 규칙 연결점 (구현 전 인물은 전부 기본값) ---------- */
 const hook60 = (k, ...a) => { const H = H60(); return H && H.impl && H[k] ? H[k](...a) : undefined; };
 function jobDmgMul(e, o) {
-  let m = 1, cc = 0, cm = 2;
-  if (pBr('might') === 'crit') cc += 0.15;                    // 보조 효과 분기 '치명'
-  if (cc && Math.random() < cc) { m *= cm; o.crit = true; }
+  let m = 1;
+  const ctx = o.cr60 !== undefined ? o.cr60 : CR60;          // 0.62 치명타: 발동 판정(투사체·늦은 타격은 발동 때 판정을 들고 옴), o.cr = 직접 지정
+  if (o.cr === true || (o.cr !== false && ctx && ctx.cr && PW60.includes(o.src))) { m *= o.critMul || critMul60(); o.crit = true; }   // 무기 피해만 (처치 폭발·궁극기 등 제외)
+  if (pBr('might') === 'over' && e.mhp && e.hp >= e.mhp) m *= CRIT60.over;   // 공격력 통달 '압도'
   if (pBr('might') === 'pen' && (e.r >= 16 || e.elite || e.cmd)) m *= 1.25;
   const h = hook60('dmgMul', e, o); if (h) m *= h;
   return m;
 }
-function onEnemyHit(e, o) { if (!G.p.job || e.dead) return; hook60('onHit', e, o); }
+function onEnemyHit(e, o) {
+  if (e.dead) return;
+  if (o.crit && pBr('crit') === 'shake') stun60(e, CRIT60.shake);   // 치명타 통달 '흔들기'
+  if (G.p.job) hook60('onHit', e, o);
+}
 function onEnemyKill(e) { if (!G.p.job) return; ultKillGain(e); hook60('onKill', e); }
 function playerHurtMul() { let m = ultHurtMul(); const h = hook60('hurtMul'); if (h) m *= h; return m; }
 function onPlayerHurt() { hook60('onHurt'); }
@@ -331,6 +364,7 @@ function openJob2() {
   const q = G.h60q; G.h60q = null;
   if (q === 'hero' && !G.p.job) return openHero60();
   if (q === 'aw' && G.p.job && !G.p.job2) return openAw60();
+  if (q === 'keep' && G.p.job) return openKeep60();
 }
 function openHero60() {
   const p = G.p, ids = heroCands60(), offs = [[-96, -58], [0, -108], [96, -58]];
@@ -359,7 +393,56 @@ function applyHero60(id) {
   heroBurst60(H.col); if (typeof cine47 === 'function') cine47('job', H.col);
   checkBranch('w', b.id);                                   // 0.61 이미 Lv 3 이상인 무기를 전용 칸으로 가져온 경우 발현 대기
   evRetry60(null);                                          // 0.61 인물 선택 직후 페이즈 돌발 사건 1번 보장
+  if (keepGen60().length > heroSlotN()) { G.h60q = 'keep'; G.pendingJob2 = true; }   // 0.62 칸이 적은 인물(도적): 남길 무기 고르기
 }
+
+/* ---------- 0.62 남길 무기 고르기 (회차 93 결정: 도적 무기 칸 3 = 일반 무기 2칸) ----------
+   인물 선택 직후 일반 무기가 칸보다 많으면 직접 남길 무기를 고름, 빠지는 무기는 레벨 × 0.5레벨분 경험치로 돌려받음 */
+const KEEP60 = { xpK: 0.5 };
+const keepGen60 = () => G.p.weapons.filter(w => !w.base && !w.fu);
+function keepXp60(w) { return Math.round(w.lvl * KEEP60.xpK * G.p.need); }
+function openKeep60() {
+  const ws = keepGen60(), n = heroSlotN(); if (ws.length <= n) return;
+  STATE.mode = 'select'; clearInput();
+  const def = ws.slice().sort((a, b) => b.lvl - a.lvl).slice(0, n).map(w => w.id);   // 기본 = 레벨 높은 순
+  G.sel = { kind: 'keep', n, keep: new Set(def), cards: ws.map(w => ({ t: 'wup', id: w.id })) };
+  renderSelect(); autoLater();
+}
+function keepInfo60(c, kept) {
+  const w = wObj(c.id), d = WEAPONS[c.id];
+  return { id: c.id, k: 'k-' + d.cat, col: CFG.colors[d.cat], ic: d.ic, nm: d.name, tag: (kept ? '남김' : '빠짐') + ' · Lv ' + w.lvl, ds: kept ? d.desc : `경험치 ${keepXp60(w)} 돌려받음` };
+}
+function keepOk60() {
+  const s = G.sel; if (!s || s.kind !== 'keep' || s.keep.size !== s.n) return;
+  const drop = keepGen60().filter(w => !s.keep.has(w.id)); let xp = 0;
+  for (const w of drop) xp += keepXp60(w);
+  G.p.weapons = G.p.weapons.filter(w => !drop.includes(w));
+  S60().keep = { kept: [...s.keep], drop: drop.map(w => w.id + ':' + w.lvl), xp };
+  recalc(); closeSel();
+  if (xp > 0) _addXp60(xp);
+  toast(drop.length ? `${drop.map(w => WEAPONS[w.id].name).join('·')} → 경험치 ${xp}` : '무기 정리 완료', H60() ? H60().col : '#fff');
+}
+SEL_HEAD.keep = s => ['남길 무기', `${H60() ? H60().name : ''} 무기 칸 ${s.n + 1}개 · 일반 무기 ${s.n}개 선택`];   // 빠지는 무기의 경험치 환급은 카드에 표기
+(function () { const st = document.createElement('style'); st.textContent = '.sel-keep .card.k-drop{opacity:.42;filter:saturate(.35)}.sel-keep #keepok[disabled]{opacity:.5}'; document.head.appendChild(st); })();
+const _renderSelectK60 = renderSelect0;
+renderSelect0 = function () {
+  const s = G.sel; if (!s || s.kind !== 'keep') return _renderSelectK60();
+  const cards = s.cards.map((c, i) => choiceCard(c, keepInfo60(c, s.keep.has(c.id)), i)).join(''), [h, sub] = SEL_HEAD.keep(s);
+  UI.innerHTML = `<div class="layer sel sel-keep"><div class="sel-head">${choiceHeading('keep')}<h2>${h}</h2><p class="sub" role="status" aria-live="polite">${esc(sub)}</p></div>
+    <div class="cards">${cards}</div><div class="sel-actions"><button id="keepok" class="pri" ${s.keep.size === s.n ? '' : 'disabled'}>확정 (${s.keep.size}/${s.n})</button></div></div>`;
+  UI.querySelectorAll('.card[data-i]').forEach(b => { const c = s.cards[+b.dataset.i]; if (!s.keep.has(c.id)) b.classList.add('k-drop'); b.addEventListener('click', () => { sfx('pick'); vibe(10); pickCard(+b.dataset.i); }); });
+  on('keepok', () => { sfx('pick'); keepOk60(); });
+  if (typeof fitChoices === 'function') fitChoices();
+};
+const _pickCardK60 = pickCard;
+pickCard = function (i) {
+  const s = G.sel; if (!s || s.kind !== 'keep') return _pickCardK60(i);
+  const c = s.cards[i]; if (!c) return;
+  if (s.keep.has(c.id)) s.keep.delete(c.id); else if (s.keep.size < s.n) s.keep.add(c.id); else { s.keep.delete([...s.keep][0]); s.keep.add(c.id); }   // 가득 찼으면 가장 먼저 고른 것과 교체
+  renderSelect();
+};
+const _autoSelectK60 = autoSelect;
+autoSelect = function () { const s = G && G.sel; if (STATE.dev.auto && !STATE.dev.semi && STATE.mode === 'select' && s && s.kind === 'keep') return keepOk60(); return _autoSelectK60(); };
 applyJob = applyHero60;
 function heroBurst60(col) {
   const p = G.p; sfx('ult'); shake(4, 0.3); rcBig(col, 0.4);
@@ -438,7 +521,7 @@ function levelCands60() {
     for (const id of nw) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * nk });
   }
   for (const ps of p.passives) if (ps.lvl < CFG.passiveMax && !ban.has(ps.id)) out.push({ t: 'pup', id: ps.id, w: K.pupW });
-  if (p.passives.length < CFG.slots.passive) for (const id of PASSIVE_ORDER) if (!hasP(id) && !ban.has(id)) out.push({ t: 'pnew', id, w: K.pnewW });
+  if (p.passives.length < CFG.slots.passive) for (const id of PASSIVE_ORDER) if (!hasP(id) && !ban.has(id)) out.push({ t: 'pnew', id, w: K.pnewW * 8 / PASSIVE_ORDER.length });   // 0.62 보조 효과 9종: 신규 후보 총 비중 8종 기준 유지
   return out;
 }
 levelCands = levelCands60;
@@ -619,6 +702,11 @@ function cxFuse() {
    짝 무기(일반 무기)는 발현·각성 없음 → 전용 칸(w.base)일 때만 대기열에 올림 */
 const _checkBranch60 = checkBranch;
 checkBranch = function (kind, id) {
+  if (kind === 'p') {                                       // 0.62 보조 효과 통달: Lv 5 (옛 Lv 3 분기)
+    const it = G.p.passives.find(x => x.id === id);
+    if (it && it.lvl >= PBR_AT && !it.br && !it.brQ && BRANCHES[id]) { it.brQ = true; G.pendingBr.push({ kind, id }); }
+    return;
+  }
   if (kind !== 'w' || !PW60.includes(id)) return _checkBranch60(kind, id);
   const it = wObj(id), H = H60(); if (!it || !it.base || !H || !H.impl || !H.br) return;
   if (it.lvl >= BRANCH_AT && !it.br && !it.brQ) { BRANCHES[id] = H.br; it.brQ = true; G.pendingBr.push({ kind, id }); }
@@ -648,7 +736,12 @@ cardInfo = function (c) {
   return r;
 };
 const _selHeadBr60 = SEL_HEAD.branch;
-SEL_HEAD.branch = s => { const w = s.q && !s.q.aw && wObj(s.q.id); return w && w.base && H60() && H60().br ? ['발현', `${WEAPONS[s.q.id].name} Lv ${BRANCH_AT} · 전용 무기 발현 1종 선택`] : _selHeadBr60(s); };
+SEL_HEAD.branch = s => { if (s.q && s.q.kind === 'p') return ['통달', `${itemName(s.q.id)} Lv ${PBR_AT} · 통달 1종 선택`];
+  const w = s.q && !s.q.aw && wObj(s.q.id); return w && w.base && H60() && H60().br ? ['발현', `${WEAPONS[s.q.id].name} Lv ${BRANCH_AT} · 전용 무기 발현 1종 선택`] : _selHeadBr60(s); };
+const _cardInfoP60 = cardInfo;
+cardInfo = function (c) { const r = _cardInfoP60(c); if (r && c.t === 'branch' && c.kind === 'p') r.tag = itemName(c.id) + ' 통달'; return r; };
+const _choiceTypeP60 = choiceType;
+choiceType = (c, f) => c.t === 'branch' && c.kind === 'p' ? '통달' : _choiceTypeP60(c, f);
 /* 이동 속도·그리기 연결점: HERO60[id].spdMul()·draw(c)·drawBody(c, fn) */
 const _ultSpdMul60 = ultSpdMul;
 ultSpdMul = function () { const h = hook60('spdMul'); return _ultSpdMul60() * (h || 1); };
