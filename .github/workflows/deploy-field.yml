@@ -44,3 +44,36 @@ jobs:
           if git diff --cached --quiet; then echo 'Already deployed'; exit 0; fi
           git commit -m "Deploy loop-game ${VER} (${SHA:0:7})"
           git push origin HEAD:main
+  preview:
+    # 회차 99: 배포 제외([skip deploy]) 커밋은 미리보기 주소(1hyun-you.github.io/field-preview/)로 보냄, 게임 주소는 그대로
+    if: ${{ contains(github.event.head_commit.message, '[skip deploy]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: game
+          persist-credentials: false
+      - name: Validate the game build
+        id: game
+        run: |
+          node game/dev/build.cjs
+          node game/dev/check-build.cjs
+          node -e "const s=require('fs').readFileSync('game/src/config.js','utf8');const m=s.match(/VERSION:\s*'([^']+)'/);if(!m)throw Error('VERSION not found');require('fs').appendFileSync(process.env.GITHUB_OUTPUT,'version='+m[1]+'\n');"
+      - uses: actions/checkout@v4
+        with:
+          repository: 1hyun-you/1hyun-you.github.io
+          token: ${{ secrets.SITE_DEPLOY_TOKEN }}
+          path: site
+      - name: Point the preview at this game revision
+        env:
+          SHA: ${{ github.sha }}
+          VER: ${{ steps.game.outputs.version }}
+        run: |
+          cd site
+          node -e "const fs=require('fs');fs.writeFileSync('field-preview/source-ref.json',JSON.stringify({repository:'1hyun-you/loop-game',commit:process.env.SHA,version:process.env.VER},null,2)+'\n');"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add field-preview/source-ref.json
+          if git diff --cached --quiet; then echo 'Preview already current'; exit 0; fi
+          git commit -m "Preview loop-game ${VER} (${SHA:0:7})"
+          git push origin HEAD:main

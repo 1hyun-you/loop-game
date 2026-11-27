@@ -129,6 +129,7 @@
 - 게임 주소 https://1hyun-you.github.io/field/ (옛 /loop-game/ 주소는 자동 이동)
 - 자동 배포: loop-game main에 `src/` 변경 저장 → `.github/workflows/deploy-field.yml`이 비밀값 `SITE_DEPLOY_TOKEN`으로 서비스 저장소 `field/source-ref.json` 갱신 → 서비스 쪽 `build-field.yml` 빌드·게시
 - 커밋 메시지에 `[skip deploy]` 포함 시 배포 제외 (문서·기록만 바꿀 때 사용)
+- 미리보기 주소(회차 99): `[skip deploy]` 커밋은 같은 작업의 preview 단계가 서비스 저장소 `field-preview/source-ref.json` 갱신 → `build-field-preview.yml`이 `dev/make-preview.cjs`로 가공해 https://1hyun-you.github.io/field-preview/ 게시 (저장 데이터 `preview:` 접두어 분리, 설치 불가, 미리보기 표시)
 - `field/version.json`은 자동 갱신 대상 아님 (GPT 수동 기록 파일)
 - `deploy_field.sh`는 사용 중지
 - 설치형 앱 규칙: 같은 사이트 앱은 하위 폴더별 배치, 최상위 앱 설치 금지, manifest id는 자기 폴더 경로(템트리 노트 /temtree/)
