@@ -241,7 +241,7 @@ button.row.pick.on{border-color:var(--accent);background:#2e2858}
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.67',
+  VERSION: '0.68',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
@@ -17298,7 +17298,7 @@ function fSwipe68(w, S) {
 }
 // 칼잎: 칼잎 3장이 흩날리듯 날아가 가까운 적 3마리를 한 장씩 그음
 function fLeaf68(w, S) {
-  const C = D68C.leaf, p = G.p, D = Dg(), ts = nearN60(p.x, p.y, C.range * S.area, C.n + (S.n - 1)); if (!ts.length) return false;
+  const C = D68C.leaf, p = G.p, D = Dg(), ts = nearN60(p.x, p.y, C.range * S.area, C.n); if (!ts.length) return false;   // 3장 고정 (단검 수 증가는 연성 업그레이드로 대체)
   const d = C.dmg * dk68(w, S);
   for (const e of ts) { damageEnemy(e, d, { src: 'dagger' }); D.leaves.push({ x: p.x, y: p.y - 6, e, tx: e.x, ty: e.y, t: 0, dur: 0.22, s: rand(6.28), bear: bear68() }); }
   const S6 = S60(); S6.leafMax = Math.max(S6.leafMax || 0, ts.length);
@@ -17359,7 +17359,7 @@ function fShroom68(w, S) {
 }
 // 생명 뿌리: 땅속 뿌리 2가닥이 가까운 적 2마리 발밑까지 뻗어 생기를 빨아들임 (휘감지 않음, 회복 없음)
 function fRoot68(w, S) {
-  const C = D68C.root, p = G.p, ts = nearN60(p.x, p.y, C.range * S.area, C.n + Math.max(0, S.n - 1)), prev = w.lk || [];
+  const C = D68C.root, p = G.p, ts = nearN60(p.x, p.y, C.range * S.area, C.n), prev = w.lk || [];   // 2가닥 고정
   w.lk = ts; w.lkT = G.time; if (!ts.length) return false;
   const d = C.dmg * dk68(w, S); for (const e of ts) damageEnemy(e, d, { src: 'lamp' });
   const S6 = S60(); S6.rootMax = Math.max(S6.rootMax || 0, ts.length);
@@ -17420,9 +17420,9 @@ Object.assign(HERO60.druid, {
 
 /* ---------- 드루이드 전용 자동 플레이 ----------
    변신은 1.5초 멈춰야 하므로 공용 자동 플레이(늘 움직임)로는 늑대에서 거의 바뀌지 않음 → 여유가 있을 때 서서 원하는 형태로 바꿈
-   곰을 고르는 때: 가까이 적이 많음(반경 130 안 6마리 이상)·체력 50% 미만·수문장 근처 / 그 밖에는 늑대
+   곰을 고르는 때: 가까이 적이 많음(반경 200 안 6마리 이상, 체력 60% 넘으면 맞으면서도 서서 바꿈)·체력 50% 미만·수문장 근처 / 그 밖에는 늑대
    깊어지는 야성(A)은 단계를 지키려고 꼭 필요할 때만 바꿈, 자연의 응답(B)은 적이 몰렸을 때 일부러 변신 (기준값 가안) */
-const AUTO68 = { tcStand: 0.9, dense: 6, denseR: 130, lowHp: 0.5, bTrig: 5 };
+const AUTO68 = { tcStand: 0.9, dense: 6, denseR: 200, lowHp: 0.5, bTrig: 5, bearHp: 0.6 };
 const _autoVecD68 = autoVec;
 function dAuto68() { return AUTO.d68 && AUTO.d68.run === G ? AUTO.d68 : (AUTO.d68 = { run: G, mode: 'move', at: G.time }); }
 autoVec = function () {
@@ -17438,8 +17438,9 @@ autoVec = function () {
   let sw = want !== D.form;
   if (p.job2 === 'A' && wildLv68() >= 2 && !(D.form === 'wolf' && p.hp < p.maxHp * 0.35)) sw = false;   // 깊어지는 야성: 단계 지킴
   if (p.job2 === 'B' && n >= AUTO68.bTrig) sw = true;                                 // 자연의 응답: 적이 몰리면 변신으로 덩굴 분출
-  const safe = !inHz && tc > AUTO68.tcStand * (STATE.dev.god ? 0.6 : 1) && shotT63() > 0.5 && !(tg && tg.k === 'goal') && here < 2;
-  if (sw && (safe || (s.mode === 'stand' && !inHz && tc > 0.35))) {
+  const base0 = !inHz && shotT63() > 0.5 && !(tg && tg.k === 'goal');
+  const safe = base0 && (tc > AUTO68.tcStand * (STATE.dev.god ? 0.6 : 1) || (want === 'bear' && p.hp > p.maxHp * AUTO68.bearHp));   // 곰으로 바꿀 때는 체력이 넉넉하면 맞으면서도 섬
+  if (sw && (safe || (s.mode === 'stand' && base0 && (want === 'bear' || tc > 0.35)))) {
     if (s.mode !== 'stand') { s.mode = 'stand'; s.at = G.time; S6.dStand = (S6.dStand || 0) + 1; }
     return (s.out = AUTO.out = { x: 0, y: 0, m: 0 });
   }
