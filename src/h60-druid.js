@@ -10,13 +10,13 @@
    ============================================================ */
 const D68C = {
   form: { still: 1.5, lock: 4, wolfSpd: 0.2, wolfCd: 0.3, bearGuard: 0.3, bearArea: 0.3 },
-  slam: { R: 110, k: 1, stun: 0.3 },                                                 // 곰 전환: 내려찍기 충격 (반경·피해 가안)
+  slam: { R: 110, k: 1, stun: 0.3, kb: 90 },                                         // 곰 전환: 내려찍기 충격 (반경·피해·밀쳐냄 90 가안)
   roar: { R: 120, fear: 0.5, kb: 170 },                                              // 늑대 전환: 포효 (반경 가안), 바깥으로만 밀어냄
   tangle: { R: 70, n: 2, k: 0.7 },                                                   // 발현 A 얽는 덩굴
   bush: { life: 3, R: 30, k: 0.4, root: 0.5, gap: 1.5, max: 6 },                     // 무기 각성 A 덩굴 덤불 (반경 가안)
   spear: { k: 1.5, lift: 0.4 },                                                      // 발현 B 가시 창
   bloom: { late: 0.3, n: 6, L: 90, k: 0.5, w: 12 },                                  // 무기 각성 B 가시꽃
-  tree: { rise: 0.5, n: 4, gap: 0.4, R: 90, k: 2, kb: 160, heal: 0.1, look: 300, dur: 2.5 },   // 수호목
+  tree: { rise: 0.5, n: 4, gap: 0.4, R: 90, k: 2, kb: 160, heal: 0.1, look: 300, dur: 2.5 },   // 수호목 (밀쳐냄 160·탐색 300·고목 위치 등 뒤 30 가안)
   wild: { t1: 6, t2: 12, k: 0.5 },                                                   // 깊어지는 야성: 6초·12초 단계 상승, 단계마다 형태 효과 +50%
   moon: { dur: 8, k: 2 },                                                            // 만월
   answer: { R: 150, L: 200, arc: 100 * Math.PI / 180, k: 1.5, root: 1 },             // 자연의 응답 (늑대 부채꼴 각도 가안)
@@ -24,7 +24,7 @@ const D68C = {
   swipe: { cd: 1.25, range: 86, arc: 110 * Math.PI / 180, dmg: 19, late: 0.3, k: 0.7 },
   leaf: { cd: 0.9, range: 220, n: 3, dmg: 11 },
   hawk: { cd: 1.0, range: 300, w: 24, dmg: 16, sp: 620 },
-  flower: { cd: 4, max: 3, life: 10, fire: 0.8, range: 240, dmg: 8, sp: 300, pool: { R: 28, life: 1.5, tick: 0.5, dmg: 3 }, dist: 38 },   // 식충 꽃 (바닥 독액: 반경 28·1.5초·0.5초마다 3, 구현 직전 작성 가안)
+  flower: { cd: 4, max: 3, life: 10, fire: 0.8, range: 240, dmg: 8, sp: 300, pool: { R: 28, life: 1.5, tick: 0.5, dmg: 3 }, dist: 38 },   // 식충 꽃 (바닥 독액: 반경 28·1.5초·0.5초마다 3 = 3번, 독액 속도 300·놓는 거리 38, 구현 직전 작성 가안)
   shroom: { cd: 1.2, range: 260, R: 45, dmg: 18, late: 0.25 },
   root: { n: 2, range: 140, dmg: 5 },
   bellf: { cd: 3, R: 140, stun: 0.2, pollen: 0.8, slow: 0.2 },
@@ -63,8 +63,8 @@ function shift68() {
 }
 function shiftFx68(k) {                                                               // 전환 효과 (만월 시작 = 2배)
   const D = Dg(), p = G.p, x = p.x, y = p.y, d = ref68() * D68C.slam.k * k;
-  if (D.form === 'bear') { const C = D68C.slam; gridQuery(x, y, C.R, e => { damageEnemy(e, d, { src: 'thorn', kb: 90, fx: x, fy: y }); if (!e.dead) stun60(e, C.stun * k); }); D.booms.push({ x, y, R: C.R, t: 0, dur: 0.4, slam: 1 }); shake(3 * k, 0.2); S60().slam = (S60().slam || 0) + 1; }
-  else { const C = D68C.roar; gridQuery(x, y, C.R, e => { damageEnemy(e, 0.01, { src: 'thorn', kb: C.kb, fx: x, fy: y }); if (!e.dead) stun60(e, C.fear * k); }); D.booms.push({ x, y, R: C.R, t: 0, dur: 0.45, roar: 1 }); S60().roar = (S60().roar || 0) + 1; }   // 겁먹어 물러남: 프리스트처럼 바깥으로만
+  if (D.form === 'bear') { const C = D68C.slam; gridQuery(x, y, C.R, e => { damageEnemy(e, d, { src: 'thorn', kb: C.kb, fx: x, fy: y }); if (!e.dead) stun60(e, C.stun * k); }); D.booms.push({ x, y, R: C.R, t: 0, dur: 0.4, slam: 1 }); shake(3 * k, 0.2); S60().slam = (S60().slam || 0) + 1; }
+  else { const C = D68C.roar; gridQuery(x, y, C.R, e => { if (!e.cmd) { const dx = e.x - x, dy = e.y - y, dd = Math.hypot(dx, dy) || 1; e.kbx += dx / dd * C.kb * JUICE.kbMul; e.kby += dy / dd * C.kb * JUICE.kbMul; } stun60(e, C.fear * k); }); D.booms.push({ x, y, R: C.R, t: 0, dur: 0.45, roar: 1 }); S60().roar = (S60().roar || 0) + 1; }   // 겁먹어 물러남: 프리스트처럼 바깥으로만
 }
 function answer68() {                                                                // 자연의 응답: 변신하는 순간 주변 땅에서 가시 덩굴 일제 분출
   const D = Dg(), C = D68C.answer, p = G.p, d = ref68() * C.k, hit = new Set(), b = baseW(), ctx = b ? roll60(b) : null;
@@ -88,7 +88,7 @@ function pThorn68(w, S) {
       for (const o of L) { damageEnemy(o, d * C.tangle.k, { src: 'thorn' }); if (!o.dead) root60(o, rt); D.spikes.push({ x: o.x, y: o.y, R: R * 0.7, t: 0, dur: 0.55, e: o, from: { x, y } }); }
       S60().tangle = (S60().tangle || 0) + L.length; }
     if (w.aw === 'A') { D.bushes.push({ x, y, R: C.bush.R * S.area, t: 0, d: S.dmg * C.bush.k, last: new Map() }); if (D.bushes.length > C.bush.max) D.bushes.shift(); S60().bush = (S60().bush || 0) + 1; }   // 덩굴 덤불 (동시 6개)
-    if (w.aw === 'B') G.later.push({ t: C.bloom.late, f: () => { if (G.result) return; const L = C.bloom.L * S.area, dd = S.dmg * C.bloom.k * (spear ? 1 : 1), a0 = rand(6.28), got = new Set();   // 가시꽃: 6방향 가시 줄기
+    if (w.aw === 'B') G.later.push({ t: C.bloom.late, f: () => { if (G.result) return; const L = C.bloom.L * S.area, dd = S.dmg * C.bloom.k, a0 = rand(6.28), got = new Set();   // 가시꽃: 6방향 가시 줄기
       withCR60(ctx, () => { for (let i = 0; i < C.bloom.n; i++) { const a = a0 + i / C.bloom.n * Math.PI * 2, ux = Math.cos(a), uy = Math.sin(a);
         gridQuery(x + ux * L / 2, y + uy * L / 2, L / 2 + 10, e => { if (got.has(e) || e.dead) return; const rx = e.x - x, ry = e.y - y, al = rx * ux + ry * uy; if (al < 0 || al > L + e.r) return; if (Math.abs(rx * uy - ry * ux) > C.bloom.w + e.r) return; got.add(e); damageEnemy(e, dd, { src: 'thorn' }); }); } });
       D.blooms.push({ x, y, L, a0, t: 0, dur: 0.4 }); S60().bloom = (S60().bloom || 0) + 1; S60().bloomHit = (S60().bloomHit || 0) + got.size; } });
@@ -187,7 +187,7 @@ function flowerTick68(dt) {
   D.flowers = D.flowers.filter(o => !o.dead);
   for (const s of D.spits) { s.t += dt; if (s.t < s.dur) continue; s.dead = true; const x = s.e && !s.e.dead ? s.e.x : s.tx, y = s.e && !s.e.dead ? s.e.y : s.ty;
     withCR60(s.ctx, () => { if (s.e && !s.e.dead && dist2(s.e.x, s.e.y, x, y) < 400) damageEnemy(s.e, s.d, { src: 'turret' }); });
-    D.pools.push({ x, y, R: s.R, t: 0, tk: P.tick, d: s.pd, bear: s.bear }); S60().spit = (S60().spit || 0) + 1; }
+    D.pools.push({ x, y, R: s.R, t: 0, tk: 0, d: s.pd, bear: s.bear }); S60().spit = (S60().spit || 0) + 1; }
   D.spits = D.spits.filter(s => !s.dead);
   for (const o of D.pools) { o.t += dt; if (o.t >= P.life) { o.dead = true; continue; } o.tk -= dt; if (o.tk > 0) continue; o.tk += P.tick;
     gridQuery(o.x, o.y, o.R, e => { damageEnemy(e, o.d, { src: 'turret' }); S60().poolTk = (S60().poolTk || 0) + 1; }); }   // 바닥 독액 = 지속 피해, 치명타 없음

@@ -15,15 +15,15 @@ const R67C = {
   echo: { late: 0.5, k: 0.3 },                                                       // 발현 A 잔향: 0.5초 뒤 같은 적 30%
   reso: { late: 0.3, R: 70, Rb: 105, k: 0.5, stun: 0.2 },                            // 무기 각성 A 공명: 0.3초 뒤 반경 70 작은 고리 50% + 멈칫 (일제 발동 105)
   fan: { arc: 120 * Math.PI / 180, R: 260, k: 1.2 },                                 // 발현 B 뻗는 울림: 부채꼴 120도·반경 260·피해 +20%
-  layer: { n: 3, gap: 0.2, k: 0.7, kb: 70 },                                         // 무기 각성 B 겹울림: 세 겹 0.2초 간격·각 70%·마지막 겹 살짝 밀어냄
-  sky: { R: 150, look: 320, drop: 4, stun: 1, late: 0.4, dur: 6, tick: 1, k: 1.5, guard: 0.3, heal: 0.02 },   // 하늘의 대종 (반경·낙하 피해 가안)
+  layer: { n: 3, gap: 0.2, k: 0.7, kb: 70 },                                         // 무기 각성 B 겹울림: 세 겹 0.2초 간격·각 70%·마지막 겹 살짝 밀어냄 (밀어냄 70 가안)
+  sky: { R: 150, look: 320, drop: 4, stun: 1, late: 0.4, kb: 160, dur: 6, tick: 1, k: 1.5, guard: 0.3, heal: 0.02 },   // 하늘의 대종 (반경·탐색 320·낙하 0.4초·낙하 피해·밀쳐냄 160 가안)
   descend: { n: 3, gap: 1 },                                                         // 여신 강림: 일제 발동 1초 간격 3번
   bolt: { R: 100, gap: 0.8, k: 0.8, stun: 0.2 },                                     // 맡기는 기도: 반경 100·0.8초 간격·종 기본 피해 80%
   judge: { dur: 2, n: 10, gap: 0.2, k: 3, R: 40 },                                   // 심판: 2초 이동 불가·피해 무효, 빛 번개 10줄기 (피해·반경 가안)
   sword: { cd: 1.25, range: 86, arc: 110 * Math.PI / 180, dmg: 19, per: 0.02, max: 0.08 },   // 성검: 벤 적 1마리당 기도 +2% (최대 +8%)
-  cross: { cd: 0.9, range: 220, dmg: 14, late: 0.15, k: 0.6, side: 50, band: 16 },   // 십자 긋기
-  prism: { cd: 1.0, range: 300, dmg: 16, sp: 520, R: 120, n: 2, k: 0.5 },            // 갈라지는 빛살
-  candle: { cd: 4, max: 3, life: 10, R: 70, tick: 0.5, dmg: 6, dist: 40 },           // 금빛 촛대
+  cross: { cd: 0.9, range: 220, dmg: 14, late: 0.15, k: 0.6, side: 50, band: 16 },   // 십자 긋기 (위아래 폭 16 가안)
+  prism: { cd: 1.0, range: 300, dmg: 16, sp: 520, R: 120, n: 2, k: 0.5 },            // 갈라지는 빛살 (화살 속도 가안)
+  candle: { cd: 4, max: 3, life: 10, R: 70, tick: 0.5, dmg: 6, dist: 40 },           // 금빛 촛대 (놓는 거리 가안)
   holy: { cd: 1.2, range: 260, dmg: 18, sp: 300, R: [35, 45, 55, 55] },              // 성화: 기도 단계에 따라 폭발 반경
   purify: { range: 140, dmg: 5, heal: 0.1 },                                         // 정화의 등불: 준 피해의 10% 체력 회복
   bind: { cd: 1.3, range: 200, R: 60, n: 4, dmg: 15, root: 0.5 },                    // 결박진
@@ -104,7 +104,8 @@ function pBell67(w, S, force) {
   const hit = []; gridQuery(p.x, p.y, R, e => { damageEnemy(e, S.dmg, { src: 'bell' }); if (!e.dead) { stun60(e, D.stun); hit.push(e); } });
   P.rings.push({ x: p.x, y: p.y, R, t: 0, dur: 0.35, big: burst, n: burst ? 3 : 1 });
   if (w.aw === 'A') {                                                                 // 공명: 맞은 적마다 작은 고리, 1번만 번짐
-    const r = (burst ? C.reso.Rb : C.reso.R) * S.area, d = S.dmg * C.reso.k;
+    const r = burst ? C.reso.Rb * S.area / P.boost.area : C.reso.R * S.area,   // 일제 발동 반경 105 (S.area에 든 1.5배를 빼고 적용, 교차 검토 반영)
+     d = S.dmg * C.reso.k;
     for (const e of hit) { G.later.push({ t: C.reso.late, f: () => { if (G.result) return; const x = e.x, y = e.y;
       withCR60(ctx, () => gridQuery(x, y, r, o => { damageEnemy(o, d, { src: 'bell' }); if (!o.dead) stun60(o, C.reso.stun); })); P.rings.push({ x, y, R: r, t: 0, dur: 0.3, small: 1 }); S60().reso = (S60().reso || 0) + 1; } }); }
   } else if (w.br === 'A') {                                                          // 잔향: 0.5초 뒤 같은 적에게 약한 울림 (멈칫 없음)
@@ -133,7 +134,7 @@ function ultSky67(p) {                                                          
 function skyTick67(dt) {
   const P = Qg(), B = P.sky; if (!B) return;
   const C = R67C.sky, p = G.p, d0 = ref67(); B.t += dt;
-  if (!B.land && B.t >= 0) { B.land = 1; gridQuery(B.x, B.y, C.R, e => { damageEnemy(e, d0 * C.drop, { src: 'ult', kb: 160, fx: p.x, fy: p.y }); if (!e.dead) stun60(e, C.stun); }); shake(6, 0.35); P.waves.push({ x: B.x, y: B.y, R: C.R, t: 0, dur: 0.5, big: 1 }); }
+  if (!B.land && B.t >= 0) { B.land = 1; gridQuery(B.x, B.y, C.R, e => { damageEnemy(e, d0 * C.drop, { src: 'ult', kb: C.kb, fx: p.x, fy: p.y }); if (!e.dead) stun60(e, C.stun); }); shake(6, 0.35); P.waves.push({ x: B.x, y: B.y, R: C.R, t: 0, dur: 0.5, big: 1 }); }
   if (!B.land) return;
   while (B.t >= (B.k + 1) * C.tick && B.k < C.dur / C.tick) {
     B.k++; gridQuery(B.x, B.y, C.R, e => { damageEnemy(e, d0 * C.k, { src: 'ult' }); if (!e.dead) stun60(e, 0.2); });
@@ -211,11 +212,11 @@ function rayTick67(dt) {
 // 금빛 촛대: 곁에 촛대가 세워지고, 촛불 빛 범위 안 적은 계속 그을림 (쏘지 않음)
 function fCandle67(w, S) {
   const C = R67C.candle, p = G.p, P = Qg(), mine = P.candles.filter(o => o.w === w), burst = !!P.boost;
-  if (mine.length >= C.max) { if (burst) for (const o of mine) { gridQuery(o.x, o.y, o.R * R67C.boost.area, e => damageEnemy(e, C.dmg * rk67(w, S) * 2, { src: 'turret' })); P.rings.push({ x: o.x, y: o.y, R: o.R * R67C.boost.area, t: 0, dur: 0.35, small: 1 }); S60().candleFlare = (S60().candleFlare || 0) + 1; } return 0.5; }   // 일제 발동 때 가득 차 있으면 세워진 촛대가 크게 타오름
+  if (mine.length >= C.max) { if (burst) for (const o of mine) { const fr = C.R * S.area; gridQuery(o.x, o.y, fr, e => damageEnemy(e, C.dmg * rk67(w, S), { src: 'turret' })); P.rings.push({ x: o.x, y: o.y, R: fr, t: 0, dur: 0.35, small: 1 }); S60().candleFlare = (S60().candleFlare || 0) + 1; } return 0.5; }   // 일제 발동 때 가득 차 있으면 세워진 촛대가 크게 타오름
   if (!nearestEnemy(p.x, p.y, 420)) return false;
   let q = null; for (let k = 0; k < 6 && !q; k++) { const a = rand(6.28), x = p.x + Math.cos(a) * C.dist, y = p.y + Math.sin(a) * C.dist * 0.8; if (!P.candles.some(o => dist2(o.x, o.y, x, y) < 26 * 26)) q = { x, y }; }
   q = q || { x: p.x + rand(-34, 34), y: p.y + rand(-30, 30) };
-  P.candles.push({ w, x: q.x, y: q.y, t: 0, tk: 0, R: C.R * S.area, k: rk67(w, S) / (burst ? R67C.boost.dmg : 1), big: burst }); S60().candle = (S60().candle || 0) + 1;
+  P.candles.push({ w, x: q.x, y: q.y, t: 0, tk: 0, R: C.R * S.area / (burst ? R67C.boost.area : 1), k: rk67(w, S) / (burst ? R67C.boost.dmg : 1), big: burst });   // 일제 발동 중 세워도 촛대 자체는 기본 크기 (교차 검토 반영) S60().candle = (S60().candle || 0) + 1;
   return C.cd * rc67(w, S);
 }
 function candleTick67(dt) {
@@ -223,8 +224,8 @@ function candleTick67(dt) {
   for (const o of P.candles) {
     o.t += dt; if (o.t >= C.life || !G.p.weapons.includes(o.w)) { o.dead = true; continue; }
     o.tk -= dt * ultCdMul(); if (o.tk > 0) continue; o.tk += C.tick;
-    const R = o.big ? o.R : o.R, d = C.dmg * o.k * (o.big ? R67C.boost.dmg : 1);
-    gridQuery(o.x, o.y, R, e => { damageEnemy(e, d, { src: 'turret' }); S60().candleTk = (S60().candleTk || 0) + 1; });   // 그을림 = 지속 피해, 치명타 없음
+    const d = C.dmg * o.k;
+    gridQuery(o.x, o.y, o.R, e => { damageEnemy(e, d, { src: 'turret' }); S60().candleTk = (S60().candleTk || 0) + 1; });   // 그을림 = 지속 피해, 치명타 없음
   }
   P.candles = P.candles.filter(o => !o.dead);
 }
@@ -234,7 +235,7 @@ function fHoly67(w, S) {
   const a0 = Math.atan2(tg.y - p.y, tg.x - p.x), st = Math.min(2, stage67()), R = C.R[st] * S.area, d = C.dmg * rk67(w, S), P = Qg();
   S60().holyR = Math.max(S60().holyR || 0, C.R[st]);
   for (let i = 0; i < S.n; i++) shoot({ kind: 'fire', x: p.x, y: p.y, ang: a0 + (i - (S.n - 1) / 2) * 0.25, sp: C.sp, r: 6 + st * 1.5, dmg: d, R, life: range / C.sp, color: '#FFF8E7', src: 'fireball', r67: 1,
-    on44: pr => { const x = pr.x, y = pr.y; withCR60(pr.cr60 || null, () => gridQuery(x, y, pr.R, e => damageEnemy(e, pr.dmg, { src: 'fireball', kb: 60, fx: G.p.x, fy: G.p.y }))); P.waves.push({ x, y, R: pr.R, t: 0, dur: 0.3, holy: 1 }); } });
+    on44: pr => { const x = pr.x, y = pr.y; withCR60(pr.cr60 || null, () => gridQuery(x, y, pr.R, e => damageEnemy(e, pr.dmg, { src: 'fireball', kb: 60, fx: G.p.x, fy: G.p.y }   /* 밀쳐냄 60 가안 */))); P.waves.push({ x, y, R: pr.R, t: 0, dur: 0.3, holy: 1 }); } });
   return C.cd * rc67(w, S);
 }
 // 정화의 등불: 가까운 적의 어둠을 빨아들여 빛으로 바꿔 체력을 채움
