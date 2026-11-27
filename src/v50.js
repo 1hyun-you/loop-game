@@ -78,7 +78,7 @@ function autoVec() {
   if (tg && tg.k === 'boss') pull = td > 60 ? 1 : 0;
   if (tg && tg.k === 'gk') { const mel = p.weapons.filter(w => WEAPONS[w.id].cat === 'melee').length >= 2, lo = mel ? 55 : 110, hi = mel ? 95 : 170; pull = td > hi ? 1 : td < lo ? -0.6 : 0.1; }
   const here = autoDanger(p.x, p.y), hz = hazT50(p.x, p.y), inHz = hz < Infinity;
-  if (J === 'archer' && heroImpl60('archer') && !inHz && here < (typeof V54 !== 'undefined' ? V54.arcStop : 2.5) && !(tg && (tg.k === 'goal' || tg.k === 'boss' || tg.k === 'gk'))) return (AUTO.out = { x: 0, y: 0, m: 0 });   // 궁수 정지 사격
+  // 0.63 궁수 정지 사격은 h60-archer.js 궁수 전용 자동 플레이로 이전 (옛 '위험 낮으면 정지' 한 줄 삭제)
   // 궁극기 정지 발동: 예고 밖에서만 (무적 궁극기 전사·도적은 발동까지 0.9초 넘게 남으면 허용)
   if (ultReady() && !autoUltSetting() && (here > 3 || G.time - G.tm.readyAt > 8)) {
     if (!inHz || ((J === 'warrior' || J === 'berserker' || J === 'rogue') && hz > 0.9)) { S.ultStop++; ultPress58('ai'); }   // 0.58 버튼 누름, 정지 없음
