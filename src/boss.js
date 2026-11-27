@@ -14,7 +14,7 @@ const GATEKEEPERS = {
 };
 const GK_ORDER = ['bargan', 'igna', 'morden', 'seren'];
 const GK_CFG = {
-  hpMul: 140, dmgMul: 1.3, spawn: [230, 270], rage: 0.5, fail: 360,   // hpMul 80→140: 0.11 1차 10판 바르간 평균 36초·이그나 18~71초·세렌 74초
+  hpMul: 100, dmgMul: 1.3, spawn: [230, 270], rage: 0.5, fail: 360,   // 0.69 hpMul 140→100 (인물 재구성 후 수문장전 100~360초·퇴각 잦음 → 목표 60~150초) / hpMul 80→140: 0.11 1차 10판 바르간 평균 36초·이그나 18~71초·세렌 74초
   bulletR: 6, bulletLife: 5,
   // 바르간
   bgEvery: [2.6, 1.9], bgTele: [0.75, 0.55], bgDashSp: 560, bgDashT: 0.6, bgSlamR: 120, bgSlamWarn: 0.9, bgSlamDmg: 26, bgAfterR: 62, bgAfterDmg: 20,

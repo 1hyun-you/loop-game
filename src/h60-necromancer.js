@@ -32,9 +32,9 @@ const N64C = {
 const Ng = () => G.n64 || (G.n64 = { souls: [], soulN: 0, ally: [], tombs: [], wisps: [], rel: [], bombs: [], hands: [], booms: [], links: [], giant: null, bind: 0, bindK: 1, relT: 0, relN: 0 });
 const isN64 = () => G.p && G.p.job === 'necromancer' && HERO60.necromancer.impl;
 const NCOL = () => HERO60.necromancer;
-const nk64 = (w, S) => S.dmg / WEAPONS[w.id].base.dmg;                              // 짝 무기 강화·보조 효과 배율
+const nk64 = (w, S) => fk60r(w, S);                              // 짝 무기 강화·보조 효과 배율
 const nc64 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
-const nMod64 = () => G.p.mod.dmg * TEMP60.dmg;                                      // 망령 피해: 공격력 보조 효과·전환기 보정만 (무기 강화와 무관)
+const nMod64 = () => G.p.mod.dmg * 1.2;                                             // 망령 피해: 공격력 보조 효과 × 기준 1.2 (0.69 옛 전환기 보정 편입, 무기 강화와 무관)
 const ref64 = () => { const b = baseW(); if (!b) return 20; const S = wStats(b); return S.dmg / Math.max(0.05, S.cd); };   // 등불 기준 = 초당 피해 (가안)
 const soulPer64 = () => G.p.job2 === 'B' ? N64C.soul.perB : N64C.soul.per;
 
@@ -191,7 +191,7 @@ function ultBind64(p) {                                                         
 function fEat64(w, S) {
   const C = N64C.eat, p = G.p, st = w.eat64 || 0, range = C.range * S.area * (1 + C.per * st), arc = C.arc + C.arcPer * st;
   const tg = nearestEnemy(p.x, p.y, range * 1.4); if (!tg) return false;
-  const a0 = Math.atan2(tg.y - p.y, tg.x - p.x), d = WEAPONS.cleave.base.dmg * nk64(w, S), hit = [];
+  const a0 = Math.atan2(tg.y - p.y, tg.x - p.x), d = FREF60.cleave * nk64(w, S), hit = [];
   gridQuery(p.x, p.y, range, e => { let da = Math.atan2(e.y - p.y, e.x - p.x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= arc / 2 + 0.15) hit.push(e); });
   for (const e of hit) { damageEnemy(e, d, { kb: WEAPONS.cleave.base.kb, fx: p.x, fy: p.y, src: 'cleave' }); Ng().links.push({ x: e.x, y: e.y, t: 0, dur: 0.3, home: 1, blade: 1 }); }
   fx({ kind: 'arc', a: a0, arc, r: range, dur: 0.18, color: NCOL().c3, basicArt: 'cleave', artX: p.x, artY: p.y });
@@ -201,7 +201,7 @@ function fEat64(w, S) {
 // 넋 가르기: 영혼 칼날이 몸을 긋고 한 박자 뒤 같은 자리에 반투명 칼날이 한 번 더 그어 넋까지 벰
 function fRend64(w, S) {
   const C = N64C.rend, p = G.p, ts = nearN60(p.x, p.y, C.range * S.area, S.n); if (!ts.length) return false;
-  const d = WEAPONS.dagger.base.dmg * nk64(w, S);
+  const d = FREF60.dagger * nk64(w, S);
   for (const e of ts) { cut60(e, NCOL().c3); damageEnemy(e, d, { src: 'dagger', fx: p.x, fy: p.y });
     G.later.push({ t: C.late, f: () => { if (G.result || e.dead) return; cut60(e, '#d8f4ff'); damageEnemy(e, d * C.k, { src: 'dagger' }); S60().rend = (S60().rend || 0) + 1; } }); }
   return C.cd * nc64(w, S);
@@ -237,7 +237,7 @@ function tombKill64(e) {                                                        
     o.s++; A.links.push({ x: e.x, y: e.y, tx: o.x, ty: o.y - 10, t: 0, dur: 0.3 });
     if (o.s >= C.need) {
       const w = o.w, S = wStats(w), T = o;
-      o.wr = ally64({ kind: 'tomb', x: o.x, y: o.y - 12, life: C.life - o.t + 0.1, atk: N64C.wr.atk, sp: N64C.wr.sp, reach: N64C.wr.reach, dmg: WEAPONS.turret.base.dmg * 2.5 * nk64(w, S) / nMod64(), anchor: () => T, alive: () => !T.dead, guard: C.guard, src: 'turret' });
+      o.wr = ally64({ kind: 'tomb', x: o.x, y: o.y - 12, life: C.life - o.t + 0.1, atk: N64C.wr.atk, sp: N64C.wr.sp, reach: N64C.wr.reach, dmg: FREF60.turret * 2.5 * nk64(w, S) / nMod64(), anchor: () => T, alive: () => !T.dead, guard: C.guard, src: 'turret' });
       S60().tombWr = (S60().tombWr || 0) + 1; fx({ kind: 'ring', x: o.x, y: o.y - 8, r0: 4, r1: 26, dur: 0.3, color: NCOL().c3 });
     }
     break;
@@ -264,7 +264,7 @@ function wispTick64(dt) {
 }
 // 조종: 낡은 종이 울리면 소환된 망령들도 함께 울부짖어, 망령 곁에도 울림이 퍼짐
 function fKnell64(w, S) {
-  const C = N64C.knell, p = G.p, A = Ng(), R = C.R * S.area, d = WEAPONS.bell.base.dmg * nk64(w, S);
+  const C = N64C.knell, p = G.p, A = Ng(), R = C.R * S.area, d = FREF60.bell * nk64(w, S);
   const wr = A.ally; if (!nearestEnemy(p.x, p.y, R) && !wr.some(a => nearestEnemy(a.x, a.y, C.wR))) return false;
   gridQuery(p.x, p.y, R, e => { damageEnemy(e, d, { src: 'bell' }); if (!e.dead) stun60(e, C.stun); });
   A.booms.push({ x: p.x, y: p.y, R, t: 0, dur: 0.4, ring: 1, bell: 1 });

@@ -4,15 +4,15 @@
    초기값 출처: 초안 0.2l, 본 제작 시험 기록으로 재조정 (0.2: 경험치 곡선·흡수 범위, 0.3: 페이즈 도입에 따른 출현 증가율·적 강화율 하향)
    ============================================================ */
 const CFG = {
-  VERSION: '0.68',
+  VERSION: '0.69',
   DEV: true,
   SAVE_KEY: 'hoegwi_main_v1',
   dprMax: 2,
   viewWidth: 400,                       // 기준 시야 폭(논리 px)
   player: { hp: 100, speed: 150, r: 12, pickup: 70, invuln: 0.5 },
-  xp: { base: 5, linear: 5, pow: 1.75, powMul: 0.9 },
-  spawn: { base: 1.6, perMin: 2.7, max: 460, soft: 300, softSpan: 250, softMin: 0.35, ramp: 1.25, rampBase: 170 },
-  scale: { hpPerMin: 0.45, dmgPerMin: 0.07, speedPerMin: 0.04 },
+  xp: { base: 4, linear: 4, pow: 1.75, powMul: 0.72 },   // 0.69 옛 전환기 경험치 1.25배 편입 (필요 경험치 ÷ 1.25)
+  spawn: { base: 1.12, perMin: 1.89, max: 460, soft: 300, softSpan: 250, softMin: 0.35, ramp: 1.25, rampBase: 170 },
+  scale: { hpPerMin: 0.42, dmgPerMin: 0.07, speedPerMin: 0.04 },
   early: { phases: 2, hp: 0.8, spawn: 0.8, xp: 1.25 },   // 0.16 초반 완화: 첫 2페이즈(예고 구간 포함) 적 체력·출현 밀도 하향, 경험치 획득 증가(레벨업 간격 단축)
   gemMerge: 300,
   joyR: 56,

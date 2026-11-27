@@ -30,7 +30,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     ok(HERO60.archer.br.length === 2 && HERO60.archer.wak.A && HERO60.archer.wak.B && FUSE60.archer && Object.keys(FUSE60.archer).length === 7, '발현 2·무기 각성 2·연성 7종 등록');
     // 2. 멈춤 사격 · 정지 공속 · 흡수 범위
     run(1);
-    ok(Math.abs(heroStat60(base()).cd - 1 / 1.8) < 1e-6, '정지 중 장궁 간격 ×1/1.8 (공속 +80%, 실제 ' + wStats(base()).cd.toFixed(2) + '초)');
+    ok(Math.abs(heroStat60(base()).cd - 1 / (1 + A63C.still.spd)) < 1e-6, '정지 중 장궁 간격 ×1/' + (1 + A63C.still.spd) + ' (공속 +' + Math.round(A63C.still.spd * 100) + '%, 실제 ' + wStats(base()).cd.toFixed(2) + '초)');
     const r0 = pickR(); mv(true); step(1 / 60); const r1 = pickR();
     ok(Math.abs(r0 / r1 - 1.6) < 0.01, '정지 중 경험치 흡수 범위 +60% (' + Math.round(r1) + ' → ' + Math.round(r0) + ')');
     ok(heroStat60(base()).cd === 1 && heroStatus60('').includes('이동'), '이동 중 공속 보너스 없음·상태 글자');
@@ -66,11 +66,11 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     // 6. 인물 각성 A 매의 눈 · 매의 시선
     fresh(); applyAw60('A'); cine(); mv(true); step(1 / 60); mv(false);
     runT(0.5); const bA = stillBonus63(); runT(1.5); const bB = stillBonus63(); runT(1.5); const bC = stillBonus63();
-    ok(Math.abs(bA - 0.8) < 1e-6 && bB > 0.8 && bB < 1.5 && Math.abs(bC - 1.5) < 1e-6, `매의 눈: 서 있는 시간에 따라 공속 +80% → +${Math.round(bB * 100)}% → +150%`);
+    const s0 = A63C.still.spd, sM = A63C.eye.max; ok(Math.abs(bA - s0) < 1e-6 && bB > s0 && bB < sM && Math.abs(bC - sM) < 1e-6, `매의 눈: 서 있는 시간에 따라 공속 +${Math.round(s0 * 100)}% → +${Math.round(bB * 100)}% → +${Math.round(sM * 100)}%`);
     G.enemies.forEach(e => e.dead = true); G.enemies = G.enemies.filter(e => !e.dead); mv(true); step(1 / 60); mv(false);
     const sl = makeEnemy('slime', G.p.x + 150, G.p.y); sl.speed = 60; const x0 = sl.x; for (let i = 0; i < 30; i++) step(1 / 60); const dN = x0 - sl.x;
     G.p.ult = JOB_CFG.ultNeed; useUlt(); runT(0.1); const x1 = sl.x; for (let i = 0; i < 30; i++) step(1 / 60); const dS = x1 - sl.x;
-    ok(A().gaze > 3 && dS < dN * 0.65 && Math.abs(stillBonus63() - 1.5) < 1e-6, `매의 시선: 적 이동 감속 (${dN.toFixed(1)} → ${dS.toFixed(1)})·정지 공속 즉시 최대`);
+    ok(A().gaze > 3 && dS < dN * 0.65 && Math.abs(stillBonus63() - A63C.eye.max) < 1e-6, `매의 시선: 적 이동 감속 (${dN.toFixed(1)} → ${dS.toFixed(1)})·정지 공속 즉시 최대`);
     // 7. 인물 각성 B 치고 빠지기 · 화살 폭풍
     fresh(); applyAw60('B'); cine(); crowd(10); const hb0 = S6().hb || 0;
     for (let k = 0; k < 6; k++) { runM(0.4, 0, true); runT(1.0); }

@@ -1,14 +1,14 @@
 /* ============================================================
    0.66 화염술사 구현 (회차 97, 분할 구현 7차) — 기준: docs/characters/pyromancer.md
-   • 고유 규칙(연성형): "화염구·연성 무기에 맞은 적이 불붙음" — 불 3초·매초 화염구 피해 10%, 화염술사 전용 상태 (옮겨붙음·번짐 없음)
+   • 고유 규칙(연성형): "화염구·연성 무기에 맞은 적이 불붙음" — 불 3초·매초 화염구 피해 15%(0.69 10% → 15%), 화염술사 전용 상태 (옮겨붙음·번짐 없음)
    • 전용 무기 화염구: 발현 A 큰 불꽃 → 무기 각성 A 불기둥 / 발현 B 불의 창 → 무기 각성 B 폭렬 창
    • 궁극기: 기본 화염 해방 / 인물 각성 A 불 거두기 + 불사조 / 인물 각성 B 불티 + 거대 불덩이
    • 연성 7종: 불꽃 대검·X자 불칼금·불씨살·불꽃 정령·화염 등불·뜨거운 숨·불넝쿨 (7종 전부 불붙음, 색은 같게 두고 모양으로 구분)
    • 그림: 새 장면은 임시 도형 (최종본 아님, GPT 요청 대상), 수치는 전부 가안 (대규모 밸런스 단계 조정)
    ============================================================ */
 const P66C = {
-  burn: { dur: 3, k: 0.1, tick: 1 },                                                 // 불붙음: 3초·매초 화염구 피해 10%
-  fb: { range: 260, R: 35, sp: 300 },                                                // 화염구: 1.2초마다·사거리 260·폭발 반경 35·피해 18
+  burn: { dur: 3, k: 0.15, tick: 1 },                                                // 불붙음: 3초·매초 화염구 피해 15% (0.69 10% → 15%)
+  fb: { range: 260, R: 35, sp: 300 },                                                // 화염구: 1.2초마다·사거리 260·폭발 반경 35·피해 22(0.69 짝 무기 표)
   big: { R: 1.6 },                                                                   // 발현 A 큰 불꽃: 폭발 반경 +60%
   pillar: { every: 4, dur: 1.5, R: 50, tick: 0.3, k: 0.4 },                          // 무기 각성 A 불기둥: 4번째 발동마다 1.5초·반경 50·0.3초마다 40%
   spear: { k: 1.3, sp: 460, w: 10 },                                                 // 발현 B 불의 창: 일직선 관통·피해 +30%
@@ -29,7 +29,7 @@ const P66C = {
 const Pg = () => G.p66 || (G.p66 = { burn: [], embers: 0, pillars: [], spears: [], arrows: [], spirits: [], vines: [], booms: [], links: [], cuts: [], phoenix: null, meteor: null, nCast: 0 });
 const isP66 = () => G.p && G.p.job === 'pyromancer' && HERO60.pyromancer.impl;
 const PCOL = () => HERO60.pyromancer;
-const pk66 = (w, S) => S.dmg / WEAPONS[w.id].base.dmg;                              // 짝 무기 강화·보조 효과 배율
+const pk66 = (w, S) => fk60r(w, S);                              // 짝 무기 강화·보조 효과 배율
 const pc66 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
 const fbD66 = () => { const b = baseW(); return b ? wStats(b).dmg : WEAPONS.fireball.base.dmg; };   // 화염구 피해 (불붙음·불티·궁극기 기준)
 const ref66 = () => { const b = baseW(); if (!b) return 15; const S = wStats(b); return S.dmg / Math.max(0.05, S.cd); };   // 무기 기준 = 화염구 초당 피해 (가안, 사령술사·엔지니어와 같은 방식)
@@ -209,7 +209,7 @@ function fLamp66(w, S) {
 }
 // 뜨거운 숨: 숨을 내쉬듯 몸에서 열기 고리가 두 번 퍼지고, 두 번째가 더 멀리 퍼짐
 function fBreath66(w, S) {
-  const C = P66C.breath, p = G.p, R1 = C.R1 * S.area, R2 = C.R2 * S.area, d = WEAPONS.bell.base.dmg * pk66(w, S), P = Pg(), ctx = CR60;
+  const C = P66C.breath, p = G.p, R1 = C.R1 * S.area, R2 = C.R2 * S.area, d = FREF60.bell * pk66(w, S), P = Pg(), ctx = CR60;
   if (!nearestEnemy(p.x, p.y, R2)) return false;
   gridQuery(p.x, p.y, R1, e => { hit66(e, d, 'bell'); if (!e.dead) stun60(e, C.stun); });
   P.booms.push({ x: p.x, y: p.y, R: R1, t: 0, dur: 0.35, ring: 1 });

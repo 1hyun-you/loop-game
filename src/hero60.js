@@ -49,30 +49,34 @@ const heroImpl60 = id => { const H = H60(id); return !!(H && H.impl); };
 const PW60 = ['cleave', 'dagger', 'arrow', 'turret', 'fireball', 'lamp', 'bell', 'thorn'];
 Object.assign(WEAPONS, {
   cleave: { name: '대검', cat: 'melee', ic: '검', desc: '가장 가까운 적 쪽 부채꼴 베기, 밀쳐냄', col: '#ffe0d0',
-    base: { dmg: 19, cd: 1.25, range: 86, arc: 1.92, kb: 180 },
+    base: { dmg: 23, cd: 1.25, range: 86, arc: 1.92, kb: 180 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { cd: 0.15 }, { dmg: 0.5, area: 0.1 }] },
   dagger: { name: '단검', cat: 'melee', ic: '단', desc: '가장 가까운 적을 긋기, 적 몸에 상처 선', col: '#e6e8f8', noMotion: true,
-    base: { dmg: 14, cd: 0.9, range: 220, n: 1 },
+    base: { dmg: 19, cd: 0.9, range: 220, n: 1 },
     ups: [{ dmg: 0.3 }, { cd: 0.15 }, { n: 1 }, { dmg: 0.4 }] },
   arrow: { name: '장궁', cat: 'ranged', ic: '궁', desc: '가장 가까운 적에게 화살 1발', col: '#e8f6d0',
-    base: { dmg: 16, cd: 1.0, range: 300, n: 1, sp: 540 },
+    base: { dmg: 21, cd: 1.0, range: 300, n: 1, sp: 540 },
     ups: [{ dmg: 0.3 }, { cd: 0.15 }, { n: 1 }, { dmg: 0.4 }] },
   turret: { name: '포탑 설치', cat: 'ranged', ic: '포', desc: '곁에 포탑 설치, 포탑이 가까운 적 사격 (10초 뒤 사라짐)', col: '#ffd890',
-    base: { dmg: 8, cd: 4, n: 3, life: 10, fire: 0.8, range: 240 },
+    base: { dmg: 11, cd: 4, n: 3, life: 10, fire: 0.8, range: 240 },
     ups: [{ dmg: 0.3 }, { n: 1 }, { cd: 0.15 }, { dmg: 0.4 }] },
   fireball: { name: '화염구', cat: 'magic', ic: '화', desc: '가장 가까운 적에게 불덩이, 작은 폭발', col: '#ff9a4a',
-    base: { dmg: 18, cd: 1.2, range: 260, R: 35, sp: 300 },
+    base: { dmg: 22, cd: 1.2, range: 260, R: 35, sp: 300 },
     ups: [{ dmg: 0.3 }, { area: 0.2 }, { cd: 0.15 }, { dmg: 0.3, area: 0.1 }] },
   lamp: { name: '영혼 등불', cat: 'magic', ic: '등', desc: '가까운 적과 줄기로 이어져 계속 빨아들임', col: '#b9a4ff', noMotion: true,
-    base: { dmg: 5, cd: 0.25, range: 140, n: 1 },
+    base: { dmg: 7, cd: 0.25, range: 140, n: 1 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { n: 1 }, { dmg: 0.4 }] },
   bell: { name: '축복의 종', cat: 'magic', ic: '종', desc: '몸 주위로 음파 고리, 맞은 적 멈칫', col: '#f3e6b0',
-    base: { dmg: 12, cd: 3, R: 140, stun: 0.2 },
+    base: { dmg: 14, cd: 3, R: 140, stun: 0.2 },
     ups: [{ dmg: 0.3 }, { area: 0.15 }, { cd: 0.15 }, { dmg: 0.4 }] },
   thorn: { name: '가시 덩굴', cat: 'magic', ic: '덩', desc: '가장 가까운 적 발밑에서 솟아 휘감아 묶음', col: '#9fd47a',
-    base: { dmg: 15, cd: 1.3, range: 200, R: 35, n: 1, root: 0.5 },
+    base: { dmg: 18, cd: 1.3, range: 200, R: 35, n: 1, root: 0.5 },
     ups: [{ dmg: 0.3 }, { area: 0.2 }, { cd: 0.15 }, { n: 1 }] },
 });
+// 0.69 연성·인물 수치 기준표: 인물 파일의 연성 설정 피해(C.dmg 등)는 이 표(0.60 짝 무기 피해)에 맞춰 적혀 있음
+//   → 배율 = 현재 짝 무기 피해(wStats) ÷ 기준표, 옛 전환기 보정 1.2는 짝 무기 표 피해에 편입됨 (기준표는 고정, 짝 무기 표만 조정)
+const FREF60 = { cleave: 19, dagger: 14, arrow: 16, turret: 8, fireball: 18, lamp: 5, bell: 12, thorn: 15 };
+const fk60r = (w, S) => S.dmg / FREF60[w.id];
 WEAPON_ORDER.splice(0, WEAPON_ORDER.length, ...PW60);
 START_POOL.splice(0, START_POOL.length, ...PW60);
 for (const id of PW60) { delete BRANCHES[id]; delete AWAKEN[id]; }   // 일반 무기는 발현·각성 없음 (전용 무기 발현은 인물 구현 때 인물 쪽에 둠)
@@ -112,8 +116,9 @@ const FUSE60 = {};                                           // FUSE60[인물][�
 function fuseDef60(j, id) { return FUSE60[j] && FUSE60[j][id] || null; }
 function fuseCands60() {
   const p = G.p; if (!p.job || !baseW()) return [];
-  return slotWs().filter(w => !w.fu && w.lvl >= CFG.weaponMax && fuseDef60(p.job, w.id));
+  return slotWs().filter(w => !w.fu && w.lvl >= CFG.weaponMax - 1 && fuseDef60(p.job, w.id));   // 0.69 연성 카드 시점: 짝 무기 Lv 4 → 5 카드 = 연성 카드 (DESIGN 4장)
 }
+const fuseNext60 = w => !w.fu && !w.base && w.lvl === CFG.weaponMax - 1 && G.p.job && baseW() && fuseDef60(G.p.job, w.id);   // Lv 4 짝 무기의 다음 카드는 연성 카드로 대체
 fuseName = (j, id) => (FUSE60_NM[j] && FUSE60_NM[j][id]) || WEAPONS[id].name;
 
 /* ---------- 상태 ---------- */
@@ -126,18 +131,14 @@ makeEnemy = function (type, x, y) { const e = _makeEnemy60(type, x, y); if (G &&
 /* ---------- 전환기 임시 보정 (대규모 밸런스 단계에서 제거·재조정) ----------
    옛 직업 규칙·분기·각성·연성 90종이 빠지고 인물·연성이 아직 비어 있는 동안 판 돌파가 가능하도록 일괄 보정
    (짝 무기 기본형은 대부분 단일 대상이라 무리 처리량이 0.58의 약 60% → 무기 피해·출현량·경험치 3가지로 메움) */
-const TEMP60 = { dmg: 1.2, spawn: 0.7, xp: 1.25 };
-const _phaseSpawnMul60 = phaseSpawnMul;
-phaseSpawnMul = function () { return _phaseSpawnMul60.apply(this, arguments) * TEMP60.spawn; };
-const _addXp60 = addXp;
-addXp = function (v) { return _addXp60(v * TEMP60.xp); };
+// 0.69 대규모 밸런스 2단계: 임시 보정 제거 → 정식 수치로 편입 (무기 피해 1.2 = 짝 무기 표 피해, 출현 0.7 = CFG.spawn, 경험치 1.25 = CFG.xp 곡선)
 
 /* ---------- 0.62 치명타 공통 (회차 93 결정) ----------
    • 판정: 무기 발동 1번에 1회 (여러 적을 맞혀도 같은 결과), 그 발동의 투사체·늦은 타격도 같은 판정
      발동 밖의 지속 피해(장판·소환물 틱 등)는 치명타 없음, 인물 규칙이 직접 지정하는 경우 o.cr·o.critMul
    • 치명타 피해 1.5배 (통달 '급소' 1.8배), 확률 = 보조 효과 '치명타' 레벨당 +4% (모든 인물·모든 무기) + 인물 규칙(도적: 전용·연성 +20%)
    • 보조 효과 통달: Lv 3 분기 → Lv 5 통달로 이동 (전용 무기 발현은 Lv 3 그대로), 공격력 분기 '치명' 삭제 → '압도' */
-const CRIT60 = { per: 0.04, mul: 1.5, vital: 1.8, shake: 0.3, over: 1.5 };
+const CRIT60 = { per: 0.08, mul: 1.5, vital: 1.8, shake: 0.3, over: 1.5 };
 const PBR_AT = 5;
 let CR60 = null;                                             // 현재 발동의 치명타 판정 { w, cr }
 function critCh60(w) { let c = CRIT60.per * passLv('crit'); const h = w && hook60('critAdd', w); if (h) c += h; return c; }
@@ -149,7 +150,7 @@ function runCR60(ctx, f) {                                   // 판정을 걸고
   return r;
 }
 const critMul60 = () => pBr('crit') === 'vital' ? CRIT60.vital : CRIT60.mul;
-PASSIVES.crit = { name: '치명타', ic: '치', per: CRIT60.per, desc: L => `치명타 확률 +${4 * L}% (치명타 피해 1.5배)` };
+PASSIVES.crit = { name: '치명타', ic: '치', per: CRIT60.per, desc: L => `치명타 확률 +${Math.round(CRIT60.per * 100 * L)}% (치명타 피해 1.5배)` };
 if (!PASSIVE_ORDER.includes('crit')) PASSIVE_ORDER.push('crit');
 BRANCHES.crit = [{ k: 'vital', nm: '급소', ds: '치명타 피해 1.5배 → 1.8배' }, { k: 'shake', nm: '흔들기', ds: '치명타를 맞은 적 0.3초 멈칫' }];
 BRANCHES.might = [{ k: 'over', nm: '압도', ds: '체력이 가득 찬 적에게 주는 첫 타격 피해 +50%' }, BRANCHES.might.find(o => o.k === 'pen')];
@@ -172,7 +173,7 @@ function wStats(w) {
   if (mL && B.n && w.id !== 'turret') { s.n += multiN(mL) + (pBr('multi') === 'barrage' ? 1 : 0); dm *= 1 + 0.03 * mL + (pBr('multi') === 'velocity' ? 0.2 : 0); if (pBr('multi') === 'barrage') cm *= 1.2; }
   if (pBr('might') === 'pen' && w.id === 'arrow') s.pierce += 1;
   const H = heroStat60(w); dm *= H.dmg; cm *= H.cd;
-  return { dmg: B.dmg * (1 + s.dmg) * M.dmg * dm * TEMP60.dmg, area: (1 + s.area) * H.area, cd: (B.cd || 0) * (1 - s.cd) * M.cd * cm, n: (B.n || 1) + s.n, pierce: (B.pierce || 0) + s.pierce, rot: 0 };
+  return { dmg: B.dmg * (1 + s.dmg) * M.dmg * dm, area: (1 + s.area) * H.area, cd: (B.cd || 0) * (1 - s.cd) * M.cd * cm, n: (B.n || 1) + s.n, pierce: (B.pierce || 0) + s.pierce, rot: 0 };
 }
 /* 인물 규칙의 무기 수치 보정 (전용·연성 무기만, 인물 구현 때 HERO60[id].stat(w) 등록) */
 function heroStat60(w) { const H = H60(); return H && H.impl && H.stat && (w.base || w.fu) ? Object.assign({ dmg: 1, cd: 1, area: 1 }, H.stat(w)) : { dmg: 1, cd: 1, area: 1 }; }
@@ -380,6 +381,7 @@ function applyHero60(id) {
   const own = p.weapons.find(w => w.id === H.wpn && !w.fu);
   if (own) p.weapons = p.weapons.filter(w => w !== own);
   p.job = id; p.jobAt = G.ph.i; G.altar = null;
+  if (G.banished && G.banished.delete(H.wpn)) S60().unban = H.wpn;   // 0.69 오류 수정: 인물 선택 전 '제외'한 무기가 전용 무기가 되면 강화 카드가 영영 안 나오던 문제 (전용 무기는 제외 대상 아님)
   G.stats.job = id; G.stats.jobAt = Math.round(G.time);
   const b = makeBase(own || { id: H.wpn, lvl: 1, t: 0.3 }); p.weapons.push(b);
   G.stats.base = H.wpn + ':' + b.lvl;
@@ -419,7 +421,7 @@ function keepOk60() {
   G.p.weapons = G.p.weapons.filter(w => !drop.includes(w));
   S60().keep = { kept: [...s.keep], drop: drop.map(w => w.id + ':' + w.lvl), xp };
   recalc(); closeSel();
-  if (xp > 0) _addXp60(xp);
+  if (xp > 0) addXp(xp);
   toast(drop.length ? `${drop.map(w => WEAPONS[w.id].name).join('·')} → 경험치 ${xp}` : '무기 정리 완료', H60() ? H60().col : '#fff');
 }
 SEL_HEAD.keep = s => ['남길 무기', `${H60() ? H60().name : ''} 무기 칸 ${s.n + 1}개 · 일반 무기 ${s.n}개 선택`];   // 빠지는 무기의 경험치 환급은 카드에 표기
@@ -506,7 +508,7 @@ function applyFuse60(id) {
   const p = G.p, w = slotWs().find(x => x.id === id && !x.fu), j = p.job, d = fuseDef60(j, id);
   if (!w || !j) return;
   if (!d) { toast('이 연성은 아직 제작 전', '#ff8a7a'); return; }
-  const H = HERO60[j]; w.fu = { job: j, nm: d.nm || fuseName(j, id) }; w.t = 0.3;
+  const H = HERO60[j]; w.lvl = Math.max(w.lvl, CFG.weaponMax); w.fu = { job: j, nm: d.nm || fuseName(j, id) }; w.t = 0.3;   // 0.69 연성 = Lv 5 도달
   (G.stats.fuses = G.stats.fuses || []).push(`${id}:${j}:${Math.round(G.time)}`); S60().fuse++;
   banner('연성 · ' + w.fu.nm, `${WEAPONS[id].name} + ${WEAPONS[H.wpn].name}`, H.col, 2.4);
   heroBurst60(H.col); if (typeof cine47 === 'function') cine47('fuse', H.col, w);
@@ -515,7 +517,7 @@ function applyFuse60(id) {
 applyFuse = applyFuse60;
 function levelCands60() {
   const p = G.p, out = [], ban = G.banished, nW = p.weapons.length, K = CFG.select, b = baseW();
-  for (const w of p.weapons) if (!w.fu && w.lvl < CFG.weaponMax && !ban.has(w.id)) out.push({ t: 'wup', id: w.id, w: K.wupW * (nW >= 3 ? K.wupW3 : 1) * (w === b ? BASE_CARD_W : 1) });
+  for (const w of p.weapons) if (!w.fu && w.lvl < CFG.weaponMax && !ban.has(w.id) && !fuseNext60(w)) out.push({ t: 'wup', id: w.id, w: K.wupW * (nW >= 3 ? K.wupW3 : 1) * (w === b ? BASE_CARD_W : 1) });
   if (nW < slotW()) {
     const nw = WEAPON_ORDER.filter(id => !hasW(id) && !ban.has(id) && catOk(WEAPONS[id].cat)), nk = Math.min(1, K.wnewPool / Math.max(1, nw.length));
     for (const id of nw) out.push({ t: 'wnew', id, w: (nW >= 3 ? K.wnewW3 : K.wnewW) * nk });
@@ -532,7 +534,7 @@ function drawCards(n, exclude = []) {
   for (const t of traitCands(exclude.concat(res))) if (res.length < n) res.push(t);
   for (const f of FILL_CARDS) if (res.length < n && !res.some(x => same(x, f)) && !exclude.some(x => same(x, f))) res.push(f);
   const b = baseW(); if (b && res.some(x => x.t === 'wup' && x.id === b.id)) S60().bOff = (S60().bOff || 0) + 1;
-  const c = fuseCands60()[0];
+  const fc = fuseCands60(), c = fc.length ? fc[Math.floor(Math.random() * fc.length)] : null;   // 0.69 Lv 4 짝 무기가 여럿이면 무작위 1장 (교차 검토 반영: 첫 무기만 나와 나머지가 Lv 4에 고정되던 문제)
   if (c && n === selN() && !exclude.some(x => x.t === 'fuse60') && res.length) { res.splice(res.length - 1, 1); res.unshift({ t: 'fuse60', id: c.id }); }
   return res;
 }
@@ -667,7 +669,7 @@ function abilW55() {
   return ws.map(w => {
     const d = WEAPONS[w.id], col = w.fu || w.base ? JOB_COL[p.job] : CFG.colors[d.cat], fd = w.fu && fuseDef60(w.fu.job, w.id);
     return cxCard({ id: w.id, col, ic: d.ic, nm: wName(w.id), tag: (w.base ? '전용 무기 · ' : w.fu ? '연성 · ' : '') + 'Lv ' + w.lvl,
-      lines: [esc(fd ? fd.ds || '' : d.desc), wChips55(w, null, null), !w.fu && w.lvl < CFG.weaponMax ? '' : !w.base && !w.fu && p.job && FUSE60_NM[p.job] && FUSE60_NM[p.job][w.id] ? `<i>연성</i> ${esc(FUSE60_NM[p.job][w.id])}${fuseDef60(p.job, w.id) ? '' : ' (제작 중)'}` : ''] });
+      lines: [esc(fd ? fd.ds || '' : d.desc), wChips55(w, null, null), !w.fu && w.lvl < CFG.weaponMax - 1 ? '' : !w.base && !w.fu && p.job && FUSE60_NM[p.job] && FUSE60_NM[p.job][w.id] ? `<i>연성</i> ${esc(FUSE60_NM[p.job][w.id])}${fuseDef60(p.job, w.id) ? '' : ' (제작 중)'}` : ''] });
   }).join('');
 }
 function abilJ55() {

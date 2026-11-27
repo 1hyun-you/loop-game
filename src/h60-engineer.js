@@ -2,10 +2,10 @@
    0.65 엔지니어 구현 (회차 97, 분할 구현 6차) — 기준: docs/characters/engineer.md
    • 고유 규칙: "엔지니어의 기계는 사라지지 않고 체력을 가지며, 가까운 적은 기계를 먼저 노림"
      - 정예 = 캐릭터 우선·길 막는 기계만 공격 / 수문장·마왕 = 기계 무시·광역기(예고 구역)에 기계도 피해
-     - 설치: 가만히 2.5초 → 캐릭터 위쪽 설치, 계속 서 있으면 1.2초 간격, 움직이면 취소
-     - 수량: 기본 포탑 4대(+ 포탑 강화 '최대 설치' + 연성마다 +1), 연성 기계 종류별 2기(가안)
+     - 설치: 가만히 1.5초 → 캐릭터 위쪽 설치, 계속 서 있으면 1.0초 간격, 움직이면 취소 (0.69 2.5·1.2초에서 단축)
+     - 수량: 기본 포탑 5대(0.69 4 → 5, + 포탑 강화 '최대 설치' + 연성마다 +1), 연성 기계 종류별 2기(가안)
      - 철거: 기계 탭 1회 = 반투명 + 빨간 X, 2회 = 철거 / 재설치 대기 부서짐 10초·철거 5초
-     - 영역: 기계마다 반경 200 원, 영역 밖 5초 → 전체 분해, 영역 밖에서는 짓지 않음
+     - 영역: 기계마다 반경 250 원, 영역 밖 8초 → 전체 분해 (0.69 200·5초에서 완화), 영역 밖에서는 짓지 않음
    • 전용 무기 포탑 설치: 발현 A 쌍열 포탑 → 무기 각성 A 회전 기관포 / 발현 B 대구경 포탑 → 무기 각성 B 박격포
    • 궁극기: 기본 긴급 증설 / 인물 각성 A 현장 지휘관 + 총지휘 / 인물 각성 B 전기 울타리 + 결전 병기
    • 연성 7종 = 그 무기를 쓰는 기계 설치: 대검 기계병·칼날 드론·쇠뇌 포대·용광로·용접 토치·경보종·철조망 발사기
@@ -13,14 +13,15 @@
    • 그림: 새 장면은 임시 도형 (최종본 아님, GPT 요청 대상), 수치는 전부 가안 (대규모 밸런스 단계 조정)
    ============================================================ */
 const E65C = {
-  build: { first: 2.5, next: 1.2, gap: 6, hpBase: 60 },                              // 가만히 2.5초 → 설치, 계속 서 있으면 1.2초 간격, 가장자리 틈 6, 체력 60
-  cap: { turret: 4, fuse: 2 },                                                       // 기본 포탑 4대 (+최대 설치 강화·연성마다 +1), 연성 기계 종류별 2기 (가안)
+  build: { first: 1.5, next: 1.0, gap: 6, hpBase: 80, hpMin: 0.3 },                 // 가만히 1.5초 → 설치, 계속 서 있으면 1.0초 간격, 가장자리 틈 6, 체력 80 × (1 + 분당 30%) (0.69: 2.5초·1.2초·60 고정 → 서 있기 어렵고 후반 접촉에 바로 부서짐)
+  cap: { turret: 5, fuse: 2 },                                                       // 0.69 기본 포탑 5대 (4 → 5) (+최대 설치 강화·연성마다 +1), 연성 기계 종류별 2기 (가안)
+  out: { k: 1.5 },                                                                   // 0.69 기계 출력: 전용·연성 기계 피해 +50% (대규모 밸런스, 처치/분 최하위 보완)
   cool: { broke: 10, removed: 5 },                                                   // 재설치 대기: 부서짐 10초·직접 철거 5초
   tap: { move: 10, time: 0.25, hit: 22, keep: 2 },                                   // 탭: 이동 10px 미만·0.25초 안에 뗌, 판정 지름 44px, X 표시 2초 유지
-  area: { R: 200, edge: 100, out: 5 },                                               // 영역 반경 200(1.3초), 경계 100 안에서 진해짐, 영역 밖 5초 → 분해
-  lure: { R: 150, hitCd: 0.6 },                                                      // 기계 반경 150 안·캐릭터보다 기계가 가까운 일반 적 → 기계를 노림 (가안), 붙어서 0.6초마다 적 피해만큼 (가안)
+  area: { R: 250, edge: 100, out: 8 },                                               // 영역 반경 250(1.7초), 경계 100 안에서 진해짐, 영역 밖 8초 → 분해 (0.69 200·5초 → 250·8초: 피하다 영역을 벗어나 기계 전부 분해되는 일 잦음)
+  lure: { R: 180, hitCd: 0.6 },                                                      // 기계 반경 150 안·캐릭터보다 기계가 가까운 일반 적 → 기계를 노림 (가안), 붙어서 0.6초마다 적 피해만큼 (가안)
   xp: { still: 0.6 },                                                                // 멈춤·자리 인물 경험치 보조 (가안): 서 있는 동안 흡수 범위 +60% (궁수와 같음)
-  turret: { fire: 0.8, range: 240, r: 10, sp: 520 },                                 // 기본 포탑: 0.8초마다·사거리 240·피해 8
+  turret: { fire: 0.65, range: 240, r: 10, sp: 520 },                                // 기본 포탑: 0.65초마다·사거리 240·피해 11 (0.69 0.8초 → 0.65초)
   gat: { min: 0.3, step: 0.1, back: 3, cap: 5 },                                             // 회전 기관포: 같은 적을 계속 쏘면 한 발마다 -0.1초 (최저 0.3초), 대상이 바뀌면 3발분 느려짐 (가안)
   big: { R: 30, k: 1.2 },                                                            // 대구경 포탑: 작은 폭발 반경 30·피해 +20%
   mortar: { every: 4, R: 80, k: 2.5, fly: 0.7, look: 80 },                           // 박격포: 4번째 발사마다 가장 큰 무리에 곡사 포탄 반경 80·250%
@@ -43,7 +44,7 @@ const MACH65 = {                                                                
 const Eg = () => G.e65 || (G.e65 = { mach: [], cool: {}, bt: 0, chain: false, outT: 0, cmdT: 0, cannon: null, lobs: [], booms: [], sparks: [], links: [], fenceT: 0, mark: null, prev: null });
 const isE65 = () => G.p && G.p.job === 'engineer' && HERO60.engineer.impl;
 const ECOL = () => HERO60.engineer;
-const ek65 = (w, S) => S.dmg / WEAPONS[w.id].base.dmg;                              // 짝 무기 강화·보조 효과 배율
+const ek65 = (w, S) => fk60r(w, S);                              // 짝 무기 강화·보조 효과 배율
 const ec65 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
 function tFire65(S) { return E65C.turret.fire * (S.cd / WEAPONS.turret.base.cd); }
 const ref65 = () => { const b = baseW(); if (!b) return 10; const S = wStats(b); return S.dmg / Math.max(0.05, tFire65(S)); };   // 무기 기준 = 기본 포탑 1대 초당 피해 (가안, 사령술사 등불 기준과 같은 방식)
@@ -85,7 +86,7 @@ function spot65(type) {
   return { x: p.x + rand(-40, 40), y: p.y - 40 };
 }
 function place65(type, w, o = {}) {
-  const E = Eg(), q = o.at || spot65(type), D = MACH65[type], hp = E65C.build.hpBase * (type === 'cleave' ? E65C.bot.hpK : 1);
+  const E = Eg(), q = o.at || spot65(type), D = MACH65[type], hp = E65C.build.hpBase * (1 + E65C.build.hpMin * G.time / 60) * (type === 'cleave' ? E65C.bot.hpK : 1);
   const m = Object.assign({ type, w, x: q.x, y: q.y, hx: q.x, hy: q.y, r: D.r, hp, mhp: hp, cd: rand(0.1, 0.3), t: 0, a: -Math.PI / 2, shotN: 0, gat: 0 }, o.tmp ? { tmp: o.tmp } : {});
   E.mach.push(m); const S6 = S60(); S6.built = (S6.built || 0) + 1; const B = S6.builtBy || (S6.builtBy = {}); B[type] = (B[type] || 0) + 1;
   fx({ kind: 'ring', x: m.x, y: m.y, r0: 4, r1: m.r + 12, dur: 0.25, color: ECOL().c1 });
@@ -213,7 +214,7 @@ const MACT65 = {
     const C = E65C.alarm; if (m.cd > 0) return; const R = C.R * S.area;
     if (!nearestEnemy(m.x, m.y, R)) { m.cd = 0.25; return; }
     m.cd = C.cd * ec65(m.w, S); m.fireT = now;
-    const d = WEAPONS.bell.base.dmg * ek65(m.w, S) * vol65(m), ctx = roll60(m.w), E = Eg();
+    const d = FREF60.bell * ek65(m.w, S) * vol65(m), ctx = roll60(m.w), E = Eg();
     withCR60(ctx, () => gridQuery(m.x, m.y, R, e => { damageEnemy(e, d, { src: 'bell' }); if (!e.dead) stun60(e, C.stun); }));
     E.booms.push({ x: m.x, y: m.y, R, t: 0, dur: 0.35, ring: 1 });
     const os = E.mach.filter(o => o !== m && !o.dead).sort((a, b) => dist2(a.x, a.y, m.x, m.y) - dist2(b.x, b.y, m.x, m.y)).slice(0, C.n);
@@ -397,6 +398,7 @@ Object.assign(HERO60.engineer, {
   impl: true,
   br: [{ k: 'A', nm: '쌍열 포탑', ds: '포신 2개, 2발 동시 발사' }, { k: 'B', nm: '대구경 포탑', ds: '포탄이 작은 폭발 (반경 30), 피해 +20%' }],
   wak: { A: { nm: '회전 기관포', ds: '같은 적을 계속 쏘면 발사 간격 0.8 → 최저 0.3초' }, B: { nm: '박격포', ds: '4번째 발사마다 가장 큰 무리에 곡사 포탄 (반경 80·250%)' } },
+  stat(w) { return { dmg: E65C.out.k }; },
   fire: () => 'tick',                                                                 // 전용 무기 칸은 기본 포탑 종류만 정함, 공격은 설치된 포탑이 함
   onPick() { G.e65 = null; Eg(); SRC_NM.turret = '포탑'; SRC_NM.fence65 = '전기 울타리'; },
   ultFn(k) { return k === 'A' ? ultCmd65 : k === 'B' ? ultCannon65 : ultRush65; },

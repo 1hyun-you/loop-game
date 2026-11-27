@@ -281,7 +281,7 @@ function showResult() {
   add('phase', { id: 'elite', tx: '빛나는 큰 적은 정예 · 쓰러뜨리면 보물 상자', when: () => G.enemies.some(e => e.elite && !e.dead && !e.clone) });
   add('chest', { id: 'branch', tx: '무기는 Lv 3에서 분기 선택 · Lv 5에서 각성', when: () => G.p.weapons.some(w => w.lvl >= 2) });
   add('altar', { id: 'job', tx: '인물 선택 완료 · 인물 능력은 오른쪽 위 일시정지 → 내 능력에서 확인', when: () => !!G.p.job });
-  add('ult', { id: 'fuse', tx: '무기 칸 무기와 기본 무기가 모두 Lv 5·각성이면 연성 카드 등장', when: () => !!G.p.job && G.p.weapons.some(w => !w.base && !w.fu && w.lvl >= 4) });
+  add('ult', { id: 'fuse', tx: '일반 무기가 Lv 4가 되면 다음 카드가 연성 카드 (고르면 Lv 5 + 연성)', when: () => !!G.p.job && G.p.weapons.some(w => !w.base && !w.fu && w.lvl >= 4) });
   add('warn', { id: 'gate', tx: '수문장 등장 · 제한 시간 안에 쓰러뜨리면 문 개방', when: () => !!(G.gkMob && !G.gkMob.dead && G.ph && G.ph.id === 'gate') });
 })();
 /* 첫 선택 화면 도움말: 레벨업 선택 화면 처음 2번 */

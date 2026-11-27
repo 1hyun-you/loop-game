@@ -5,7 +5,7 @@ const cv = document.getElementById('c');
 const ctx = cv.getContext('2d', { alpha: false });
 const VIEW = { w: 400, h: 800, dpr: 1, zoom: 1, cameraW: 400, cameraH: 800, sat: 0, sab: 0, cw: 400, ch: 800 };
 // Display scale is independent of the legacy simulation viewport (spawns/ultimates).
-function battleZoom(width, height) { return clamp(Math.min(width, height) / 390 * 1.4, 1.15, 2.05); }
+function battleZoom(width, height) { return clamp(Math.min(width, height) / 390 * 1.4 / 1.2, 0.96, 1.71); }   // 0.69 시야 1.2배 (회차 99 결정, S23 기준 보이는 폭 약 280 → 약 335)
 /* 0.26a 화면 고정: 캔버스·UI를 픽셀 고정 크기로 두어 창 크기가 순간 변해도 늘어남·재생성·재배치 없음
    (가장자리·상단 끌기 때 시스템 표시줄이 잠깐 나타나며 창 높이가 흔들리던 현상 대응)
    폭 변경(회전)·높이 확대는 즉시 반영, 높이 축소는 1.2초 이상 유지될 때만 반영 */

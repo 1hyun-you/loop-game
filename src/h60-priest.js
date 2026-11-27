@@ -1,7 +1,7 @@
 /* ============================================================
    0.67 프리스트 구현 (회차 98, 분할 구현 8차) — 기준: docs/characters/priest.md
    • 고유 규칙(연성형): 기도 = 빛을 모으는 장치(스스로 피해 없음), 평소 천천히·멈추면 2배, 3단계 차면 0.3초 모으기 →
-     축복 일제 발동(전용·연성 무기가 간격 무관 한꺼번에 강화 발동: 범위 +50%·피해 2배) + 빛 파동(피해 없음)·종소리 + 보호막 2초
+     축복 일제 발동(전용·연성 무기가 간격 무관 한꺼번에 강화 발동: 범위 +50%·피해 1.6배, 0.69 2배 → 1.6배) + 빛 파동(피해 없음)·종소리 + 보호막 2초
    • 머리 위 여신 형상: 기도의 출처·단계 표시 (임시 도형)
    • 전용 무기 축복의 종: 발현 A 잔향 → 무기 각성 A 공명 / 발현 B 뻗는 울림 → 무기 각성 B 겹울림
    • 궁극기: 기본 하늘의 대종 / 인물 각성 A 넘치는 기도 + 여신 강림 / 인물 각성 B 맡기는 기도 + 심판
@@ -10,7 +10,7 @@
    ============================================================ */
 const R67C = {
   pray: { move: 1 / 3, stand: 2 / 3, max: 3, gather: 0.3, shield: 2 },               // 기도: 이동 중 9초·멈추면 4.5초에 3단계 (가안)
-  boost: { area: 1.5, dmg: 2 },                                                      // 축복 일제 발동: 범위 +50%·피해 2배
+  boost: { area: 1.5, dmg: 1.6 },                                                    // 축복 일제 발동: 범위 +50%·피해 1.6배 (0.69 2배 → 1.6배, 종 피해 쏠림 55%)
   over: { hold: 4, area: 2, dmg: 3 },                                                // 넘치는 기도 4단계: 3단계 후 4초·범위 +100%·피해 3배
   echo: { late: 0.5, k: 0.3 },                                                       // 발현 A 잔향: 0.5초 뒤 같은 적 30%
   reso: { late: 0.3, R: 70, Rb: 105, k: 0.5, stun: 0.2 },                            // 무기 각성 A 공명: 0.3초 뒤 반경 70 작은 고리 50% + 멈칫 (일제 발동 105)
@@ -32,9 +32,9 @@ const Qg = () => G.r67 || (G.r67 = { pray: 0, gT: 0, gLv: 0, hold: -1, boost: nu
   rings: [], waves: [], bolts: [], cuts: [], rays: [], candles: [], binds: [], sweeps: [], motes: [], bursts: 0 });
 const isR67 = () => G.p && G.p.job === 'priest' && HERO60.priest.impl;
 const QCOL = () => HERO60.priest;
-const rk67 = (w, S) => S.dmg / WEAPONS[w.id].base.dmg;                              // 짝 무기 강화·보조 효과·일제 발동 배율
+const rk67 = (w, S) => fk60r(w, S);                              // 짝 무기 강화·보조 효과·일제 발동 배율
 const rc67 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
-const ref67 = () => { const b = baseW(); return b ? wStats(b).dmg : WEAPONS.bell.base.dmg * TEMP60.dmg; };   // 무기 기준 = 종 1번 피해 (궁극기·번개, 가안)
+const ref67 = () => { const b = baseW(); return b ? wStats(b).dmg : WEAPONS.bell.base.dmg; };   // 무기 기준 = 종 1번 피해 (궁극기·번개, 가안)
 const stage67 = () => Math.max(0, Math.min(R67C.pray.max, Math.floor(Qg().pray + 1e-6)));
 function dense67(x, y, range, R) {                                                    // 범위 안에서 주변 적이 가장 많은 적
   let best = null, bs = -1;
@@ -273,7 +273,7 @@ Object.assign(HERO60.priest, {
   fire: pBell67,
   stat(w) { const B = Qg().boost; return B ? { dmg: B.dmg, area: B.area } : {}; },   // 일제 발동 중 강화 (전용·연성 무기만)
   hurtMul() { return inSky67() ? 1 - R67C.sky.guard : 1; },
-  avoid() { const P = Qg(); if (P.judge) return true; if (P.shieldT > 0) { S60().shieldBlock = (S60().shieldBlock || 0) + 1; return true; } return false; },
+  avoid() { const P = Qg(); if (P.judge) return true; if (P.shieldT > 0) { P.shieldT = 0; G.p.invT = CFG.player.invuln; S60().shieldBlock = (S60().shieldBlock || 0) + 1; fx({ kind: 'ring', x: G.p.x, y: G.p.y - 4, r0: 12, r1: 34, dur: 0.3, color: QCOL().c1, follow: true }); return true; } return false; },   // 0.69 보호막 = 2초 동안 피격 1번 막고 깨짐 (회차 102 해석: '근거 없는 무적' 원칙, 옛 2초 피해 무효)
   spdMul() { return Qg().judge ? 1e-6 : 1; },   // 0은 연결점에서 기본값 1로 바뀌므로 아주 작은 값
   onPick() { G.r67 = null; Qg(); },
   ultFn(k) { return k === 'A' ? ultDescend67 : k === 'B' ? ultJudge67 : ultSky67; },

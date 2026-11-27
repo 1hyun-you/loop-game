@@ -32,9 +32,9 @@ const D68C = {
 const Dg = () => G.d68 || (G.d68 = { form: 'wolf', still: 0, lock: 0, keep: 0, moon: 0, nSw: 0, forest: null, tree: null, bushes: [], blooms: [], spikes: [], hawks: [], flowers: [], spits: [], pools: [], pollens: [], booms: [], swipes: [], leaves: [], fx: [] });
 const isD68 = () => G.p && G.p.job === 'druid' && HERO60.druid.impl;
 const DCOL = () => HERO60.druid;
-const dk68 = (w, S) => S.dmg / WEAPONS[w.id].base.dmg;
+const dk68 = (w, S) => fk60r(w, S);
 const dc68 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
-const ref68 = () => { const b = baseW(); return b ? wStats(b).dmg : WEAPONS.thorn.base.dmg * TEMP60.dmg; };   // 무기 기준 = 가시 덩굴 1번 피해
+const ref68 = () => { const b = baseW(); return b ? wStats(b).dmg : WEAPONS.thorn.base.dmg; };   // 무기 기준 = 가시 덩굴 1번 피해
 const bear68 = () => Dg().form === 'bear';
 function wildLv68() { const D = Dg(); if (G.p.job2 !== 'A') return 1; if (D.moon > 0) return 3; return D.keep >= D68C.wild.t2 ? 3 : D.keep >= D68C.wild.t1 ? 2 : 1; }
 const formK68 = () => 1 + D68C.wild.k * (wildLv68() - 1);                            // 형태 효과 배율 (1 → 1.5 → 2)
@@ -212,7 +212,7 @@ function fRoot68(w, S) {
 // 초롱꽃: 곁에 핀 초롱꽃이 흔들리면 꽃가루 고리가 퍼져 적을 움찔하게 하고, 꽃가루가 잠시 남아 적을 느리게 함
 function fBellf68(w, S) {
   const C = D68C.bellf, p = G.p, D = Dg(), R = C.R * S.area; if (!nearestEnemy(p.x, p.y, R)) return false;
-  const d = WEAPONS.bell.base.dmg * dk68(w, S);
+  const d = FREF60.bell * dk68(w, S);
   gridQuery(p.x, p.y, R, e => { damageEnemy(e, d, { src: 'bell' }); if (!e.dead) stun60(e, C.stun); });
   D.pollens.push({ x: p.x, y: p.y, R, t: 0, bear: bear68() }); S60().pollen = (S60().pollen || 0) + 1;
   return C.cd * dc68(w, S);

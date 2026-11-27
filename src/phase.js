@@ -12,7 +12,7 @@ const PHASES = {
     hint: '버텨라' },
   calm: { name: '고요한 언덕', type: '기본형', goal: 'time', dur: 90, spawnMul: 0.45, tint: [150, 210, 140],
     hint: '회복의 샘을 찾아라' },
-  fog: { name: '안개 평원', type: '기본형', goal: 'time', dur: 130, spawnMul: 0.9, bias: { bat: 5, skel: 3, slime: 2 }, tint: [175, 185, 195], fog: 150, spawnR: [210, 270],
+  fog: { name: '안개 평원', type: '기본형', goal: 'time', dur: 130, spawnMul: 0.8, bias: { bat: 5, skel: 3, slime: 2 }, tint: [175, 185, 195], fog: 150, spawnR: [250, 310],   // 0.69 시야 1.2배에 맞춰 출현 거리 210~270 → 250~310, 출현 0.9 → 0.8 (서 있는 인물 사망 집중)
     hint: '시야 축소 · 근접 기습 주의' },
   camp: { name: '떠돌이 야영지', type: '기본형', goal: 'time', dur: 90, spawnMul: 0.4, tint: [230, 170, 90],
     hint: '야영지에서 휴식·보상 1회 선택' },

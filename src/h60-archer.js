@@ -2,7 +2,7 @@
    0.63 궁수 구현 (회차 94, 분할 구현 4차) — 기준: docs/characters/archer.md
    • 고유 규칙(제약형 + 연성형 + 자신형): "멈춰 있을 때만 쏘고, 서 있을수록 빨라짐"
      - 멈춤 사격: 이동 중 전용·연성 무기 발동 없음 (매 횃대의 이미 앉은 매는 움직여도 싸움)
-     - 정지 중 공속 +80% (전용·연성만), 정지 중 경험치 흡수 범위 +60% (멈춤 인물 경험치 보조 수단)
+     - 정지 중 공속 +180% (전용·연성만, 0.69 +80% → +180%), 0.69 버티기 사격: 서서 맞힌 공격은 반경 90 안 적을 밀어냄, 정지 중 경험치 흡수 범위 +60% (멈춤 인물 경험치 보조 수단)
    • 전용 무기 장궁: 발현 A 연사 → 무기 각성 A 속사 연발 / 발현 B 꿰뚫기 → 무기 각성 B 거대 화살
    • 궁극기: 기본 사냥 개시 / 인물 각성 A 매의 눈 + 매의 시선 / 인물 각성 B 치고 빠지기 + 화살 폭풍
    • 연성 7종: 초승달촉 화살·사냥칼 던지기·매 횃대·불화살·미늘 줄화살·우는살·가시줄 화살
@@ -10,9 +10,10 @@
    • 그림: 새 장면은 임시 도형 (최종본 아님, GPT 요청 대상), 수치는 전부 가안 (대규모 밸런스 단계 조정)
    ============================================================ */
 const A63C = {
-  still: { spd: 0.8, xp: 0.6, moveMin: 0.2 },                                       // 정지 공속 +80%, 흡수 범위 +60%, '움직였다' 판정 최소 이동 0.2초
-  eye: { t0: 1, t1: 3, max: 1.5 },                                                  // 인물 각성 A 매의 눈: 1초 +80% → 3초 +150%
+  still: { spd: 1.8, xp: 0.6, moveMin: 0.2 },                                       // 정지 공속 +180% (0.69 +80% → +180%), 흡수 범위 +60%, '움직였다' 판정 최소 이동 0.2초
+  eye: { t0: 1, t1: 3, max: 2.8 },                                                  // 인물 각성 A 매의 눈: 1초 +180% → 3초 +280% (0.69 정지 공속 상향에 맞춰 +150% → +280%)
   hit: { n: 3, fan: 0.25, k: 1.5 },                                                 // 인물 각성 B 치고 빠지기: 멈춘 직후 첫 발동 부채꼴 3발 + 150%
+  guard: { R: 90, kb: 140, once: 0.4 },                                            // 0.69 버티기 사격: 서서 쏠 때 반경 90(0.6초) 안까지 붙은 적은 맞으면 밀려남 (같은 적 0.4초에 1번)
   bow: { sp: 540, r: 6 },
   rapidA: { n: 2, gap: 0.1 },                                                       // 발현 A 연사: 한 번에 2발·0.1초 간격
   pierceB: { dmg: 1.15 },                                                           // 발현 B 꿰뚫기: 사거리 끝까지 관통·피해 +15%
@@ -33,7 +34,7 @@ const Ag = () => G.a63 || (G.a63 = { still: 0, mov: 0, hunt: 0, gaze: 0, storm: 
   ar: [], perches: [], knives: [], booms: [], rings: [], lines: [], hawks: [] });
 const isA63 = () => G.p && G.p.job === 'archer' && HERO60.archer.impl;
 const ACOL = () => HERO60.archer;
-const ak63 = (w, S) => S.dmg / WEAPONS[w.id].base.dmg;                              // 짝 무기 강화·보조 효과 배율
+const ak63 = (w, S) => fk60r(w, S);                              // 짝 무기 강화·보조 효과 배율
 const ac63 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
 const own63 = w => !!(w && (w.base || w.fu));                                       // 인물 규칙 대상 (전용·연성)
 const canShoot63 = () => !G.p.moving || Ag().hunt > 0;                              // 멈춤 사격 (사냥 개시 5초 동안은 이동 중에도)
@@ -168,7 +169,7 @@ function stormTick63(dt) {
 // 초승달촉 화살: 넓은 초승달 칼날을 촉으로 단 화살, 맞은 적에 큰 칼자국 + 칼날 폭 안 적 함께 베임 (첫 적에서 멈춤, 최대 3마리)
 function fMoon63(w, S) {
   const C = A63C.moon, p = G.p, tg = nearestEnemy(p.x, p.y, C.range * S.area); if (!tg) return false;
-  const d = WEAPONS.cleave.base.dmg * ak63(w, S) * HBK63, R = C.R * S.area;
+  const d = FREF60.cleave * ak63(w, S) * HBK63, R = C.R * S.area;
   arrow63({ x: p.x, y: p.y, a: ang63(p.x, p.y, tg), sp: C.sp, L: C.range * S.area, r: 9, dmg: d, src: 'cleave', kind: 'moon',
     onHit: (e, pr) => { const L = [e].concat(nearN60(e.x, e.y, R + 14, C.n + 1).filter(o => o !== e)).slice(0, C.n);
       for (const o of L) { cut60(o, ACOL().c1); damageEnemy(o, pr.dmg, hitOpt63(pr)); }
@@ -178,7 +179,7 @@ function fMoon63(w, S) {
 // 사냥칼 던지기: 가까이 온 적 2마리에게 허리의 사냥칼을 던져 그음 (회전하며 날아가 상처 선, 바닥에 꽂혔다 사라짐)
 function fKnife63(w, S) {
   const C = A63C.knife, p = G.p, ts = nearN60(p.x, p.y, C.range * S.area, C.n); if (!ts.length) return false;
-  const d = WEAPONS.dagger.base.dmg * ak63(w, S) * HBK63;
+  const d = FREF60.dagger * ak63(w, S) * HBK63;
   for (const e of ts) {
     const x0 = p.x, y0 = p.y, tt = Math.sqrt(dist2(x0, y0, e.x, e.y)) / C.sp, K = { x0, y0, x: e.x, y: e.y, t: 0, fly: tt, dur: 0.45 };
     Ag().knives.push(K);
@@ -224,7 +225,7 @@ function fFire63(w, S) {
   if (!L.length) return false;
   let best = L[0], bn = -1;
   for (const e of L.length > 40 ? L.slice(0, 40) : L) { let n = 0; gridQuery(e.x, e.y, C.crowd, () => { n++; }); if (n > bn) { bn = n; best = e; } }
-  const tx = best.x, ty = best.y, R = C.R * S.area, d = WEAPONS.fireball.base.dmg * ak63(w, S) * HBK63, Ld = Math.sqrt(dist2(p.x, p.y, tx, ty));
+  const tx = best.x, ty = best.y, R = C.R * S.area, d = FREF60.fireball * ak63(w, S) * HBK63, Ld = Math.sqrt(dist2(p.x, p.y, tx, ty));
   arrow63({ x: p.x, y: p.y, a: Math.atan2(ty - p.y, tx - p.x), sp: C.sp, L: Ld, noHit: true, dmg: d, src: 'fireball', kind: 'fire',
     onEnd: pr => { gridQuery(tx, ty, R, e => damageEnemy(e, d, { src: 'fireball', kb: 80, fx: tx, fy: ty })); Ag().booms.push({ x: tx, y: ty, R, t: 0, dur: 0.35, fire: 1 }); shake(1.5, 0.1); S60().fireN = (S60().fireN || 0) + 1; } });
   return C.cd * ac63(w, S);
@@ -248,7 +249,7 @@ function fWhistle63(w, S) {
   const C = A63C.whistle, p = G.p, R0 = C.range * S.area; let far = null, fd = -1;
   gridQuery(p.x, p.y, R0, e => { if (e.dead) return; const d = dist2(p.x, p.y, e.x, e.y); if (d <= R0 * R0 && d > fd) { fd = d; far = e; } });
   if (!far) return false;
-  const tx = far.x, ty = far.y, R = C.R * S.area, d = WEAPONS.bell.base.dmg * ak63(w, S) * HBK63;
+  const tx = far.x, ty = far.y, R = C.R * S.area, d = FREF60.bell * ak63(w, S) * HBK63;
   arrow63({ x: p.x, y: p.y, a: Math.atan2(ty - p.y, tx - p.x), sp: C.sp, L: Math.sqrt(fd), r: C.w / 2, noHit: true, kind: 'whistle', dmg: 0, src: 'bell',
     pass: e => { stun60(e, C.stun); S60().whPass = (S60().whPass || 0) + 1; },
     onEnd: () => { gridQuery(tx, ty, R, e => { damageEnemy(e, d, { src: 'bell' }); if (!e.dead) stun60(e, C.stun); }); Ag().rings.push({ x: tx, y: ty, R, t: 0, dur: 0.4 }); S60().whistle = (S60().whistle || 0) + 1; } });
@@ -257,7 +258,7 @@ function fWhistle63(w, S) {
 // 가시줄 화살: 가시 덩굴을 감아 둔 화살이 꽂히면 덩굴이 풀려 그 적과 곁의 최대 2마리 다리를 휘감아 묶음
 function fVine63(w, S) {
   const C = A63C.vine, p = G.p, tg = nearestEnemy(p.x, p.y, C.range * S.area); if (!tg) return false;
-  const d = WEAPONS.thorn.base.dmg * ak63(w, S) * HBK63, R = C.near * S.area;
+  const d = FREF60.thorn * ak63(w, S) * HBK63, R = C.near * S.area;
   arrow63({ x: p.x, y: p.y, a: ang63(p.x, p.y, tg), sp: C.sp, L: C.range * S.area, dmg: d, src: 'thorn', kind: 'vine',
     onHit: (e, pr) => { const L = [e].concat(nearN60(e.x, e.y, R, C.more + 1).filter(o => o !== e).slice(0, C.more)), F = F60();
       for (const o of L) { damageEnemy(o, pr.dmg, hitOpt63(pr)); if (!o.dead) root60(o, C.root); if (F.vines.length < 40) F.vines.push({ x: o.x, y: o.y, R: o.r + 6, e: o, t: 0, dur: Math.max(0.55, C.root + 0.15), col: ACOL().c1, s: rand(7) }); }
@@ -282,6 +283,11 @@ Object.assign(HERO60.archer, {
   wak: { A: { nm: '속사 연발', ds: '5번째 발동마다 1.5초 동안 초당 10발 연달아 사격 (각 50%)' }, B: { nm: '거대 화살', ds: '4번째 발동마다 화면 끝까지 꿰뚫는 거대 화살 (250%·밀쳐냄)' } },
   fire: af63(aBow63),
   stat(w) { const b = stillBonus63(); return b > 0 ? { cd: 1 / (1 + b) } : {}; },
+  onHit(e, o) {                                                                       // 0.69 버티기 사격 (대규모 밸런스: 서 있는 동안 몰려든 적에 맞아 쓰러지는 구조 보완, 밀어냄 기준점 = 캐릭터)
+    const p = G.p, C = A63C.guard; if ((p.moving && !(Ag().hunt > 0)) || e.dead || !noBoss60(e) || (e.ag63 || 0) > G.time) return;
+    const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1; if (d > C.R + e.r) return;
+    e.ag63 = G.time + C.once; e.kbx += dx / d * C.kb * JUICE.kbMul; e.kby += dy / d * C.kb * JUICE.kbMul; S60().guard = (S60().guard || 0) + 1;
+  },
   onPick() { G.a63 = null; Ag(); },
   ultFn(k) { return k === 'A' ? ultGaze63 : k === 'B' ? ultStorm63 : ultHunt63; },
   tick(dt) {

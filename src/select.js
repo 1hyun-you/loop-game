@@ -138,6 +138,7 @@ function pickCard(i) {
   if (s.kind === 'start') { addWeapon(c.id); G.stats.start = c.id; recalc(); return closeSel(); }
   if (s.banish) {
     if (isFill(c) || !G.banishes) return;
+    if (c.t === 'wup' && typeof baseW === 'function' && baseW() && c.id === baseW().id) { toast('전용 무기는 제외할 수 없음', '#ff9a7a'); return; }   // 0.69 전용 무기 제외 금지
     G.banished.add(c.t === 'relic' ? 'r:' + c.id : c.id); G.banishes--; s.banish = false;
     s.cards[i] = drawCards(1, s.cards)[0] || FILL_CARDS[1];
     renderSelect(); return;

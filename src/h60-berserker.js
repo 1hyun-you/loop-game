@@ -28,7 +28,7 @@ const tierK60 = e => e.gk || e.boss ? B60C.fury.bossK : e.elite ? B60C.fury.elit
 const furyOn60 = () => !!B60().mode;
 const furyFrac60 = () => { const B = B60(); return B.mode ? 1 : Math.min(1, B.fury / B.max); };
 // 연성 수치: 기획 수치 × (그 짝 무기의 현재 강화·보조 효과·인물 보정 배율)
-const fk60 = (w, S) => S.dmg / WEAPONS[w.id].base.dmg;
+const fk60 = (w, S) => fk60r(w, S);
 const fc60 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
 
 /* ---------- 투지·격노 ---------- */

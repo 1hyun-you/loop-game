@@ -32,7 +32,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     let [e1] = tank(G.p.x + 120, G.p.y); base().t = 0; runT(1.2);
     ok(burning66(e1), '화염구에 맞은 적 불붙음');
     const bd0 = G.stats.dmg.burn66 || 0; runT(2.2); const bd = (G.stats.dmg.burn66 || 0) - bd0;
-    const nt = bd / (fbD66() * 0.1); ok(bd > 0 && Math.abs(nt - Math.round(nt)) < 0.05 && Math.round(nt) >= 2 && Math.round(nt) <= 3, '불붙음: 1초마다 화염구 피해 10% (2.2초 ' + nt.toFixed(2) + '틱)');
+    const nt = bd / (fbD66() * P66C.burn.k); ok(bd > 0 && Math.abs(nt - Math.round(nt)) < 0.05 && Math.round(nt) >= 2 && Math.round(nt) <= 3, '불붙음: 1초마다 화염구 피해 ' + Math.round(P66C.burn.k * 100) + '% (2.2초 ' + nt.toFixed(2) + '틱)');
     clear(); [e1] = tank(G.p.x + 600, G.p.y); burn66(e1); runT(3.2); ok(!burning66(e1), '불 지속 3초');
     clear(); G.p.weapons.push({ id: 'dagger', lvl: 1, t: 0 }); const [e2] = tank(G.p.x + 60, G.p.y); base().t = 99; runT(1.5);
     ok(!burning66(e2) && (G.stats.dmg.dagger || 0) > 0, '공용 무기(짝 무기 단검)는 불붙음 없음');

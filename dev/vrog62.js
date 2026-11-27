@@ -25,7 +25,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     try {
     // 1. 치명타 공통
     base0();
-    ok(PASSIVE_ORDER.includes('crit') && PASSIVES.crit.desc(5).includes('20%'), '보조 효과 치명타 신설 (Lv 5 = 20%)');
+    ok(PASSIVE_ORDER.includes('crit') && PASSIVES.crit.desc(5).includes(Math.round(CRIT60.per * 500) + '%'), '보조 효과 치명타 (Lv 5 = ' + Math.round(CRIT60.per * 500) + '%)');
     ok(!BRANCHES.might.some(o => o.k === 'crit') && BRANCHES.might.some(o => o.k === 'over'), '공격력 통달: 치명 삭제 → 압도');
     const e1 = makeEnemy(T[0], G.p.x + 300, G.p.y), h0 = e1.hp; damageEnemy(e1, 10, { src: 'bell' }); const dN = h0 - e1.hp;
     const e2 = makeEnemy(T[0], G.p.x + 300, G.p.y + 40), h2 = e2.hp; withCR60({ cr: true }, () => damageEnemy(e2, 10, { src: 'bell' })); const dC = h2 - e2.hp;
@@ -33,7 +33,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     const e3 = makeEnemy(T[0], G.p.x + 300, G.p.y - 40), h3 = e3.hp; withCR60({ cr: true }, () => damageEnemy(e3, 10, { src: 'b60boom' }));
     ok(Math.abs((h3 - e3.hp) - dN) < 0.01, '무기가 아닌 피해(처치 폭발 등)는 치명타 없음');
     G.p.passives = [{ id: 'crit', lvl: 5 }]; G.p.weapons.push({ id: 'bell', lvl: 5, t: 0.2 });
-    ok(Math.abs(critCh60(G.p.weapons.find(w => w.id === 'bell')) - 0.2) < 1e-9, '보조 효과 치명타 Lv 5: 모든 무기 20%');
+    ok(Math.abs(critCh60(G.p.weapons.find(w => w.id === 'bell')) - CRIT60.per * 5) < 1e-9, '보조 효과 치명타 Lv 5: 모든 무기 ' + Math.round(CRIT60.per * 500) + '%');
     const per = {}; const _dm = damageEnemy; damageEnemy = function (e, d, o = {}) { const r = _dm.apply(this, arguments); if (o.src === 'bell') { const k = G.time.toFixed(4); (per[k] = per[k] || []).push(!!o.crit); } return r; };
     for (let i = 0; i < 40 * 60; i++) { if (i % 60 === 0) crowd(6); settle(); step(1 / 60); if (G.result) { G.result = null; G.endT = 0; } }
     damageEnemy = _dm;
@@ -65,7 +65,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     const cs = levelCands().filter(c => c.t === 'wnew'); ok(!cs.length, '칸이 가득 차면 새 무기 후보 없음');
     // 3. 고유 규칙: 그림자 연격 (기본형 1번)
     fresh();
-    ok(Math.abs(critCh60(base()) - 0.2) < 1e-9, '도적 치명타 확률: 단검 20%');
+    ok(Math.abs(critCh60(base()) - R60C.crit) < 1e-9, '도적 치명타 확률: 단검 ' + Math.round(R60C.crit * 100) + '%');
     G.p.weapons.push({ id: 'bell', lvl: 1, t: 0.2 }); ok(critCh60(G.p.weapons.find(w => w.id === 'bell')) === 0, '일반 무기는 도적 치명타 없음');
     G.p.weapons = G.p.weapons.filter(w => w.id !== 'bell');
     R60C.crit = 1; run(8, 1);

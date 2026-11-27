@@ -40,7 +40,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     P().pray = 2.999; const b0 = S6().bless || 0, d0 = G.stats.dmg.bell || 0; runT(0.6);
     const dB = (G.stats.dmg.bell || 0) - d0, dS = wStats(base()).dmg;
     ok((S6().bless || 0) - b0 === 1 && P().pray < 0.5, '3단계 → 0.3초 모으기 → 축복 일제 발동 1회·기도 초기화');
-    ok(Math.abs(dB / 3 / dS - 2) < 0.05, `일제 발동: 종 피해 2배 (${(dB / 3 / dS).toFixed(2)}배)`);
+    ok(Math.abs(dB / 3 / dS - R67C.boost.dmg) < 0.05, `일제 발동: 종 피해 ${R67C.boost.dmg}배 (${(dB / 3 / dS).toFixed(2)}배)`);
     ok(P().shieldT > 1 && P().shieldT <= 2, '보호막 2초 (' + P().shieldT.toFixed(2) + ')');
     ok(G.eb.every(b => b.life <= 0 || b.src !== 'test') && (S6().purify || 0) >= 1, '일제 발동 종소리: 투사체 정화');
     ok(HERO60.priest.avoid() === true, '보호막 중 피해 막음');

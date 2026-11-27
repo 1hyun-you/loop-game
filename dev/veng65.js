@@ -32,17 +32,18 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     ok(G.p.job === 'engineer' && HERO60.engineer.impl && heroSlotN() === 4 && base() && base().id === 'turret', '엔지니어 선택·구현 상태·전용 포탑 설치·일반 무기 4칸');
     ok(HERO60.engineer.br.length === 2 && HERO60.engineer.wak.A && HERO60.engineer.wak.B && Object.keys(FUSE60.engineer).length === 7, '발현 2·무기 각성 2·연성 7종 등록');
     // 2. 설치: 가만히 2.5초 → 위쪽, 계속 서 있으면 1.2초, 움직이면 취소
-    runT(2.3); ok(mN() === 0, '2.3초 서 있음: 아직 설치 안 됨');
-    runT(0.3); const m1 = E().mach[0]; ok(mN() === 1 && m1.y < G.p.y - 5, '2.5초 서 있음 → 캐릭터 위쪽 설치 (dy ' + Math.round(m1.y - G.p.y) + ')');
-    runT(1.25); ok(mN() === 2, '계속 서 있으면 1.2초 간격 (' + mN() + '대)');
+    const B1 = E65C.build.first, B2 = E65C.build.next, CAP = E65C.cap.turret;
+    runT(B1 - 0.2); ok(mN() === 0, (B1 - 0.2).toFixed(1) + '초 서 있음: 아직 설치 안 됨');
+    runT(0.3); const m1 = E().mach[0]; ok(mN() === 1 && m1.y < G.p.y - 5, B1 + '초 서 있음 → 캐릭터 위쪽 설치 (dy ' + Math.round(m1.y - G.p.y) + ')');
+    runT(B2 + 0.05); ok(mN() === 2, '계속 서 있으면 ' + B2 + '초 간격 (' + mN() + '대)');
     INPUT.keys = { d: true }; runT(0.6); INPUT.keys = {}; step(1 / 60);
     ok(E().bt < 0.1 && !E().chain, '움직이면 진행 취소·연속 설치 해제');
-    runT(2.0); ok(mN() === 2, '움직인 뒤 다시 2.5초부터 (2.0초 시점 ' + mN() + '대)');
-    runT(0.6); ok(mN() === 3, '2.5초 뒤 설치');
-    runH(6); ok(mN() === eCap65('turret') && eCap65('turret') === 4, '기본 포탑 상한 4대 (' + mN() + ')');
+    runT(B1 - 0.5); ok(mN() === 2, '움직인 뒤 다시 ' + B1 + '초부터 (' + (B1 - 0.5) + '초 시점 ' + mN() + '대)');
+    runT(0.6); ok(mN() === 3, B1 + '초 뒤 설치');
+    runH(8); ok(mN() === eCap65('turret') && eCap65('turret') === CAP, '기본 포탑 상한 ' + CAP + '대 (' + mN() + ')');
     const ms = E().mach; let ov = 0; for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) if (Math.hypot(ms[i].x - ms[j].x, ms[i].y - ms[j].y) < ms[i].r + ms[j].r + 5.9) ov++;
     ok(ov === 0, '빈자리 보정: 기계끼리 겹침 없음·틈 6');
-    runH(30); ok(mN() === 4, '기계는 시간이 지나도 사라지지 않음 (30초 뒤 ' + mN() + ')');
+    runH(30); ok(mN() === CAP, '기계는 시간이 지나도 사라지지 않음 (30초 뒤 ' + mN() + ')');
     // 3. 공격·적이 기계를 노림
     const ts0 = S6().tShot || 0; for (let i = 0; i < 6; i++) makeEnemy('slime', G.p.x + 150, G.p.y - 120 + i * 30); runT(3);
     ok((S6().tShot || 0) > ts0 && (G.stats.dmg.turret || 0) > 0, '포탑 사격 (' + ((S6().tShot || 0) - ts0) + '발·피해 ' + Math.round(G.stats.dmg.turret || 0) + ')');
@@ -59,20 +60,20 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     // 4. 재설치 대기
     const nT = mN('turret'); ok(eCool65('turret') >= 1 && !eNext65(), '부서짐: 10초 재설치 대기 (대기 ' + eCool65('turret') + '·남은 ' + nT + ')');
     G.p.x = E().mach[0].x; G.p.y = E().mach[0].y + 40; runH(9); ok(mN('turret') === nT, '10초 전 재설치 없음');
-    runH(5); ok(mN('turret') === 4, '10초 뒤 재설치 (' + mN('turret') + ')');
+    runH(5); ok(mN('turret') === CAP, '10초 뒤 재설치 (' + mN('turret') + ')');
     // 5. 탭 철거
     const tg = E().mach[1]; ok(tapW(tg.x, tg.y) && E().mark && E().mark.m === tg, '탭 1회: X 표시');
     runT(0.5); ok(E().bt === 0, 'X 표시 중 건설 정지');
     tapW(tg.x + 300, tg.y + 300); ok(!E().mark, '다른 곳 탭 → 취소');
     tapW(tg.x, tg.y); runT(2.1); ok(!E().mark, 'X 표시 2초 뒤 취소');
-    tapW(tg.x, tg.y); tapW(tg.x, tg.y); ok(tg.dead && mN('turret') === 3 && eCool65('turret') === 1, '탭 2회: 철거 + 5초 재설치 대기');
-    runH(4.5); ok(mN('turret') === 3, '철거 5초 전 재설치 없음'); runH(5); ok(mN('turret') === 4, '철거 5초 뒤 재설치');
+    tapW(tg.x, tg.y); tapW(tg.x, tg.y); ok(tg.dead && mN('turret') === CAP - 1 && eCool65('turret') === 1, '탭 2회: 철거 + 5초 재설치 대기');
+    runH(4.5); ok(mN('turret') === CAP - 1, '철거 5초 전 재설치 없음'); runH(5); ok(mN('turret') === CAP, '철거 5초 뒤 재설치');
     // 6. 영역
-    const c0 = E().mach[0]; G.p.x = c0.x + 400; G.p.y = c0.y; runH(3); ok(mN() === 4 && E().outT > 2.5 && heroStatus60('').includes('분해'), '영역 밖: 무너짐 게이지 (분해 표시)');
+    const c0 = E().mach[0]; G.p.x = c0.x + 400; G.p.y = c0.y; runH(3); ok(mN() === CAP && E().outT > 2.5 && heroStatus60('').includes('분해'), '영역 밖: 무너짐 게이지 (분해 표시)');
     ok(E().bt === 0, '영역 밖에서는 짓지 않음');
-    G.p.x = c0.x; G.p.y = c0.y + 40; runT(0.2); ok(E().outT === 0 && mN() === 4, '돌아오면 유지');
-    G.p.x = c0.x + 400; runT(5.2); ok(mN() === 0 && (S6().outAll || 0) > 0, '영역 밖 5초 → 전체 분해');
-    runT(2.6); ok(mN() === 1, '기계가 없으면 그 자리에서 새로 지음');
+    G.p.x = c0.x; G.p.y = c0.y + 40; runT(0.2); ok(E().outT === 0 && mN() === CAP, '돌아오면 유지');
+    G.p.x = c0.x + 400; runT(E65C.area.out + 0.2); ok(mN() === 0 && (S6().outAll || 0) > 0, '영역 밖 ' + E65C.area.out + '초 → 전체 분해');
+    runT(E65C.build.first + 0.3); ok(mN() === 1, '기계가 없으면 그 자리에서 새로 지음');
     // 7. 흡수 범위
     G.p.moving = false; ok(Math.abs(pickR() / _pickRE65() - 1.6) < 1e-6, '서 있는 동안 흡수 범위 +60%');
     // 8. 발현 A 쌍열 → 회전 기관포
@@ -82,7 +83,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     ok(G.proj.filter(q => q.e65).length >= 2 * mN(), '쌍열 포탑: 2발 동시 (' + G.proj.filter(q => q.e65).length + '발 / ' + mN() + '대)');
     w.lvl = 5; checkBranch('w', w.id); ok(w.aw === 'A', '무기 각성 A 회전 기관포 자동');
     clear(); const eg = makeEnemy(T[0], G.p.x + 120, G.p.y - 40); eg.hp = eg.mhp = 1e6; eg.frz = 99; runH(6);
-    ok((S6().gatMax || 0) >= 5 && Math.abs((S6().gatCd || 9) - 0.3) < 0.01, '회전 기관포: 같은 적을 계속 쏘면 간격 0.8 → 최저 0.3초 (연속 ' + S6().gatMax + '·최저 ' + (S6().gatCd || 0).toFixed(2) + '초)');
+    ok((S6().gatMax || 0) >= Math.ceil((E65C.turret.fire - E65C.gat.min) / E65C.gat.step) && Math.abs((S6().gatCd || 9) - E65C.gat.min) < 0.01, '회전 기관포: 같은 적을 계속 쏘면 간격 ' + E65C.turret.fire + ' → 최저 ' + E65C.gat.min + '초 (연속 ' + S6().gatMax + '·최저 ' + (S6().gatCd || 0).toFixed(2) + '초)');
     // 9. 발현 B 대구경 → 박격포
     fresh(); fill(); w = base(); w.lvl = 3; checkBranch('w', w.id); G.pendingBr = []; applyBranch({ t: 'branch', id: 'turret', k: 'B', kind: 'w' });
     const eb = makeEnemy('slime', G.p.x + 100, G.p.y - 60); eb.hp = eb.mhp = 9999; G.proj = []; for (const m of E().mach) m.cd = 0; step(1 / 60);
@@ -91,7 +92,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     run(8, 1, 'slime'); ok((S6().mortar || 0) > 0, '박격포: 4번째 발사마다 곡사 포탄 (' + S6().mortar + '회)');
     // 10. 기본 궁극기 긴급 증설
     fresh(); fill(); for (const m of E().mach) m.hp = 5; crowd(10, 'slime'); const u0 = G.stats.dmg.ult || 0; G.p.ult = JOB_CFG.ultNeed; useUlt(); runT(0.6);
-    ok(E().mach.filter(m => m.tmp).length === 3 && eCount65('turret') <= 4, '긴급 증설: 포탑 3대 낙하 (상한 초과 허용, 임시 표시)');
+    ok(E().mach.filter(m => m.tmp).length === 3 && eCount65('turret') <= E65C.cap.turret, '긴급 증설: 포탑 3대 낙하 (상한 초과 허용, 임시 표시)');
     ok((G.stats.dmg.ult || 0) > u0, '착지 충격 피해 (' + Math.round((G.stats.dmg.ult || 0) - u0) + ')');
     clear(); runT(20); ok(E().mach.filter(m => m.tmp).length === 0, '임시 포탑 20초 뒤 분해');
     fresh(); fill(); for (const m of E().mach) m.hp = 5; G.p.ult = JOB_CFG.ultNeed; useUlt(); ok(E().mach.every(m => m.hp === m.mhp), '긴급 증설: 모든 기계 수리');
@@ -105,10 +106,10 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     // 12. 인물 각성 B 전기 울타리 · 결전 병기
     fresh(); applyAw60('B'); cine(); fill(); for (const m of E().mach) m.cd = 99; const c1 = E().mach[0]; runT(0.1);
     let fx0 = c1.x, fy0 = c1.y; for (const m of E().mach) { if (m.x > fx0) { fx0 = m.x; fy0 = m.y; } }
-    const fz = makeEnemy(T[0], fx0 + 260, fy0); fz.hp = fz.mhp = 99999; fz.speed = 120; const f0 = S6().fence || 0; G.p.x = fx0 - 40; G.p.y = fy0;
+    const fz = makeEnemy(T[0], fx0 + E65C.area.R + 60, fy0); fz.hp = fz.mhp = 99999; fz.speed = 120; const f0 = S6().fence || 0; G.p.x = fx0 - 40; G.p.y = fy0;
     for (let i = 0; i < 150; i++) { for (const m of E().mach) m.cd = 99; settle(); step(1 / 60); }
     ok((S6().fence || 0) - f0 === 1 && (G.stats.dmg.fence65 || 0) > 0, '전기 울타리: 테두리를 넘어온 적 감전 (' + ((S6().fence || 0) - f0) + '회)');
-    fz.x = fx0 + 260; fz.in65 = false; fz.y = fy0; for (let i = 0; i < 20; i++) { fz.x = fx0 + 150; step(1 / 60); } ok((S6().fence || 0) - f0 === 1, '같은 적 2초에 1번');
+    fz.x = fx0 + E65C.area.R + 60; fz.in65 = false; fz.y = fy0; for (let i = 0; i < 20; i++) { fz.x = fx0 + E65C.area.R - 50; step(1 / 60); } ok((S6().fence || 0) - f0 === 1, '같은 적 2초에 1번');
     clear(); crowd(14, 'slime'); const u2 = G.stats.dmg.ult || 0, ch0 = S6().cannonHit || 0; G.p.ult = JOB_CFG.ultNeed; useUlt(); runT(3.6);
     ok((S6().cannonHit || 0) - ch0 === 3 && (G.stats.dmg.ult || 0) > u2 && !E().cannon, '결전 병기: 조립 → 대형 포탄 3발 폭발 (' + ((S6().cannonHit || 0) - ch0) + ')');
     // 13. 연성 7종 (기계 설치형)
@@ -118,14 +119,14 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
       for (const id of ids) { G.p.weapons.push({ id, lvl: 5, t: 0.2 }); applyFuse60(id); settle(); cine(); }
       STATE.dev.auto = false; G.p.moving = false;
       ok(ids.every(id => G.p.weapons.find(x => x.id === id && x.fu && x.fu.nm === FUSE60_NM.engineer[id])), '연성 적용: ' + ids.map(id => FUSE60_NM.engineer[id]).join('·'));
-      ok(eCap65('turret') === 4 + ids.length && ids.every(id => eCap65(id) === 2), '연성마다 기본 포탑 +1 (' + eCap65('turret') + ')·연성 기계 종류별 2기');
+      ok(eCap65('turret') === CAP + ids.length && ids.every(id => eCap65(id) === 2), '연성마다 기본 포탑 +1 (' + eCap65('turret') + ')·연성 기계 종류별 2기');
       const first = eNext65(); ok(first && first.type === ids[0], '설치 순서: 빈 비율 같으면 연성 기계 먼저·무기 칸 순서 (' + (first && first.type) + ')');
-      fill(); ok(ids.every(id => mN(id) === 2) && mN('turret') === 4 + ids.length, '기계 전부 설치 (' + E().mach.length + '대)');
+      fill(); ok(ids.every(id => mN(id) === 2) && mN('turret') === CAP + ids.length, '기계 전부 설치 (' + E().mach.length + '대)');
       for (const m of E().mach) m.hp = m.mhp = 99999;
       const dd = Object.assign({}, G.stats.dmg); run(20, 1);
       for (const id of ids) ok((G.stats.dmg[id] || 0) > (dd[id] || 0), FUSE60_NM.engineer[id] + ' 피해 (' + Math.round((G.stats.dmg[id] || 0) - (dd[id] || 0)) + ')');
       if (ids.includes('cleave')) ok((S6().botHit || 0) > 0 && E().mach.filter(m => m.type === 'cleave').every(m => Math.hypot(m.x - m.hx, m.y - m.hy) <= E65C.bot.roam + 1), `대검 기계병: 베기 ${S6().botHit}·회전 ${S6().botSpin || 0}·자리 반경 80 안`);
-      if (ids.includes('cleave')) { const t0 = place65('cleave', G.p.weapons.find(x => x.id === 'cleave')); ok(t0.mhp === 120, '대검 기계병 체력 기본 포탑 2배'); t0.dead = true; sweepDead65(); }
+      if (ids.includes('cleave')) { const t0 = place65('cleave', G.p.weapons.find(x => x.id === 'cleave')); ok(Math.abs(t0.mhp - E65C.build.hpBase * (1 + E65C.build.hpMin * G.time / 60) * 2) < 0.01, '대검 기계병 체력 기본 포탑 2배'); t0.dead = true; sweepDead65(); }
       if (ids.includes('dagger')) ok((S6().drone || 0) > 0, `칼날 드론: 왕복 ${S6().drone}·돌아오는 길 ${S6().droneBack || 0}`);
       if (ids.includes('arrow')) { clear(); const bm = E().mach.find(m => m.type === 'arrow'); const L = [0, 1, 2].map(i => makeEnemy(T[0], bm.x + 70 + i * 50, bm.y)); L.forEach(e => { e.hp = e.mhp = 9999; e.frz = 99; }); const h = L.map(e => e.hp); for (const m of E().mach) if (m.type === 'arrow') m.cd = 0;
         for (let i = 0; i < 48; i++) { for (const m of E().mach) if (m.type !== 'arrow') m.cd = 99; step(1 / 60); } ok(L.every((e, i) => e.hp < h[i]), '쇠뇌 포대: 일직선 적 3마리 모두 꿰뚫음'); }
