@@ -14,7 +14,7 @@
 • 읽기: 매 회차 HANDOFF 상태판 + 읽을 문서 표에 있는 장만 읽음, 나머지는 필요할 때만
 • 원칙 보관처: REWORK_MEETING.md 1장 (범위 표기)
 • 메모리: 문서 위치, 현재 단계, 상위 원칙 요지만 (상세·경과 기록 금지)
-• 현황판 https://claude.ai/artifact/542UcGQtf9eT6q9dBsLCSE, 게임 주소 https://1hyun-you.github.io/field/
+• 현황판 https://claude.ai/artifact/542UcGQtf9eT6q9dBsLCSE: 사용자 열람 전용 대시보드(Claude 기준 문서 아님, 회차 종료 시 갱신만), 게임 주소 https://1hyun-you.github.io/field/
 • HANDOFF 기준 문서 목록 외 옛 링크·페이지는 기준 아님
 
 [역할]
