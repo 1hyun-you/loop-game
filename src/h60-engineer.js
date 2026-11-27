@@ -21,7 +21,7 @@ const E65C = {
   lure: { R: 150, hitCd: 0.6 },                                                      // 기계 반경 150 안·캐릭터보다 기계가 가까운 일반 적 → 기계를 노림 (가안), 붙어서 0.6초마다 적 피해만큼 (가안)
   xp: { still: 0.6 },                                                                // 멈춤·자리 인물 경험치 보조 (가안): 서 있는 동안 흡수 범위 +60% (궁수와 같음)
   turret: { fire: 0.8, range: 240, r: 10, sp: 520 },                                 // 기본 포탑: 0.8초마다·사거리 240·피해 8
-  gat: { min: 0.3, step: 0.1, back: 3 },                                             // 회전 기관포: 같은 적을 계속 쏘면 한 발마다 -0.1초 (최저 0.3초), 대상이 바뀌면 3발분 느려짐 (가안)
+  gat: { min: 0.3, step: 0.1, back: 3, cap: 5 },                                             // 회전 기관포: 같은 적을 계속 쏘면 한 발마다 -0.1초 (최저 0.3초), 대상이 바뀌면 3발분 느려짐 (가안)
   big: { R: 30, k: 1.2 },                                                            // 대구경 포탑: 작은 폭발 반경 30·피해 +20%
   mortar: { every: 4, R: 80, k: 2.5, fly: 0.7, look: 80 },                           // 박격포: 4번째 발사마다 가장 큰 무리에 곡사 포탄 반경 80·250%
   cmd: { R: 120, spd: 1.6, rep: 0.05, dur: 8, vol: 2 },                              // 현장 지휘관: 반경 120 기계 공속 +60%·초당 체력 5% 수리 / 총지휘 8초·일제 사격 피해 2배
@@ -133,8 +133,9 @@ function bigCluster65(x, y, range, R) {                                         
 }
 function turretAtk65(m, S, now) {
   const C = E65C.turret, w = m.w, br = w.br, aw = w.aw, range = C.range * S.area;
-  const e = nearestEnemy(m.x, m.y, range); if (!e) { m.cd = 0.25; m.gat = Math.max(0, m.gat - 1); return; }
-  if (aw === 'A') { if (m.tg === e) m.gat++; else if (m.tg) m.gat = Math.max(0, m.gat - E65C.gat.back); }   // 회전 기관포: 같은 적을 계속 쏠수록 빨라짐
+  const keep = aw === 'A' && m.tg && !m.tg.dead && dist2(m.tg.x, m.tg.y, m.x, m.y) < (range + m.tg.r) ** 2;   // 회전 기관포: 사거리 안에 있는 동안 같은 적을 계속 조준 (가안)
+  const e = keep ? m.tg : nearestEnemy(m.x, m.y, range); if (!e) { m.cd = 0.25; m.gat = Math.max(0, m.gat - 1); return; }
+  if (aw === 'A') { if (m.tg === e) m.gat = Math.min(E65C.gat.cap, m.gat + 1); else if (m.tg) m.gat = Math.max(0, m.gat - E65C.gat.back); }   // 회전 기관포: 같은 적을 계속 쏠수록 빨라짐
   m.tg = e; m.a = Math.atan2(e.y - m.y, e.x - m.x); m.shotN++; m.fireT = now;
   const base = tFire65(S); m.cd = aw === 'A' ? Math.max(E65C.gat.min * (S.cd / WEAPONS.turret.base.cd), base - E65C.gat.step * m.gat * (S.cd / WEAPONS.turret.base.cd)) : base;
   const v = vol65(m), dm = S.dmg * v * (br === 'B' ? E65C.big.k : 1), col = ECOL().c1;
@@ -150,7 +151,7 @@ function turretAtk65(m, S, now) {
       else shoot({ kind: 'arrow', x: m.x + ox * s, y: m.y - 6 + oy * s, ang: m.a, sp: C.sp, r: 4, dmg: dm, pierce: 0, life: range / C.sp, color: col, src: 'turret', e65: 1 });
     }
   });
-  const S6 = S60(); S6.tShot = (S6.tShot || 0) + 1; if (aw === 'A') S6.gatMax = Math.max(S6.gatMax || 0, m.gat);
+  const S6 = S60(); S6.tShot = (S6.tShot || 0) + 1; if (aw === 'A') { S6.gatMax = Math.max(S6.gatMax || 0, m.gat); S6.gatCd = Math.min(S6.gatCd || 9, m.cd / (S.cd / WEAPONS.turret.base.cd)); }
 }
 /* 연성 기계 7종 */
 const MACT65 = {
@@ -260,13 +261,13 @@ updateEnemies = function (dt) {
   for (const e of G.enemies) {
     if (e.dead || !noBoss60(e) || e.elite || e.fixed || e.sleep || e.thief || e.tgtCart) continue;
     let bm = null, bd = LR * LR; for (const m of E.mach) { const d = dist2(m.x, m.y, e.x, e.y); if (d < bd) { bd = d; bm = m; } }
-    if (bm && bd < dist2(p.x, p.y, e.x, e.y)) rec.push([e, e.x, e.y, bm]);
+    if (bm && bd < dist2(p.x, p.y, e.x, e.y)) rec.push([e, e.x, e.y, bm, e.kbx || 0, e.kby || 0]);
   }
   const r = _updateEnemiesE65.apply(this, arguments);
-  for (const [e, x0, y0, m] of rec) {
+  for (const [e, x0, y0, m, kx0, ky0] of rec) {
     if (e.dead || m.dead) continue;
-    const dx = e.x - x0, dy = e.y - y0, s = Math.hypot(dx, dy); if (s <= 0) continue;
-    e.x = x0; e.y = y0;                                                               // 캐릭터 쪽 이동을 되돌리고 기계 쪽으로 같은 만큼
+    const kx = kx0 * dt, ky = ky0 * dt, dx = e.x - x0 - kx, dy = e.y - y0 - ky, s = Math.hypot(dx, dy); if (s <= 0) continue;   // 밀쳐냄 이동은 그대로 두고 걸음 이동만 바꿈 (교차 검토 반영)
+    e.x = x0 + kx; e.y = y0 + ky;                                                     // 캐릭터 쪽 걸음을 되돌리고 기계 쪽으로 같은 만큼
     const mx = m.x - e.x, my = m.y - e.y, md = Math.hypot(mx, my) || 1, mv = Math.min(s, Math.max(0, md - m.r - e.r));
     e.x += mx / md * mv; e.y += my / md * mv; e.m65 = m; e.m65T = G.time;
   }
@@ -276,7 +277,7 @@ updateEnemies = function (dt) {
       if (!noBoss60(e)) return;                                                       // 수문장·마왕은 기계 무시
       const dx = e.x - m.x, dy = e.y - m.y, d = Math.hypot(dx, dy) || 0.01, ov = m.r + e.r - d;
       if (ov > 0) { e.x += dx / d * ov; e.y += dy / d * ov; }
-      if (G.time - (e.hm65 || -9) >= E65C.lure.hitCd && (e.elite || e.m65 === m)) { e.hm65 = G.time; hurtM65(m, e.dmg * (1 + tierK()), e); }
+      if (G.time - (e.hm65 || -9) >= E65C.lure.hitCd && (e.elite || (e.m65 === m && G.time - e.m65T < 0.1))) { e.hm65 = G.time; hurtM65(m, e.dmg * (1 + tierK()), e); }
     });
   }
   sweepDead65();
@@ -355,7 +356,7 @@ function cannonTick65(dt) {
   while (K.shot < C.n && K.t >= C.build + K.shot * C.gap) { K.shot++; K.recoil = G.time; K.shells.push({ x: K.x + Math.cos(K.a) * 20, y: K.y + Math.sin(K.a) * 20, a: K.a, d: 0 }); shake(2.5, 0.12); }
   for (const s of K.shells) {
     if (s.dead) continue; const st = C.sp * dt; s.x += Math.cos(s.a) * st; s.y += Math.sin(s.a) * st; s.d += st;
-    let hit = null; gridQuery(s.x, s.y, 10, e => { if (!hit) hit = e; });
+    let hit = null; gridQuery(s.x, s.y, 10, e => { if (!hit && !e.dead) hit = e; });
     if (hit || s.d >= C.range) { s.dead = true; const R = C.R; gridQuery(s.x, s.y, R, e => damageEnemy(e, ref65() * C.k, { src: 'ult', kb: C.kb, fx: s.x, fy: s.y }));
       E.booms.push({ x: s.x, y: s.y, R, t: 0, dur: 0.45, big: 1 }); shake(4, 0.2); S60().cannonHit = (S60().cannonHit || 0) + 1; }
   }

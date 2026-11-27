@@ -81,8 +81,8 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     const ea = makeEnemy('slime', G.p.x + 100, G.p.y - 60); ea.hp = ea.mhp = 9999; G.proj = []; for (const m of E().mach) m.cd = 0; step(1 / 60);
     ok(G.proj.filter(q => q.e65).length >= 2 * mN(), '쌍열 포탑: 2발 동시 (' + G.proj.filter(q => q.e65).length + '발 / ' + mN() + '대)');
     w.lvl = 5; checkBranch('w', w.id); ok(w.aw === 'A', '무기 각성 A 회전 기관포 자동');
-    clear(); const eg = makeEnemy(T[0], G.p.x + 120, G.p.y - 40); eg.hp = eg.mhp = 1e6; eg.frz = 99; const sh0 = S6().tShot || 0; runT(4);
-    const shotsGat = (S6().tShot || 0) - sh0; ok((S6().gatMax || 0) >= 5 && shotsGat > mN() * 4 / 0.8 * 1.3, '회전 기관포: 같은 적을 계속 쏘면 빨라짐 (연속 ' + S6().gatMax + '·4초 ' + shotsGat + '발)');
+    clear(); const eg = makeEnemy(T[0], G.p.x + 120, G.p.y - 40); eg.hp = eg.mhp = 1e6; eg.frz = 99; runH(6);
+    ok((S6().gatMax || 0) >= 5 && Math.abs((S6().gatCd || 9) - 0.3) < 0.01, '회전 기관포: 같은 적을 계속 쏘면 간격 0.8 → 최저 0.3초 (연속 ' + S6().gatMax + '·최저 ' + (S6().gatCd || 0).toFixed(2) + '초)');
     // 9. 발현 B 대구경 → 박격포
     fresh(); fill(); w = base(); w.lvl = 3; checkBranch('w', w.id); G.pendingBr = []; applyBranch({ t: 'branch', id: 'turret', k: 'B', kind: 'w' });
     const eb = makeEnemy('slime', G.p.x + 100, G.p.y - 60); eb.hp = eb.mhp = 9999; G.proj = []; for (const m of E().mach) m.cd = 0; step(1 / 60);
