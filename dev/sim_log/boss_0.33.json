@@ -1,0 +1,405 @@
+{
+ "v": "0.33",
+ "errs": [],
+ "res": {
+  "out": [
+   {
+    "k": "bargan",
+    "n": 0,
+    "kill": true,
+    "sec": 109,
+    "bpat": {
+     "rock": 5,
+     "slam": 6,
+     "dash": 7,
+     "crack": 7,
+     "dash2": 3,
+     "arena": 2
+    },
+    "rep": 0,
+    "seq": "rock slam dash crack rock slam dash crack rock dash slam crack dash dash2",
+    "kinds": "circ,line",
+    "hurt": {
+     "바르간 대지 균열": 24
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "bargan",
+    "n": 1,
+    "kill": true,
+    "sec": 120,
+    "bpat": {
+     "dash": 8,
+     "slam": 7,
+     "rock": 7,
+     "crack": 6,
+     "dash2": 4,
+     "arena": 2
+    },
+    "rep": 0,
+    "seq": "dash slam rock crack dash slam rock crack rock slam dash crack dash dash2",
+    "kinds": "line,circ",
+    "hurt": {},
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "bargan",
+    "n": 2,
+    "kill": true,
+    "sec": 112,
+    "bpat": {
+     "rock": 6,
+     "dash": 7,
+     "crack": 5,
+     "slam": 7,
+     "dash2": 4,
+     "arena": 2
+    },
+    "rep": 0,
+    "seq": "rock dash crack slam crack rock slam dash rock crack slam dash slam crack",
+    "kinds": "circ,line",
+    "hurt": {},
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "igna",
+    "n": 0,
+    "kill": true,
+    "sec": 103,
+    "bpat": {
+     "fan": 9,
+     "grid": 8,
+     "pool": 9,
+     "ring": 8,
+     "twist": 9,
+     "sun": 3
+    },
+    "rep": 0,
+    "seq": "fan grid pool ring twist pool fan twist ring grid fan twist grid ring",
+    "kinds": "line,circ",
+    "hurt": {
+     "이그나 화염탄": 167,
+     "이그나 태양 화염탄": 11,
+     "이그나 화염 회오리": 16,
+     "동굴 박쥐": 5
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "igna",
+    "n": 1,
+    "kill": true,
+    "sec": 93,
+    "bpat": {
+     "ring": 8,
+     "fan": 8,
+     "grid": 8,
+     "twist": 8,
+     "pool": 8,
+     "sun": 2
+    },
+    "rep": 0,
+    "seq": "ring fan grid twist pool twist grid ring pool fan twist ring fan pool",
+    "kinds": "line,circ",
+    "hurt": {
+     "이그나 화염탄": 179,
+     "이그나 화염 회오리": 15,
+     "이그나 태양 화염탄": 11
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "igna",
+    "n": 2,
+    "kill": true,
+    "sec": 100,
+    "bpat": {
+     "grid": 7,
+     "twist": 8,
+     "pool": 9,
+     "ring": 8,
+     "fan": 9,
+     "sun": 3
+    },
+    "rep": 0,
+    "seq": "grid twist pool ring fan grid fan twist pool ring fan pool grid ring",
+    "kinds": "circ,line",
+    "hurt": {
+     "이그나 화염탄": 194,
+     "이그나 태양 화염탄": 11,
+     "이그나 화염 회오리": 49,
+     "이그나 불기둥": 19
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "morden",
+    "n": 0,
+    "kill": true,
+    "sec": 360,
+    "bpat": {
+     "mark": 27,
+     "bolt": 27,
+     "prison": 25,
+     "raise": 26,
+     "march": 27,
+     "grave": 2
+    },
+    "rep": 0,
+    "seq": "mark bolt prison raise march prison raise bolt march mark raise mark march bolt",
+    "kinds": "circ,line",
+    "hurt": {
+     "해골 병사": 280,
+     "모르덴 망자 행렬": 130,
+     "동굴 박쥐": 12,
+     "모르덴 뼈 화살": 16,
+     "초록 슬라임": 15,
+     "분열 젤리": 11,
+     "돌진 멧돼지": 93
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "morden",
+    "n": 1,
+    "kill": true,
+    "sec": 360,
+    "bpat": {
+     "mark": 26,
+     "raise": 26,
+     "prison": 26,
+     "march": 25,
+     "bolt": 26,
+     "grave": 1
+    },
+    "rep": 0,
+    "seq": "mark raise prison march bolt march mark prison raise bolt march bolt raise prison",
+    "kinds": "circ,line",
+    "hurt": {
+     "해골 병사": 297,
+     "초록 슬라임": 13,
+     "모르덴 망자 행렬": 101,
+     "동굴 박쥐": 62,
+     "고블린 궁수": 4
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "morden",
+    "n": 2,
+    "kill": true,
+    "sec": 360,
+    "bpat": {
+     "march": 27,
+     "bolt": 27,
+     "prison": 27,
+     "mark": 28,
+     "raise": 27,
+     "grave": 1
+    },
+    "rep": 0,
+    "seq": "march bolt prison mark raise mark prison march bolt raise prison raise march bolt",
+    "kinds": "line,circ",
+    "hurt": {
+     "해골 병사": 274,
+     "동굴 박쥐": 23,
+     "초록 슬라임": 7,
+     "모르덴 망자 행렬": 87
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "seren",
+    "n": 0,
+    "kill": true,
+    "sec": 360,
+    "bpat": {
+     "reflect": 30,
+     "mirror": 29,
+     "swap": 18
+    },
+    "rep": 0,
+    "seq": "reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror",
+    "kinds": "mir,circ",
+    "hurt": {
+     "거울 파편": 41,
+     "세렌": 62,
+     "동굴 박쥐": 38,
+     "세렌 빛살": 253,
+     "초록 슬라임": 23,
+     "고블린 궁수": 37,
+     "세렌 거울진": 79,
+     "해골 병사": 11
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "seren",
+    "n": 1,
+    "kill": true,
+    "sec": 360,
+    "bpat": {
+     "reflect": 29,
+     "mirror": 28,
+     "swap": 22
+    },
+    "rep": 0,
+    "seq": "reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror",
+    "kinds": "mir,circ",
+    "hurt": {
+     "세렌 빛살": 226,
+     "세렌 거울진": 108,
+     "세렌": 104,
+     "거울 파편": 40,
+     "동굴 박쥐": 62,
+     "고블린 궁수": 26,
+     "해골 병사": 23,
+     "초록 슬라임": 8
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "seren",
+    "n": 2,
+    "kill": true,
+    "sec": 211,
+    "bpat": {
+     "reflect": 17,
+     "mirror": 17,
+     "swap": 11
+    },
+    "rep": 0,
+    "seq": "reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror reflect mirror",
+    "kinds": "mir",
+    "hurt": {
+     "세렌 반사": 11,
+     "거울 파편": 18,
+     "세렌 빛살": 136,
+     "세렌 거울진": 53,
+     "동굴 박쥐": 17,
+     "고블린 궁수": 4
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "demon",
+    "n": 0,
+    "kill": true,
+    "sec": 210,
+    "bpat": {
+     "scythe": 7,
+     "blink": 14,
+     "hands": 6,
+     "homing": 6,
+     "wave": 7,
+     "beams": 7,
+     "scho": 7,
+     "beho": 7,
+     "meteor": 8,
+     "blsc": 8,
+     "split": 8
+    },
+    "rep": 0,
+    "seq": "scythe blink hands homing blink hands scythe homing scythe hands homing blink hands blink",
+    "kinds": "sect,circ,beam",
+    "hurt": {
+     "마왕 혼령": 32,
+     "마왕 그림자 손": 8,
+     "마왕 광선": 34,
+     "마왕 탄막 파도": 11,
+     "마왕 운석": 63,
+     "마왕 분할 낙하": 49,
+     "고블린 궁수": 3,
+     "초록 슬라임": 6
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "demon",
+    "n": 1,
+    "kill": true,
+    "sec": 210,
+    "bpat": {
+     "hands": 6,
+     "scythe": 6,
+     "blink": 14,
+     "homing": 7,
+     "wave": 7,
+     "beams": 7,
+     "scho": 7,
+     "blsc": 8,
+     "meteor": 8,
+     "split": 8,
+     "beho": 8
+    },
+    "rep": 0,
+    "seq": "hands scythe blink homing blink scythe hands homing scythe blink hands homing scythe homing",
+    "kinds": "circ,sect,beam",
+    "hurt": {
+     "마왕 그림자 손": 48,
+     "마왕 탄막 파도": 52,
+     "마왕 혼령": 44,
+     "마왕 광선": 24,
+     "고블린 궁수": 6,
+     "마왕 운석": 21,
+     "마왕 도약": 11,
+     "해골 병사": 9,
+     "동굴 박쥐": 5,
+     "마왕 분할 낙하": 12
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   },
+   {
+    "k": "demon",
+    "n": 2,
+    "kill": true,
+    "sec": 208,
+    "bpat": {
+     "blink": 14,
+     "scythe": 7,
+     "homing": 6,
+     "hands": 6,
+     "beams": 7,
+     "wave": 7,
+     "scho": 7,
+     "blsc": 7,
+     "meteor": 8,
+     "split": 8,
+     "beho": 8
+    },
+    "rep": 0,
+    "seq": "blink scythe homing hands homing blink scythe hands homing scythe blink hands homing hands",
+    "kinds": "circ,sect,beam",
+    "hurt": {
+     "마왕 그림자 손": 16,
+     "마왕 탄막 파도": 26,
+     "마왕 분할 낙하": 61,
+     "마왕 혼령": 33,
+     "마왕 광선": 25,
+     "동굴 박쥐": 10,
+     "초록 슬라임": 12,
+     "고블린 궁수": 6,
+     "마왕 운석": 21
+    },
+    "perr": 0,
+    "rocksLeft": 0
+   }
+  ],
+  "err": []
+ }
+}

@@ -84,6 +84,20 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
       fresh('engineer', 'turret'); G.time = 600;
       const m = place65('turret', baseW(), {}); ok(m && Math.abs(m.mhp - 80 * 4) < 1, '엔지니어 기계 체력 80 × (1 + 분당 30%) = 10분 ' + (m ? m.mhp : 0));
       ok(heroStat60(baseW()).dmg === 1.5 && E65C.cap.turret === 5 && E65C.build.first === 1.5 && E65C.build.next === 1 && E65C.turret.fire === 0.65, '엔지니어 기계 출력 +50%·포탑 5대·설치 1.5초(이어서 1초)·발사 0.65초');
+      // 0.70 수문장 큰 동작 뒤 굳는 틈 (회차 103)
+      for (const k of ['igna', 'morden', 'seren']) {
+        fresh('archer', 'longbow'); G.gk = k; gkSpawn(); const e = G.gkMob; e.hp = e.maxHp = 1e9; e.ai.cd = 0; if (k === 'seren') e.ai.cd2 = 99;
+        let held = 0; for (let i = 0; i < 90 && !(e.ai.hold > 0); i++) step(1 / 60); held = e.ai.hold || 0;
+        const x0 = e.x, y0 = e.y; for (let i = 0; i < 24; i++) step(1 / 60); const moved = Math.hypot(e.x - x0, e.y - y0);
+        ok(held >= 0.5 && moved < 1, `${GATEKEEPERS[k].name} 큰 동작 뒤 제자리 ${held.toFixed(2)}초 (0.4초간 이동 ${moved.toFixed(1)})`);
+        e.ai.cd = 99; e.ai.cd2 = 99; const cd0 = e.ai.cd; step(1 / 60); const cdRun = e.ai.cd < cd0;   // 재발동 막고 대기시간 흐름 확인
+        for (let i = 0; i < 200 && e.ai.hold > 0; i++) step(1 / 60);
+        G.p.x = e.x + 600; G.p.y = e.y; const x1 = e.x, y1 = e.y; for (let i = 0; i < 30; i++) step(1 / 60);
+        ok(cdRun && Math.hypot(e.x - x1, e.y - y1) > 3, `${GATEKEEPERS[k].name} 틈 동안 대기시간 흐름·틈 끝나면 다시 움직임 (${Math.hypot(e.x - x1, e.y - y1).toFixed(0)})`);
+        render(); clear(); G.gkMob = null;
+      }
+      { fresh('archer', 'longbow'); G.gk = 'bargan'; gkSpawn(); const e = G.gkMob; e.hp = e.maxHp = 1e9; let h = 0; for (let i = 0; i < 300; i++) { step(1 / 60); if (e.ai.hold > 0) h++; } ok(h === 0, '바르간에는 굳는 틈 없음'); clear(); G.gkMob = null; }
+      ok(GK_CFG.holdIg === 1.2 && GK_CFG.holdMo === 1.5 && GK_CFG.holdMoS === 0.6 && GK_CFG.holdSe === 1.5, '굳는 틈 수치 이그나 1.2·모르덴 1.5/0.6·세렌 1.5초');
       render();
     } catch (e) { ok(false, '실행 오류 ' + e.message + ' ' + (e.stack || '').split('\n').slice(1, 3).join(' / ')); }
     return out;
