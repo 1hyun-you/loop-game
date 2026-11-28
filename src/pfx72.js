@@ -4,6 +4,7 @@
    • 다 구워지기 전에는 각 인물의 옛 그리기(임시 도형)를 그대로 씀 (PFX72.on(키)로 확인)
    • 반투명·빛 번짐 허용 (DOT_STYLE 1장 이펙트 예외), 연기는 흙먼지 갈색 (pfx-lib 안에서 교체)
    • 지금은 광전사 전용 키만 등록 (시범), 다른 인물은 같은 틀로 키를 추가
+   • 0.73: 층 나누기(L 'g' = 바닥, 적·캐릭터 아래 / 그 밖 = 위), 설정 '이펙트 강도'(약하게·보통·강하게, 자기 반복 공격 r: 투명도 0.45·0.7·1 / 그 밖 0.7·0.9·1), 캐릭터 위치 표시
    ============================================================ */
 const PFX72 = (() => {
   const RAGE = ['#1a0508', '#4a0c12', '#8a1420', '#c4202a', '#ee4a30', '#ff8a4a', '#ffd09a'];
@@ -12,21 +13,23 @@ const PFX72 = (() => {
   const BROWN = '#4a3a2e';
   // 키: m = pfx-lib 효과 이름, o = 옵션(색 등), T = 구울 길이(초, 원본보다 짧으면 끝을 흐리게), fps, pv = 기준점('c' = 그림 중심, [x, y] = 원점 기준 칸)
   const SPEC = {
-    slash: { m: 'swordSlash', o: { palette: RAGE, sparks: SPARK }, T: 0.6, pv: [0, -20] },
-    heavy: { m: 'heavyCleave', o: { palette: RAGE, stone: BROWN }, T: 1.0, pv: [0, -20] },
-    spin: { m: 'spinSlash', o: { palette: RAGE, sparks: SPARK }, T: 0.7, pv: 'c' },
-    thrust: { m: 'thrust', o: { palette: RAGE, sparks: SPARK }, T: 0.6, pv: [0, -20] },
-    claw: { m: 'clawSwipe', o: { palette: RAGE, sparks: SPARK }, T: 0.7, pv: 'c' },
-    flame: { m: 'spiritFlame', o: { palette: ['#1a0508', '#4a0c12', '#8a1420', '#c4202a', '#ee4a30', '#ff6a3a', '#ff8a4a', '#ffd09a', '#fff0d0'] }, fps: 20, pv: [0, 0] },
-    quake: { m: 'groundSlam', o: { palette: RAGE, stone: BROWN }, T: 1.1, fps: 24, pv: [0, 0] },
-    spike: { m: 'earthSpike', o: { palette: RAGE, glow: ['#4a0c12', '#c4202a', '#ff8a4a', '#ffd09a', '#fff0d0'] }, T: 1.0, fps: 24, pv: [0, 0] },
+    slash: { m: 'swordSlash', o: { palette: RAGE, sparks: SPARK }, T: 0.6, pv: [0, -20], r: 1 },
+    heavy: { m: 'heavyCleave', o: { palette: RAGE, stone: BROWN }, T: 1.0, pv: [0, -20], r: 1 },
+    spin: { m: 'spinSlash', o: { palette: RAGE, sparks: SPARK }, T: 0.7, pv: 'c', r: 1 },
+    thrust: { m: 'thrust', o: { palette: RAGE, sparks: SPARK }, T: 0.6, pv: [0, -20], r: 1 },
+    claw: { m: 'clawSwipe', o: { palette: RAGE, sparks: SPARK }, T: 0.7, pv: 'c', r: 1 },
+    flame: { m: 'spiritFlame', o: { palette: ['#1a0508', '#4a0c12', '#8a1420', '#c4202a', '#ee4a30', '#ff6a3a', '#ff8a4a', '#ffd09a', '#fff0d0'] }, fps: 20, pv: [0, 0], r: 1 },
+    quake: { m: 'groundSlam', o: { palette: RAGE, stone: BROWN }, T: 1.1, fps: 24, pv: [0, 0], L: 'g' },
+    spike: { m: 'earthSpike', o: { palette: RAGE, glow: ['#4a0c12', '#c4202a', '#ff8a4a', '#ffd09a', '#fff0d0'] }, T: 1.0, fps: 24, pv: [0, 0], L: 'g' },
     pillar: { m: 'flamePillar', o: { stone: BROWN }, T: 1.1, fps: 24, pv: [0, 0] },
     boom: { m: 'smallExplosion', o: { stone: BROWN }, T: 0.9, fps: 24, pv: [0, 0] },
-    bolt: { m: 'warBolt', o: {}, pv: [0, 0] },
-    beat: { m: 'warBeat', o: { squash: 1 }, pv: [0, 0] },
-    dome: { m: 'warDome', o: {}, fps: 20, pv: [0, 0] },
-    domeOn: { m: 'warDome', o: { palette: RAGE_DARK }, fps: 20, pv: [0, 0] },
-    roar: { m: 'warRoar', o: { squash: 1 }, pv: [0, 0] },
+    bolt: { m: 'warBolt', o: {}, pv: [0, 0], r: 1 },
+    beat: { m: 'warBeat', o: { squash: 1 }, pv: [0, 0], L: 'g', r: 1 },
+    dome: { m: 'warDome', o: {}, fps: 20, pv: [0, 0], L: 'g' },
+    domeOn: { m: 'warDome', o: { palette: RAGE_DARK }, fps: 20, pv: [0, 0], L: 'g' },
+    roar: { m: 'warRoar', o: { squash: 1 }, pv: [0, 0], L: 'g' },
+    drain: { m: 'warDrain', o: {}, fps: 20, pv: [0, 0], r: 1 },
+    blades: { m: 'warBlades', o: {}, pv: [0, 0], L: 'g' },
   };
   const S = {}, Q = [];
   let list = [], gRef = null;
@@ -71,7 +74,7 @@ const PFX72 = (() => {
     if (list.length >= 80) list.shift();
     let rot = o.rot || 0, flip = !!o.flip;
     if (o.dir !== undefined) { rot = o.dir; if (Math.cos(o.dir) < 0) { flip = true; rot = o.dir - Math.PI; } }
-    const s = o.s || 1, inst = { k, x, y, rot, flip, sx: o.sx || s, sy: o.sy || s, t: -(o.delay || 0), e: o.e || null, fol: !!o.fol, a: o.a ?? 1 };
+    const s = o.s || 1, inst = { k, x, y, rot, flip, sx: o.sx || s, sy: o.sy || s, t: -(o.delay || 0), e: o.e || null, fol: !!o.fol, a: o.a ?? 1, L: SPEC[k].L || 't' };
     list.push(inst); return inst;
   }
   function tick(dt) {
@@ -83,7 +86,7 @@ const PFX72 = (() => {
   function frame(c, k, x, y, t, o) {
     const st = S[k]; if (!st || st.st !== 'ok' || t < 0) return;
     let i = Math.floor(t * st.fps); if (st.loop) i %= st.n; else if (i >= st.n) return;
-    let a = o.a ?? 1; if (st.trim) { const u = t / st.dur; if (u > 0.7) a *= Math.max(0, (1 - u) / 0.3); }
+    let a = (o.a ?? 1) * strength(k); if (st.trim) { const u = t / st.dur; if (u > 0.7) a *= Math.max(0, (1 - u) / 0.3); }
     if (a <= 0.01) return;
     const sx = o.sx, sy = o.sy;
     c.save(); c.imageSmoothingEnabled = false; c.globalAlpha = Math.min(1, a);
@@ -91,8 +94,11 @@ const PFX72 = (() => {
     c.drawImage(st.cv, (i % st.cols) * st.cw, Math.floor(i / st.cols) * st.ch, st.cw, st.ch, st.dx, st.dy, st.cw, st.ch);
     c.restore();
   }
-  function draw(c) { if (G !== gRef) return; for (const p of list) frame(c, p.k, p.x, p.y, p.t, p); }
-  return { SPEC, want, on, play, tick, draw, frame, bake, state: S, count: () => (G === gRef ? list.length : 0) };
+  // 설정 '이펙트 강도' (SETTINGS.fx72 = 'l'·'m'·'h', 기본 보통)
+  const STR = { r: { l: 0.45, m: 0.7, h: 1 }, o: { l: 0.7, m: 0.9, h: 1 } };
+  function strength(k) { const v = (typeof SETTINGS !== 'undefined' && SETTINGS.fx72) || 'm'; return (SPEC[k] && SPEC[k].r ? STR.r : STR.o)[v] ?? 1; }
+  function draw(c, layer = 't') { if (G !== gRef) return; for (const p of list) if (p.L === layer) frame(c, p.k, p.x, p.y, p.t, p); }
+  return { SPEC, want, on, play, tick, draw, frame, bake, strength, state: S, under: null, count: () => (G === gRef ? list.length : 0) };
 })();
 
 /* 옛 이펙트 숨기기: fx 객체에 hide72가 있으면 그리지 않음 (동작 판정·몸 휘두름 연출은 그대로) */
@@ -103,3 +109,20 @@ drawFx = function (c) {
   try { _drawFx72(c); } finally { G.fx = all; }   // 그리기는 읽기 전용 (game.js fx 주석)
 };
 const hideLast72 = (kind, key) => { if (!PFX72.on(key)) return; const f = G.fx[G.fx.length - 1]; if (f && f.kind === kind && f.t === 0) f.hide72 = 1; };
+
+/* 0.73 바닥 층: 적·캐릭터보다 먼저 그림 (돔·균열·가시·맥박·포효 바람) — 캐릭터가 이펙트에 묻히지 않게 */
+const _drawEnemies72 = drawEnemies;
+drawEnemies = function (c, inView) {
+  if (G && G.p) { c.save(); try { if (PFX72.under) PFX72.under(c); PFX72.draw(c, 'g'); } finally { c.restore(); } }
+  return _drawEnemies72.apply(this, arguments);
+};
+/* 0.73 설정 '이펙트 강도' — 설정 화면 '상단 화면 크기' 아래에 한 줄 추가 */
+const FX72_NM = { l: '약하게', m: '보통', h: '강하게' };
+const _showSettings72 = showSettings;
+showSettings = function (back) {
+  _showSettings72.apply(this, arguments);
+  const hud = document.getElementById('s_hud'); if (!hud) return;
+  const v = SETTINGS.fx72 || 'm', row = hud.closest('.row');
+  row.insertAdjacentHTML('afterend', `<div class="row"><div class="rt"><b>이펙트 강도</b><span>${v === 'l' ? '약하게: 내 반복 공격 이펙트를 옅게 (캐릭터가 잘 보임)' : v === 'h' ? '강하게: 모든 이펙트를 원래 밝기로' : '보통: 내 반복 공격 이펙트를 조금 옅게'}</span></div><button class="tg" id="s_fx72">${FX72_NM[v]}</button></div>`);
+  on('s_fx72', () => { SETTINGS.fx72 = { l: 'm', m: 'h', h: 'l' }[SETTINGS.fx72 || 'm']; saveSettings(); keepScroll(() => showSettings(back)); });
+};

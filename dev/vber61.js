@@ -22,7 +22,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     ok(G.p.job === 'berserker' && HERO60.berserker.impl, '광전사 선택·구현 상태');
     ok(heroDials60().some(d => d.ic === '투'), '투지 주기 표시');
     run(6, 1); ok(B().fury > 0 || B().mode, '전투로 투지 충전 (' + Math.round(B().fury) + ')');
-    const cdN = wStats(base()).cd; B().fury = 99; B().idle = 0; furyGain60(5);
+    if (B().mode) furyEnd60(); const cdN = wStats(base()).cd;   /* 0.73: 전투 중 이미 격노에 들어간 경우 기준값이 틀어지던 시험 우연 제거 */ B().fury = 99; B().idle = 0; furyGain60(5);
     ok(B().mode === 'rage' && heroStatus60('').startsWith('격노'), '투지 가득 → 격노·상태 글자');
     const cd0 = wStats(base()).cd; ok(Math.abs(cd0 * 1.25 - cdN) < 0.01, '격노 중 대검 속도 +25% (' + cdN.toFixed(2) + ' → ' + cd0.toFixed(2) + ')');
     ok(Math.abs(playerHurtMul() - 0.85) < 0.01, '격노 받는 피해 -15%');

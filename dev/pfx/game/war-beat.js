@@ -1,32 +1,24 @@
-// 회귀의 들판 — 고동: 심장 박동처럼 붉은 고리가 '쿵' 퍼짐 (Claude, 회차 105)
-import { Rng, fit, clamp, ease, WHITE, TAU } from "../../core/index.js";
+// 회귀의 들판 — 고동: 심장 박동처럼 몸에서 얇은 맥박 고리가 '쿵' 퍼지고 몸 중심에 심장 빛 (Claude, 회차 105 · 0.73 모양 구분)
+import { fit, clamp, ease, WHITE, TAU } from "../../core/index.js";
 export const meta = {
-  name: "War heartbeat", desc: "A heartbeat thumps out of the body: a thick red ring snaps outward, hot on its leading edge, dark behind, cracking as it fades.",
-  tags: ["game", "ring", "aura"], size: [260, 200], origin: [130, 100], duration: 0.42, loop: false, fps: 30, bg: "ground",
-  options: { palette: ["#1a0508", "#4a0c12", "#8a1420", "#c4202a", "#ee4a30", "#ff8a4a", "#ffd09a"], radius: 110, squash: 0.62, seed: 4 },
+  name: "War heartbeat", desc: "One heartbeat: a hot heart-shaped flare at the body, then a thin double pulse line that races out and is gone.",
+  tags: ["game", "pulse"], size: [260, 250], origin: [130, 125], duration: 0.4, loop: false, fps: 30, bg: "ground",
+  options: { palette: ["#1a0508", "#4a0c12", "#8a1420", "#c4202a", "#ee4a30", "#ff8a4a", "#ffd09a"], radius: 110, squash: 1, seed: 4 },
 };
-export function create(o) {
-  const C = fit(o.palette, 7), R = new Rng(o.seed), RR = o.radius, sq = o.squash;
-  const gaps = Array.from({ length: 7 }, () => [R.range(0, TAU), R.range(0.08, 0.22)]);
-  let t = 0;
-  return {
-    update(dt) { t += dt; },
-    draw(p) {
-      const u = clamp(t / meta.duration), r = RR * (0.18 + 0.82 * ease.outExpo(u)), w = Math.max(2, 12 * (1 - u) + 2);
-      const fade = 1 - ease.inQuad(u);
-      if (fade <= 0.02) return;
-      // squashed ring: draw in a scaled space by shading per pixel
-      p.shade(-r - 2, -r * sq - 2, r + 2, r * sq + 2, (x, y, out) => {
-        const d = Math.hypot(x, y / sq);
-        if (d > r || d < r - w) return;
-        const a = Math.atan2(y / sq, x);
-        if (u > 0.35) for (const [g, gw] of gaps) { let da = Math.abs(((a - g + Math.PI * 3) % TAU) - Math.PI); if (da < gw * (u - 0.35) * 2.5) return; }
-        const v = (d - (r - w)) / w;
-        out.c = v > 0.8 ? (u < 0.15 ? WHITE : C[6]) : v > 0.55 ? C[5] : v > 0.3 ? C[3] : C[2];
-        out.a = fade < 1 && ((x + y) & 1) && fade < 0.5 ? 0 : 1;
-      });
-      p.glowRing(0, 0, r * 0.82, 10, C[4], 0.3 * fade);
-      if (t < 0.06) p.glow(0, 0, 22, C[6], 0.5);
-    },
-  };
+const HEART = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."];
+export function draw(p, t, o) {
+  const C = fit(o.palette, 7), RR = o.radius, sq = o.squash, u = clamp(t / meta.duration);
+  // 심장: 처음 0.12초 부풀었다 꺼짐
+  if (t < 0.14) { const k = t < 0.05 ? 1 : 1 - (t - 0.05) / 0.09; p.sprite(HEART, { "#": k > 0.6 ? C[6] : C[4] }, -3, -16); p.glow(0, -13, 16, C[5], 0.5 * k); }
+  // 맥박 고리 2줄(바깥 굵음 2칸, 안쪽 1칸) — 빠르게 나가며 얇아짐, 원 둘레를 따라 맥파처럼 굵기가 출렁임
+  for (const [lag, w0, col] of [[0, 2.5, C[5]], [0.06, 1.2, C[3]]]) {
+    const v = clamp((t - lag) / (meta.duration - lag)); if (v <= 0 || v >= 1) continue;
+    const r = RR * (0.15 + 0.85 * ease.outCubic(v)), fade = 1 - v;
+    p.shade(-r - 3, -r * sq - 3, r + 3, r * sq + 3, (x, y, out) => {
+      const a = Math.atan2(y / sq, x), w = w0 * (1 + 0.6 * Math.max(0, Math.sin(a * 6 + v * 20))) * (0.4 + 0.6 * fade), d = Math.hypot(x, y / sq);
+      if (d > r || d < r - w) return;
+      out.c = v < 0.15 && lag === 0 ? WHITE : col; out.a = fade < 0.35 && ((x + y) & 1) ? 0 : 1;
+    });
+    if (lag === 0) p.glowRing(0, 0, r, 5, C[4], 0.25 * fade);
+  }
 }

@@ -47,7 +47,7 @@ function furyStart60(force) {
   const col = HERO60.berserker.c1;
   sfx('ult'); shake(3, 0.25); rcBig(col, 0.25);
   fx({ kind: 'ring', x: p.x, y: p.y, r0: 12, r1: 90, dur: 0.4, color: col, follow: true }); hideLast72('ring', 'beat');
-  PFX72.play('beat', p.x, p.y, { s: 100 / 110, fol: 1 }); PFX72.play('roar', p.x, p.y, { s: 70 / 128, fol: 1 });
+  PFX72.play('roar', p.x, p.y, { s: 80 / 128, fol: 1 });   // 0.73: 격노 진입 = 포효 바람(작게)
   toast(k === 'frenzy' ? '광란' : k === 'ramp' ? '폭주' : '격노', col);
   const a = fz60('arrow'); if (a) giantBolt60(a);                               // 투기살: 격노 진입 순간 거대 투기살
 }
@@ -120,7 +120,7 @@ function ultSlam60(p) {                                                         
     if (PFX72.on('quake')) for (let i = n72; i < G.fx.length; i++) G.fx[i].hide72 = 1;
     gridQuery(x, y, R, e => { if (!e.dead) stun60(e, C.stun); });
     fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.6, color: HERO60.berserker.c3 }); hideLast72('ring', 'quake');
-    PFX72.play('quake', x, y, { s: R / 104 }); PFX72.play('beat', x, y, { s: R / 110 });
+    PFX72.play('quake', x, y, { s: R / 104 });   // 0.73: 대지 분쇄 = 고리 없이 땅 갈라짐·파편
     if (!PFX72.on('quake')) for (let i = 0; i < 10; i++) { const a = i * 0.628; B60().cracks.push({ x: x + Math.cos(a) * 30, y: y + Math.sin(a) * 18, a, L: R * 0.45, t: 0, dur: 0.7, big: 1 }); }
   });
   return 0.9;
@@ -143,7 +143,7 @@ function ultBurst60(p) {                                                        
     fx({ kind: 'arc', a: a0, arc: C.arc, r: R, dur: 0.3, color: H.c1 }); hideLast72('arc', 'spike'); };
   uLater(C.jump, () => { shake(8, 0.4); hit(C.k, 0); PFX72.play('quake', G.p.x, G.p.y, { s: VIEW.w * C.R / 104 }); furyStart60('ramp'); B60().rageT = B60C.ramp.dur; });
   for (let i = 1; i <= C.n; i++) uLater(C.jump + C.gap * i, () => { hit(C.k2, C.stun); const x = G.p.x, y = G.p.y; for (let j = 0; j < 5; j++) { const a = a0 + rand(-C.arc / 2, C.arc / 2), r = VIEW.w * C.R * rand(0.3, 0.9), sx = x + Math.cos(a) * r, sy = y + Math.sin(a) * r;
-      if (PFX72.on('spike')) PFX72.play('spike', sx, sy, { s: rand(0.45, 0.65), flip: Math.random() < 0.5 }); else B60().cracks.push({ x: sx, y: sy, a, L: 26, t: 0, dur: 0.45, blood: 1 }); } });
+      if (PFX72.on('spike')) PFX72.play('spike', sx, sy, { s: 0.45 + Math.random() * 0.2, flip: Math.random() < 0.5 }); else B60().cracks.push({ x: sx, y: sy, a, L: 26, t: 0, dur: 0.45, blood: 1 }); } });
   return C.jump + C.gap * C.n + 0.2;
 }
 
@@ -156,7 +156,7 @@ function fCut60(w, S) {
   for (const e of pool.slice(0, n)) {
     damageEnemy(e, 15 * fk60(w, S) * k, { src: 'dagger', kb: WEAPONS.cleave.base.kb * 0.4, fx: p.x, fy: p.y });
     B60().cuts.push({ e, x: e.x, y: e.y, a: rand(-0.9, 0.9), r: e.r + 9, t: 0, dur: 0.38, w: 3 + 5 * fr });
-    PFX72.play('claw', e.x, e.y, { e, s: (e.r + 9) / 22 * (1 + 0.3 * fr), flip: e.x < p.x, rot: rand(-0.3, 0.3) });   // 투지에 따라 굵게(1~1.3배)
+    PFX72.play('claw', e.x, e.y, { e, s: (e.r + 9) / 22 * (1 + 0.3 * fr), flip: e.x < p.x, rot: (Math.random() - 0.5) * 0.6 });   // 투지에 따라 굵게(1~1.3배)
   }
   return 0.9 * fc60(w, S);
 }
@@ -192,7 +192,7 @@ function graveTick60(dt) {
       g.bu = on ? 1.5 : 2.5; g.pop = 0.3; const RB = (on ? 150 : 110) * S.area;
       gridQuery(g.x, g.y, RB, e => damageEnemy(e, 20 * k, { src: 'turret', kb: 200, fx: g.x, fy: g.y }));
       fx({ kind: 'ring', x: g.x, y: g.y, r0: R, r1: RB, dur: 0.3, color: on ? HERO60.berserker.c2 : HERO60.berserker.c1 }); hideLast72('ring', 'beat');
-      PFX72.play('beat', g.x, g.y, { s: RB / 110 });
+      PFX72.play('blades', g.x, g.y, { s: RB / 110 });   // 0.73: 칼무덤 확 커짐 = 둘레에서 칼날이 솟음
     }
   }
   B.graves = B.graves.filter(g => !g.dead);
@@ -220,7 +220,7 @@ function fDrain60(w, S) {
 function beat60(R, d, stun, kb, big) {
   const p = G.p; gridQuery(p.x, p.y, R, e => { damageEnemy(e, d, { src: 'bell', kb, fx: p.x, fy: p.y }); if (!e.dead && stun) stun60(e, stun); });
   B60().beats.push({ R, t: 0, dur: big ? 0.6 : 0.32, big });
-  PFX72.play('beat', p.x, p.y, { s: R / 110, fol: 1 }); if (big) PFX72.play('roar', p.x, p.y, { s: R / 128, fol: 1, a: 0.8 });
+  PFX72.play('beat', p.x, p.y, { s: R / 110, fol: 1 });   // 0.73: 고동 = 심장 빛 + 얇은 맥박 2줄 (큰 고동은 범위만 큼)
 }
 function fBeat60(w, S) {
   const R = 140 * S.area; if (!nearestEnemy(G.p.x, G.p.y, R)) return false;
@@ -330,7 +330,14 @@ function burn60(e) {
 }
 
 /* ---------- 그리기 (임시 도형, 최종본 아님 — 0.72부터 pixelfx가 구워지면 그쪽으로 대체) ---------- */
-const B72KEYS = ['slash', 'heavy', 'spin', 'thrust', 'claw', 'flame', 'quake', 'spike', 'pillar', 'boom', 'bolt', 'beat', 'dome', 'domeOn', 'roar'];
+function drawUnderB60(c) {                                                       // 0.73 바닥 층: 칼무덤 돔 (적·캐릭터 아래)
+  const B = G.b60; if (!B || !isB60() || !PFX72.on('dome')) return;
+  const on = furyOn60();
+  for (const g of B.graves) { const S = wStats(g.w), R = 65 * S.area + Math.sin(g.t * 9) * 5 + g.pop * 60, fade = Math.min(1, g.t * 4) * (g.life - g.t < 1 ? g.life - g.t : 1), s = R / 52;
+    PFX72.frame(c, on && PFX72.on('domeOn') ? 'domeOn' : 'dome', g.x, g.y, g.t, { sx: s, sy: s, a: fade }); }
+}
+PFX72.under = drawUnderB60;
+const B72KEYS = ['slash', 'heavy', 'spin', 'thrust', 'claw', 'flame', 'quake', 'spike', 'pillar', 'boom', 'bolt', 'beat', 'dome', 'domeOn', 'roar', 'drain', 'blades'];
 function drawB60(c) {
   const B = G.b60; if (!B) return;
   const p = G.p, H = HERO60.berserker, tau = Math.PI * 2;
@@ -358,7 +365,7 @@ function drawB60(c) {
     c.strokeStyle = H.c3; c.lineWidth = Math.max(2, o.w * 0.18); c.stroke(); }
   for (const g of B.graves) {                                                   // 칼무덤: 꽂힌 칼 + 흔들리는 붉은 돔
     const on = furyOn60(), S = wStats(g.w), R = 65 * S.area + Math.sin(g.t * 9) * 5 + g.pop * 60, fade = Math.min(1, g.t * 4) * (g.life - g.t < 1 ? g.life - g.t : 1);
-    if (PFX72.on('dome')) { const s = R / 52; PFX72.frame(c, on && PFX72.on('domeOn') ? 'domeOn' : 'dome', g.x, g.y, g.t, { sx: s, sy: s, a: fade }); continue; }
+    if (PFX72.on('dome')) continue;                                             // 0.73: 돔은 바닥 층(drawUnderB60)에서 그림
     c.globalAlpha = (on ? 0.32 : 0.18) * fade; c.fillStyle = on ? H.c2 : H.c1; c.beginPath(); c.ellipse(g.x, g.y, R, R * 0.62, 0, 0, tau); c.fill();
     c.globalAlpha = 0.7 * fade; c.strokeStyle = H.c1; c.lineWidth = 2; c.stroke();
     c.globalAlpha = fade; c.strokeStyle = '#d8d2cc'; c.lineWidth = 4; c.beginPath(); c.moveTo(g.x, g.y + 4); c.lineTo(g.x, g.y - 22); c.stroke();
@@ -375,6 +382,11 @@ function drawB60(c) {
   const lw = fz60('lamp');                                                      // 피의 갈증: 적 → 광전사로 흐르는 핏줄기
   if (lw && lw.lk && lw.lk.length && G.time - lw.lkT < 0.45) {
     const S = wStats(lw), in2 = (60 * S.area) ** 2;
+    if (PFX72.on('drain')) {                                                    // 0.73 피의 갈증: 핏방울이 핏줄기를 타고 빨려 들어옴 (가까운 적은 굵게), 몸 둘레 붉은 맥동
+      lw.lk.forEach((e, i) => { if (e.dead) return; const close = dist2(p.x, p.y, e.x, e.y) < in2, L = Math.hypot(e.x - p.x, e.y - p.y) || 1;
+        PFX72.frame(c, 'drain', p.x, p.y - 4, G.time + i * 0.21, { rot: Math.atan2(e.y - p.y + 4, e.x - p.x), sx: L / 120, sy: close ? 1.9 : 1.2 }); });
+      c.globalAlpha = 0.18 + 0.1 * Math.sin(G.time * 12); c.fillStyle = H.c1; c.beginPath(); c.arc(p.x, p.y, p.r + 4, 0, tau); c.fill(); c.globalAlpha = 1;
+    } else
     for (const e of lw.lk) { if (e.dead) continue; const close = dist2(p.x, p.y, e.x, e.y) < in2, dx = p.x - e.x, dy = p.y - e.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
       c.globalAlpha = 0.8; c.strokeStyle = H.c1; c.lineWidth = close ? 4.5 : 2; c.beginPath();
       for (let k = 0; k <= 10; k++) { const u = k / 10, wv = Math.sin(u * 8 + G.time * 16) * 4 * Math.sin(u * Math.PI), x = e.x + dx * u + nx * wv, y = e.y + dy * u + ny * wv; k ? c.lineTo(x, y) : c.moveTo(x, y); }
@@ -382,4 +394,13 @@ function drawB60(c) {
   }
   c.globalAlpha = 1;
   PFX72.draw(c);
+  if (PFX72.count() >= 3 || B.mode) markP72(c, p);
+}
+function markP72(c, p) {                                                        // 0.73 캐릭터 위치 표시: 이펙트가 많을 때 발밑 테·머리 위 작은 화살표
+  const y = p.y + p.r * 0.95, k = 0.55 + 0.25 * Math.sin(G.time * 6);
+  c.save(); c.globalAlpha = k; c.lineWidth = 2; c.strokeStyle = '#1a0508'; c.beginPath(); c.ellipse(p.x, y, p.r * 1.15, p.r * 0.45, 0, 0, Math.PI * 2); c.stroke();
+  c.lineWidth = 1.2; c.strokeStyle = '#fff4e0'; c.stroke();
+  const hy = p.y - p.r * 2.4 - 3 * Math.abs(Math.sin(G.time * 4));
+  c.globalAlpha = 0.9; c.fillStyle = '#fff4e0'; c.strokeStyle = '#1a0508'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(p.x - 5, hy - 4); c.lineTo(p.x + 5, hy - 4); c.lineTo(p.x, hy + 2); c.closePath(); c.stroke(); c.fill();
+  c.restore();
 }
