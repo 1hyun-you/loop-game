@@ -33,6 +33,8 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
   await scene('f_fuse1', new Function(F(['dagger', 'arrow', 'turret', 'fireball']) + '; T72.crowd(14, 80);'), [1.0, 0.15, 0.15, 0.6]);
   await scene('g_fuse2', new Function(F(['lamp', 'bell', 'thorn']) + '; T72.crowd(14, 80);'), [1.0, 0.15, 0.15, 0.6]);
   await scene('h_burst', () => { T72.fresh(); applyAw60('B'); T72.crowd(16, 90); G.p.ult = JOB_CFG.ultNeed; useUlt(); }, [0.45, 0.3, 0.35]);
+  await scene('i_drain', new Function(F(['lamp']) + "; G.enemies.length = 0; const T = Object.keys(TOUGH60).filter(k => ENEMIES[k]); for (const [dx, dy] of [[90, -30], [-60, 50], [40, 110]]) { const e = makeEnemy(T[0], G.p.x + dx, G.p.y + dy); if (e) { e.spd = 0; e.hp = e.maxHp = 1e7; } }"), [0.4, 0.13, 0.13]);
+  await scene('j_gash', new Function(F(['dagger']) + "; G.enemies.length = 0; const T = Object.keys(TOUGH60).filter(k => ENEMIES[k]); for (const [dx, dy] of [[140, -30], [-120, 60]]) { const e = makeEnemy(T[0], G.p.x + dx, G.p.y + dy); if (e) { e.spd = 0; e.hp = e.maxHp = 1e7; } }"), [0.95, 0.06, 0.1]);
   // 2. 그리기 시간: 연성 7종 + 격노 + 적 40마리, render 100회 평균 (이펙트 있음 / 없음)
   const perf = await p.evaluate(() => {
     T72.fresh(); for (const id of ['dagger', 'arrow', 'turret', 'fireball']) { G.p.weapons.push({ id, lvl: 5, t: 0.2 }); applyFuse60(id); T72.settle(); }

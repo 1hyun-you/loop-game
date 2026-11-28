@@ -28,7 +28,8 @@ const PFX72 = (() => {
     dome: { m: 'warDome', o: {}, fps: 20, pv: [0, 0], L: 'g' },
     domeOn: { m: 'warDome', o: { palette: RAGE_DARK }, fps: 20, pv: [0, 0], L: 'g' },
     roar: { m: 'warRoar', o: { squash: 1 }, pv: [0, 0], L: 'g' },
-    drain: { m: 'warDrain', o: {}, fps: 20, pv: [0, 0], r: 1 },
+    drain: { m: 'warSoul', o: {}, fps: 20, pv: [0, 0], r: 1 },   // 0.74: 디멘터처럼 혼을 빨아들임 (war-drain 대체)
+    gash: { m: 'warGash', o: {}, pv: [0, 0], r: 1 },   // 0.74 칼자국: 굵은 사선 1줄 (발톱 3줄은 드루이드 늑대 표현이라 대체)
     blades: { m: 'warBlades', o: {}, pv: [0, 0], L: 'g' },
   };
   const S = {}, Q = [];

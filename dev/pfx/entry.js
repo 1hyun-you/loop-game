@@ -17,7 +17,9 @@ import * as warDome from "./src/fx/game/war-dome.js";
 import * as warRoar from "./src/fx/game/war-roar.js";
 import * as warDrain from "./src/fx/game/war-drain.js";
 import * as warBlades from "./src/fx/game/war-blades.js";
-const MODS = { swordSlash, heavyCleave, spinSlash, thrust, clawSwipe, spiritFlame, groundPound, groundSlam, earthSpike, flamePillar, smallExplosion, warBolt, warBeat, warDome, warRoar, warDrain, warBlades };
+import * as warSoul from "./src/fx/game/war-soul.js";
+import * as warGash from "./src/fx/game/war-gash.js";
+const MODS = { swordSlash, heavyCleave, spinSlash, thrust, clawSwipe, spiritFlame, groundPound, groundSlam, earthSpike, flamePillar, smallExplosion, warBolt, warBeat, warDome, warRoar, warDrain, warBlades, warSoul, warGash };
 // 연기: 회보라 → 흙먼지 갈색 (자홍 금지 규칙과 거리 두기)
 ["#6e5a40", "#54442f", "#3e3224", "#2a2119", "#1a140f"].forEach((c, i) => (SMOKE_RAMP[i] = hex(c)));
 /** 나눠 굽기: job.step(ms) 를 여러 프레임에 걸쳐 불러 화면 끊김 없이 굽기. put(i, rgba, w, h) 로 한 장씩 넘김 */

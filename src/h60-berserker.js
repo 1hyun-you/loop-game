@@ -80,10 +80,12 @@ function bSwing60(w, S) {
   return cd;
 }
 function bCut60(w, a0, arc, range, dmg, kb) {
-  const H = HERO60.berserker, k = w.br === 'B' ? 'heavy' : 'slash', p = G.p;
+  const H = HERO60.berserker, k = 'slash', p = G.p;
   sweep60(a0, arc, range, dmg, kb, H.c1, 'cleave'); hideLast72('arc', k);
-  // 0.72: 대검 베기 = sword-slash(가로 반경 약 52칸), 무거운 베기 = heavy-cleave(앞쪽 약 80칸) — 사거리에 맞춰 늘림, 무기 각성은 1.08배
-  PFX72.play(k, p.x, p.y, { dir: a0, s: range / (k === 'heavy' ? 80 : 52) * (w.aw ? 1.08 : 1) });
+  // 0.74: 이펙트는 칼날이 아니라 칼이 지나간 궤적·충격만 (대검 그림이 실제 칼) — 대검 베기 = sword-slash 궤적(가로 반경 약 52칸)
+  //       무거운 베기 = 같은 궤적을 더 크게 + 칼끝 자리 바닥 긁힘·흙먼지(ground-slam 작게), 무기 각성은 1.08배
+  PFX72.play(k, p.x, p.y, { dir: a0, s: range / 52 * (w.aw ? 1.08 : 1) * (w.br === 'B' ? 1.1 : 1) });
+  if (w.br === 'B') PFX72.play('quake', p.x + Math.cos(a0) * range * 0.7, p.y + Math.sin(a0) * range * 0.7, { s: range / 260, a: 0.85 });
   if (w.aw) { fx({ kind: 'arc', a: a0, arc: arc * 0.92, r: range * 1.08, dur: 0.2, color: H.c3 }); hideLast72('arc', k); }   // 무기 각성 공통 모습: 칼날 확대·붉은 날 무늬
 }
 function thrust60(w, range, dmg) {                                              // 찌르기: 우선 조준(정예·수문장 > 단단한 적 > 가까운 적), 직선 꿰뚫기
@@ -156,7 +158,7 @@ function fCut60(w, S) {
   for (const e of pool.slice(0, n)) {
     damageEnemy(e, 15 * fk60(w, S) * k, { src: 'dagger', kb: WEAPONS.cleave.base.kb * 0.4, fx: p.x, fy: p.y });
     B60().cuts.push({ e, x: e.x, y: e.y, a: rand(-0.9, 0.9), r: e.r + 9, t: 0, dur: 0.38, w: 3 + 5 * fr });
-    PFX72.play('claw', e.x, e.y, { e, s: (e.r + 9) / 22 * (1 + 0.3 * fr), flip: e.x < p.x, rot: (Math.random() - 0.5) * 0.6 });   // 투지에 따라 굵게(1~1.3배)
+    PFX72.play('gash', e.x, e.y, { e, s: (e.r + 9) / 22 * (1 + 0.3 * fr), flip: Math.random() < 0.5, rot: (Math.random() - 0.5) * 0.6 });   // 0.74 굵은 사선 칼자국, 투지에 따라 굵게(1~1.3배)
   }
   return 0.9 * fc60(w, S);
 }
@@ -192,7 +194,7 @@ function graveTick60(dt) {
       g.bu = on ? 1.5 : 2.5; g.pop = 0.3; const RB = (on ? 150 : 110) * S.area;
       gridQuery(g.x, g.y, RB, e => damageEnemy(e, 20 * k, { src: 'turret', kb: 200, fx: g.x, fy: g.y }));
       fx({ kind: 'ring', x: g.x, y: g.y, r0: R, r1: RB, dur: 0.3, color: on ? HERO60.berserker.c2 : HERO60.berserker.c1 }); hideLast72('ring', 'beat');
-      PFX72.play('blades', g.x, g.y, { s: RB / 110 });   // 0.73: 칼무덤 확 커짐 = 둘레에서 칼날이 솟음
+      // 0.74: 칼무덤 확 커짐 = 돔 자체가 부풀었다 돌아옴 (drawUnderB60의 g.pop), 칼날 가시는 투기 가시와 헷갈려 제거
     }
   }
   B.graves = B.graves.filter(g => !g.dead);
@@ -334,10 +336,13 @@ function drawUnderB60(c) {                                                      
   const B = G.b60; if (!B || !isB60() || !PFX72.on('dome')) return;
   const on = furyOn60();
   for (const g of B.graves) { const S = wStats(g.w), R = 65 * S.area + Math.sin(g.t * 9) * 5 + g.pop * 60, fade = Math.min(1, g.t * 4) * (g.life - g.t < 1 ? g.life - g.t : 1), s = R / 52;
-    PFX72.frame(c, on && PFX72.on('domeOn') ? 'domeOn' : 'dome', g.x, g.y, g.t, { sx: s, sy: s, a: fade }); }
+    const k = on && PFX72.on('domeOn') ? 'domeOn' : 'dome';
+    PFX72.frame(c, k, g.x, g.y, g.t, { sx: s, sy: s, a: fade });
+    if (g.pop > 0) { c.save(); c.globalCompositeOperation = 'lighter'; PFX72.frame(c, k, g.x, g.y, g.t, { sx: s, sy: s, a: fade * g.pop / 0.3 * 0.8 }); c.restore(); }   // 부푸는 순간 테두리·막이 밝게 번쩍
+  }
 }
 PFX72.under = drawUnderB60;
-const B72KEYS = ['slash', 'heavy', 'spin', 'thrust', 'claw', 'flame', 'quake', 'spike', 'pillar', 'boom', 'bolt', 'beat', 'dome', 'domeOn', 'roar', 'drain', 'blades'];
+const B72KEYS = ['slash', 'spin', 'thrust', 'flame', 'quake', 'spike', 'pillar', 'boom', 'bolt', 'beat', 'dome', 'domeOn', 'roar', 'drain', 'gash'];
 function drawB60(c) {
   const B = G.b60; if (!B) return;
   const p = G.p, H = HERO60.berserker, tau = Math.PI * 2;
@@ -357,7 +362,7 @@ function drawB60(c) {
   if (!PFX72.on('spin')) for (const o of B.trails) { c.globalAlpha = 0.5 * (1 - o.t / o.dur); c.strokeStyle = H.c1; c.lineWidth = 5; c.beginPath(); c.arc(o.x, o.y, o.r, o.a, o.a + 1.6); c.stroke(); }
   if (!PFX72.on('thrust')) for (const o of B.thrusts) { const k = o.t / o.dur; c.globalAlpha = 1 - k; c.strokeStyle = H.c1; c.lineWidth = 10 * (1 - k * 0.6); c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(o.x + Math.cos(o.a) * o.L * Math.min(1, o.t / 0.06), o.y + Math.sin(o.a) * o.L * Math.min(1, o.t / 0.06)); c.stroke();
     c.strokeStyle = H.c3; c.lineWidth = 2; c.stroke(); }
-  if (!PFX72.on('claw')) for (const o of B.cuts) { const k = o.t / o.dur, x = o.e && !o.e.dead ? o.e.x : o.x, y = o.e && !o.e.dead ? o.e.y : o.y, L = o.r * Math.min(1, o.t / 0.05);   // 칼자국: 굵게 찢긴 상처
+  if (!PFX72.on('gash')) for (const o of B.cuts) { const k = o.t / o.dur, x = o.e && !o.e.dead ? o.e.x : o.x, y = o.e && !o.e.dead ? o.e.y : o.y, L = o.r * Math.min(1, o.t / 0.05);   // 칼자국: 굵게 찢긴 상처
     c.globalAlpha = 1 - k; c.strokeStyle = H.c2; c.lineWidth = o.w + 3; c.beginPath(); c.moveTo(x - Math.cos(o.a) * L, y - Math.sin(o.a) * L); c.lineTo(x + Math.cos(o.a) * L, y + Math.sin(o.a) * L); c.stroke();
     c.strokeStyle = H.c1; c.lineWidth = o.w; c.stroke(); }
   if (!PFX72.on('bolt')) for (const o of B.bolts) { const head = Math.min(o.L, o.t * o.sp), tail = Math.max(0, head - 90), k = Math.max(0, (o.t - o.L / o.sp) / 0.15);   // 투기살: 붉은 줄기가 날아감
@@ -384,7 +389,7 @@ function drawB60(c) {
     const S = wStats(lw), in2 = (60 * S.area) ** 2;
     if (PFX72.on('drain')) {                                                    // 0.73 피의 갈증: 핏방울이 핏줄기를 타고 빨려 들어옴 (가까운 적은 굵게), 몸 둘레 붉은 맥동
       lw.lk.forEach((e, i) => { if (e.dead) return; const close = dist2(p.x, p.y, e.x, e.y) < in2, L = Math.hypot(e.x - p.x, e.y - p.y) || 1;
-        PFX72.frame(c, 'drain', p.x, p.y - 4, G.time + i * 0.21, { rot: Math.atan2(e.y - p.y + 4, e.x - p.x), sx: L / 120, sy: close ? 1.9 : 1.2 }); });
+        PFX72.frame(c, 'drain', p.x, p.y - 4, G.time + i * 0.27, { rot: Math.atan2(e.y - p.y + 4, e.x - p.x), sx: L / 120, sy: close ? 2.2 : 1.5, flip: false }); });
       c.globalAlpha = 0.18 + 0.1 * Math.sin(G.time * 12); c.fillStyle = H.c1; c.beginPath(); c.arc(p.x, p.y, p.r + 4, 0, tau); c.fill(); c.globalAlpha = 1;
     } else
     for (const e of lw.lk) { if (e.dead) continue; const close = dist2(p.x, p.y, e.x, e.y) < in2, dx = p.x - e.x, dy = p.y - e.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
