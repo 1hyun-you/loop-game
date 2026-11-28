@@ -1,0 +1,78 @@
+[도트 재작업 요청 묶음 S2] 궁수 · 프리스트 · 사령술사 전 장면 재작업 (얼굴·형태 + 서 있기 2장·걷기 옆/위 추가)
+작성 2026-11-28 회차 105 (Claude)
+
+1. 배경
+• 게임: '회귀의 들판' — 휴대폰 세로 화면용 탑다운 액션 웹 게임 (뱀파이어 서바이버즈와 비슷한 방식)
+• 도트는 네가 정해진 칸 수로 원화 없이 직접 찍는 방식으로 확정됨
+• 이번 묶음은 재작업: 사용자 평가 "멍청해 보이고 생기다 만 느낌". 구체 문제는 아래 5장에 대상별로 적음
+• 진행 방식: 대상 하나씩 → 먼저 기준 장(아래 6장 '기준 장') 1장을 완성해 대화창에 보여 준 뒤 기다리지 말고 나머지 장을 이어서 → 저장·커밋 → 다음 대상
+• 코드는 절대 건드리지 않음. 그림만 지정 폴더에 저장하면 끝
+
+2. 참고 파일
+• 화풍 기준: assets/dot-src/berserker/gpt_dot/ (외곽선·명암·면 나누기를 같게. 단 얼굴은 아래 4장 규칙이 우선)
+• 도트 규칙: docs/DOT_STYLE.md (4장 얼굴 규칙, 8장 인물 외형 기준)
+• 검수 확대 시트: dev/art_review/r105/ (faces.png, portraits.png 등 — 무엇이 문제였는지 확인)
+• 지금 그림: 각 인물 폴더 gpt_dot/ (동작 구성·색은 그대로 참고, 얼굴·형태는 이번 규칙으로 다시)
+
+3. 도트 규격 (공통)
+• 픽셀 1개 = 도트 1칸, 투명 배경, 흐림·중간색 경계·반투명 금지
+• 색 수: 인물 16 이내
+• 외곽선 바깥 1칸 가장 짙은 색(순수 검정 금지), 빛 왼쪽 위, 명암 3단계
+• 시점: 정면에서 살짝 위에서 내려다본 2D 탑다운
+• 바닥 줄: 맨 아래에서 3칸 위(64칸 = 60번 줄), 좌우 가운데 / 사방 2칸 이상 여백
+• 자홍(분홍 보라) 금지(적 공격 예고 전용), 글자·로고 금지
+• 실루엣만으로 구분 가능, 색만 바꾼 구분 금지
+
+4. 얼굴·손 규칙 (이번 재작업의 핵심, 64칸 인물 기준 칸 수)
+• 이번 문제의 원인 3가지: 넓은 피부 면에 작은 눈이 낮게 붙고 눈썹이 약해 멍한 눈이 됨 / 피부 위 낱점·얼룩 명암이 수염·때처럼 보임 / 손이 손가락 없는 둥근 덩어리
+• 머리: 가로 22~24칸, 눈은 머리 세로 가운데 줄 높이에 (이마·머리카락이 얼굴 위쪽 절반 이상을 덮지 않게)
+• 눈 하나: 가로 2칸 × 세로 3칸 (위 1칸 흰자 또는 밝은 색 + 아래 2칸 눈동자색), 두 눈 사이 4칸, 양쪽 같은 높이·좌우 대칭, 눈 뜬 상태
+• 눈썹: 눈 위 1칸 띄우고 가로 3칸, 피부보다 확실히 짙은 머리카락 색, 표정은 눈썹 기울기로 (화남 = 안쪽이 내려감, 온화 = 바깥이 살짝 내려감)
+• 코: 그림자 1~2칸 / 입: 다문 가로 3칸 1줄 (벌린 입·이빨은 설명에 있을 때만)
+• 피부: 3색 면 나누기만 (밝은 면 왼쪽 위, 그림자 오른쪽·턱 아래 1칸), 피부 위에 혼자 떨어진 점·점무늬 얼룩(디더링) 금지, 수염은 설명에 있을 때만
+• 손: 가로·세로 3~4칸, 주먹이면 손가락 사이 1칸 짙은 선 1~2줄, 편 손이면 엄지 1칸 분리 → 둥근 공 모양 금지
+• 앞·옆·뒤 모두 같은 사람: 머리 모양·머리 색 면적·키·체형 일치 (옆모습에서 다른 사람 얼굴이 되거나 뒷모습이 공·묘비 모양이 되지 않게)
+• 성별·나이는 얼굴로 바로 보이게: 젊은 여성 = 턱이 좁고 짧음·볼 그림자 없음·속눈썹 1칸 / 남성 = 턱선 각짐 / 중년 = 수염·눈 아래 주름 1칸
+
+5. 대상별 설명 (색은 지금 팔레트 유지, 표기한 것만 변경)
+• 궁수 (64칸, 폴더 archer/gpt_dot/)
+  - 인상: 멈춰 서서 한 발에 꿰뚫는 침착한 명사수, 젊은 여성 (DOT_STYLE 8장)
+  - 고칠 것: 정면이 수염 난 남자처럼 보임(넓은 턱·볼 얼룩) → 좁은 턱·작은 코·속눈썹 / 정면에서 포니테일이 안 보임 → 정면·뒤에서도 머리 옆으로 포니테일 끝 3~4칸 보이게, 후드는 내린 상태(머리 위를 덮지 않음) / 특수·궁극기 장면에서 손이 덩어리로 뭉침 → 활을 쥔 손과 시위를 당기는 손을 따로 분명히
+  - 특수 2장 (서서 쏘기 준비, 정면): 활을 몸 앞에 세워 들고 화살을 시위에 거는 손 / 시위를 턱 아래까지 당김
+  - 피할 것: 남자 얼굴, 머리 위를 덮는 후드
+  - 파일: archer_idle_down_1, archer_idle_down_2, archer_idle_side_1, archer_idle_side_2, archer_idle_up_1, archer_idle_up_2, archer_walk_down_1, archer_walk_down_2, archer_walk_down_3, archer_walk_down_4, archer_walk_side_1, archer_walk_side_2, archer_walk_side_3, archer_walk_side_4, archer_walk_up_1, archer_walk_up_2, archer_walk_up_3, archer_walk_up_4, archer_attack_side_1, archer_attack_side_2, archer_attack_side_3, archer_ult_down_1, archer_ult_down_2, archer_death_down_1, archer_death_down_2, archer_death_down_3, archer_death_down_4, archer_special_down_1, archer_special_down_2 (총 29장)
+• 프리스트 (64칸, 폴더 priest/gpt_dot/)
+  - 인상: 기도로 지키는 온화한 사제, 젊은 여성
+  - 고칠 것: 큰 얼굴에 작은 눈 = 무표정·멍함 → 4장 눈 규칙 + 온화한 눈썹·옅은 미소 1칸 / 옆모습 베일이 커다란 흰 판처럼 머리 뒤로 솟음 → 베일은 머리 윤곽 +2칸까지만 / 뒷모습이 흰 묘비 모양 → 베일 아래로 금발 끝·금 테두리·어깨선이 보이게 / 기도 손이 갈색 덩어리 → 두 손바닥을 모은 모양을 손가락 선 1줄로
+  - 특수 2장 (기도): 정면, 아래를 보며 두 손을 가슴 앞에 모음 → 무릎을 살짝 굽힌 기도 자세 (눈은 뜬 상태)
+  - 피할 것: 실제 종교 상징·날개, 무표정
+  - 파일: priest_idle_down_1, priest_idle_down_2, priest_idle_side_1, priest_idle_side_2, priest_idle_up_1, priest_idle_up_2, priest_walk_down_1, priest_walk_down_2, priest_walk_down_3, priest_walk_down_4, priest_walk_side_1, priest_walk_side_2, priest_walk_side_3, priest_walk_side_4, priest_walk_up_1, priest_walk_up_2, priest_walk_up_3, priest_walk_up_4, priest_attack_side_1, priest_attack_side_2, priest_attack_side_3, priest_ult_down_1, priest_ult_down_2, priest_death_down_1, priest_death_down_2, priest_death_down_3, priest_death_down_4, priest_special_down_1, priest_special_down_2 (총 29장)
+• 사령술사 (64칸, 폴더 necromancer/gpt_dot/)
+  - 인상: 영혼을 거두는 음울한 술사, 마른 30대 남성
+  - 고칠 것: 단발 소녀 인형처럼 보임(앞머리 일자·동그란 얼굴) → 갸름한 긴 얼굴, 움푹한 볼 그림자 1칸, 각진 턱, 앞머리 대신 후드 그늘 / 옆얼굴이 평평한 가면 덩어리 → 코·턱이 튀어나온 옆선 / 궁극기에서 들어 올린 팔이 후드에 붙은 뿔처럼 보임 → 팔은 후드 옆에서 소매와 손이 분명히 보이게 / 긴 옷이라 걷기 발이 안 보임 → 옷자락 아래 발끝이 번갈아 보이게
+  - 특수 2장 (등불 거두기): 정면, 등불을 가슴 앞에 두 손으로 감싸 쥠 → 고개를 숙이고 등불을 끌어안음
+  - 피할 것: 흰 가면 얼굴, 소녀처럼 보이는 얼굴, 등불이 너무 작아짐(가로 5칸 이상)
+  - 파일: necromancer_idle_down_1, necromancer_idle_down_2, necromancer_idle_side_1, necromancer_idle_side_2, necromancer_idle_up_1, necromancer_idle_up_2, necromancer_walk_down_1, necromancer_walk_down_2, necromancer_walk_down_3, necromancer_walk_down_4, necromancer_walk_side_1, necromancer_walk_side_2, necromancer_walk_side_3, necromancer_walk_side_4, necromancer_walk_up_1, necromancer_walk_up_2, necromancer_walk_up_3, necromancer_walk_up_4, necromancer_attack_side_1, necromancer_attack_side_2, necromancer_attack_side_3, necromancer_ult_down_1, necromancer_ult_down_2, necromancer_death_down_1, necromancer_death_down_2, necromancer_death_down_3, necromancer_death_down_4, necromancer_special_down_1, necromancer_special_down_2 (총 29장)
+
+6. 찍을 그림 (64칸, 인물마다 아래 이름 전부)
+• 기준 장 = <인물>_idle_down_1 (먼저 완성해 대화창에 보여 줌)
+• 서 있기 2장 × 아래·옆(오른쪽)·위: 몸 전체 1칸 오르내림 (숨쉬기)
+• 걷기 4장 × 아래·옆·위: 발 닿음 → 지나감 → 반대발 닿음 → 지나감, 지나갈 때 몸 1칸 위, ★다리·발이 프레임마다 확실히 바뀌게 (긴 옷이면 옷자락 아래 발끝 2~3칸이 번갈아 보임)
+• 공격 = 오른쪽 옆 3장 (준비 → 휘두름·발사 → 마무리) / 궁극기 = 정면 2장 / 사망 = 정면 4장 (마지막 장은 망토만 남음, 지금과 같음) / 특수 = 인물별
+• 동작 내용은 지금 그림과 같게 하되 5장의 '고칠 것'을 반영. 이펙트(불꽃·빛·잔상·화살 궤적)는 그리지 않음
+• 망토·옷자락 1~2칸 늦게 따라옴, 모든 장 같은 얼굴·색·키
+
+7. 저장 규칙
+• 저장소: GitHub 1hyun-you/loop-game, main 브랜치
+• 저장 폴더: assets/dot-src/archer/gpt_dot/, priest/gpt_dot/, necromancer/gpt_dot/ 만 사용, 다른 폴더·파일은 절대 수정하지 않음
+• 이번 목록에 있는 기존 파일은 같은 이름으로 덮어씀 (재작업), 목록에 없는 기존 파일은 건드리지 않음
+• preview.png: 대상(폴더)마다 모든 장을 확대해 회색 #808080 배경에 늘어놓음, 맨 앞에 광전사 berserker_idle_down_1(이번에 광전사를 다시 그리면 새 그림)을 같은 배율로 (64칸 이하 6배 · 96칸 이하 4배 · 그 이상 2배)
+• compare.png: 대상마다 이전 그림과 새 그림의 기준 장을 나란히 + 얼굴 부분 확대 (이전 그림은 git 이전 커밋에서)
+• note.md: 사용한 색, 정한 세부 3줄 이내
+• 커밋: 대상 하나 끝날 때마다 "[skip deploy] 묶음 S2 <대상> <장수>장" 형식
+• 저장(push)이 거절되면 최신 내용을 받은 뒤(pull) 다시 저장
+
+8. 완료 보고 (필수)
+• 대화창에 preview.png와 compare.png를 직접 띄워 보여 줌 (파일 이름만 알리는 것 금지)
+• 대상마다 확인 결과 1줄: 칸 수 · 투명 배경 · 색 수 · 바닥 줄 · 여백 · (얼굴 있으면) 눈 2×3칸·양쪽 같은 높이·피부 낱점 없음
+• 커밋 번호

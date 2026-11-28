@@ -1,0 +1,78 @@
+[도트 재작업 요청 묶음 S3] 화염술사 · 엔지니어 · 광전사 전 장면 재작업 (얼굴·형태 + 서 있기 2장·걷기 옆/위 추가)
+작성 2026-11-28 회차 105 (Claude)
+
+1. 배경
+• 게임: '회귀의 들판' — 휴대폰 세로 화면용 탑다운 액션 웹 게임 (뱀파이어 서바이버즈와 비슷한 방식)
+• 도트는 네가 정해진 칸 수로 원화 없이 직접 찍는 방식으로 확정됨
+• 이번 묶음은 재작업: 사용자 평가 "멍청해 보이고 생기다 만 느낌". 구체 문제는 아래 5장에 대상별로 적음
+• 진행 방식: 대상 하나씩 → 먼저 기준 장(아래 6장 '기준 장') 1장을 완성해 대화창에 보여 준 뒤 기다리지 말고 나머지 장을 이어서 → 저장·커밋 → 다음 대상
+• 코드는 절대 건드리지 않음. 그림만 지정 폴더에 저장하면 끝
+
+2. 참고 파일
+• 화풍 기준: assets/dot-src/berserker/gpt_dot/ (외곽선·명암·면 나누기를 같게. 단 얼굴은 아래 4장 규칙이 우선)
+• 도트 규칙: docs/DOT_STYLE.md (4장 얼굴 규칙, 8장 인물 외형 기준)
+• 검수 확대 시트: dev/art_review/r105/ (faces.png, portraits.png 등 — 무엇이 문제였는지 확인)
+• 지금 그림: 각 인물 폴더 gpt_dot/ (동작 구성·색은 그대로 참고, 얼굴·형태는 이번 규칙으로 다시)
+
+3. 도트 규격 (공통)
+• 픽셀 1개 = 도트 1칸, 투명 배경, 흐림·중간색 경계·반투명 금지
+• 색 수: 인물 16 이내
+• 외곽선 바깥 1칸 가장 짙은 색(순수 검정 금지), 빛 왼쪽 위, 명암 3단계
+• 시점: 정면에서 살짝 위에서 내려다본 2D 탑다운
+• 바닥 줄: 맨 아래에서 3칸 위(64칸 = 60번 줄), 좌우 가운데 / 사방 2칸 이상 여백
+• 자홍(분홍 보라) 금지(적 공격 예고 전용), 글자·로고 금지
+• 실루엣만으로 구분 가능, 색만 바꾼 구분 금지
+
+4. 얼굴·손 규칙 (이번 재작업의 핵심, 64칸 인물 기준 칸 수)
+• 이번 문제의 원인 3가지: 넓은 피부 면에 작은 눈이 낮게 붙고 눈썹이 약해 멍한 눈이 됨 / 피부 위 낱점·얼룩 명암이 수염·때처럼 보임 / 손이 손가락 없는 둥근 덩어리
+• 머리: 가로 22~24칸, 눈은 머리 세로 가운데 줄 높이에 (이마·머리카락이 얼굴 위쪽 절반 이상을 덮지 않게)
+• 눈 하나: 가로 2칸 × 세로 3칸 (위 1칸 흰자 또는 밝은 색 + 아래 2칸 눈동자색), 두 눈 사이 4칸, 양쪽 같은 높이·좌우 대칭, 눈 뜬 상태
+• 눈썹: 눈 위 1칸 띄우고 가로 3칸, 피부보다 확실히 짙은 머리카락 색, 표정은 눈썹 기울기로 (화남 = 안쪽이 내려감, 온화 = 바깥이 살짝 내려감)
+• 코: 그림자 1~2칸 / 입: 다문 가로 3칸 1줄 (벌린 입·이빨은 설명에 있을 때만)
+• 피부: 3색 면 나누기만 (밝은 면 왼쪽 위, 그림자 오른쪽·턱 아래 1칸), 피부 위에 혼자 떨어진 점·점무늬 얼룩(디더링) 금지, 수염은 설명에 있을 때만
+• 손: 가로·세로 3~4칸, 주먹이면 손가락 사이 1칸 짙은 선 1~2줄, 편 손이면 엄지 1칸 분리 → 둥근 공 모양 금지
+• 앞·옆·뒤 모두 같은 사람: 머리 모양·머리 색 면적·키·체형 일치 (옆모습에서 다른 사람 얼굴이 되거나 뒷모습이 공·묘비 모양이 되지 않게)
+• 성별·나이는 얼굴로 바로 보이게: 젊은 여성 = 턱이 좁고 짧음·볼 그림자 없음·속눈썹 1칸 / 남성 = 턱선 각짐 / 중년 = 수염·눈 아래 주름 1칸
+
+5. 대상별 설명 (색은 지금 팔레트 유지, 표기한 것만 변경)
+• 화염술사 (64칸, 폴더 pyromancer/gpt_dot/)
+  - 인상: 불을 다루는 자신만만한 젊은 남성 마법사
+  - 고칠 것: 피부·옷·모자·머리가 모두 주황이라 얼굴이 묻힘 → 피부 = 채도 낮은 살구색(옷보다 확실히 밝고 덜 노랗게), 머리카락 = 짙은 적갈색, 옷 = 주황 유지·모자 = 주황 한 단계 짙게 / 궁극기 팔이 긴 주황 관처럼 보임 → 소매 끝·손이 분명히, 팔 길이는 몸통 높이 정도 / 사망 장면에서 모자가 떨어지면 머리가 주황 덩어리 → 적갈색 머리로
+  - 특수 1장 (불 거두기): 정면, 손바닥을 위로 펴고 불씨를 바라봄
+  - 피할 것: 모자 끝 꺾임이 사라지는 것, 얼굴이 옷과 같은 색
+  - 파일: pyromancer_idle_down_1, pyromancer_idle_down_2, pyromancer_idle_side_1, pyromancer_idle_side_2, pyromancer_idle_up_1, pyromancer_idle_up_2, pyromancer_walk_down_1, pyromancer_walk_down_2, pyromancer_walk_down_3, pyromancer_walk_down_4, pyromancer_walk_side_1, pyromancer_walk_side_2, pyromancer_walk_side_3, pyromancer_walk_side_4, pyromancer_walk_up_1, pyromancer_walk_up_2, pyromancer_walk_up_3, pyromancer_walk_up_4, pyromancer_attack_side_1, pyromancer_attack_side_2, pyromancer_attack_side_3, pyromancer_ult_down_1, pyromancer_ult_down_2, pyromancer_death_down_1, pyromancer_death_down_2, pyromancer_death_down_3, pyromancer_death_down_4, pyromancer_special_down_1 (총 28장)
+• 엔지니어 (64칸, 폴더 engineer/gpt_dot/)
+  - 인상: 무엇이든 만드는 듬직한 중년 장인, 작고 다부진 체격 (키는 다른 인물보다 6칸 낮게 유지)
+  - 고칠 것: 정면 눈이 졸린 흰 막대 → 4장 눈 규칙, 고글은 이마 위(눈과 1칸 이상 떨어짐) / 머리가 공처럼 둥글게 부풂 → 머리 가로 22칸 이내, 정수리 납작 / 뒷모습 머리가 갈색 공 → 머리카락 결 2~3줄·고글 끈·뒷목 보이게 / 특수 3장째 엄지척은 우스꽝스러움 → 렌치로 볼트 조이는 손 / 궁극기 2장째가 서 있기와 같음 → 두 팔로 렌치를 높이 치켜듦
+  - 특수 3장 (설치): 정면, 무릎 꿇고 렌치를 땅에 댐 → 렌치를 돌림 → 일어서며 렌치로 볼트 조임
+  - 피할 것: 졸린 눈, 공 모양 머리
+  - 파일: engineer_idle_down_1, engineer_idle_down_2, engineer_idle_side_1, engineer_idle_side_2, engineer_idle_up_1, engineer_idle_up_2, engineer_walk_down_1, engineer_walk_down_2, engineer_walk_down_3, engineer_walk_down_4, engineer_walk_side_1, engineer_walk_side_2, engineer_walk_side_3, engineer_walk_side_4, engineer_walk_up_1, engineer_walk_up_2, engineer_walk_up_3, engineer_walk_up_4, engineer_attack_side_1, engineer_attack_side_2, engineer_attack_side_3, engineer_ult_down_1, engineer_ult_down_2, engineer_death_down_1, engineer_death_down_2, engineer_death_down_3, engineer_death_down_4, engineer_special_down_1, engineer_special_down_2, engineer_special_down_3 (총 30장)
+• 광전사 (64칸, 폴더 berserker/gpt_dot/)
+  - 인상: 분노를 힘으로 바꾸는 거친 전사, 20대 후반 남성 (정면 얼굴·대검은 지금 채택안 유지, 4장 손 규칙만 적용)
+  - 고칠 것: 옆모습 머리가 베레모처럼 납작하게 얹히고 얼굴이 다른 사람(동그란 코·민머리 느낌) → 정면처럼 뻗친 붉은 머리 끝 3~4갈래가 뒤로 뻗고, 옆얼굴은 각진 턱·흉터 / 걷기에서 다리가 대검에 가려 거의 안 움직임 → 걸을 때는 대검을 오른손으로 비스듬히 들어 다리가 보이게 / 어깨 가죽 보호대가 갈색 공 덩어리 → 가장자리 선·끈 1줄로 형태 분명히
+  - 특수 1장 (격노 rage_down_1): 정면, 두 팔에 힘을 주고 포효 (이 장만 입 벌림)
+  - 피할 것: 대검이 짧거나 얇아짐(대검 길이 키의 80% 이상 유지)
+  - 파일: berserker_idle_down_1, berserker_idle_down_2, berserker_idle_side_1, berserker_idle_side_2, berserker_idle_up_1, berserker_idle_up_2, berserker_walk_down_1, berserker_walk_down_2, berserker_walk_down_3, berserker_walk_down_4, berserker_walk_side_1, berserker_walk_side_2, berserker_walk_side_3, berserker_walk_side_4, berserker_walk_up_1, berserker_walk_up_2, berserker_walk_up_3, berserker_walk_up_4, berserker_attack_side_1, berserker_attack_side_2, berserker_attack_side_3, berserker_ult_down_1, berserker_ult_down_2, berserker_death_down_1, berserker_death_down_2, berserker_death_down_3, berserker_death_down_4, berserker_rage_down_1 (총 28장)
+
+6. 찍을 그림 (64칸, 인물마다 아래 이름 전부)
+• 기준 장 = <인물>_idle_down_1 (먼저 완성해 대화창에 보여 줌)
+• 서 있기 2장 × 아래·옆(오른쪽)·위: 몸 전체 1칸 오르내림 (숨쉬기)
+• 걷기 4장 × 아래·옆·위: 발 닿음 → 지나감 → 반대발 닿음 → 지나감, 지나갈 때 몸 1칸 위, ★다리·발이 프레임마다 확실히 바뀌게 (긴 옷이면 옷자락 아래 발끝 2~3칸이 번갈아 보임)
+• 공격 = 오른쪽 옆 3장 (준비 → 휘두름·발사 → 마무리) / 궁극기 = 정면 2장 / 사망 = 정면 4장 (마지막 장은 망토만 남음, 지금과 같음) / 특수 = 인물별
+• 동작 내용은 지금 그림과 같게 하되 5장의 '고칠 것'을 반영. 이펙트(불꽃·빛·잔상·화살 궤적)는 그리지 않음
+• 망토·옷자락 1~2칸 늦게 따라옴, 모든 장 같은 얼굴·색·키
+
+7. 저장 규칙
+• 저장소: GitHub 1hyun-you/loop-game, main 브랜치
+• 저장 폴더: assets/dot-src/pyromancer/gpt_dot/, engineer/gpt_dot/, berserker/gpt_dot/ 만 사용, 다른 폴더·파일은 절대 수정하지 않음
+• 이번 목록에 있는 기존 파일은 같은 이름으로 덮어씀 (재작업), 목록에 없는 기존 파일은 건드리지 않음
+• preview.png: 대상(폴더)마다 모든 장을 확대해 회색 #808080 배경에 늘어놓음, 맨 앞에 광전사 berserker_idle_down_1(이번에 광전사를 다시 그리면 새 그림)을 같은 배율로 (64칸 이하 6배 · 96칸 이하 4배 · 그 이상 2배)
+• compare.png: 대상마다 이전 그림과 새 그림의 기준 장을 나란히 + 얼굴 부분 확대 (이전 그림은 git 이전 커밋에서)
+• note.md: 사용한 색, 정한 세부 3줄 이내
+• 커밋: 대상 하나 끝날 때마다 "[skip deploy] 묶음 S3 <대상> <장수>장" 형식
+• 저장(push)이 거절되면 최신 내용을 받은 뒤(pull) 다시 저장
+
+8. 완료 보고 (필수)
+• 대화창에 preview.png와 compare.png를 직접 띄워 보여 줌 (파일 이름만 알리는 것 금지)
+• 대상마다 확인 결과 1줄: 칸 수 · 투명 배경 · 색 수 · 바닥 줄 · 여백 · (얼굴 있으면) 눈 2×3칸·양쪽 같은 높이·피부 낱점 없음
+• 커밋 번호
