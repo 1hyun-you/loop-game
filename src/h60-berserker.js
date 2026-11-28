@@ -5,6 +5,7 @@
    • 궁극기: 기본 대지 분쇄 / 인물 각성 A 광란 + 광란의 포효 / 인물 각성 B 광폭 + 분출 강타
    • 연성 7종: 칼자국·투기살·칼무덤·분화·피의 갈증·고동·투기 가시
    • 그림: 새 장면은 임시 도형 (최종본 아님, GPT 요청 대상), 수치는 전부 가안 (대규모 밸런스 단계 조정)
+   • ★0.72 이펙트: pixelfx(pfx72.js) 시범 적용 — 구워지면 PFX72로 그리고 옛 도형은 숨김, 대응표 DOT_STYLE '이펙트' 장
    ============================================================ */
 const B60C = {
   fury: { max: 100, maxB: 60, hurt: 15, hurtA: 10, hit: 3, eliteK: 2, bossK: 3, hitCap: 1.5, idle: 2, decay: 6 },
@@ -45,7 +46,8 @@ function furyStart60(force) {
   S60().fury = (S60().fury || 0) + 1;
   const col = HERO60.berserker.c1;
   sfx('ult'); shake(3, 0.25); rcBig(col, 0.25);
-  fx({ kind: 'ring', x: p.x, y: p.y, r0: 12, r1: 90, dur: 0.4, color: col, follow: true });
+  fx({ kind: 'ring', x: p.x, y: p.y, r0: 12, r1: 90, dur: 0.4, color: col, follow: true }); hideLast72('ring', 'beat');
+  PFX72.play('beat', p.x, p.y, { s: 100 / 110, fol: 1 }); PFX72.play('roar', p.x, p.y, { s: 70 / 128, fol: 1 });
   toast(k === 'frenzy' ? '광란' : k === 'ramp' ? '폭주' : '격노', col);
   const a = fz60('arrow'); if (a) giantBolt60(a);                               // 투기살: 격노 진입 순간 거대 투기살
 }
@@ -72,15 +74,17 @@ function bSwing60(w, S) {
   if (w.aw === 'A' && B.sw % C.spin.every === 0) { B.spin = { t: 0, n: 0, range, dmg, kb, col: HERO60.berserker.c1 }; S60().spin = (S60().spin || 0) + 1; return C.spin.dur + 0.15; }
   const a0 = Math.atan2(tg.y - p.y, tg.x - p.x);
   if (br === 'B') {                                                             // 무거운 베기: 칼끝이 바닥을 긁으며 늦게 내려침
-    for (let i = 0; i < 4; i++) fx({ kind: 'pop', x: p.x + Math.cos(a0 + Math.PI + rand(-0.5, 0.5)) * 22, y: p.y + 8 + rand(-3, 3), r: 4 + rand(3), color: '#8a7a68', dur: 0.3 });
+    if (!PFX72.on('heavy')) for (let i = 0; i < 4; i++) fx({ kind: 'pop', x: p.x + Math.cos(a0 + Math.PI + rand(-0.5, 0.5)) * 22, y: p.y + 8 + rand(-3, 3), r: 4 + rand(3), color: '#8a7a68', dur: 0.3 });
     G.later.push({ t: C.heavy.wind, f: () => { if (G.result) return; const t2 = nearestEnemy(G.p.x, G.p.y, range * 1.4), a = t2 ? Math.atan2(t2.y - G.p.y, t2.x - G.p.x) : a0; bCut60(w, a, arc, range, dmg, kb); } });
   } else bCut60(w, a0, arc, range, dmg, kb);
   return cd;
 }
 function bCut60(w, a0, arc, range, dmg, kb) {
-  const H = HERO60.berserker;
-  sweep60(a0, arc, range, dmg, kb, H.c1, 'cleave');
-  if (w.aw) fx({ kind: 'arc', a: a0, arc: arc * 0.92, r: range * 1.08, dur: 0.2, color: H.c3 });   // 무기 각성 공통 모습: 칼날 확대·붉은 날 무늬
+  const H = HERO60.berserker, k = w.br === 'B' ? 'heavy' : 'slash', p = G.p;
+  sweep60(a0, arc, range, dmg, kb, H.c1, 'cleave'); hideLast72('arc', k);
+  // 0.72: 대검 베기 = sword-slash(가로 반경 약 52칸), 무거운 베기 = heavy-cleave(앞쪽 약 80칸) — 사거리에 맞춰 늘림, 무기 각성은 1.08배
+  PFX72.play(k, p.x, p.y, { dir: a0, s: range / (k === 'heavy' ? 80 : 52) * (w.aw ? 1.08 : 1) });
+  if (w.aw) { fx({ kind: 'arc', a: a0, arc: arc * 0.92, r: range * 1.08, dur: 0.2, color: H.c3 }); hideLast72('arc', k); }   // 무기 각성 공통 모습: 칼날 확대·붉은 날 무늬
 }
 function thrust60(w, range, dmg) {                                              // 찌르기: 우선 조준(정예·수문장 > 단단한 적 > 가까운 적), 직선 꿰뚫기
   const p = G.p, C = B60C.thrust, L = range * C.len; let best = null, bs = -1;
@@ -89,7 +93,7 @@ function thrust60(w, range, dmg) {                                              
   const a = Math.atan2(best.y - p.y, best.x - p.x), ux = Math.cos(a), uy = Math.sin(a);
   gridQuery(p.x, p.y, L, e => { const dx = e.x - p.x, dy = e.y - p.y, t = dx * ux + dy * uy; if (t < 0 || t > L) return; if (Math.abs(dx * -uy + dy * ux) > C.w / 2 + e.r) return;
     damageEnemy(e, dmg * C.k, { src: 'cleave', kb: 60, fx: p.x, fy: p.y }); if (!e.dead) stun60(e, C.stun); });
-  B60().thrusts.push({ x: p.x, y: p.y, a, L, t: 0, dur: 0.22 }); S60().thrust = (S60().thrust || 0) + 1;
+  B60().thrusts.push({ x: p.x, y: p.y, a, L, t: 0, dur: 0.22 }); PFX72.play('thrust', p.x, p.y, { dir: a, s: L / 120 }); S60().thrust = (S60().thrust || 0) + 1;
   shake(2, 0.12);
 }
 function spinTick60(dt) {
@@ -99,7 +103,8 @@ function spinTick60(dt) {
   while (s.n < C.turns && s.t >= per * (s.n + 1) - per * 0.5) {                // 한 바퀴마다 둘레 전부 판정
     s.n++; const last = s.n === C.turns;
     gridQuery(p.x, p.y, s.range, e => damageEnemy(e, s.dmg * C.k, { src: 'cleave', kb: s.kb * (last ? C.kbEnd : 0.4), fx: p.x, fy: p.y }));
-    fx({ kind: 'ring', x: p.x, y: p.y, r0: s.range * 0.5, r1: s.range, dur: 0.2, color: s.col, follow: true });
+    fx({ kind: 'ring', x: p.x, y: p.y, r0: s.range * 0.5, r1: s.range, dur: 0.2, color: s.col, follow: true }); hideLast72('ring', 'spin');
+    PFX72.play('spin', p.x, p.y, { s: s.range / 75, fol: 1, flip: s.n % 2 === 0 });
     if (last) shake(3, 0.2);
   }
   if (s.t >= C.dur) B.spin = null;
@@ -111,17 +116,20 @@ function ultSlam60(p) {                                                         
   p.invT = Math.max(p.invT, C.jump + 0.1); B.leap = { t: 0, dur: C.jump, h: 26 };
   uLater(C.jump, () => {
     const x = G.p.x, y = G.p.y, R = VIEW.w * C.R, d = B60().ref * C.k;
-    shake(9, 0.45); uBlast(x, y, R, d, C.kb, col);
+    shake(9, 0.45); const n72 = G.fx.length; uBlast(x, y, R, d, C.kb, col);
+    if (PFX72.on('quake')) for (let i = n72; i < G.fx.length; i++) G.fx[i].hide72 = 1;
     gridQuery(x, y, R, e => { if (!e.dead) stun60(e, C.stun); });
-    fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.6, color: HERO60.berserker.c3 });
-    for (let i = 0; i < 10; i++) { const a = i * 0.628; B60().cracks.push({ x: x + Math.cos(a) * 30, y: y + Math.sin(a) * 18, a, L: R * 0.45, t: 0, dur: 0.7, big: 1 }); }
+    fx({ kind: 'ring', x, y, r0: R * 0.3, r1: R, dur: 0.6, color: HERO60.berserker.c3 }); hideLast72('ring', 'quake');
+    PFX72.play('quake', x, y, { s: R / 104 }); PFX72.play('beat', x, y, { s: R / 110 });
+    if (!PFX72.on('quake')) for (let i = 0; i < 10; i++) { const a = i * 0.628; B60().cracks.push({ x: x + Math.cos(a) * 30, y: y + Math.sin(a) * 18, a, L: R * 0.45, t: 0, dur: 0.7, big: 1 }); }
   });
   return 0.9;
 }
 function ultRoar60(p) {                                                         // 광란의 포효: 포효로 밀어냄 → 8초 광란 (속도·받는 피해·이동·화상·처치 폭발)
   const C = B60C.roar, B = B60(), col = HERO60.berserker.c1;
   gridQuery(p.x, p.y, C.R, e => damageEnemy(e, B.ref * C.k, { src: 'ult', kb: C.kb, fx: p.x, fy: p.y }));
-  for (let i = 0; i < 3; i++) fx({ kind: 'ring', x: p.x, y: p.y, r0: 20 + i * 20, r1: C.R + i * 40, dur: 0.5 + i * 0.2, color: i ? HERO60.berserker.c3 : col, follow: true });
+  for (let i = 0; i < 3; i++) { fx({ kind: 'ring', x: p.x, y: p.y, r0: 20 + i * 20, r1: C.R + i * 40, dur: 0.5 + i * 0.2, color: i ? HERO60.berserker.c3 : col, follow: true }); hideLast72('ring', 'roar'); }
+  PFX72.play('roar', p.x, p.y, { s: (C.R + 40) / 128, fol: 1 }); PFX72.play('roar', p.x, p.y, { s: (C.R + 80) / 128, fol: 1, delay: 0.18, a: 0.7 });
   shake(6, 0.5); B.roar = C.t + C.dur;
   return C.t + C.dur;
 }
@@ -132,9 +140,10 @@ function ultBurst60(p) {                                                        
   const hit = (k, stun) => { const x = G.p.x, y = G.p.y, R = VIEW.w * C.R;
     gridQuery(x, y, R, e => { let da = Math.atan2(e.y - y, e.x - x) - a0; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) > C.arc / 2) return;
       damageEnemy(e, B60().ref * k, { src: 'ult', kb: 160, fx: x, fy: y }); if (!e.dead && stun) stun60(e, stun); });
-    fx({ kind: 'arc', a: a0, arc: C.arc, r: R, dur: 0.3, color: H.c1 }); };
-  uLater(C.jump, () => { shake(8, 0.4); hit(C.k, 0); furyStart60('ramp'); B60().rageT = B60C.ramp.dur; });
-  for (let i = 1; i <= C.n; i++) uLater(C.jump + C.gap * i, () => { hit(C.k2, C.stun); const x = G.p.x, y = G.p.y; for (let j = 0; j < 5; j++) { const a = a0 + rand(-C.arc / 2, C.arc / 2), r = VIEW.w * C.R * rand(0.3, 0.9); B60().cracks.push({ x: x + Math.cos(a) * r, y: y + Math.sin(a) * r, a, L: 26, t: 0, dur: 0.45, blood: 1 }); } });
+    fx({ kind: 'arc', a: a0, arc: C.arc, r: R, dur: 0.3, color: H.c1 }); hideLast72('arc', 'spike'); };
+  uLater(C.jump, () => { shake(8, 0.4); hit(C.k, 0); PFX72.play('quake', G.p.x, G.p.y, { s: VIEW.w * C.R / 104 }); furyStart60('ramp'); B60().rageT = B60C.ramp.dur; });
+  for (let i = 1; i <= C.n; i++) uLater(C.jump + C.gap * i, () => { hit(C.k2, C.stun); const x = G.p.x, y = G.p.y; for (let j = 0; j < 5; j++) { const a = a0 + rand(-C.arc / 2, C.arc / 2), r = VIEW.w * C.R * rand(0.3, 0.9), sx = x + Math.cos(a) * r, sy = y + Math.sin(a) * r;
+      if (PFX72.on('spike')) PFX72.play('spike', sx, sy, { s: rand(0.45, 0.65), flip: Math.random() < 0.5 }); else B60().cracks.push({ x: sx, y: sy, a, L: 26, t: 0, dur: 0.45, blood: 1 }); } });
   return C.jump + C.gap * C.n + 0.2;
 }
 
@@ -147,6 +156,7 @@ function fCut60(w, S) {
   for (const e of pool.slice(0, n)) {
     damageEnemy(e, 15 * fk60(w, S) * k, { src: 'dagger', kb: WEAPONS.cleave.base.kb * 0.4, fx: p.x, fy: p.y });
     B60().cuts.push({ e, x: e.x, y: e.y, a: rand(-0.9, 0.9), r: e.r + 9, t: 0, dur: 0.38, w: 3 + 5 * fr });
+    PFX72.play('claw', e.x, e.y, { e, s: (e.r + 9) / 22 * (1 + 0.3 * fr), flip: e.x < p.x, rot: rand(-0.3, 0.3) });   // 투지에 따라 굵게(1~1.3배)
   }
   return 0.9 * fc60(w, S);
 }
@@ -157,6 +167,7 @@ function boltFire60(w, S, wd, k) {
   gridQuery(x0, y0, L, e => { const dx = e.x - x0, dy = e.y - y0, t = dx * ux + dy * uy; if (t < 0 || t > L || Math.abs(dx * -uy + dy * ux) > wd / 2 + e.r) return;
     G.later.push({ t: t / sp, f: () => { if (e.dead || G.result) return; damageEnemy(e, d, { src: 'arrow' }); if (!e.dead) stun60(e, 0.2); } }); });
   B60().bolts.push({ x: x0, y: y0, a, L, w: wd, t: 0, dur: L / sp + 0.15, sp });
+  PFX72.play('bolt', x0, y0, { dir: a, sx: L / 240, sy: wd / 14 });
   return 1.0 * fc60(w, S);
 }
 function giantBolt60(w) { const S = wStats(w); boltFire60(w, S, 70, 3); shake(4, 0.25); }
@@ -167,7 +178,7 @@ function fGrave60(w, S) {
   const tg = nearestEnemy(p.x, p.y, 300); if (!tg) return false;
   const a = Math.atan2(tg.y - p.y, tg.x - p.x), d = Math.min(60, Math.sqrt(dist2(p.x, p.y, tg.x, tg.y)));
   B.graves.push({ w, x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, t: 0, life: 10, tk: 0.5, bu: 2.5, pop: 0 });
-  fx({ kind: 'pop', x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: 10, color: HERO60.berserker.c1, dur: 0.25 });
+  fx({ kind: 'pop', x: p.x + Math.cos(a) * d, y: p.y + Math.sin(a) * d, r: 10, color: HERO60.berserker.c1, dur: 0.25 }); hideLast72('pop', 'dome');
   return 4 * fc60(w, S);
 }
 function graveTick60(dt) {
@@ -180,7 +191,8 @@ function graveTick60(dt) {
     if ((g.bu -= dt) <= 0) {
       g.bu = on ? 1.5 : 2.5; g.pop = 0.3; const RB = (on ? 150 : 110) * S.area;
       gridQuery(g.x, g.y, RB, e => damageEnemy(e, 20 * k, { src: 'turret', kb: 200, fx: g.x, fy: g.y }));
-      fx({ kind: 'ring', x: g.x, y: g.y, r0: R, r1: RB, dur: 0.3, color: on ? HERO60.berserker.c2 : HERO60.berserker.c1 });
+      fx({ kind: 'ring', x: g.x, y: g.y, r0: R, r1: RB, dur: 0.3, color: on ? HERO60.berserker.c2 : HERO60.berserker.c1 }); hideLast72('ring', 'beat');
+      PFX72.play('beat', g.x, g.y, { s: RB / 110 });
     }
   }
   B.graves = B.graves.filter(g => !g.dead);
@@ -190,9 +202,9 @@ function fErupt60(w, S) {
   const p = G.p, ts = nearN60(p.x, p.y, 120 * S.area, 3); if (!ts.length) return false;
   const d = 18 * fk60(w, S), R = 40 * S.area;
   ts.forEach((e, i) => { const x = e.x, y = e.y;
-    G.later.push({ t: i * 0.15, f: () => B60().cracks.push({ x, y, a: rand(7), L: R * 0.8, t: 0, dur: 0.5 }) });
+    G.later.push({ t: i * 0.15, f: () => { if (!PFX72.on('pillar')) B60().cracks.push({ x, y, a: rand(7), L: R * 0.8, t: 0, dur: 0.5 }); else PFX72.play('pillar', x, y, { s: R / 45 }); } });
     G.later.push({ t: i * 0.15 + 0.22, f: () => { if (G.result) return; gridQuery(x, y, R, t => damageEnemy(t, d, { src: 'fireball', kb: 60, fx: x, fy: y }));
-      B60().spikes.push({ x, y, R, t: 0, dur: 0.4, fire: 1 }); fx({ kind: 'ring', x, y, r0: 6, r1: R, dur: 0.25, color: '#ff9a4a' }); } }); });
+      if (!PFX72.on('pillar')) { B60().spikes.push({ x, y, R, t: 0, dur: 0.4, fire: 1 }); fx({ kind: 'ring', x, y, r0: 6, r1: R, dur: 0.25, color: '#ff9a4a' }); } } }); });
   return 1.2 * fc60(w, S);
 }
 // 피의 갈증: 주변 적 최대 3마리를 동시에 흡수, 가까운 적은 굵은 줄·피해 증가, 투지 충전 2배
@@ -208,6 +220,7 @@ function fDrain60(w, S) {
 function beat60(R, d, stun, kb, big) {
   const p = G.p; gridQuery(p.x, p.y, R, e => { damageEnemy(e, d, { src: 'bell', kb, fx: p.x, fy: p.y }); if (!e.dead && stun) stun60(e, stun); });
   B60().beats.push({ R, t: 0, dur: big ? 0.6 : 0.32, big });
+  PFX72.play('beat', p.x, p.y, { s: R / 110, fol: 1 }); if (big) PFX72.play('roar', p.x, p.y, { s: R / 128, fol: 1, a: 0.8 });
 }
 function fBeat60(w, S) {
   const R = 140 * S.area; if (!nearestEnemy(G.p.x, G.p.y, R)) return false;
@@ -221,6 +234,7 @@ function fSpike60(w, S) {
   const R = 35 * S.area, x = tg.x, y = tg.y, F = F60();
   gridQuery(x, y, R, e => { damageEnemy(e, 15 * fk60(w, S), { src: 'thorn' }); if (!e.dead) { root60(e, 1.3); if (noBoss60(e)) e.b60g = G.time + 1.3; } });
   if (F.vines.length < 40) F.vines.push({ x, y, R, e: tg, t: 0, dur: 1.45, col: HERO60.berserker.c1, s: rand(7) });
+  PFX72.play('spike', x, y, { s: R / 40, flip: Math.random() < 0.5 });
   return 1.3 * fc60(w, S);
 }
 function spikeBurst60(e) {
@@ -229,7 +243,7 @@ function spikeBurst60(e) {
   const S = wStats(w), d = 15 * fk60(w, S), x = e.x, y = e.y, R = 50 * S.area;
   if (!e.dead) damageEnemy(e, d, { src: 'thorn' });
   gridQuery(x, y, R, t => { if (t !== e) damageEnemy(t, d * 0.6, { src: 'thorn' }); });
-  B60().spikes.push({ x, y, R, t: 0, dur: 0.35 });
+  if (PFX72.on('spike')) { PFX72.play('spike', x, y, { s: R / 55 }); PFX72.play('spike', x, y, { s: R / 70, flip: true, delay: 0.06 }); } else B60().spikes.push({ x, y, R, t: 0, dur: 0.35 });
 }
 FUSE60.berserker = {
   dagger: { nm: '칼자국', ds: '먼 적 몸에 굵은 붉은 칼자국, 투지가 높을수록 굵고 강함 · 격노 중 2마리', fire: fCut60 },
@@ -270,7 +284,7 @@ Object.assign(HERO60.berserker, {
     }
     if (B.roar > 0 && B.roar <= C.roar.dur && (mineSrc60(src) || src === 'b60burn') && B.boomN < 6) {   // 광란의 포효: 처치 시 화염 폭발 (폭발끼리 연쇄 없음)
       B.boomN++; const x = e.x, y = e.y;
-      G.later.push({ t: 0.05, f: () => { if (G.result) return; gridQuery(x, y, C.roar.boomR, t => damageEnemy(t, B60().ref * C.roar.boomK, { src: 'b60boom' })); fx({ kind: 'ring', x, y, r0: 6, r1: C.roar.boomR, dur: 0.3, color: '#ff8a3a', fill: true }); } });
+      G.later.push({ t: 0.05, f: () => { if (G.result) return; gridQuery(x, y, C.roar.boomR, t => damageEnemy(t, B60().ref * C.roar.boomK, { src: 'b60boom' })); if (PFX72.on('boom')) PFX72.play('boom', x, y + 8, { s: C.roar.boomR / 95, a: 0.85 }); else fx({ kind: 'ring', x, y, r0: 6, r1: C.roar.boomR, dur: 0.3, color: '#ff8a3a', fill: true }); } });
     }
   },
   hurtMul() {
@@ -281,7 +295,7 @@ Object.assign(HERO60.berserker, {
   },
   onHurt() { const B = B60(); furyGain60(B.mode === 'frenzy' ? B60C.fury.hurtA : B60C.fury.hurt); },
   spdMul() { const B = B60(); return B.roar > 0 && B.roar <= B60C.roar.dur ? B60C.roar.move : 1; },
-  onPick() { G.b60 = null; B60(); SRC_NM.b60burn = '광란 화상'; SRC_NM.b60boom = '광란 폭발'; },
+  onPick() { G.b60 = null; B60(); SRC_NM.b60burn = '광란 화상'; SRC_NM.b60boom = '광란 폭발'; PFX72.want(B72KEYS); },
   onAwaken(k) { const B = B60(); B.max = k === 'B' ? B60C.fury.maxB : B60C.fury.max; B.fury = Math.min(B.fury, B.max); if (B.mode) { B.mode = null; B.fury = 0; } },
   ultFn(k) { return k === 'A' ? ultRoar60 : k === 'B' ? ultBurst60 : ultSlam60; },
   tick(dt) {
@@ -293,7 +307,7 @@ Object.assign(HERO60.berserker, {
     else if (B.mode === 'frenzy') { B.frT += dt; B.fury -= (C.frenzy.drain + C.frenzy.accel * Math.floor(B.frT)) * dt; if (B.fury <= 0) furyEnd60(); }
     if (B.roar > 0) B.roar -= dt;
     if (B.leap) { B.leap.t += dt; if (B.leap.t >= B.leap.dur) B.leap = null; }
-    spinTick60(dt); graveTick60(dt);
+    spinTick60(dt); graveTick60(dt); PFX72.tick(dt);
     if ((B.bt -= dt) <= 0) {                                                    // 광란의 포효 화상 (초당 대검 15%, 0.25초마다)
       B.bt = 0.25; const now = G.time;
       B.burn = B.burn.filter(e => !e.dead && e.b60b > now);
@@ -315,12 +329,16 @@ function burn60(e) {
   e.b60b = G.time + C.burnT; e.b60bd = B.ref * C.burnK;
 }
 
-/* ---------- 그리기 (임시 도형, 최종본 아님) ---------- */
+/* ---------- 그리기 (임시 도형, 최종본 아님 — 0.72부터 pixelfx가 구워지면 그쪽으로 대체) ---------- */
+const B72KEYS = ['slash', 'heavy', 'spin', 'thrust', 'claw', 'flame', 'quake', 'spike', 'pillar', 'boom', 'bolt', 'beat', 'dome', 'domeOn', 'roar'];
 function drawB60(c) {
   const B = G.b60; if (!B) return;
   const p = G.p, H = HERO60.berserker, tau = Math.PI * 2;
   c.lineCap = 'round';
-  if (B.mode) {                                                                 // 격노·광란·폭주: 몸 둘레 붉은 불길
+  if (B.mode && PFX72.on('flame')) {                                           // 0.72 격노 불길: 몸 둘레 불꽃 3개(시차), 광란은 크게
+    const s = p.r * (B.mode === 'frenzy' ? 3.2 : 2.6) / 50, sm = B.mode === 'ramp' ? B60C.ramp.body : 1;
+    for (let i = 0; i < 2; i++) PFX72.frame(c, 'flame', p.x + (i ? 1 : -1) * p.r * 1.05 * sm, p.y + p.r * 0.95 * sm, G.time + i * 0.53, { sx: s * sm * 0.75, sy: s * sm * 0.9, flip: !!i, a: 0.75 });   // 몸을 가리지 않게 양옆 2개
+  } else if (B.mode) {                                                          // 격노·광란·폭주: 몸 둘레 붉은 불길
     const n = 9, R = p.r + 6;
     c.globalAlpha = 0.55; c.fillStyle = B.mode === 'frenzy' ? '#ff5a3c' : H.c1;
     for (let i = 0; i < n; i++) { const a = i / n * tau + G.time * 2, fl = 8 + 6 * Math.abs(Math.sin(G.time * 11 + i * 1.7)), bx = p.x + Math.cos(a) * R * 0.8, by = p.y + Math.sin(a) * R * 0.45 + 4;
@@ -329,17 +347,18 @@ function drawB60(c) {
   }
   if (B.roar > 0 && B.roar <= B60C.roar.dur) { c.globalAlpha = 0.35 + 0.15 * Math.sin(G.time * 14); c.strokeStyle = '#ff8a3a'; c.lineWidth = 3; c.beginPath(); c.arc(p.x, p.y, p.r + 14, 0, tau); c.stroke(); }
   if (B.leap) { c.globalAlpha = 0.35; c.fillStyle = '#000'; const k = 1 - Math.sin(Math.PI * B.leap.t / B.leap.dur) * 0.4; c.beginPath(); c.ellipse(p.x, p.y + p.r, p.r * k, p.r * 0.4 * k, 0, 0, tau); c.fill(); }
-  for (const o of B.trails) { c.globalAlpha = 0.5 * (1 - o.t / o.dur); c.strokeStyle = H.c1; c.lineWidth = 5; c.beginPath(); c.arc(o.x, o.y, o.r, o.a, o.a + 1.6); c.stroke(); }
-  for (const o of B.thrusts) { const k = o.t / o.dur; c.globalAlpha = 1 - k; c.strokeStyle = H.c1; c.lineWidth = 10 * (1 - k * 0.6); c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(o.x + Math.cos(o.a) * o.L * Math.min(1, o.t / 0.06), o.y + Math.sin(o.a) * o.L * Math.min(1, o.t / 0.06)); c.stroke();
+  if (!PFX72.on('spin')) for (const o of B.trails) { c.globalAlpha = 0.5 * (1 - o.t / o.dur); c.strokeStyle = H.c1; c.lineWidth = 5; c.beginPath(); c.arc(o.x, o.y, o.r, o.a, o.a + 1.6); c.stroke(); }
+  if (!PFX72.on('thrust')) for (const o of B.thrusts) { const k = o.t / o.dur; c.globalAlpha = 1 - k; c.strokeStyle = H.c1; c.lineWidth = 10 * (1 - k * 0.6); c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(o.x + Math.cos(o.a) * o.L * Math.min(1, o.t / 0.06), o.y + Math.sin(o.a) * o.L * Math.min(1, o.t / 0.06)); c.stroke();
     c.strokeStyle = H.c3; c.lineWidth = 2; c.stroke(); }
-  for (const o of B.cuts) { const k = o.t / o.dur, x = o.e && !o.e.dead ? o.e.x : o.x, y = o.e && !o.e.dead ? o.e.y : o.y, L = o.r * Math.min(1, o.t / 0.05);   // 칼자국: 굵게 찢긴 상처
+  if (!PFX72.on('claw')) for (const o of B.cuts) { const k = o.t / o.dur, x = o.e && !o.e.dead ? o.e.x : o.x, y = o.e && !o.e.dead ? o.e.y : o.y, L = o.r * Math.min(1, o.t / 0.05);   // 칼자국: 굵게 찢긴 상처
     c.globalAlpha = 1 - k; c.strokeStyle = H.c2; c.lineWidth = o.w + 3; c.beginPath(); c.moveTo(x - Math.cos(o.a) * L, y - Math.sin(o.a) * L); c.lineTo(x + Math.cos(o.a) * L, y + Math.sin(o.a) * L); c.stroke();
     c.strokeStyle = H.c1; c.lineWidth = o.w; c.stroke(); }
-  for (const o of B.bolts) { const head = Math.min(o.L, o.t * o.sp), tail = Math.max(0, head - 90), k = Math.max(0, (o.t - o.L / o.sp) / 0.15);   // 투기살: 붉은 줄기가 날아감
+  if (!PFX72.on('bolt')) for (const o of B.bolts) { const head = Math.min(o.L, o.t * o.sp), tail = Math.max(0, head - 90), k = Math.max(0, (o.t - o.L / o.sp) / 0.15);   // 투기살: 붉은 줄기가 날아감
     c.globalAlpha = 0.85 * (1 - k); c.strokeStyle = H.c1; c.lineWidth = o.w * 0.6; c.beginPath(); c.moveTo(o.x + Math.cos(o.a) * tail, o.y + Math.sin(o.a) * tail); c.lineTo(o.x + Math.cos(o.a) * head, o.y + Math.sin(o.a) * head); c.stroke();
     c.strokeStyle = H.c3; c.lineWidth = Math.max(2, o.w * 0.18); c.stroke(); }
   for (const g of B.graves) {                                                   // 칼무덤: 꽂힌 칼 + 흔들리는 붉은 돔
     const on = furyOn60(), S = wStats(g.w), R = 65 * S.area + Math.sin(g.t * 9) * 5 + g.pop * 60, fade = Math.min(1, g.t * 4) * (g.life - g.t < 1 ? g.life - g.t : 1);
+    if (PFX72.on('dome')) { const s = R / 52; PFX72.frame(c, on && PFX72.on('domeOn') ? 'domeOn' : 'dome', g.x, g.y, g.t, { sx: s, sy: s, a: fade }); continue; }
     c.globalAlpha = (on ? 0.32 : 0.18) * fade; c.fillStyle = on ? H.c2 : H.c1; c.beginPath(); c.ellipse(g.x, g.y, R, R * 0.62, 0, 0, tau); c.fill();
     c.globalAlpha = 0.7 * fade; c.strokeStyle = H.c1; c.lineWidth = 2; c.stroke();
     c.globalAlpha = fade; c.strokeStyle = '#d8d2cc'; c.lineWidth = 4; c.beginPath(); c.moveTo(g.x, g.y + 4); c.lineTo(g.x, g.y - 22); c.stroke();
@@ -351,7 +370,7 @@ function drawB60(c) {
     c.globalAlpha = 1 - k;
     if (o.fire) { c.fillStyle = '#ff8a2a'; c.beginPath(); c.arc(o.x, o.y - 26 * Math.sin(Math.min(1, k * 2) * Math.PI / 2), o.R * 0.55 * (1 - k * 0.5), 0, tau); c.fill(); c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(o.x, o.y - 26 * Math.sin(Math.min(1, k * 2) * Math.PI / 2), o.R * 0.25, 0, tau); c.fill(); }
     else { c.strokeStyle = H.c1; c.lineWidth = 3; c.beginPath(); for (let i = 0; i < 8; i++) { const a = i * 0.785, r0 = 6, r1 = o.R * Math.min(1, o.t / 0.1); c.moveTo(o.x + Math.cos(a) * r0, o.y + Math.sin(a) * r0); c.lineTo(o.x + Math.cos(a) * r1, o.y + Math.sin(a) * r1); } c.stroke(); } }
-  for (const o of B.beats) { const k = o.t / o.dur, r = o.R * (0.25 + 0.75 * Math.min(1, k * 1.6));   // 고동: 심장 박동 고리
+  if (!PFX72.on('beat')) for (const o of B.beats) { const k = o.t / o.dur, r = o.R * (0.25 + 0.75 * Math.min(1, k * 1.6));   // 고동: 심장 박동 고리
     c.globalAlpha = 0.8 * (1 - k); c.strokeStyle = H.c1; c.lineWidth = o.big ? 7 : 4; c.beginPath(); c.arc(p.x, p.y, r, 0, tau); c.stroke(); }
   const lw = fz60('lamp');                                                      // 피의 갈증: 적 → 광전사로 흐르는 핏줄기
   if (lw && lw.lk && lw.lk.length && G.time - lw.lkT < 0.45) {
@@ -362,4 +381,5 @@ function drawB60(c) {
       c.stroke(); }
   }
   c.globalAlpha = 1;
+  PFX72.draw(c);
 }

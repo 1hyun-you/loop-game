@@ -113,10 +113,14 @@
 | 프리스트 | 기도로 지키는 온화한 사제 (젊은 여성) | 금발·흰 베일·금 머리띠, 흰 사제복 금 테두리, 해 모양 성표, 금빛 손종 (실제 종교 상징·날개 금지) |
 | 드루이드 | 숲과 하나 된 야성의 수호자 (젊은 여성) | 공통 표식 = 짙은 초록 잎 망토·작은 가지 뿔·노랑 눈동자·초록 문양 2줄 / 사람: 머리관·나무 지팡이 / 늑대: 회갈색·가늘고 빠름 / 곰: 짙은 갈색·어깨 솟은 큰 몸 |
 
-## 이펙트 (회차 105, pixelfx 기반 — 시범 단계)
+## 이펙트 (회차 105, pixelfx 기반 — 0.72 광전사 적용)
 - 도구: github.com/patch-gg/pixelfx (MIT, 이펙트 244종 코드·그림 뽑기 도구), Claude가 내려받아 색 바꾸기·새로 만들기, 반투명·빛 번짐 허용(1장 예외)
 - 광전사 색 단계(가안): #1a0508 #4a0c12 #8a1420 #c4202a #ee4a30 #ff8a4a #ffd09a
 - 광전사 시범 대응(가안, dev/art_review/r105/berserker_fx_trial.mp4): 대검 베기 = melee/sword-slash, 무거운 베기 = melee/heavy-cleave, 회오리 베기 = melee/spin-slash, 찌르기 = melee/thrust, 칼자국 = melee/claw-swipe, 격노 불길 = fire/spirit-flame(몸 둘레로), 대지 분쇄 = moves/ground-pound·impacts/ground-slam, 분출 강타·투기 가시 = nature/earth-spike, 분화 = fire/flame-pillar, 화염 폭발 = explosions/small-explosion, 피의 갈증 = shadow/life-steal
 - 새로 만들 것(라이브러리에 맞는 것 없음): 투기살(붉은 투기 한 줄기), 고동(심장 박동 붉은 고리 쿵-쿵), 칼무덤(흔들리는 붉은 원형 돔), 광란의 포효(밀어내는 충격파)
 - 고칠 점: 연기 기본색이 회보라·분홍빛(자홍 금지와 가까움) → 흙먼지 갈색으로 통일, 가시의 초록 잎 제거, status/rage(만화식 분노 표시)는 화풍이 달라 미사용
+- ★0.72 적용 방식: `src/pfx-lib.js`(pixelfx 필요한 효과만 묶음, 다시 만들기 `sh dev/pfx/build.sh`) + `src/pfx72.js`(실행 중 나눠 굽기·그리기, 키 표 PFX72.SPEC) — 효과 1칸 ≈ 월드 1.25 단위 기준, 사거리에 맞춰 늘림, 원본보다 짧게 구운 효과는 끝 30% 흐리게
+- 0.72 화면 점검에서 고친 것: 격노 불길이 몸을 가림 → 양옆 2개·투명도 0.75, 칼무덤 돔 반투명 면이 바둑판 점무늬 → 테두리 + 빛으로만, 포효 처치 폭발 과대 → 축소
+- 피의 갈증: pixelfx life-steal은 기본 인형 몸을 함께 그려서 제외, 기존 핏줄기 유지
+- 다른 인물 적용: PFX72.SPEC에 키 추가 → 각 h60-<인물>.js에서 PFX72.play / 옛 효과는 hideLast72로 숨김
 
