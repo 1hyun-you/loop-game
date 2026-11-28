@@ -190,7 +190,7 @@ function gkSplit(e) {
     const a = a0 + i * 6.283 / (n + 1), x = p.x + Math.cos(a) * 200, y = p.y + Math.sin(a) * 200;
     if (i === slot) { e.x = x; e.y = y; continue; }
     const c = makeEnemy('brute', x, y);
-    Object.assign(c, { r: e.r, speed: e.speed, color: e.color, shape: e.shape, xp: 0, dmg: e.dmg, cmd: true, boss: true, gk: 'seren', clone: true, real: e });
+    Object.assign(c, { r: e.r, speed: e.sp0 || e.speed, color: e.color, shape: e.shape, xp: 0, dmg: e.dmg, cmd: true, boss: true, gk: 'seren', clone: true, real: e });
     c.hp = c.maxHp = e.maxHp * GK_CFG.seCloneHp;
   }
   e.ai.hp0 = e.hp; e.ai.splitAt = G.time;

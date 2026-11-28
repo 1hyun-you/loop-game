@@ -23,6 +23,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     const A = () => G.a63, base = () => baseW(), S6 = () => S60();
     const mv = on => { INPUT.keys = on ? { d: true } : {}; };
     const runM = (sec, cr, move) => { mv(move); run(sec, cr); mv(false); };
+    const FK63 = A63C.flinch.k, FB63 = A63C.flinch.kBoss; A63C.flinch.k = 0; A63C.flinch.kBoss = 0;   // 0.70 움찔은 마지막 항목에서만 켬 (다른 항목은 적 접근 시간 기준이라 끔)
     try {
     // 1. 궁수 선택·구현 상태
     fresh();
@@ -108,8 +109,25 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     ok((G.stats.dmg.arrow || 0) > 0, '자동 플레이 중 장궁 피해 (' + Math.round(G.stats.dmg.arrow || 0) + ')');
     fresh(); applyAw60('B'); cine(); STATE.dev.auto = true; const hb2 = S6().hb || 0; run(90, 0);
     ok(((S6().aWhy || {}).hop || 0) > 0 && (S6().hb || 0) > hb2, '자동 플레이 각성 B: 짧게 물러섰다 멈추기 (' + ((S6().aWhy || {}).hop || 0) + '회, 강화 ' + ((S6().hb || 0) - hb2) + '회)');
+    // 0.70 움찔 (회차 103)
+    A63C.flinch.k = FK63; A63C.flinch.kBoss = FB63;
+    { const clear = () => { G.enemies.forEach(e => e.dead = true); G.enemies = []; G.hz = []; G.eb = []; }; fresh(); clear(); const ws = G.p.weapons; G.p.weapons = [];
+      const mv = (e, fl) => { e.x = G.p.x + 220; e.y = G.p.y; e.kbx = e.kby = 0; e.fl63 = fl ? G.time + 1 : 0; const x0 = e.x; for (let i = 0; i < 6; i++) step(1 / 60); return Math.abs(e.x - x0); };
+      const m = makeEnemy('brute', G.p.x + 220, G.p.y); m.mb = null; m.elite = false; if (!G.enemies.includes(m)) G.enemies.push(m); const a = mv(m, false), b = mv(m, true);
+      mv(m, false); const a2 = mv(m, false);  ok(a > 0 && Math.abs(b / a2 - 0.6) < 0.05, `움찔: 일반 적 이동 -40% (${(b / a2).toFixed(2)})`);
+      m.fl63 = 0; G.p.weapons = ws.concat([{ id: 'cleave', lvl: 1, t: 0 }]); onEnemyHit(m, { src: 'arrow' }); const t1 = m.fl63 - G.time; m.fl63 = 0; onEnemyHit(m, { src: 'cleave' });
+      ok(Math.abs(t1 - 0.4) < 0.01 && !(m.fl63 > G.time), `움찔: 장궁 적중 시 0.4초, 공용 무기는 없음 (${t1.toFixed(2)})`);
+      G.p.weapons = []; m.slowT = 5; const c = mv(m, false), d2 = mv(m, true); m.slowT = 0;
+      ok(Math.abs(d2 - c) < 0.01, '움찔: 다른 둔화와 겹치면 강한 쪽 하나만');
+      Ag().gaze = 3; const g1 = mv(m, false), g2 = mv(m, true); Ag().gaze = 0;
+      ok(Math.abs(g2 - g1) < 0.01, `움찔: 매의 시선 중에는 겹치지 않음 ${g1.toFixed(2)}/${g2.toFixed(2)}`);
+      clear(); G.gk = 'bargan'; gkSpawn(); const k = G.gkMob; k.hp = k.maxHp = 1e9; k.ai.at = 99; k.ai.cd = 99; k.ai.act = 'chase';
+      const bx = () => { k.x = G.p.x + 240; k.y = G.p.y; const x0 = k.x; for (let i = 0; i < 6; i++) step(1 / 60); return Math.abs(k.x - x0); };
+      k.fl63 = 0; const ba = bx(); k.fl63 = G.time + 1; const bb = bx();
+      ok(ba > 0 && Math.abs(bb / ba - 0.8) < 0.06, `움찔: 수문장 -20% (${(bb / ba).toFixed(2)})`);
+      clear(); G.gkMob = null; G.gk = null; G.p.weapons = ws; }
     render();
-    } catch (e) { ok(false, '실행 오류 ' + e.message + ' ' + (e.stack || '').split('\n').slice(1, 3).join(' / ')); }
+    } catch (e) { A63C.flinch.k = FK63; A63C.flinch.kBoss = FB63; ok(false, '실행 오류 ' + e.message + ' ' + (e.stack || '').split('\n').slice(1, 3).join(' / ')); }
     return out;
   }).catch(e => ['FAIL 실행 오류 ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 3).join(' / ')]);
   console.log(res.join('\n'));

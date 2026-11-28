@@ -36,11 +36,11 @@ function mobMove(e, dt, sp, d, dx, dy) {
   }
   if (k === 'dash') {
     const C = MOB.dash; e.cd = (e.cd == null ? rand(C.cd[0], C.cd[1]) : e.cd) - dt;
-    if (e.dsh > 0) { e.dsh -= dt; e.x += e.ddx * e.speed * C.spK * dt; e.y += e.ddy * e.speed * C.spK * dt; return 0; }
+    if (e.dsh > 0) { e.dsh -= dt; const v = e.sp0 || e.speed; e.x += e.ddx * v * C.spK * dt; e.y += e.ddy * v * C.spK * dt; return 0; }   // 0.71 sp0 = 둔화 전 원래 속도 (예고선과 실제 돌진 거리 일치)
     if (e.tl > 0) { e.tl -= dt; if (e.tl <= 0) e.dsh = C.dur; return 0; }
     if (e.cd <= 0 && d < C.near && !G.result && sp > 0) {
       e.cd = rand(C.cd[0], C.cd[1]); e.tl = C.tele; e.ddx = dx / d; e.ddy = dy / d;
-      G.hz.push({ k: 'line', x: e.x, y: e.y, dx: e.ddx, dy: e.ddy, len: e.speed * C.spK * C.dur, w: e.r * 2, warn: C.tele, t: 0, dmg: 0, follow: e });
+      G.hz.push({ k: 'line', x: e.x, y: e.y, dx: e.ddx, dy: e.ddy, len: (e.sp0 || e.speed) * C.spK * C.dur, w: e.r * 2, warn: C.tele, t: 0, dmg: 0, follow: e });
       return 0;
     }
     return sp;
