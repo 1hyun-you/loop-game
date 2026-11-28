@@ -35,7 +35,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     ok(Math.abs(r0 / r1 - 1.6) < 0.01, '정지 중 경험치 흡수 범위 +60% (' + Math.round(r1) + ' → ' + Math.round(r0) + ')');
     ok(heroStat60(base()).cd === 1 && heroStatus60('').includes('이동'), '이동 중 공속 보너스 없음·상태 글자');
     let d0 = G.stats.dmg.arrow || 0, h0 = S6().held || 0; runM(4, 1, true);
-    ok((G.stats.dmg.arrow || 0) === d0 && (S6().held || 0) > h0, '이동 중 장궁 발동 없음 (대기 ' + ((S6().held || 0) - h0) + '회)');
+    ok((G.stats.dmg.arrow || 0) > d0 && (S6().mvShot || 0) > 0, '0.69 이동 중에도 장궁 느리게 발동 (이동 사격 ' + (S6().mvShot || 0) + '회)');
     d0 = G.stats.dmg.arrow || 0; run(4, 1);
     ok((G.stats.dmg.arrow || 0) > d0, '멈추면 장궁 발동 (' + Math.round((G.stats.dmg.arrow || 0) - d0) + ')');
     G.p.weapons.push({ id: 'bell', lvl: 1, t: 0.2 }); const bw = G.p.weapons.find(w => w.id === 'bell');
@@ -62,7 +62,7 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
     ok((G.stats.dmg.ult || 0) > u0 && (S6().hunt || 0) > 0, '사냥 개시: 화살비 피해 (' + Math.round((G.stats.dmg.ult || 0) - u0) + ')');
     crowd(16); d0 = G.stats.dmg.arrow || 0; mv(true); runT(2); const hs = heroStatus60(''); mv(false);
     ok((G.stats.dmg.arrow || 0) > d0 && hs.startsWith('사냥 개시'), '사냥 개시 중 이동하며 장궁 발동·상태 글자');
-    runT(2.5); mv(true); runT(0.8); d0 = G.stats.dmg.arrow || 0; runT(2); mv(false); ok((G.stats.dmg.arrow || 0) === d0, '5초 뒤 다시 멈춤 사격');
+    runT(2.5); mv(true); runT(0.8); crowd(16); const ms0 = S6().mvShot || 0; runT(4); mv(false); ok(Ag().hunt <= 0 && (S6().mvShot || 0) > ms0, '5초 뒤 이동 중에는 다시 느린 이동 사격 (' + ((S6().mvShot || 0) - ms0) + '회)');
     // 6. 인물 각성 A 매의 눈 · 매의 시선
     fresh(); applyAw60('A'); cine(); mv(true); step(1 / 60); mv(false);
     runT(0.5); const bA = stillBonus63(); runT(1.5); const bB = stillBonus63(); runT(1.5); const bC = stillBonus63();
@@ -96,9 +96,10 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
         const lw = G.p.weapons.find(x => x.id === 'lamp'); mv(true); step(1 / 60); step(1 / 60); ok(!lw.lk63, '움직이면 줄이 풀림'); mv(false); }
       if (ids.includes('bell')) ok((S6().whistle || 0) > 0 && (S6().whPass || 0) > 0, `우는살: 꽂힌 자리 고리 ${S6().whistle}·지나는 길 멈칫 ${S6().whPass}`);
       if (ids.includes('thorn')) ok((S6().vineN || 0) > 0, '가시줄 화살: 묶음 (' + S6().vineN + '마리)');
-      runM(1, 0, true); const dm = Object.assign({}, G.stats.dmg); runM(3, 1, true);   // 이미 날아가던 화살·예약 폭발이 끝난 뒤부터 집계
-      const mvd = ids.filter(id => id !== 'turret').map(id => [id, (G.stats.dmg[id] || 0) - (dm[id] || 0)]).filter(a => a[1] >= 1);
-      ok(!mvd.length, '이동 중 연성 발동 없음 (매 제외)' + (mvd.length ? ' ' + JSON.stringify(mvd) : ''));
+      runM(1, 0, true); const dm = Object.assign({}, G.stats.dmg); runM(6, 1, true);   // 이미 날아가던 화살·예약 폭발이 끝난 뒤부터 집계
+      const mvd = ids.filter(id => id !== 'turret' && id !== 'lamp').map(id => [id, (G.stats.dmg[id] || 0) - (dm[id] || 0)]).filter(a => a[1] >= 1), lmv = (G.stats.dmg.lamp || 0) - (dm.lamp || 0);
+      const want = ids.filter(id => id !== 'turret' && id !== 'lamp');
+      ok(mvd.length === want.length && (!ids.includes('lamp') || lmv < 1), '0.69 이동 중 연성 느리게 발동 ' + mvd.length + '/' + want.length + ' (매 횃대·미늘 줄화살은 서 있을 때만) ' + JSON.stringify(mvd));
     }
     // 9. 궁수 전용 자동 플레이 (멈춰 쏘기)
     fresh(); STATE.dev.auto = true; INPUT.keys = {}; const st0 = S6().rngStill || 0, mt0 = S6().rngMove || 0; run(60, 0);   // 실제 출현 흐름 (인위적 몰이 없음)

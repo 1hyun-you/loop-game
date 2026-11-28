@@ -19,6 +19,7 @@ const E65C = {
   cool: { broke: 10, removed: 5 },                                                   // 재설치 대기: 부서짐 10초·직접 철거 5초
   tap: { move: 10, time: 0.25, hit: 22, keep: 2 },                                   // 탭: 이동 10px 미만·0.25초 안에 뗌, 판정 지름 44px, X 표시 2초 유지
   area: { R: 250, edge: 100, out: 8 },                                               // 영역 반경 250(1.7초), 경계 100 안에서 진해짐, 영역 밖 8초 → 분해 (0.69 200·5초 → 250·8초: 피하다 영역을 벗어나 기계 전부 분해되는 일 잦음)
+  cover: { R: 60, bossK: 0 },                                                       // bossK: 포탑의 수문장·마왕 1.3배 조준 — 확정 문서(DESIGN 4장 우선 조준 = 한 방향 강한 공격만) 범위 밖이라 승인 전 꺼 둠(0), 켜면 1.3                                                                  // 0.69 엄호 사격(회차 102 사용자 결정): 캐릭터 반경 60(0.4초) 안 적을 기계가 먼저 노림
   lure: { R: 180, hitCd: 0.6 },                                                      // 기계 반경 150 안·캐릭터보다 기계가 가까운 일반 적 → 기계를 노림 (가안), 붙어서 0.6초마다 적 피해만큼 (가안)
   xp: { still: 0.6 },                                                                // 멈춤·자리 인물 경험치 보조 (가안): 서 있는 동안 흡수 범위 +60% (궁수와 같음)
   turret: { fire: 0.65, range: 240, r: 10, sp: 520 },                                // 기본 포탑: 0.65초마다·사거리 240·피해 11 (0.69 0.8초 → 0.65초)
@@ -46,6 +47,22 @@ const isE65 = () => G.p && G.p.job === 'engineer' && HERO60.engineer.impl;
 const ECOL = () => HERO60.engineer;
 const ek65 = (w, S) => fk60r(w, S);                              // 짝 무기 강화·보조 효과 배율
 const ec65 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
+/* 0.69 엄호 사격: 기계 사거리 안에 캐릭터에게 바짝 붙은 적이 있으면 그 적(캐릭터에 가장 가까운)부터 → (포탑만) 수문장·마왕이 사거리 1.3배 안이면 그쪽 → 기계에서 가장 가까운 적 */
+function nearCover65(x, y, range) {                                                  // 캐릭터 반경 60 안 + 기계 사거리 안 적 중 캐릭터에 가장 가까운 적
+  const p = G.p, R = E65C.cover.R; let best = null, bd = Infinity;
+  gridQuery(p.x, p.y, R + 40, e => {
+    if (e.dead) return; const dp = Math.hypot(e.x - p.x, e.y - p.y) - e.r; if (dp > R) return;
+    if ((e.x - x) ** 2 + (e.y - y) ** 2 > (range + e.r) ** 2) return; if (dp < bd) { bd = dp; best = e; }
+  });
+  return best;
+}
+function cover65(x, y, range, bossOK) {
+  const best = nearCover65(x, y, range);
+  if (best) { S60().cover = (S60().cover || 0) + 1; return best; }
+  if (bossOK && E65C.cover.bossK > 0) for (const e of G.enemies) if (!e.dead && (e.gk || e.boss) && (e.x - x) ** 2 + (e.y - y) ** 2 <= (range * E65C.cover.bossK + e.r) ** 2) { S60().coverBoss = (S60().coverBoss || 0) + 1; return e; }   // 수문장·마왕: 사거리 1.3배 안이면 조준 (DESIGN 4장 우선 조준 규칙, 거리 두는 수문장 대응)
+  return nearestEnemy(x, y, range);
+}
+
 function tFire65(S) { return E65C.turret.fire * (S.cd / WEAPONS.turret.base.cd); }
 const ref65 = () => { const b = baseW(); if (!b) return 10; const S = wStats(b); return S.dmg / Math.max(0.05, tFire65(S)); };   // 무기 기준 = 기본 포탑 1대 초당 피해 (가안, 사령술사 등불 기준과 같은 방식)
 
@@ -134,12 +151,12 @@ function bigCluster65(x, y, range, R) {                                         
 }
 function turretAtk65(m, S, now) {
   const C = E65C.turret, w = m.w, br = w.br, aw = w.aw, range = C.range * S.area;
-  const keep = aw === 'A' && m.tg && !m.tg.dead && dist2(m.tg.x, m.tg.y, m.x, m.y) < (range + m.tg.r) ** 2;   // 회전 기관포: 사거리 안에 있는 동안 같은 적을 계속 조준 (가안)
-  const e = keep ? m.tg : nearestEnemy(m.x, m.y, range); if (!e) { m.cd = 0.25; m.gat = Math.max(0, m.gat - 1); return; }
+  const cv = nearCover65(m.x, m.y, range), keep = aw === 'A' && m.tg && !m.tg.dead && dist2(m.tg.x, m.tg.y, m.x, m.y) < (range + m.tg.r) ** 2 && (!cv || cv === m.tg);   // 0.69 엄호 대상이 생기면 같은 적 조준 해제   // 회전 기관포: 사거리 안에 있는 동안 같은 적을 계속 조준 (가안)
+  const e = keep ? m.tg : cover65(m.x, m.y, range, true); if (!e) { m.cd = 0.25; m.gat = Math.max(0, m.gat - 1); return; }
   if (aw === 'A') { if (m.tg === e) m.gat = Math.min(E65C.gat.cap, m.gat + 1); else if (m.tg) m.gat = Math.max(0, m.gat - E65C.gat.back); }   // 회전 기관포: 같은 적을 계속 쏠수록 빨라짐
   m.tg = e; m.a = Math.atan2(e.y - m.y, e.x - m.x); m.shotN++; m.fireT = now;
   const base = tFire65(S); m.cd = aw === 'A' ? Math.max(E65C.gat.min * (S.cd / WEAPONS.turret.base.cd), base - E65C.gat.step * m.gat * (S.cd / WEAPONS.turret.base.cd)) : base;
-  const v = vol65(m), dm = S.dmg * v * (br === 'B' ? E65C.big.k : 1), col = ECOL().c1;
+  const v = vol65(m), dm = S.dmg * v * (br === 'B' ? E65C.big.k : 1), col = ECOL().c1, L65 = Math.max(range, Math.hypot(e.x - m.x, e.y - m.y) + 10);   // 0.69 수문장·마왕 1.3배 조준 시 탄이 닿게
   withCR60(roll60(w), () => {
     if (aw === 'B' && m.shotN % E65C.mortar.every === 0) {                            // 박격포: 4번째 발사마다 가장 큰 무리에 곡사 포탄
       const t = bigCluster65(m.x, m.y, range, E65C.mortar.look) || e;
@@ -148,8 +165,8 @@ function turretAtk65(m, S, now) {
     }
     const n = br === 'A' ? 2 : 1, ox = -Math.sin(m.a) * 4, oy = Math.cos(m.a) * 4;
     for (let i = 0; i < n; i++) { const s = n > 1 ? (i ? 1 : -1) : 0;
-      if (br === 'B') shoot({ kind: 'shell', x: m.x + ox * s, y: m.y - 6 + oy * s, ang: m.a, sp: C.sp, r: 5, dmg: dm, R: E65C.big.R * S.area, life: range / C.sp, color: col, src: 'turret', e65: 1, on44: pr => explode(pr.x, pr.y, pr.R, pr.dmg, 'turret', '#ffcf7a') });
-      else shoot({ kind: 'arrow', x: m.x + ox * s, y: m.y - 6 + oy * s, ang: m.a, sp: C.sp, r: 4, dmg: dm, pierce: 0, life: range / C.sp, color: col, src: 'turret', e65: 1 });
+      if (br === 'B') shoot({ kind: 'shell', x: m.x + ox * s, y: m.y - 6 + oy * s, ang: m.a, sp: C.sp, r: 5, dmg: dm, R: E65C.big.R * S.area, life: L65 / C.sp, color: col, src: 'turret', e65: 1, on44: pr => explode(pr.x, pr.y, pr.R, pr.dmg, 'turret', '#ffcf7a') });
+      else shoot({ kind: 'arrow', x: m.x + ox * s, y: m.y - 6 + oy * s, ang: m.a, sp: C.sp, r: 4, dmg: dm, pierce: 0, life: L65 / C.sp, color: col, src: 'turret', e65: 1 });
     }
   });
   const S6 = S60(); S6.tShot = (S6.tShot || 0) + 1; if (aw === 'A') { S6.gatMax = Math.max(S6.gatMax || 0, m.gat); S6.gatCd = Math.min(S6.gatCd || 9, m.cd / (S.cd / WEAPONS.turret.base.cd)); }
@@ -157,7 +174,7 @@ function turretAtk65(m, S, now) {
 /* 연성 기계 7종 */
 const MACT65 = {
   cleave(m, S, now, dt) {                                                             // 대검 기계병: 자기 자리 근처를 걸으며 다가온 적을 벰, 3마리 이상 몰리면 회전 베기
-    const C = E65C.bot, e = nearestEnemy(m.hx, m.hy, C.roam + C.range * S.area);
+    const C = E65C.bot, e = cover65(m.hx, m.hy, C.roam + C.range * S.area);
     let tx = m.hx, ty = m.hy; if (e) { tx = e.x; ty = e.y; }
     const dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1, st = e ? Math.max(0, d - e.r - C.range * S.area * 0.6) : d;
     if (st > 1) { const s = Math.min(st, C.sp * dt); let nx = m.x + dx / d * s, ny = m.y + dy / d * s; const hd = Math.hypot(nx - m.hx, ny - m.hy);
@@ -173,7 +190,7 @@ const MACT65 = {
   dagger(m, S, now, dt) {                                                             // 칼날 드론: 충전대에서 날아가 적을 긋고 돌아옴, 돌아오는 길의 적도 한 번 더 그음
     const C = E65C.drone;
     if (m.dr) { m.dr.t += dt; return; }
-    if (m.cd > 0) return; const e = nearestEnemy(m.x, m.y, C.range * S.area); if (!e) { m.cd = 0.25; return; }
+    if (m.cd > 0) return; const e = cover65(m.x, m.y, C.range * S.area); if (!e) { m.cd = 0.25; return; }
     m.cd = C.cd * ec65(m.w, S); m.fireT = now;
     const d = Math.sqrt(dist2(m.x, m.y, e.x, e.y)), go = d / C.sp, dm = ek65(m.w, S) * vol65(m), ctx = roll60(m.w);
     m.dr = { e, x: e.x, y: e.y, t: 0, go };
@@ -195,7 +212,7 @@ const MACT65 = {
   fireball(m, S, now, dt) {                                                           // 용광로: 쇳물 덩이를 던져 터뜨림, 달궈진 몸통에 붙은 적은 데임
     const C = E65C.furn;
     m.bt = (m.bt || 0) - dt; if (m.bt <= 0) { m.bt = C.tick; const d = C.body * ek65(m.w, S); let n = 0; gridQuery(m.x, m.y, C.bodyR, o => { damageEnemy(o, d, { src: 'fireball' }); n++; }); if (n) S60().furnBody = (S60().furnBody || 0) + n; }   // 몸통 열기 (치명타 없음)
-    if (m.cd > 0) return; const e = nearestEnemy(m.x, m.y, C.range * S.area); if (!e) { m.cd = 0.25; return; }
+    if (m.cd > 0) return; const e = cover65(m.x, m.y, C.range * S.area); if (!e) { m.cd = 0.25; return; }
     m.cd = C.cd * ec65(m.w, S); m.fireT = now;
     Eg().lobs.push({ x0: m.x, y0: m.y - 10, x: e.x, y: e.y, t: 0, fly: C.fly, R: C.R * S.area, d: C.dmg * ek65(m.w, S) * vol65(m), src: 'fireball', melt: 1, cr: roll60(m.w) });
     S60().furn = (S60().furn || 0) + 1;
@@ -204,7 +221,7 @@ const MACT65 = {
     const C = E65C.torch;
     if (m.wait > 0) { m.wait -= dt; return; }
     if (m.tg && (m.tg.dead || dist2(m.tg.x, m.tg.y, m.x, m.y) > (C.range * S.area + m.tg.r) ** 2)) { if (m.tg.dead) m.wait = C.wait; m.tg = null; m.link = 0; if (m.wait > 0) return; }
-    if (!m.tg) { m.tg = nearestEnemy(m.x, m.y, C.range * S.area); m.link = 0; if (!m.tg) return; }
+    if (!m.tg) { m.tg = cover65(m.x, m.y, C.range * S.area); m.link = 0; if (!m.tg) return; }
     m.link += dt * mSpd65(m); m.a = Math.atan2(m.tg.y - m.y, m.tg.x - m.x);
     if (m.cd > 0) return; m.cd = C.tick * ec65(m.w, S); m.fireT = now;
     const k = Math.min(C.max, 1 + C.up * Math.floor(m.link)); withCR60(roll60(m.w), () => damageEnemy(m.tg, C.dmg * ek65(m.w, S) * k * vol65(m), { src: 'lamp' }));
@@ -223,7 +240,7 @@ const MACT65 = {
     S60().alarm = (S60().alarm || 0) + 1;
   },
   thorn(m, S, now) {                                                                  // 철조망 발사기: 가시철사 다발로 적과 곁의 적 다리를 휘감아 묶음
-    const C = E65C.wire; if (m.cd > 0) return; const tg = nearestEnemy(m.x, m.y, C.range * S.area); if (!tg) { m.cd = 0.25; return; }
+    const C = E65C.wire; if (m.cd > 0) return; const tg = cover65(m.x, m.y, C.range * S.area); if (!tg) { m.cd = 0.25; return; }
     m.cd = C.cd * ec65(m.w, S); m.a = Math.atan2(tg.y - m.y, tg.x - m.x); m.fireT = now;
     const L = [tg].concat(nearN60(tg.x, tg.y, C.near * S.area, C.more + 1).filter(o => o !== tg).slice(0, C.more)), d = C.dmg * ek65(m.w, S) * vol65(m), F = F60();
     withCR60(roll60(m.w), () => { for (const e of L) { damageEnemy(e, d, { src: 'thorn' }); if (e.dead) continue; root60(e, C.root); if (F.vines.length < 40) F.vines.push({ x: e.x, y: e.y, R: e.r, e, t: 0, dur: C.root + 0.15, col: '#9aa0a8', s: rand(7) }); } });

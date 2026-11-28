@@ -1,7 +1,7 @@
 /* ============================================================
    0.63 궁수 구현 (회차 94, 분할 구현 4차) — 기준: docs/characters/archer.md
-   • 고유 규칙(제약형 + 연성형 + 자신형): "멈춰 있을 때만 쏘고, 서 있을수록 빨라짐"
-     - 멈춤 사격: 이동 중 전용·연성 무기 발동 없음 (매 횃대의 이미 앉은 매는 움직여도 싸움)
+   • 고유 규칙(제약형 + 연성형 + 자신형): "움직이면 느리게 쏘고, 서 있을수록 빨라짐" (0.69 회차 102 사용자 결정)
+     - 이동 사격: 이동 중 전용·연성 무기 간격 3배, 멈추는 순간 서 있는 간격으로 줄어듦 / 매 횃대·미늘 줄화살은 서 있을 때만(가안) (이미 앉은 매는 움직여도 싸움)
      - 정지 중 공속 +180% (전용·연성만, 0.69 +80% → +180%), 0.69 버티기 사격: 서서 맞힌 공격은 반경 90 안 적을 밀어냄, 정지 중 경험치 흡수 범위 +60% (멈춤 인물 경험치 보조 수단)
    • 전용 무기 장궁: 발현 A 연사 → 무기 각성 A 속사 연발 / 발현 B 꿰뚫기 → 무기 각성 B 거대 화살
    • 궁극기: 기본 사냥 개시 / 인물 각성 A 매의 눈 + 매의 시선 / 인물 각성 B 치고 빠지기 + 화살 폭풍
@@ -13,6 +13,7 @@ const A63C = {
   still: { spd: 1.8, xp: 0.6, moveMin: 0.2 },                                       // 정지 공속 +180% (0.69 +80% → +180%), 흡수 범위 +60%, '움직였다' 판정 최소 이동 0.2초
   eye: { t0: 1, t1: 3, max: 2.8 },                                                  // 인물 각성 A 매의 눈: 1초 +180% → 3초 +280% (0.69 정지 공속 상향에 맞춰 +150% → +280%)
   hit: { n: 3, fan: 0.25, k: 1.5 },                                                 // 인물 각성 B 치고 빠지기: 멈춘 직후 첫 발동 부채꼴 3발 + 150%
+  move: { k: 3 },                                                                    // 0.69 이동 사격(회차 102 사용자 결정): 움직이는 동안 전용·연성 무기 간격 3배
   guard: { R: 90, kb: 140, once: 0.4 },                                            // 0.69 버티기 사격: 서서 쏠 때 반경 90(0.6초) 안까지 붙은 적은 맞으면 밀려남 (같은 적 0.4초에 1번)
   bow: { sp: 540, r: 6 },
   rapidA: { n: 2, gap: 0.1 },                                                       // 발현 A 연사: 한 번에 2발·0.1초 간격
@@ -37,7 +38,7 @@ const ACOL = () => HERO60.archer;
 const ak63 = (w, S) => fk60r(w, S);                              // 짝 무기 강화·보조 효과 배율
 const ac63 = (w, S) => S.cd / WEAPONS[w.id].base.cd;
 const own63 = w => !!(w && (w.base || w.fu));                                       // 인물 규칙 대상 (전용·연성)
-const canShoot63 = () => !G.p.moving || Ag().hunt > 0;                              // 멈춤 사격 (사냥 개시 5초 동안은 이동 중에도)
+const canShoot63 = () => !G.p.moving || Ag().hunt > 0;                              // 제 속도 사격 가능 여부 (서 있음, 사냥 개시 5초 동안은 이동 중에도) — 아니면 이동 사격(간격 3배)
 
 /* ---------- 정지 공속 (전용·연성) ---------- */
 function stillBonus63() {
@@ -56,10 +57,12 @@ function takeHB63(w) {
 }
 let HBK63 = 1;                                                                       // 현재 발동의 치고 빠지기 배율 (연성 피해에 곱함)
 
-/* 발동 감싸기: 이동 중이면 발동하지 않고 대기 (멈추는 순간 바로 발동), 치고 빠지기 판정 */
-function af63(fn, keepMove) {
+/* 발동 감싸기: 이동 중이면 간격 3배로 발동(서 있을 때만 무기는 대기), 치고 빠지기 판정은 서 있을 때만 */
+function af63(fn, keepMove, stillOnly) {
   return function (w, S) {
-    if (!canShoot63() && !keepMove) { if (w.id === 'lamp') w.lk63 = null; S60().held = (S60().held || 0) + 1; return 0.05; }
+    const mv = !canShoot63() && !keepMove;
+    if (mv && stillOnly) { if (w.id === 'lamp') w.lk63 = null; S60().held = (S60().held || 0) + 1; return 0.05; }   // 매 횃대·미늘 줄화살은 서 있을 때만 (자리를 잡는 무기)                                            // 0.69 이동 사격: 움직이는 동안에도 발동, 간격 3배 (치고 빠지기 강화는 멈춘 뒤에만)
+    if (mv) { const r = fn(w, S, false); if (r !== false) S60().mvShot = (S60().mvShot || 0) + 1; return typeof r === 'number' ? r * A63C.move.k : r; }
     const hb = takeHB63(w); HBK63 = hb ? A63C.hit.k : 1; w.hbNow = hb;
     try { const r = fn(w, S, hb); if (r === false && hb) w.hb63 = true; return r; } finally { HBK63 = 1; w.hbNow = false; }
   };
@@ -124,16 +127,20 @@ const a0Of63 = t => ang63(G.p.x, G.p.y, t);
 function volleyTick63(dt) {
   const A = Ag(), V = A.volley; if (!V) return;
   V.t -= dt; if (V.t <= 0 || !G.p.weapons.includes(V.w)) { A.volley = null; return; }
-  if (!canShoot63()) return;                                                         // 움직이면 쉬었다가 다시 서면 이어서
-  V.gap -= dt; if (V.gap > 0) return; V.gap = 1 / A63C.volley.rate;
+  V.gap -= canShoot63() ? dt : dt / A63C.move.k;                                    // 0.69 이동 중에는 3배 느리게
+  if (V.gap > 0) return; V.gap = 1 / A63C.volley.rate;
   const w = V.w, S = wStats(w), range = WEAPONS.arrow.base.range * S.area, t = nearestEnemy(G.p.x, G.p.y, range); if (!t) return;
   withCR60(roll60(w), () => arrow63({ x: G.p.x, y: G.p.y, a: ang63(G.p.x, G.p.y, t) + rand(-0.04, 0.04), sp: A63C.bow.sp * 1.15, L: range, dmg: S.dmg * A63C.volley.k * V.k, src: 'arrow', pierce: S.pierce, silver: 1, kind: 'quick' }));   // 연달아 쏘는 1발 = 공격 1번
 }
 
 /* ---------- 궁극기 ---------- */
 const ref63 = () => { const b = baseW(); return b ? wStats(b).dmg : WEAPONS.arrow.base.dmg; };
+function capStop63() {                                                              // 0.69 멈춤(또는 사냥 개시) 순간: 이동 사격의 3배 간격을 서 있는 간격으로 (치고 빠지기 강화 대기 무기는 즉시, 속사 연발 중인 무기는 연발 끝까지)
+  const A = Ag();
+  for (const w of G.p.weapons) if (own63(w) && w.t > 0) w.t = Math.min(w.t, w.hb63 ? 0.05 : Math.max(wStats(w).cd, A.volley && A.volley.w === w ? A.volley.t : 0));
+}
 function ultHunt63(p) {                                                             // 사냥 개시: 하늘로 쏜 화살이 화면 절반 범위에 쏟아짐 → 5초 이동 중에도 사격
-  const C = A63C.hunt, A = Ag(); A.hunt = C.dur; S60().hunt = (S60().hunt || 0) + 1;
+  const C = A63C.hunt, A = Ag(); A.hunt = C.dur; S60().hunt = (S60().hunt || 0) + 1; capStop63();
   A.lines.push({ x: p.x, y: p.y, up: 1, t: 0, dur: C.up });
   uLater(C.up, () => { const R = VIEW.w * C.R, d = ref63() * C.k, x = G.p.x, y = G.p.y, ts = [];
     gridQuery(x, y, R, e => { if (!e.dead) ts.push(e); });
@@ -165,7 +172,7 @@ function stormTick63(dt) {
   if (A.storm <= 0) { A.stormBuf = C.buff; toast('화살 폭풍 · 4초 첫 발동 강화', ACOL().c1); }
 }
 
-/* ---------- 연성 7종 (짝 무기 + 장궁) · 7종 공통: 멈춰 있을 때만 발동 + 정지 공속 +80% ---------- */
+/* ---------- 연성 7종 (짝 무기 + 장궁) · 7종 공통: 이동 중 간격 3배(매 횃대·미늘 줄화살은 서 있을 때만) + 정지 공속 ---------- */
 // 초승달촉 화살: 넓은 초승달 칼날을 촉으로 단 화살, 맞은 적에 큰 칼자국 + 칼날 폭 안 적 함께 베임 (첫 적에서 멈춤, 최대 3마리)
 function fMoon63(w, S) {
   const C = A63C.moon, p = G.p, tg = nearestEnemy(p.x, p.y, C.range * S.area); if (!tg) return false;
@@ -269,9 +276,9 @@ function fVine63(w, S) {
 FUSE60.archer = {
   cleave: { nm: '초승달촉 화살', ds: '넓은 초승달 칼날 촉 화살, 맞은 적에 큰 칼자국 + 칼날 폭 안 적 함께 베임 (최대 3마리)', fire: af63(fMoon63) },
   dagger: { nm: '사냥칼 던지기', ds: '가까이 온 적 2마리에게 사냥칼을 던져 그음', fire: af63(fKnife63) },
-  turret: { nm: '매 횃대', ds: '멈춰 서 있으면 곁에 횃대가 서고 매가 앉음, 매가 가까이 온 적을 할퀴고 돌아옴 (최대 3개, 움직여도 매는 싸움)', fire: af63(fPerch63) },
+  turret: { nm: '매 횃대', ds: '멈춰 서 있으면 곁에 횃대가 서고 매가 앉음, 매가 가까이 온 적을 할퀴고 돌아옴 (최대 3개, 움직여도 매는 싸움)', fire: af63(fPerch63, false, true) },
   fireball: { nm: '불화살', ds: '적이 가장 많이 몰린 곳 한가운데에 불화살을 꽂아 터뜨림', fire: af63(fFire63) },
-  lamp: { nm: '미늘 줄화살', ds: '줄 달린 미늘 화살을 박아 계속 파고듦, 쓰러지면 줄을 되감아 다음 적에게 다시 박음 (움직이면 줄이 풀림)', fire: af63(fBarb63) },
+  lamp: { nm: '미늘 줄화살', ds: '줄 달린 미늘 화살을 박아 계속 파고듦, 쓰러지면 줄을 되감아 다음 적에게 다시 박음 (움직이면 줄이 풀림)', fire: af63(fBarb63, false, true) },
   bell: { nm: '우는살', ds: '가장 먼 적 쪽으로 날아가며 지나는 길의 적을 움찔하게 하고, 꽂힌 자리에서 큰 소리 고리', fire: af63(fWhistle63) },
   thorn: { nm: '가시줄 화살', ds: '꽂히면 덩굴이 풀려 그 적과 곁의 최대 2마리를 휘감아 묶음', fire: af63(fVine63) },
 };
@@ -293,7 +300,9 @@ Object.assign(HERO60.archer, {
   tick(dt) {
     const A = Ag(), p = G.p;
     if (p.moving) { A.mov += dt; A.still = 0; if (!(A.hunt > 0)) for (const w of p.weapons) if (w.lk63) w.lk63 = null; }   // 움직이면 미늘 줄이 풀림
-    else { if (A.mov >= A63C.still.moveMin && p.job2 === 'B') for (const w of p.weapons) if (own63(w)) w.hb63 = true; A.mov = 0; A.still += dt; }
+    else { if (A.mov >= A63C.still.moveMin && p.job2 === 'B') for (const w of p.weapons) if (own63(w)) w.hb63 = true;
+      if (A.mov > 0) capStop63();   // 0.69 멈추는 순간: 이동 중 3배 간격을 서 있는 간격으로 줄임 (멈추면 바로 빠르게)
+      A.mov = 0; A.still += dt; }
     if (A.hunt > 0) A.hunt -= dt;
     if (A.gaze > 0) A.gaze -= dt;
     volleyTick63(dt); stormTick63(dt); arTick63(dt); perchTick63(dt);
@@ -321,7 +330,7 @@ updateEnemies = function (dt) {
 };
 
 /* ---------- 자동 플레이: 궁수 전용 '멈춰 쏘기' (시험·실기기 자동 플레이 공용) ----------
-   궁수는 서 있어야 공격하므로 기본은 '선다', 움직이는 것은 이유가 있을 때만:
+   궁수는 서 있어야 제 속도로 공격하므로 기본은 '선다', 움직이는 것은 이유가 있을 때만:
    ① 공격 예고 안
    ② 가장 빠른 적이 닿기까지 0.25초 미만(체력 40% 미만 0.45초) → 트인 쪽으로 물러섬, 0.6초 여유가 생기거나 0.5초 지나면 다시 섬 (봉인석 구역 안 제외)
    ③ 목표 지점(봉인석·상자·야영지·수레·돌발 사건·샘) ④ 적 탄환이 0.5초 안에 닿음 → 비킴

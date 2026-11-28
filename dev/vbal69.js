@@ -72,6 +72,13 @@ const SERVER = http.createServer((q, s) => { const u = decodeURIComponent((q.url
       fresh('archer', 'arrow'); const ea = makeEnemy('slime', G.p.x + 40, G.p.y); ea.hp = ea.maxHp = 1e5; G.p.moving = false; const kb0 = ea.kbx;
       HERO60.archer.onHit(ea, { src: 'arrow' }); ok(ea.kbx > kb0 + 100, '궁수 버티기 사격: 서서 쏠 때 반경 90 안 적 밀어냄');
       const eb2 = makeEnemy('slime', G.p.x + 200, G.p.y); eb2.hp = 1e5; HERO60.archer.onHit(eb2, { src: 'arrow' }); ok(!eb2.kbx, '반경 밖 적은 밀지 않음');
+      { fresh('archer', 'arrow'); const bw = baseW(), t = makeEnemy('slime', G.p.x + 120, G.p.y); t.hp = t.maxHp = 1e6; G.p.moving = true; Ag().hunt = 0; bw.t = 0; const mv0 = S60().mvShot || 0;
+        for (let i = 0; i < 30; i++) { INPUT.keys = { arrowup: true, w: true }; step(1 / 60); }
+        ok((S60().mvShot || 0) > mv0 && (G.stats.dmg.arrow || 0) > 0, '궁수 이동 사격: 움직이는 동안에도 장궁 발동 (' + ((S60().mvShot || 0) - mv0) + '회)');
+        ok(bw.t > wStats(bw).cd * 1.5, '이동 중 다음 발동 간격 3배 (남은 ' + bw.t.toFixed(2) + '초, 기본 ' + wStats(bw).cd.toFixed(2) + '초)'); INPUT.keys = {}; }
+      { fresh('engineer', 'turret'); G.time = 120; const near = makeEnemy('slime', G.p.x + 30, G.p.y); near.hp = near.maxHp = 1e6; const m = place65('turret', baseW(), {}); m.x = G.p.x + 200; m.y = G.p.y; const far = makeEnemy('slime', m.x + 20, m.y); far.hp = far.maxHp = 1e6; gridBuild(G.enemies);
+        ok(cover65(m.x, m.y, 240) === near && cover65(m.x, m.y, 100) === far, '엔지니어 엄호 사격: 사거리 안이면 캐릭터에 붙은 적 먼저, 아니면 기계 가까운 적');
+        ok(E65C.cover.bossK === 0, '포탑 수문장 1.3배 조준: 승인 전 꺼짐'); }
       fresh('engineer', 'turret'); G.time = 600;
       const m = place65('turret', baseW(), {}); ok(m && Math.abs(m.mhp - 80 * 4) < 1, '엔지니어 기계 체력 80 × (1 + 분당 30%) = 10분 ' + (m ? m.mhp : 0));
       ok(heroStat60(baseW()).dmg === 1.5 && E65C.cap.turret === 5 && E65C.build.first === 1.5 && E65C.build.next === 1 && E65C.turret.fire === 0.65, '엔지니어 기계 출력 +50%·포탑 5대·설치 1.5초(이어서 1초)·발사 0.65초');
